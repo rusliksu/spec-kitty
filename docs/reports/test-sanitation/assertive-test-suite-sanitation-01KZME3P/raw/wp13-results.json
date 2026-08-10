@@ -3,8 +3,8 @@
   "mission": "assertive-test-suite-sanitation-01KZME3P",
   "work_package": "WP13",
   "profile": "architect-alphonso",
-  "generated_at": "2026-08-10T16:53:32Z",
-  "implementation_cycle": 2,
+  "generated_at": "2026-08-10T18:38:55Z",
+  "implementation_cycle": 3,
   "review_cycle_limit": 3,
   "planning_base": "28ae75ea998c898aba57364db7a06d2088bd2af2",
   "implementation_head_before_commit": "166616671c4cee9d06863e43ec1a4b29c8de9638",
@@ -49,7 +49,7 @@
     "collection_command": ".venv/bin/pytest --collect-only -q -p no:cacheprovider <26 surviving owned test paths>",
     "collected_nodes": 133,
     "collection_seconds": 43.66,
-    "wall_seconds": 68.38,
+    "wall_seconds": 69.3,
     "pytest_summary": {
       "passed": 133,
       "skipped": 0,
@@ -95,157 +95,157 @@
       "path": "tests/charter/test_append_promotion_primitive.py",
       "base_nodes": 8,
       "head_nodes": 4,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/charter/test_mission_type_key.py",
       "base_nodes": 11,
       "head_nodes": 9,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/charter/test_operational_context.py",
       "base_nodes": 14,
       "head_nodes": 2,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/cli/test_charter_mission_type_commands.py",
       "base_nodes": 25,
       "head_nodes": 4,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/doctrine/drg/test_kind_mapping_totality.py",
       "base_nodes": 10,
       "head_nodes": 3,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/doctrine/test_activation_parity_guard.py",
       "base_nodes": 15,
       "head_nodes": 11,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/doctrine/test_pack_root_resolver.py",
       "base_nodes": 13,
       "head_nodes": 11,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/specify_cli/cli/commands/test_doctrine_collect.py",
       "base_nodes": 29,
       "head_nodes": 15,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/specify_cli/test_doctrine_service_factory.py",
       "base_nodes": 5,
       "head_nodes": 1,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_built_in_location_authority.py",
       "base_nodes": 17,
       "head_nodes": 3,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_builtin_override_policy.py",
       "base_nodes": 6,
       "head_nodes": 2,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_charter_no_specify_cli_import.py",
       "base_nodes": 4,
       "head_nodes": 3,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_charter_path_literal_authority.py",
       "base_nodes": 41,
       "head_nodes": 4,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_charter_sole_door_agent_profile_repository.py",
       "base_nodes": 18,
       "head_nodes": 6,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_charter_sole_door_doctrine_service.py",
       "base_nodes": 23,
       "head_nodes": 8,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_charter_sole_door_hardcoded_paths.py",
       "base_nodes": 16,
       "head_nodes": 3,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_charter_sole_door_inner_reacharound.py",
       "base_nodes": 15,
       "head_nodes": 4,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_charter_sole_door_resolver_imports.py",
       "base_nodes": 17,
       "head_nodes": 4,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_doctrine_wheel_closure.py",
       "base_nodes": 6,
       "head_nodes": 3,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_glossary_pack_boundary.py",
       "base_nodes": 10,
       "head_nodes": 9,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_kernel_no_doctrine_import.py",
       "base_nodes": 6,
       "head_nodes": 4,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_org_activation_seam.py",
       "base_nodes": 12,
       "head_nodes": 8,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_runtime_charter_doctrine_boundary.py",
       "base_nodes": 1,
       "head_nodes": 2,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_single_mission_surface_resolver.py",
       "base_nodes": 24,
       "head_nodes": 8,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_profile_load_resolver_guidance.py",
       "base_nodes": 6,
       "head_nodes": 1,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     },
     {
       "path": "tests/architectural/test_protection_resolver_call_sites.py",
       "base_nodes": 1,
       "head_nodes": 1,
-      "verdict": "KEEP_REDUCED"
+      "verdict": "KEEP"
     }
   ],
   "survivor_proofs": [
@@ -541,7 +541,7 @@
       "command": ".venv/bin/pytest -q -n 4 --dist loadfile -p no:cacheprovider <26 surviving owned test paths>",
       "outcome": "133 passed, 0 skipped, 1 expected warning",
       "exit_code": 0,
-      "wall_seconds": 68.38
+      "wall_seconds": 69.3
     },
     {
       "command": ".venv/bin/pytest --collect-only -q -p no:cacheprovider <26 surviving owned test paths>",
@@ -572,7 +572,17 @@
     },
     {
       "command": "PyYAML load plus terminal/count/proof assertions for WP13.yaml",
-      "outcome": "42 terminal paths; 16 DELETE; 26 KEEP_REDUCED; 526 -> 133",
+      "outcome": "cycle-2 legacy check: 42 terminal paths; 16 DELETE; 26 reduced families; 526 -> 133",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv/bin/python <WP01 audit.py> validate <base-census.json> <base-workloads.yaml> <WP13.yaml>",
+      "outcome": "canonical test-sanitation/v1 accepted; 42 terminal families; 409 exact source identities; 526 base nodes; 526 -> 133 preserved",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv/bin/python <WP01 audit.py> validate <base-census.json> <base-workloads.yaml> <WP13.yaml> <WP15.yaml>",
+      "outcome": "integrated canonical validation accepted; 54 terminal families; 510 unique exact identities; no cross-shard overlap",
       "exit_code": 0
     }
   ],
@@ -606,8 +616,20 @@
   "production_files_changed": [],
   "disposition_ledger": {
     "path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP13.yaml",
-    "sha256": "96d49ed9215fec66c860ed560591cc64cb6bc54e43781dc9d2dd7b2df3b9faee",
-    "terminal_rows": 42
+    "sha256": "775f8f17b5c0093b0be7c3e4c14673d84f259564a009eaa063c80128d8c5ba20",
+    "terminal_rows": 42,
+    "exact_source_identities": 409,
+    "exact_base_collection_nodes": 526,
+    "canonical_schema": "test-sanitation/v1"
   },
-  "tracked_test_diff_sha256_before_artifacts": "430b6bfabf1b12595f3fc22f0dbf01635755e644d45644bb172b60776dddb4e4"
+  "tracked_test_diff_sha256_before_artifacts": "430b6bfabf1b12595f3fc22f0dbf01635755e644d45644bb172b60776dddb4e4",
+  "schema_normalization": {
+    "review_cycle": 3,
+    "scope": "evidence-only",
+    "legacy_verdicts_remaining": 0,
+    "file_granularity_remaining": 0,
+    "path_level_members_remaining": 0,
+    "test_files_changed": 0,
+    "production_files_changed": 0
+  }
 }
