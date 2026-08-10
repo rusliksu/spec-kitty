@@ -18,6 +18,9 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp15-results.json
 execution_mode: code_change
 owned_files:
+- tests/specify_cli/cli/commands/test_command_surface_doctor.py
+- tests/specify_cli/cli/commands/test_doctor_shared.py
+- tests/specify_cli/tool_surface/providers/test_plugin_bundle.py
 - tests/architectural/test_artifact_selection_completeness.py
 - tests/architectural/test_cli_console_render_width.py
 - tests/architectural/test_cli_console_single_seam.py
