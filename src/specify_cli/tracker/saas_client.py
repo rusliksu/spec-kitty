@@ -19,7 +19,7 @@ import secrets
 import time
 import uuid
 from collections.abc import Callable
-from datetime import datetime, timedelta, UTC
+from kernel.clock import timedelta, now_utc
 from pathlib import Path
 from typing import Any, cast
 
@@ -32,7 +32,7 @@ from specify_cli.auth.errors import (
 )
 from specify_cli.sync.config import SyncConfig
 from specify_cli.core.contract_gate import validate_outbound_payload
-from specify_cli.egress import project_egress_refusal
+from specify_cli.tracker.egress_verdict import EgressDestination, tracker_egress_verdict
 
 _SESSION_EXPIRED_MESSAGE = (
     "Session expired. Run `spec-kitty auth login` to re-authenticate."
@@ -142,7 +142,7 @@ def _force_refresh_sync() -> bool:
     if session is None:
         raise NotAuthenticatedError("No session to refresh")
     # Bump expiry so refresh_if_needed treats the token as stale.
-    session.access_token_expires_at = datetime.now(UTC) - timedelta(seconds=60)
+    session.access_token_expires_at = now_utc() - timedelta(seconds=60)
     _run_in_fresh_loop(tm.refresh_if_needed())
     return True
 
@@ -155,8 +155,8 @@ def _current_team_slug_sync() -> str | None:
         return None
     for team in session.teams:
         if team.id == session.default_team_id:
-            return team.id
-    return session.teams[0].id
+            return cast(str, team.id)
+    return cast(str, session.teams[0].id)
 
 
 # ---------------------------------------------------------------------------
@@ -352,9 +352,13 @@ class SaaSTrackerClient:
         target for the next migration wave (sync, websocket, and
         widen-mode SaaS).
         """
-        refusal = project_egress_refusal(self._project_root, TRACKER_EGRESS_IDENTIFIER_KINDS)
-        if refusal is not None:
-            raise TrackerEgressRefusedError(refusal)
+        verdict = tracker_egress_verdict(
+            self._project_root,
+            destination=EgressDestination.HOSTED_SERVICE,
+            identifiers=TRACKER_EGRESS_IDENTIFIER_KINDS,
+        )
+        if verdict.refused:
+            raise TrackerEgressRefusedError(verdict.message)
 
         access_token = _fetch_access_token_sync()
         if access_token is None:
