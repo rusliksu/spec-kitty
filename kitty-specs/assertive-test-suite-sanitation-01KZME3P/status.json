@@ -1,7 +1,7 @@
 {
-  "event_count": 49,
-  "last_event_id": "01KZNH6CE0XM2WD50VJSHVT0DS",
-  "materialized_at": "2026-08-10T09:48:51.487714+00:00",
+  "event_count": 51,
+  "last_event_id": "01KZNK8A0QG5GSGTQ8KFYMJ3YD",
+  "materialized_at": "2026-08-10T10:24:51.735354+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -12,8 +12,8 @@
     "claimed": 0,
     "done": 0,
     "for_review": 0,
-    "in_progress": 3,
-    "in_review": 0,
+    "in_progress": 2,
+    "in_review": 1,
     "planned": 11
   },
   "work_packages": {
@@ -126,12 +126,12 @@
       "shell_pid": 28365,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T020": "planned",
-        "T021": "planned",
-        "T022": "planned",
-        "T023": "planned",
-        "T024": "planned",
-        "T025": "planned"
+        "T020": "done",
+        "T021": "done",
+        "T022": "done",
+        "T023": "done",
+        "T024": "done",
+        "T025": "done"
       },
       "tracker_refs": [
         "#1931"
@@ -140,24 +140,27 @@
     "WP05": {
       "actor": "codex",
       "agent": "codex",
-      "agent_profile": "architect-alphonso",
+      "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "in_progress",
-      "last_event_id": "01KZNH6CE0XM2WD50VJSHVT0DS",
-      "last_transition_at": "2026-08-10T09:48:51.487714+00:00",
+      "lane": "in_review",
+      "last_event_id": "01KZNK8A0QG5GSGTQ8KFYMJ3YD",
+      "last_transition_at": "2026-08-10T10:24:51.735354+00:00",
       "model": "__resolved_model_absent__",
+      "notes": [
+        "Retired 54 spent structural nodes; all 28 retained scanner files green; disposition audit valid."
+      ],
       "provider": "__resolved_provider_absent__",
-      "role": "implementer",
+      "role": "reviewer",
       "shell_pid": 28365,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T026": "planned",
-        "T027": "planned",
-        "T028": "planned",
-        "T029": "planned",
-        "T030": "planned",
-        "T031": "planned"
+        "T026": "done",
+        "T027": "done",
+        "T028": "done",
+        "T029": "done",
+        "T030": "done",
+        "T031": "done"
       },
       "tracker_refs": [
         "#1931"
