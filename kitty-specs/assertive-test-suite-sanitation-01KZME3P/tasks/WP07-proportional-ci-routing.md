@@ -47,6 +47,7 @@ owned_files:
 - .github/workflows/ci-quality.yml
 - tests/_arch_shard_map.py
 - tests/_next_shard_map.py
+- tests/architectural/_gate_coverage.py
 - tests/architectural/_baselines.yaml
 - tests/architectural/baselines/fast-tests-core-misc-nodeids.txt
 - tests/architectural/baselines/integration-tests-next-nodeids.txt
