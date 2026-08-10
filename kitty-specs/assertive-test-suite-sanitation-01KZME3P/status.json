@@ -19,7 +19,7 @@
   "work_packages": {
     "WP01": {
       "actor": "codex",
-      "agent": "",
+      "agent": "codex",
       "agent_profile": "python-pedro",
       "agent_profile_version": "1.0",
       "force_count": 0,
@@ -30,7 +30,8 @@
       "notes": [
         "Evidence commit 146ba5a4c; lane policy cleanup 5c26ceb8c; snapshot exit 0 (37444 nodes/29755 units, 22.2 MiB); validate exit 0; selftest 13/13 exit 0; ruff exit 0; mypy exit 0; workflow validation exit 0",
         "Review cycle 2: hardened recursive census discovery, truthful deselection/error capture, strict fail-closed census/workload/disposition validation, controlled aggregate errors, exact workload environments, and adversarial selftests. Evidence: commit f081a5023; 29,766 source units; 37,444 nodes; 173 strict groups/365 members; 22/22 selftests; ruff and mypy --strict clean; validator valid; tests/docs 1,381 passed.",
-        "Review cycle 3: field-specific typed validation now accepts empty marker/env collections while rejecting invalid action/evidence/survivor/TEMPORARY/equivalence records; divergent families require exact fully typed member/census node rows; duplicate environments/edges/candidate IDs and malformed measurements fail closed; sibling E2E environment frozen from observed prepared checkout. Evidence: commit a1b7ec246; 62/62 runtime selftests; canonical 29,766 source units, 37,444 nodes, 173 strict groups/365 members; artifact validation, ruff, mypy --strict green; tests/docs 1,381 passed."
+        "Review cycle 3: field-specific typed validation now accepts empty marker/env collections while rejecting invalid action/evidence/survivor/TEMPORARY/equivalence records; divergent families require exact fully typed member/census node rows; duplicate environments/edges/candidate IDs and malformed measurements fail closed; sibling E2E environment frozen from observed prepared checkout. Evidence: commit a1b7ec246; 62/62 runtime selftests; canonical 29,766 source units, 37,444 nodes, 173 strict groups/365 members; artifact validation, ruff, mypy --strict green; tests/docs 1,381 passed.",
+        "Review cycle 4: evidence rows now have nonvacuous command/reference/RouteMembership/comparison and named-result schemas; compact census builds collected+deselected node/member authority; every observation reconciles to census and candidate membership; frozen workload builds route/environment authority; candidate/evidence route IDs, environments, and roles reconcile. Evidence: commit 7863a9a22; 85/85 selftests including committed positive DELETE shard and exact combined-bypass rejection; ruff, mypy --strict, base validation green; tests/docs 1,381 passed. Snapshot semantics/raw artifacts unchanged."
       ],
       "provider": "__resolved_provider_absent__",
       "review": null,
