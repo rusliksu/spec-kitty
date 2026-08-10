@@ -70,10 +70,10 @@ None.
 - Critical issues: 0
 - High issues: 0
 
-Independent Debbie, Renata, and Reducer point-cuts returned PASS after remediation. WP01 review-cycle feedback is intentionally an implementation concern, not a planning inconsistency.
+Planning point-cut findings were remediated before task finalization, but their raw agent transcripts were not persisted. The later read-only grounding/campsite squad and its STOP verdict are recorded in `grounding-report-2026-08-10.md`. This report remains a point-in-time planning verdict, not current implementation approval.
 
 ## Next Actions
 
-- Resume WP01 implementation.
-- Correct every persisted review-cycle-1 finding before returning WP01 to review.
-- Continue the implement-review loop only after WP01 approval unblocks dependent packages.
+- Run the independent review of WP01's cycle-4 submission.
+- Reject and remediate the reproduced route-provenance and exact node/outcome evidence gaps before approval.
+- Freeze the evidence schema after those concrete bypasses close; continue dependent packages only after WP01 approval.
