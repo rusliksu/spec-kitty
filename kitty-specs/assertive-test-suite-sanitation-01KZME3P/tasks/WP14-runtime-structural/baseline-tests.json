@@ -1,6 +1,6 @@
 {
   "wp_id": "WP14",
-  "captured_at": "2026-08-10T17:21:34Z",
+  "captured_at": "2026-08-10T17:23:15Z",
   "base_branch": "pr/assertive-test-suite-sanitation",
   "base_commit": "9d206e4dc2b9d219306fdd222b4895f5581abfdb",
   "test_runner": "pytest",
