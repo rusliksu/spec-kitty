@@ -17,7 +17,7 @@ Reduce the test suite to executable, causally sensitive guards. First establish 
 **Project Type**: single Python CLI/package repository with a large pytest suite  
 **Performance Goals**: target at least 15% lower median whole-suite collection and fixed-route cost without reducing unique causal coverage  
 **Constraints**: no retry-to-green, blanket skip/xfail/quarantine, deliberate red required CI, deletion quota, or marker immunity; PR-only delivery  
-**Scale/Scope**: baseline 37,444 nodes, 2,432 test files, 833,936 Python test lines; refreshed planning scan found 173 strict AST-body groups/365 members across 131 files (the earlier projections were 75 stricter and 171 normalized groups), with WP01's deterministic dual manifest authoritative. WP01's runtime census assigned all 234 repository-source scanner files—164 under `tests/architectural/` plus 70 non-architectural AST/source scanners, including the nested enrolment scanner—across six authority-coherent structural WPs.
+**Scale/Scope**: baseline 37,444 nodes, 2,432 test files, 833,936 Python test lines; refreshed planning scan found 173 strict AST-body groups/365 members across 131 files (the earlier projections were 75 stricter and 171 normalized groups), with WP01's deterministic dual manifest authoritative. All 164 architectural test files, including the nested enrolment scanner, are assigned across six authority-coherent structural WPs.
 
 ## Charter Check
 
@@ -126,7 +126,7 @@ tests/
 
 - **Purpose**: remove tests that pin names, tokens, counts, exact prose, deleted branches, historical reports, or test-only symbols without a current invariant.
 - **Relevant requirements**: FR-006, FR-007, FR-016
-- **Affected surfaces**: all 234 repository-source scanner files split into six authority-coherent families (historical/migration, CI/gate, boundary/safety, doctrine/resolver, runtime/coordination, packaging/CLI), named release/scaffold files, and narrowly proven dead `src/` symbols; route/duplicate/inert exceptions retain exact alternate owners
+- **Affected surfaces**: all 164 architectural test files split into six authority-coherent families (historical/migration, CI/gate, boundary/safety, doctrine/resolver, runtime/coordination, packaging/CLI), named release/scaffold files, and narrowly proven dead `src/` symbols; route/duplicate/inert exceptions retain exact alternate owners
 - **Sequencing/depends-on**: IC-01; cohort handoffs converge only in IC-06's single central shard-map owner
 - **Risks**: a negative invariant may be embedded beside positive-shape cruft; split and preserve it only after plausible fault proof.
 

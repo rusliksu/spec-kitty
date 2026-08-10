@@ -47,7 +47,6 @@ owned_files:
 - tests/architectural/test_verdict_name_truthfulness.py
 - tests/release/test_diff_coverage_policy.py
 - tests/agent/test_create_feature_branch.py
-- tests/unit/migration/test_backfill_runtime_state.py
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP03.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp03-results.json
 tags: []
@@ -73,7 +72,6 @@ Remove tests that never execute or cannot block a regression. Distinguish perman
 
 - Use WP01 census, plus source AST, to enumerate unconditional `skip`, permanent `xfail`, quarantine marker, placeholder/manual-only body, missing-ref skip, and `flaky` marker.
 - The known unconditional set includes ten #2309 tests and two #2316 tests; the live-server client placeholder calls `pytest.skip` unconditionally after its docstring.
-- The census also owns the strict permanent `KNOWN HOLE` xfail in `tests/unit/migration/test_backfill_runtime_state.py`; adjudicate it against the executable companion characterization instead of carrying desired future behavior as an xfail.
 - Classify conditional platform/dependency skips separately; do not delete them merely because this machine cannot execute the branch.
 - Every inert candidate gets a terminal ledger verdict. `KEEP` cannot remain permanently non-executing. No `TEMPORARY` for these classes.
 - Reconcile the generated WP01 inert manifest to this WP's exact ownership before editing. Any newly discovered mandatory deletion outside this manifest triggers task/ownership replan and re-finalization; it may not be ignored as out of scope.

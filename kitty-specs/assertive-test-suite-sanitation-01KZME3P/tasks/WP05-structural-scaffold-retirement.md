@@ -35,12 +35,6 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-results.json
 execution_mode: code_change
 owned_files:
-- tests/acceptance/test_post_consolidation.py
-- tests/audit/test_audit_architecture.py
-- tests/core/test_retrospective_filename_constant.py
-- tests/migration/test_backfill_provenance.py
-- tests/missions/test_wp02_coord_routing_consolidation.py
-- tests/missions/test_wp17_husk_arm_collapse.py
 - tests/architectural/test_batch_drain_retired_3167.py
 - tests/architectural/test_contract_registry_parity.py
 - tests/architectural/test_coord_read_residuals_closeout.py
