@@ -1,0 +1,99 @@
+{
+  "campaigns": [
+    {
+      "id": "task-command-authorities",
+      "mutations": [
+        "tasks_outline._is_pipe_table_task_row -> always False",
+        "tasks_outline._parse_pipe_table_header -> broken mapping",
+        "tasks_parsing_validation._issue_matrix_approval_blocker -> suppress blocker",
+        "tasks_materialization._update_pipe_table_status -> no-op"
+      ],
+      "receipt_path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-probe-task-commands.json",
+      "receipt_sha256": "9b78fe7b8db4f9a60dd9a3e4647c615a01d74bc0ff9ee153baf21393af223201",
+      "result": "7 intended post-Act oracle failures; exit 1",
+      "selected_nodeids": [
+        "tests/specify_cli/cli/commands/agent/test_tasks_outline.py::test_parse_pipe_table_header_at_top",
+        "tests/specify_cli/cli/commands/agent/test_tasks_outline.py::test_is_pipe_table_task_row_match",
+        "tests/specify_cli/cli/commands/agent/test_tasks_outline.py::test_is_pipe_table_task_row_padded",
+        "tests/specify_cli/cli/commands/agent/test_tasks_parsing_validation.py::test_issue_matrix_approval_blocker_requires_resolved_verdicts",
+        "tests/specify_cli/cli/commands/agent/test_tasks_materialization.py::TestUpdatePipeTableStatus::test_updates_dedicated_status_column_only",
+        "tests/specify_cli/cli/commands/agent/test_tasks_materialization.py::TestUpdatePipeTableStatus::test_parallel_column_is_never_corrupted",
+        "tests/specify_cli/cli/commands/agent/test_tasks_materialization.py::TestUpdatePipeTableStatus::test_pending_status_writes_empty_marker"
+      ]
+    },
+    {
+      "id": "source-cluster-authorities",
+      "mutations": [
+        "PrimitiveExecutionContext enablement/mission/step strictness erased",
+        "glossary.should_block MAX behavior erased",
+        "doctrine scoping normalization and positive matches erased",
+        "git run output/current branch/remote/detection falsified",
+        "pending-origin safe default falsified",
+        "shim registry malformed input accepted",
+        "kernel asset-root authority bypassed",
+        "mission-step facade identity replaced",
+        "charter pack catalog emptied and cross-grain scan made vacuous",
+        "charter bundle hash authority changed",
+        "doctrine repositories emptied, malformed action index accepted, org root redirected",
+        "review cycle/default command/scope-source authorities falsified",
+        "retrospective absent input emitted a finding",
+        "related validator injected a dangling edge",
+        "forbidden legacy sync.auth module reintroduced"
+      ],
+      "receipt_path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-probe-source-clusters.json",
+      "receipt_sha256": "cdd763f885c02eab214b696f2a64e327d094eda29d7afccff435da2f674df38f",
+      "result": "35 intended post-Act oracle failures; runtime facade sentinel was isolated into the next campaign; exit 1",
+      "selected_nodeids": [
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract::test_enabled_by_default",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract::test_bool_true_enables",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution::test_mission_strictness_extracted_from_config",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution::test_step_strictness_extracted_from_metadata",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution::test_both_levels_coexist",
+        "tests/agent/glossary/test_strictness.py::TestShouldBlock::test_max_blocks_low",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch::test_matching_language_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch::test_unscoped_artifact_none_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestNormalizeLanguages::test_lowercase_conversion",
+        "tests/git_ops/test_git_ops_unit.py::test_run_command_captures_stdout",
+        "tests/git_ops/test_git_ops_unit.py::test_run_command_allows_nonzero_when_not_checking",
+        "tests/git_ops/test_git_ops_unit.py::test_get_current_branch_not_git_repo",
+        "tests/git_ops/test_git_ops_unit.py::test_has_remote_nonexistent_repo",
+        "tests/git_ops/test_detection.py::TestGitDetection::test_is_git_available",
+        "tests/core/test_adapters.py::test_no_consumer_returns_safe_default",
+        "tests/specify_cli/compat/test_registry.py::TestValidateRegistryBranches::test_shims_not_a_list_raises_schema_error",
+        "tests/runtime/test_home_unit.py::test_package_asset_root_compatibility_surface_delegates",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot::test_importlib_discovery",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot::test_template_root_env_nonexistent_raises",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRootPacksRoot::test_packs_root_relocates_the_door",
+        "tests/specify_cli/mission_step_contracts/test_executor.py::test_charter_mission_steps_facade_reexports_step_inputs",
+        "tests/charter/test_pack_manager_catalog.py::TestListAvailableBuiltIn::test_returns_frozenset_for_directive",
+        "tests/charter/test_pack_manager_catalog.py::TestListAvailableBuiltIn::test_unknown_kind_raises_value_error",
+        "tests/doctrine/drg/test_cross_grain_integrity.py::TestCrossGrainIntegrityGate::test_all_shipped_mission_types_are_cross_grain_disjoint",
+        "tests/charter/test_bundle_manifest_model.py::test_bundle_content_hash_files_is_charter_yaml_only",
+        "tests/doctrine/directives/test_repository.py::TestDirectiveRepository::test_list_all_from_shipped",
+        "tests/doctrine/styleguides/test_repository.py::TestStyleguideRepository::test_list_all_from_shipped",
+        "tests/doctrine/tactics/test_repository.py::TestTacticRepository::test_list_all_from_shipped",
+        "tests/doctrine/missions/test_action_index.py::TestLoadActionIndexFailLoud::test_non_list_field_value_raises",
+        "tests/doctrine/test_org_pack_subdir.py::TestEffectiveRootNoSubdir::test_absolute_local_path_no_subdir",
+        "tests/review/test_artifacts.py::test_next_cycle_number_empty_dir",
+        "tests/review/test_baseline.py::TestConfigCustomTestCommand::test_default_command",
+        "tests/review/test_scope_source.py::test_resolve_scope_source_returns_gate_coverage_for_a_pytest_shaped_repo",
+        "tests/retrospective/test_retrospective_content.py::TestWorkflowFailuresIngestor::test_absent_file_produces_no_findings",
+        "tests/docs/test_related_validator.py::test_clean_tree_has_no_dangling_edges",
+        "tests/sync/test_auth.py::test_legacy_sync_auth_module_is_gone"
+      ]
+    },
+    {
+      "id": "runtime-facade-authority",
+      "mutations": [
+        "runtime.home.get_package_asset_root bypassed kernel delegate with wrong Path"
+      ],
+      "receipt_path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-probe-runtime-delegate.json",
+      "receipt_sha256": "c5b04bf36455cda7bd579142fb032f7fb3492b3037e15dbf871d9394b4fd46e7",
+      "result": "1 intended identity-oracle failure after facade Act; exit 1",
+      "selected_nodeids": [
+        "tests/runtime/test_home_unit.py::test_package_asset_root_compatibility_surface_delegates"
+      ]
+    }
+  ],
+  "schema_version": "wp04-causal-campaign/v2"
+}

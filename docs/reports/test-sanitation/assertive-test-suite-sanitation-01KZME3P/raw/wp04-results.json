@@ -1,48 +1,186 @@
 {
-  "causal_fault_probes": [
-    {
-      "cluster": "runtime-home compatibility delegate",
-      "fault": "replace delegate with constant wrong path",
-      "result": "1 intended assertion failure after Act"
-    },
-    {
-      "cluster": "git run_command survivor",
-      "fault": "swap captured stdout/stderr",
-      "result": "canonical unit survivor failed after subprocess Act"
-    },
-    {
-      "cluster": "doctrine language scoping survivor",
-      "fault": "force overlap result false",
-      "result": "canonical overlap survivor failed after Act"
-    },
-    {
-      "cluster": "glossary strictness survivor",
-      "fault": "remove case normalization",
-      "result": "uppercase disable survivor failed after Act"
-    },
-    {
-      "cluster": "mission-primitives compatibility facade",
-      "fault": "return noncanonical class object",
-      "result": "identity survivor failed after import Act"
-    }
-  ],
-  "focused_comparison": {
-    "base": {
-      "collected": 831,
-      "passed": 829,
-      "skipped": 2,
-      "wall_seconds": 123.82
-    },
-    "head": {
-      "collected": 727,
-      "passed": 725,
-      "skipped": 2,
-      "wall_seconds": 56.24
-    },
-    "node_reduction_percent": 12.515,
-    "removed_nodes": 104,
-    "timing_note": "Single same-runner cold/warm comparison is informational; node delta is deterministic.",
-    "wall_reduction_percent_single_run": 54.579
+  "causal_campaign": {
+    "campaign_count": 3,
+    "intended_oracle_failures": 43,
+    "manifest_path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-causal-probes.json",
+    "manifest_sha256": "e7a26b60cacf5b474ea3fef87fd5638513fb71130c68c4ea52e1fd2d1ed1edca",
+    "note": "the one source-campaign pass was the monkeypatched runtime facade sentinel; its dedicated facade mutation campaign failed 1/1",
+    "selected_survivors": 44
+  },
+  "definition_reconciliation": {
+    "added_definition_ids": [
+      "tests/agent/glossary/test_primitives.py::test_compatibility_context_is_canonical_context",
+      "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_bool_true_enables",
+      "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_string_disable_is_case_insensitive",
+      "tests/doctrine/missions/test_primitives.py::TestStepInputPopulation.test_mutable_defaults_are_instance_local",
+      "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_absent_levels_return_none",
+      "tests/runtime/test_home_unit.py::test_package_asset_root_compatibility_surface_delegates"
+    ],
+    "added_definitions": 6,
+    "changed_test_paths": [
+      "tests/agent/cli/commands/test_tasks_helpers.py",
+      "tests/agent/glossary/test_integration_workflows.py",
+      "tests/agent/glossary/test_primitives.py",
+      "tests/agent/glossary/test_strictness.py",
+      "tests/architectural/test_shim_registry_schema.py",
+      "tests/auth/integration/test_transport_rewired.py",
+      "tests/charter/test_action_grain.py",
+      "tests/charter/test_mission_steps_facade.py",
+      "tests/charter/test_pack_manager.py",
+      "tests/charter/test_references_missing_failclosed.py",
+      "tests/core/test_adapters.py",
+      "tests/docs/test_related_validator.py",
+      "tests/doctrine/directives/test_repository.py",
+      "tests/doctrine/missions/test_action_index.py",
+      "tests/doctrine/missions/test_primitives.py",
+      "tests/doctrine/shared/test_scoping.py",
+      "tests/doctrine/shared/test_scoping_any_all.py",
+      "tests/doctrine/styleguides/test_repository.py",
+      "tests/doctrine/tactics/test_repository.py",
+      "tests/doctrine/test_org_pack_subdir.py",
+      "tests/doctrine/test_scoping.py",
+      "tests/git_ops/test_detection.py",
+      "tests/git_ops/test_git_ops.py",
+      "tests/git_ops/test_mark_status_pipe_table.py",
+      "tests/retrospective/test_retrospective_content.py",
+      "tests/review/test_artifacts.py",
+      "tests/review/test_baseline.py",
+      "tests/review/test_scope_source.py",
+      "tests/runtime/test_home_unit.py"
+    ],
+    "gross_removed_definitions": 110,
+    "ledgered_removed_definitions": 110,
+    "net_removed_collected_nodes": 104,
+    "removed_definitions": [
+      "tests/agent/cli/commands/test_tasks_helpers.py::test_is_pipe_table_task_row_match",
+      "tests/agent/cli/commands/test_tasks_helpers.py::test_is_pipe_table_task_row_no_match",
+      "tests/agent/cli/commands/test_tasks_helpers.py::test_is_pipe_table_task_row_padded",
+      "tests/agent/cli/commands/test_tasks_helpers.py::test_is_pipe_table_task_row_partial_id_not_matched",
+      "tests/agent/cli/commands/test_tasks_helpers.py::test_issue_matrix_approval_blocker_requires_resolved_verdicts",
+      "tests/agent/cli/commands/test_tasks_helpers.py::test_parse_pipe_table_header_at_top",
+      "tests/agent/glossary/test_integration_workflows.py::TestErrorHandlingEdgeCases.test_null_context_raises_value_error",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_bool_false_disables_glossary",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_bool_true_enables_glossary",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_both_mission_and_step_strictness_coexist",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_default_is_true",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_empty_config_and_metadata",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_disabled",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_enabled",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_false",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_true",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_null_metadata_falls_through_to_default",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_null_metadata_falls_through_to_mission_config_false",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_step_disabled_overrides_mission_enabled",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_step_metadata_overrides_mission_config",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_DISABLED_upper_case",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_False_disables_glossary",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_disabled_case_insensitive",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_enabled_case_insensitive",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_false_disables_glossary",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_true_enables_glossary",
+      "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_unknown_metadata_value_treated_as_enabled",
+      "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_on_invalid_value",
+      "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_config_empty",
+      "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_glossary_section",
+      "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_strictness_in_glossary",
+      "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_max",
+      "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_medium",
+      "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_off",
+      "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_defaults_to_none",
+      "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_populates_retry_token_alias",
+      "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_conflicts_defaults_to_empty_list",
+      "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_effective_strictness_defaults_to_none",
+      "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_extracted_terms_defaults_to_empty_list",
+      "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_defaults_to_none",
+      "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_populates_checkpoint_token_alias",
+      "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_scope_refs_defaults_to_empty_list",
+      "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_input_populated_from_inputs",
+      "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_output_defaults_to_empty_dict",
+      "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_on_invalid_value",
+      "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_key_missing",
+      "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_metadata_empty",
+      "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_value_is_null",
+      "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_max",
+      "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_medium",
+      "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_off",
+      "tests/agent/glossary/test_strictness.py::TestShouldBlock.test_max_blocks_any_conflict",
+      "tests/architectural/test_shim_registry_schema.py::TestTopLevelStructure.test_shims_not_a_list_raises",
+      "tests/architectural/test_shim_registry_schema.py::TestTopLevelStructure.test_valid_full_entry_passes",
+      "tests/auth/integration/test_transport_rewired.py::test_legacy_sync_auth_module_does_not_exist",
+      "tests/charter/test_action_grain.py::TestScanBuiltinCrossGrainDuplicates.test_all_four_shipped_types_are_disjoint",
+      "tests/charter/test_mission_steps_facade.py::test_mission_steps_facade_reexports_step_inputs",
+      "tests/charter/test_pack_manager.py::TestListAvailable.test_raises_value_error_for_unknown_kind",
+      "tests/charter/test_pack_manager.py::TestListAvailable.test_returns_nonempty_frozenset_for_directive",
+      "tests/charter/test_references_missing_failclosed.py::test_bundle_content_hash_files_is_single_element_charter_yaml",
+      "tests/core/test_adapters.py::test_cold_miss_without_staged_origin_returns_safe_default",
+      "tests/docs/test_related_validator.py::test_populated_tree_still_returns_report",
+      "tests/doctrine/directives/test_repository.py::TestDirectiveRepository.test_load_from_custom_shipped_dir",
+      "tests/doctrine/missions/test_action_index.py::TestLoadActionIndexFields.test_non_list_field_value_returns_empty_list",
+      "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_any_overlap_returns_true",
+      "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_empty_active_scope_tuple_returns_false",
+      "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_matching_returns_true_not_false",
+      "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false",
+      "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false_not_true",
+      "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_and_unfiltered_returns_true",
+      "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_artifact_empty_list_returns_true",
+      "tests/doctrine/shared/test_scoping_any_all.py::TestNonSentinelScopingUnchanged.test_concrete_lang_empty_active_still_false",
+      "tests/doctrine/shared/test_scoping_any_all.py::TestNonSentinelScopingUnchanged.test_concrete_lang_no_overlap_still_false",
+      "tests/doctrine/shared/test_scoping_any_all.py::TestNonSentinelScopingUnchanged.test_concrete_lang_overlap_still_true",
+      "tests/doctrine/styleguides/test_repository.py::TestStyleguideRepository.test_load_from_custom_shipped_dir",
+      "tests/doctrine/tactics/test_repository.py::TestTacticRepository.test_load_from_custom_shipped_dir",
+      "tests/doctrine/test_org_pack_subdir.py::TestEnvVarExpansion.test_literal_absolute_path_regression",
+      "tests/doctrine/test_scoping.py::test_applies_to_languages_match_rejects_scoped_artifact_for_explicit_empty_scope",
+      "tests/doctrine/test_scoping.py::test_normalize_languages_deduplicates_and_skips_blanks",
+      "tests/doctrine/test_scoping.py::test_normalize_languages_none_returns_empty_tuple",
+      "tests/git_ops/test_detection.py::TestCaching.test_cache_can_be_cleared",
+      "tests/git_ops/test_detection.py::TestCaching.test_is_git_available_is_cached",
+      "tests/git_ops/test_detection.py::TestGitDetection.test_is_git_available_caching",
+      "tests/git_ops/test_git_ops.py::test_exclude_from_git_index_non_git_repo",
+      "tests/git_ops/test_git_ops.py::test_get_current_branch_not_git_repo",
+      "tests/git_ops/test_git_ops.py::test_has_remote_nonexistent_repo",
+      "tests/git_ops/test_git_ops.py::test_run_command_allows_nonzero_when_not_checking",
+      "tests/git_ops/test_git_ops.py::test_run_command_captures_stdout",
+      "tests/git_ops/test_mark_status_pipe_table.py::TestUpdatePipeTableStatus.test_does_not_touch_parallel_column",
+      "tests/git_ops/test_mark_status_pipe_table.py::TestUpdatePipeTableStatus.test_updates_pending_status",
+      "tests/git_ops/test_mark_status_pipe_table.py::TestUpdatePipeTableStatus.test_updates_status_column_when_present",
+      "tests/retrospective/test_retrospective_content.py::TestAnalysisAndReviewIngestors.test_analysis_report_absent_is_noop",
+      "tests/review/test_artifacts.py::test_next_cycle_number_empty_directory_still_returns_one",
+      "tests/review/test_baseline.py::TestConfigCustomTestCommand.test_missing_config_file",
+      "tests/review/test_scope_source.py::test_resolve_scope_source_with_no_config_file_at_all_routes_to_gate_coverage",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_delegates_fail_closed_to_kernel_authority",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_importlib_discovery",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_path_object",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_falls_back_to_legacy_specify_cli_missions",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_normalizes_to_doctrine_missions",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_direct_legacy_missions_remaps_to_sibling_doctrine",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_env_nonexistent_raises",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_env_override",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_existing_invalid_dir_raises",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_legacy_package_asset_root_with_command_templates",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_legacy_package_asset_root_with_mission_yaml",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRootPacksRoot.test_packs_root_relocates_the_door",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRootPacksRoot.test_packs_root_wins_over_template_root",
+      "tests/runtime/test_home_unit.py::TestGetPackageAssetRootPacksRoot.test_packs_root_without_missions_tree_fails_closed"
+    ],
+    "unledgered_removed_definitions": []
+  },
+  "focused_smoke": {
+    "elapsed_seconds": 46.732,
+    "exit_code": 0,
+    "receipt_path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-focused-smoke.json",
+    "receipt_sha256": "f5e1d54db5fbf09cf4d5794bd620e42c52def450478129667beef88f9a29918f",
+    "result": "6 passed",
+    "selected_nodeids": [
+      "tests/specify_cli/cli/commands/agent/test_tasks_outline.py::test_parse_pipe_table_header_at_top",
+      "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract::test_enabled_by_default",
+      "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch::test_matching_language_returns_true",
+      "tests/git_ops/test_git_ops_unit.py::test_run_command_captures_stdout",
+      "tests/kernel/test_paths.py::TestGetPackageAssetRoot::test_importlib_discovery",
+      "tests/runtime/test_home_unit.py::test_package_asset_root_compatibility_surface_delegates"
+    ],
+    "stdout_sha256": "c3310537c7bfe1257eccbf5cc222ab61e24966c256514e185be0922b39b97709",
+    "timed_out": false
   },
   "groups": [
     {
@@ -1066,21 +1204,864 @@
       ],
       "survivor": "tests/review/test_baseline.py::TestConfigCustomTestCommand.test_default_command",
       "verdict": "CONSOLIDATE"
+    },
+    {
+      "basis": "metadata/config/default glossary enablement precedence",
+      "deleted_members": [
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_bool_true_enables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_empty_config_and_metadata",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_disabled",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_enabled",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_false",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_true",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_null_metadata_falls_through_to_default",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_step_metadata_overrides_mission_config",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_DISABLED_upper_case",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_False_disables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_disabled_case_insensitive",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_enabled_case_insensitive",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_false_disables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_true_enables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_unknown_metadata_value_treated_as_enabled"
+      ],
+      "fingerprint": "semantic:glossary-enablement",
+      "members": [
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_bool_true_enables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_empty_config_and_metadata",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_disabled",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_enabled",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_false",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_true",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_null_metadata_falls_through_to_default",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_step_metadata_overrides_mission_config",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_DISABLED_upper_case",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_False_disables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_disabled_case_insensitive",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_enabled_case_insensitive",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_false_disables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_true_enables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_unknown_metadata_value_treated_as_enabled"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_enabled_by_default",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_step_metadata_overrides_mission_config",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_bool_false_disables",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_bool_true_enables",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_string_disable_is_case_insensitive",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_null_falls_through_to_mission_config"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "mission strictness extraction and invalid/absent fallback",
+      "deleted_members": [
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_config_empty",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_glossary_section",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_strictness_in_glossary",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_medium",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_off"
+      ],
+      "fingerprint": "semantic:glossary-mission-strictness",
+      "members": [
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_config_empty",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_glossary_section",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_strictness_in_glossary",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_medium",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_off"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_mission_strictness_extracted_from_config",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_invalid_strictness_returns_none",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_absent_levels_return_none"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "context default isolation, step-input population, and retry/checkpoint aliases",
+      "deleted_members": [
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_populates_retry_token_alias",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_conflicts_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_effective_strictness_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_extracted_terms_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_populates_checkpoint_token_alias",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_scope_refs_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_input_populated_from_inputs",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_output_defaults_to_empty_dict"
+      ],
+      "fingerprint": "semantic:glossary-context-defaults-aliases",
+      "members": [
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_populates_retry_token_alias",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_conflicts_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_effective_strictness_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_extracted_terms_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_populates_checkpoint_token_alias",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_scope_refs_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_input_populated_from_inputs",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_output_defaults_to_empty_dict"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/missions/test_primitives.py::TestTokenAliasing.test_retry_token_populates_checkpoint_token",
+        "tests/doctrine/missions/test_primitives.py::TestTokenAliasing.test_checkpoint_token_populates_retry_token",
+        "tests/doctrine/missions/test_primitives.py::TestStepInputPopulation.test_step_input_copies_inputs_on_init",
+        "tests/doctrine/missions/test_primitives.py::TestStepInputPopulation.test_empty_inputs_yields_empty_step_input",
+        "tests/doctrine/missions/test_primitives.py::TestStepInputPopulation.test_mutable_defaults_are_instance_local"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "step strictness extraction and invalid/absent fallback",
+      "deleted_members": [
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_on_invalid_value",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_key_missing",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_metadata_empty",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_value_is_null",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_max",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_medium"
+      ],
+      "fingerprint": "semantic:glossary-step-strictness",
+      "members": [
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_on_invalid_value",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_key_missing",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_metadata_empty",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_value_is_null",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_max",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_medium"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_step_strictness_extracted_from_metadata",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_invalid_strictness_returns_none",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_absent_levels_return_none"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "unscoped, overlap, and non-overlap boolean boundaries",
+      "deleted_members": [
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_any_overlap_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_matching_returns_true_not_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false_not_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_and_unfiltered_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_artifact_empty_list_returns_true"
+      ],
+      "fingerprint": "semantic:scoping-match-boundaries",
+      "members": [
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_any_overlap_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_matching_returns_true_not_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false_not_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_and_unfiltered_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_artifact_empty_list_returns_true"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_artifact_none_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_empty_active_scope_returns_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_matching_language_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_non_matching_language_returns_false"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "deduplication and blank-token removal",
+      "deleted_members": [
+        "tests/doctrine/test_scoping.py::test_normalize_languages_deduplicates_and_skips_blanks"
+      ],
+      "fingerprint": "semantic:scoping-normalization",
+      "members": [
+        "tests/doctrine/test_scoping.py::test_normalize_languages_deduplicates_and_skips_blanks"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/shared/test_scoping.py::TestNormalizeLanguages.test_deduplicates",
+        "tests/doctrine/shared/test_scoping.py::TestNormalizeLanguages.test_blank_strings_excluded"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "removed test called functools cache_clear without asserting a product-visible effect",
+      "deleted_members": [
+        "tests/git_ops/test_detection.py::TestCaching.test_cache_can_be_cleared"
+      ],
+      "fingerprint": "semantic:git-cache-clear-nonoracle",
+      "members": [
+        "tests/git_ops/test_detection.py::TestCaching.test_cache_can_be_cleared"
+      ],
+      "replacement_survivors": [
+        "tests/git_ops/test_detection.py::TestGitDetection.test_is_git_available"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "non-repository branch lookup returns None",
+      "deleted_members": [
+        "tests/git_ops/test_git_ops.py::test_get_current_branch_not_git_repo"
+      ],
+      "fingerprint": "semantic:git-current-branch-nonrepo",
+      "members": [
+        "tests/git_ops/test_git_ops.py::test_get_current_branch_not_git_repo",
+        "tests/git_ops/test_git_ops_unit.py::test_get_current_branch_not_git_repo"
+      ],
+      "replacement_survivors": [
+        "tests/git_ops/test_git_ops_unit.py::test_get_current_branch_not_git_repo"
+      ],
+      "survivor": "tests/git_ops/test_git_ops_unit.py::test_get_current_branch_not_git_repo",
+      "verdict": "CONSOLIDATE"
+    },
+    {
+      "basis": "runtime facade delegation plus canonical asset-root type/existence contract",
+      "deleted_members": [
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_delegates_fail_closed_to_kernel_authority",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_path_object",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_falls_back_to_legacy_specify_cli_missions",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_normalizes_to_doctrine_missions",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_env_override"
+      ],
+      "fingerprint": "semantic:runtime-asset-root-semantic",
+      "members": [
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_delegates_fail_closed_to_kernel_authority",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_path_object",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_falls_back_to_legacy_specify_cli_missions",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_normalizes_to_doctrine_missions",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_env_override",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_path_object"
+      ],
+      "replacement_survivors": [
+        "tests/runtime/test_home_unit.py::test_package_asset_root_compatibility_surface_delegates",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_path_object"
+      ],
+      "survivor": "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+      "verdict": "CONSOLIDATE"
+    },
+    {
+      "basis": "metadata/config/default glossary enablement precedence",
+      "deleted_members": [
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_bool_true_enables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_empty_config_and_metadata",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_disabled",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_enabled",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_false",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_true",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_null_metadata_falls_through_to_default",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_step_metadata_overrides_mission_config",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_DISABLED_upper_case",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_False_disables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_disabled_case_insensitive",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_enabled_case_insensitive",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_false_disables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_true_enables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_unknown_metadata_value_treated_as_enabled"
+      ],
+      "fingerprint": "semantic:glossary-enablement",
+      "members": [
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_bool_true_enables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_empty_config_and_metadata",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_disabled",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_enabled",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_false",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_true",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_null_metadata_falls_through_to_default",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_step_metadata_overrides_mission_config",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_DISABLED_upper_case",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_False_disables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_disabled_case_insensitive",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_enabled_case_insensitive",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_false_disables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_true_enables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_unknown_metadata_value_treated_as_enabled"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_enabled_by_default",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_step_metadata_overrides_mission_config",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_bool_false_disables",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_bool_true_enables",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_string_disable_is_case_insensitive",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_null_falls_through_to_mission_config"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "mission strictness extraction and invalid/absent fallback",
+      "deleted_members": [
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_config_empty",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_glossary_section",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_strictness_in_glossary",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_medium",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_off"
+      ],
+      "fingerprint": "semantic:glossary-mission-strictness",
+      "members": [
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_config_empty",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_glossary_section",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_strictness_in_glossary",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_medium",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_off"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_mission_strictness_extracted_from_config",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_invalid_strictness_returns_none",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_absent_levels_return_none"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "context default isolation, step-input population, and retry/checkpoint aliases",
+      "deleted_members": [
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_populates_retry_token_alias",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_conflicts_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_effective_strictness_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_extracted_terms_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_populates_checkpoint_token_alias",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_scope_refs_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_input_populated_from_inputs",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_output_defaults_to_empty_dict"
+      ],
+      "fingerprint": "semantic:glossary-context-defaults-aliases",
+      "members": [
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_populates_retry_token_alias",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_conflicts_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_effective_strictness_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_extracted_terms_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_populates_checkpoint_token_alias",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_scope_refs_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_input_populated_from_inputs",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_output_defaults_to_empty_dict"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/missions/test_primitives.py::TestTokenAliasing.test_retry_token_populates_checkpoint_token",
+        "tests/doctrine/missions/test_primitives.py::TestTokenAliasing.test_checkpoint_token_populates_retry_token",
+        "tests/doctrine/missions/test_primitives.py::TestStepInputPopulation.test_step_input_copies_inputs_on_init",
+        "tests/doctrine/missions/test_primitives.py::TestStepInputPopulation.test_empty_inputs_yields_empty_step_input",
+        "tests/doctrine/missions/test_primitives.py::TestStepInputPopulation.test_mutable_defaults_are_instance_local"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "step strictness extraction and invalid/absent fallback",
+      "deleted_members": [
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_on_invalid_value",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_key_missing",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_metadata_empty",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_value_is_null",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_max",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_medium"
+      ],
+      "fingerprint": "semantic:glossary-step-strictness",
+      "members": [
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_on_invalid_value",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_key_missing",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_metadata_empty",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_value_is_null",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_max",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_medium"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_step_strictness_extracted_from_metadata",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_invalid_strictness_returns_none",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_absent_levels_return_none"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "unscoped, overlap, and non-overlap boolean boundaries",
+      "deleted_members": [
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_any_overlap_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_matching_returns_true_not_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false_not_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_and_unfiltered_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_artifact_empty_list_returns_true"
+      ],
+      "fingerprint": "semantic:scoping-match-boundaries",
+      "members": [
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_any_overlap_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_matching_returns_true_not_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false_not_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_and_unfiltered_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_artifact_empty_list_returns_true"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_artifact_none_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_empty_active_scope_returns_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_matching_language_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_non_matching_language_returns_false"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "deduplication and blank-token removal",
+      "deleted_members": [
+        "tests/doctrine/test_scoping.py::test_normalize_languages_deduplicates_and_skips_blanks"
+      ],
+      "fingerprint": "semantic:scoping-normalization",
+      "members": [
+        "tests/doctrine/test_scoping.py::test_normalize_languages_deduplicates_and_skips_blanks"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/shared/test_scoping.py::TestNormalizeLanguages.test_deduplicates",
+        "tests/doctrine/shared/test_scoping.py::TestNormalizeLanguages.test_blank_strings_excluded"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "removed test called functools cache_clear without asserting a product-visible effect",
+      "deleted_members": [
+        "tests/git_ops/test_detection.py::TestCaching.test_cache_can_be_cleared"
+      ],
+      "fingerprint": "semantic:git-cache-clear-nonoracle",
+      "members": [
+        "tests/git_ops/test_detection.py::TestCaching.test_cache_can_be_cleared"
+      ],
+      "replacement_survivors": [
+        "tests/git_ops/test_detection.py::TestGitDetection.test_is_git_available"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "non-repository branch lookup returns None",
+      "deleted_members": [
+        "tests/git_ops/test_git_ops.py::test_get_current_branch_not_git_repo"
+      ],
+      "fingerprint": "semantic:git-current-branch-nonrepo",
+      "members": [
+        "tests/git_ops/test_git_ops.py::test_get_current_branch_not_git_repo",
+        "tests/git_ops/test_git_ops_unit.py::test_get_current_branch_not_git_repo"
+      ],
+      "replacement_survivors": [
+        "tests/git_ops/test_git_ops_unit.py::test_get_current_branch_not_git_repo"
+      ],
+      "survivor": "tests/git_ops/test_git_ops_unit.py::test_get_current_branch_not_git_repo",
+      "verdict": "CONSOLIDATE"
+    },
+    {
+      "basis": "runtime facade delegation plus canonical asset-root type/existence contract",
+      "deleted_members": [
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_delegates_fail_closed_to_kernel_authority",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_path_object",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_falls_back_to_legacy_specify_cli_missions",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_normalizes_to_doctrine_missions",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_env_override"
+      ],
+      "fingerprint": "semantic:runtime-asset-root-semantic",
+      "members": [
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_delegates_fail_closed_to_kernel_authority",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_path_object",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_falls_back_to_legacy_specify_cli_missions",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_normalizes_to_doctrine_missions",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_env_override",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_path_object"
+      ],
+      "replacement_survivors": [
+        "tests/runtime/test_home_unit.py::test_package_asset_root_compatibility_surface_delegates",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_path_object"
+      ],
+      "survivor": "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+      "verdict": "CONSOLIDATE"
+    },
+    {
+      "basis": "metadata/config/default glossary enablement precedence",
+      "deleted_members": [
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_bool_true_enables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_empty_config_and_metadata",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_disabled",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_enabled",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_false",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_true",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_null_metadata_falls_through_to_default",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_step_metadata_overrides_mission_config",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_DISABLED_upper_case",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_False_disables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_disabled_case_insensitive",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_enabled_case_insensitive",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_false_disables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_true_enables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_unknown_metadata_value_treated_as_enabled"
+      ],
+      "fingerprint": "semantic:glossary-enablement",
+      "members": [
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_bool_true_enables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_empty_config_and_metadata",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_disabled",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_explicit_enabled",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_false",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_mission_config_enabled_true",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_null_metadata_falls_through_to_default",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_step_metadata_overrides_mission_config",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_DISABLED_upper_case",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_False_disables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_disabled_case_insensitive",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_enabled_case_insensitive",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_false_disables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_string_true_enables_glossary",
+        "tests/agent/glossary/test_primitives.py::TestIsGlossaryEnabled.test_unknown_metadata_value_treated_as_enabled"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_enabled_by_default",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_step_metadata_overrides_mission_config",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_bool_false_disables",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_bool_true_enables",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_string_disable_is_case_insensitive",
+        "tests/doctrine/missions/test_primitives.py::TestGlossaryEnablementContract.test_null_falls_through_to_mission_config"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "mission strictness extraction and invalid/absent fallback",
+      "deleted_members": [
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_config_empty",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_glossary_section",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_strictness_in_glossary",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_medium",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_off"
+      ],
+      "fingerprint": "semantic:glossary-mission-strictness",
+      "members": [
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_config_empty",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_glossary_section",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_none_when_no_strictness_in_glossary",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_medium",
+        "tests/agent/glossary/test_primitives.py::TestMissionStrictness.test_returns_strictness_off"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_mission_strictness_extracted_from_config",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_invalid_strictness_returns_none",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_absent_levels_return_none"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "context default isolation, step-input population, and retry/checkpoint aliases",
+      "deleted_members": [
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_populates_retry_token_alias",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_conflicts_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_effective_strictness_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_extracted_terms_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_populates_checkpoint_token_alias",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_scope_refs_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_input_populated_from_inputs",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_output_defaults_to_empty_dict"
+      ],
+      "fingerprint": "semantic:glossary-context-defaults-aliases",
+      "members": [
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_checkpoint_token_populates_retry_token_alias",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_conflicts_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_effective_strictness_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_extracted_terms_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_defaults_to_none",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_retry_token_populates_checkpoint_token_alias",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_scope_refs_defaults_to_empty_list",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_input_populated_from_inputs",
+        "tests/agent/glossary/test_primitives.py::TestPrimitiveExecutionContextDefaults.test_step_output_defaults_to_empty_dict"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/missions/test_primitives.py::TestTokenAliasing.test_retry_token_populates_checkpoint_token",
+        "tests/doctrine/missions/test_primitives.py::TestTokenAliasing.test_checkpoint_token_populates_retry_token",
+        "tests/doctrine/missions/test_primitives.py::TestStepInputPopulation.test_step_input_copies_inputs_on_init",
+        "tests/doctrine/missions/test_primitives.py::TestStepInputPopulation.test_empty_inputs_yields_empty_step_input",
+        "tests/doctrine/missions/test_primitives.py::TestStepInputPopulation.test_mutable_defaults_are_instance_local"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "step strictness extraction and invalid/absent fallback",
+      "deleted_members": [
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_on_invalid_value",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_key_missing",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_metadata_empty",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_value_is_null",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_max",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_medium"
+      ],
+      "fingerprint": "semantic:glossary-step-strictness",
+      "members": [
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_on_invalid_value",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_key_missing",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_metadata_empty",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_none_when_value_is_null",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_max",
+        "tests/agent/glossary/test_primitives.py::TestStepStrictness.test_returns_strictness_medium"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_step_strictness_extracted_from_metadata",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_invalid_strictness_returns_none",
+        "tests/doctrine/missions/test_primitives.py::TestStrictnessResolution.test_absent_levels_return_none"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "unscoped, overlap, and non-overlap boolean boundaries",
+      "deleted_members": [
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_any_overlap_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_matching_returns_true_not_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false_not_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_and_unfiltered_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_artifact_empty_list_returns_true"
+      ],
+      "fingerprint": "semantic:scoping-match-boundaries",
+      "members": [
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_any_overlap_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_matching_returns_true_not_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_no_overlap_returns_false_not_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_and_unfiltered_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_artifact_empty_list_returns_true"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_unscoped_artifact_none_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_empty_active_scope_returns_false",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_matching_language_returns_true",
+        "tests/doctrine/shared/test_scoping.py::TestAppliesToLanguagesMatch.test_non_matching_language_returns_false"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "deduplication and blank-token removal",
+      "deleted_members": [
+        "tests/doctrine/test_scoping.py::test_normalize_languages_deduplicates_and_skips_blanks"
+      ],
+      "fingerprint": "semantic:scoping-normalization",
+      "members": [
+        "tests/doctrine/test_scoping.py::test_normalize_languages_deduplicates_and_skips_blanks"
+      ],
+      "replacement_survivors": [
+        "tests/doctrine/shared/test_scoping.py::TestNormalizeLanguages.test_deduplicates",
+        "tests/doctrine/shared/test_scoping.py::TestNormalizeLanguages.test_blank_strings_excluded"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "removed test called functools cache_clear without asserting a product-visible effect",
+      "deleted_members": [
+        "tests/git_ops/test_detection.py::TestCaching.test_cache_can_be_cleared"
+      ],
+      "fingerprint": "semantic:git-cache-clear-nonoracle",
+      "members": [
+        "tests/git_ops/test_detection.py::TestCaching.test_cache_can_be_cleared"
+      ],
+      "replacement_survivors": [
+        "tests/git_ops/test_detection.py::TestGitDetection.test_is_git_available"
+      ],
+      "survivor": null,
+      "verdict": "DELETE"
+    },
+    {
+      "basis": "non-repository branch lookup returns None",
+      "deleted_members": [
+        "tests/git_ops/test_git_ops.py::test_get_current_branch_not_git_repo"
+      ],
+      "fingerprint": "semantic:git-current-branch-nonrepo",
+      "members": [
+        "tests/git_ops/test_git_ops.py::test_get_current_branch_not_git_repo",
+        "tests/git_ops/test_git_ops_unit.py::test_get_current_branch_not_git_repo"
+      ],
+      "replacement_survivors": [
+        "tests/git_ops/test_git_ops_unit.py::test_get_current_branch_not_git_repo"
+      ],
+      "survivor": "tests/git_ops/test_git_ops_unit.py::test_get_current_branch_not_git_repo",
+      "verdict": "CONSOLIDATE"
+    },
+    {
+      "basis": "runtime facade delegation plus canonical asset-root type/existence contract",
+      "deleted_members": [
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_delegates_fail_closed_to_kernel_authority",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_path_object",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_falls_back_to_legacy_specify_cli_missions",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_normalizes_to_doctrine_missions",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_env_override"
+      ],
+      "fingerprint": "semantic:runtime-asset-root-semantic",
+      "members": [
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_delegates_fail_closed_to_kernel_authority",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_returns_path_object",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_falls_back_to_legacy_specify_cli_missions",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_checkout_root_normalizes_to_doctrine_missions",
+        "tests/runtime/test_home_unit.py::TestGetPackageAssetRoot.test_template_root_env_override",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_path_object"
+      ],
+      "replacement_survivors": [
+        "tests/runtime/test_home_unit.py::test_package_asset_root_compatibility_surface_delegates",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+        "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_path_object"
+      ],
+      "survivor": "tests/kernel/test_paths.py::TestGetPackageAssetRoot.test_returns_existing_directory",
+      "verdict": "CONSOLIDATE"
     }
   ],
-  "inventory_commit": "28ae75ea998c898aba57364db7a06d2088bd2af2",
   "manifest": {
     "authoritative_census_sha256": "c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b",
     "exact_groups_total": 173,
-    "promoted_semantic_groups": 0,
+    "promoted_semantic_groups": 9,
+    "promoted_semantic_groups_adjudicated": 9,
     "wp04_exact_groups": 82,
     "wp04_exact_groups_adjudicated": 82
   },
-  "schema_version": "test-sanitation/v1",
-  "verification": {
-    "focused_changed_files": "725 passed, 2 skipped, 3 warnings",
-    "mutation_probe": "5/5 intended survivor failures",
-    "pre_existing_failure": "claim baseline recorded one unrelated pre-existing failure; no WP04 focused failure"
+  "pre_review_gate": {
+    "attribution": "timeout",
+    "configured_timeout_seconds": 300.0,
+    "elapsed_seconds": 300.011,
+    "exit_code": 124,
+    "observed_failure_diagnostic": {
+      "base": {
+        "elapsed_seconds": 48.996,
+        "exit_code": 1,
+        "receipt_path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-base-pre-review-failure.json",
+        "receipt_sha256": "813010b3f5ff402ed2f60e76af9b84a390e139bb06c2a28a151e24f9fe371384",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_sha256": "4d6e7d912842f96b349320286caf04b4737b7ad8426a371f399b4d2284eb81ea",
+        "timed_out": false
+      },
+      "base_commit": "71e83274387f4e4d1ceb72af33ead6b6abbf57cf",
+      "basis": "the canonical raw progress stream marked its deterministic 70th collected node F; identical exact-node base and HEAD commands both reproduce the failure",
+      "cause": "terminal-width wrapping splits the asserted substring `does not exist` across a newline as `does \\nnot exist`",
+      "classification": "base-red/head-red; pre-existing and not caused by WP04",
+      "head": {
+        "elapsed_seconds": 47.396,
+        "exit_code": 1,
+        "receipt_path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-pre-review-failure.json",
+        "receipt_sha256": "c8f22b2df228435e5b43cc3ac1934b555ada0be12e947d98d9feb3363136be2f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_sha256": "ccb0d367a031a6b16e547426fb70a83e4e69e3fe8c6c790bab6957f68a554c32",
+        "timed_out": false
+      },
+      "nodeid": "tests/agent/cli/commands/test_charter_synthesize_cli.py::TestSynthesizeErrorPaths::test_pack_config_error_surfaces_diagnostic_body",
+      "selector_and_environment_identical": true
+    },
+    "receipt_path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-pre-review-gate.json",
+    "receipt_sha256": "acd8e81fbe67e7dc5384773cc870d7f1431b5363b07274a614faf3c07f47163b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_sha256": "aededa02ebbec6e87f426c5611279e0f3e414c504898c740e89b823d79d14b7c",
+    "timed_out": true
   },
-  "work_package": "WP04"
+  "schema_version": "wp04-results/v2",
+  "selected_cohort": {
+    "base": {
+      "collected": 706,
+      "collection_receipt": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-base-changed-paths-collect.json",
+      "passed": 704,
+      "run_receipt": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-base-changed-paths-run.json",
+      "selected_paths": [
+        "tests/agent/cli/commands/test_tasks_helpers.py",
+        "tests/agent/glossary/test_integration_workflows.py",
+        "tests/agent/glossary/test_primitives.py",
+        "tests/agent/glossary/test_strictness.py",
+        "tests/architectural/test_shim_registry_schema.py",
+        "tests/auth/integration/test_transport_rewired.py",
+        "tests/charter/test_action_grain.py",
+        "tests/charter/test_mission_steps_facade.py",
+        "tests/charter/test_pack_manager.py",
+        "tests/charter/test_references_missing_failclosed.py",
+        "tests/core/test_adapters.py",
+        "tests/docs/test_related_validator.py",
+        "tests/doctrine/directives/test_repository.py",
+        "tests/doctrine/missions/test_action_index.py",
+        "tests/doctrine/missions/test_primitives.py",
+        "tests/doctrine/shared/test_scoping.py",
+        "tests/doctrine/shared/test_scoping_any_all.py",
+        "tests/doctrine/styleguides/test_repository.py",
+        "tests/doctrine/tactics/test_repository.py",
+        "tests/doctrine/test_org_pack_subdir.py",
+        "tests/doctrine/test_scoping.py",
+        "tests/git_ops/test_detection.py",
+        "tests/git_ops/test_git_ops.py",
+        "tests/git_ops/test_mark_status_pipe_table.py",
+        "tests/retrospective/test_retrospective_content.py",
+        "tests/review/test_artifacts.py",
+        "tests/review/test_baseline.py",
+        "tests/review/test_scope_source.py",
+        "tests/runtime/test_home_unit.py"
+      ],
+      "skipped": 2
+    },
+    "basis": "all 29 test paths changed by WP04 at base; 27 surviving paths at HEAD",
+    "head": {
+      "collected": 602,
+      "collection_receipt": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-head-changed-paths-collect.json",
+      "named_skips": [
+        "tests/review/test_baseline.py::TestConfigCustomTestCommand::test_capture_baseline_posix_shell_syntax_returns_sentinel_on_windows",
+        "tests/runtime/test_home_unit.py::TestGetKittifyHomeWindows::test_windows_default_path"
+      ],
+      "passed": 600,
+      "run_receipt": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-head-changed-paths-run.json",
+      "selected_paths": [
+        "tests/agent/cli/commands/test_tasks_helpers.py",
+        "tests/agent/glossary/test_integration_workflows.py",
+        "tests/agent/glossary/test_primitives.py",
+        "tests/agent/glossary/test_strictness.py",
+        "tests/architectural/test_shim_registry_schema.py",
+        "tests/auth/integration/test_transport_rewired.py",
+        "tests/charter/test_action_grain.py",
+        "tests/charter/test_pack_manager.py",
+        "tests/charter/test_references_missing_failclosed.py",
+        "tests/core/test_adapters.py",
+        "tests/docs/test_related_validator.py",
+        "tests/doctrine/directives/test_repository.py",
+        "tests/doctrine/missions/test_action_index.py",
+        "tests/doctrine/missions/test_primitives.py",
+        "tests/doctrine/shared/test_scoping.py",
+        "tests/doctrine/shared/test_scoping_any_all.py",
+        "tests/doctrine/styleguides/test_repository.py",
+        "tests/doctrine/tactics/test_repository.py",
+        "tests/doctrine/test_org_pack_subdir.py",
+        "tests/git_ops/test_detection.py",
+        "tests/git_ops/test_git_ops.py",
+        "tests/git_ops/test_mark_status_pipe_table.py",
+        "tests/retrospective/test_retrospective_content.py",
+        "tests/review/test_artifacts.py",
+        "tests/review/test_baseline.py",
+        "tests/review/test_scope_source.py",
+        "tests/runtime/test_home_unit.py"
+      ],
+      "skipped": 2
+    },
+    "node_reduction_percent": 14.731,
+    "removed_nodes": 104,
+    "timing_note": "wall time is informational; commands and raw output are durable in the named receipts"
+  },
+  "verdict_counts": {
+    "CONSOLIDATE": 57,
+    "DELETE": 9,
+    "KEEP": 25
+  }
 }
