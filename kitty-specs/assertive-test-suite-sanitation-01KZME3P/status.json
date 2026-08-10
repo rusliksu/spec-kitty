@@ -1,20 +1,20 @@
 {
-  "event_count": 134,
-  "last_event_id": "01KZP4H5XVSJAYFJ0GFQ97PYCG",
-  "materialized_at": "2026-08-10T15:26:48.216795+00:00",
+  "event_count": 151,
+  "last_event_id": "01KZP8EBYEJS2N0QXTX6TBYX2V",
+  "materialized_at": "2026-08-10T16:35:10.414251+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
   "summary": {
-    "approved": 7,
+    "approved": 8,
     "blocked": 0,
     "canceled": 0,
     "claimed": 0,
     "done": 0,
-    "for_review": 0,
-    "in_progress": 2,
+    "for_review": 1,
+    "in_progress": 1,
     "in_review": 1,
-    "planned": 5
+    "planned": 4
   },
   "work_packages": {
     "WP01": {
@@ -220,32 +220,38 @@
       ]
     },
     "WP06": {
-      "actor": "wp06-reviewer3",
-      "agent": "wp06-reviewer3",
+      "actor": "user",
+      "agent": "",
       "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "assignee": "wp06-impl",
-      "force_count": 0,
-      "lane": "in_review",
-      "last_event_id": "01KZP4B4F4GB933J99DW1VE1GG",
-      "last_transition_at": "2026-08-10T15:23:30.148891+00:00",
+      "force_count": 2,
+      "lane": "approved",
+      "last_event_id": "01KZP586ZHDXTW4JQ0RT4QSKHN",
+      "last_transition_at": "2026-08-10T15:39:22.994005+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "Bounded pre-review override after two terminal 300s gate timeouts with no failing node/stderr. Exact owned cohort: 139 passed in 45.68s under xdist; daemon matrix 20/20 isolated + 10/10 CI-parallel; Ruff, ledger validator, JSON, diff checks green; zero src edits; #2782 remains WP03 and CI route node remains WP07. 38 nodes removed, net -1794 test LOC.",
         "Cycle 2 evidence correction: exact base+WP02/HEAD provenance, all 21 sync-node survivors, and replayable daemon matrices",
         "Final implementation cycle 3 per review-cycle-2; two unsupported mappings restored as strengthened biting oracles",
-        "Bounded gate override after terminal 300s timeout with zero observed failures: focused 141/141, survivors 20/20, matrix hashes 60/60, validator 30 dispositions/46 nodes valid, Ruff/diff clean"
+        "Bounded gate override after terminal 300s timeout with zero observed failures: focused 141/141, survivors 20/20, matrix hashes 60/60, validator 30 dispositions/46 nodes valid, Ruff/diff clean",
+        "Arbiter APPROVE after third/final review; no cycle4. Exact 177→141 (-36), 141 focused passes, 20/20 biting deleted-node survivors, 60/60 daemon row hashes with reproducible pre-repair failure, no production edits/masking. Final reviewer confirms five omitted reachability membership/count/meta-pin identities are valid zero-signal deletions; assign their machine-readable terminal aggregation to WP08 closure rather than restoring them."
       ],
       "provider": "__resolved_provider_absent__",
-      "review": null,
+      "review": {
+        "actor": "operator",
+        "at": "2026-08-10T15:39:22Z",
+        "reason": "Arbiter APPROVE after third/final review; no cycle4. Exact 177→141 (-36), 141 focused passes, 20/20 biting deleted-node survivors, 60/60 daemon row hashes with reproducible pre-repair failure, no production edits/masking. Final reviewer confirms five omitted reachability membership/count/meta-pin identities are valid zero-signal deletions; assign their machine-readable terminal aggregation to WP08 closure rather than restoring them.",
+        "wp_id": "WP06"
+      },
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP06-baseline-red-adjudication/review-cycle-2.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP06-baseline-red-adjudication/review-cycle-2.md",
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP06-baseline-red-adjudication/review-cycle-3.md",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP06-baseline-red-adjudication/review-cycle-3.md",
         "reviewer": "reviewer-renata",
         "verdict": "changes_requested"
       },
       "role": "reviewer",
-      "shell_pid": 28365,
+      "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
         "T032": "done",
@@ -306,25 +312,28 @@
       ]
     },
     "WP09": {
-      "actor": "wp09-impl",
-      "agent": "wp09-impl",
-      "agent_profile": "architect-alphonso",
+      "actor": "wp09-reviewer",
+      "agent": "wp09-reviewer",
+      "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "in_progress",
-      "last_event_id": "01KZP4H5XVSJAYFJ0GFQ97PYCG",
-      "last_transition_at": "2026-08-10T15:26:48.216795+00:00",
+      "lane": "in_review",
+      "last_event_id": "01KZP8EBYEJS2N0QXTX6TBYX2V",
+      "last_transition_at": "2026-08-10T16:35:10.414251+00:00",
       "model": "__resolved_model_absent__",
+      "notes": [
+        "Pre-review composite scope timed out at its 300s ceiling (outcome=timed_out, block_enabled=false, zero observed new failures). WP09 focused 35/35 and imported support consumer 11/11 pass; fault evidence and WP07 handoff committed in be201db03."
+      ],
       "provider": "__resolved_provider_absent__",
-      "role": "implementer",
+      "role": "reviewer",
       "shell_pid": 28365,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T051": "planned",
-        "T052": "planned",
-        "T053": "planned",
-        "T054": "planned",
-        "T055": "planned"
+        "T051": "done",
+        "T052": "done",
+        "T053": "done",
+        "T054": "done",
+        "T055": "done"
       },
       "tracker_refs": [
         "#1931"
@@ -332,17 +341,29 @@
     },
     "WP10": {
       "actor": "wp10-impl",
-      "agent": "wp10-impl",
+      "agent": "",
       "agent_profile": "architect-alphonso",
       "agent_profile_version": "1.0",
       "force_count": 0,
       "lane": "in_progress",
-      "last_event_id": "01KZP254ZCS5X81HX71SQ7SNDB",
-      "last_transition_at": "2026-08-10T14:45:16.875042+00:00",
+      "last_event_id": "01KZP8CZF58YWMN7YT9C0AFZDJ",
+      "last_transition_at": "2026-08-10T16:34:24.834157+00:00",
       "model": "__resolved_model_absent__",
+      "notes": [
+        "Pre-review scoped gate timed out at fixed 300s with zero failures. Override justified by 535 passed/2 xfailed full WP cohort, 137-node changed-file coverage, clean lint/type/evidence audit; WP07 shard-map handoff recorded.",
+        "Cycle 2: 42 deep KEEP rows and 12 deletion mappings bound to SHA256 replay evidence; guard/dossier probes now traverse exact live enforcement oracles. Fresh full 535 passed/2 xfailed, selected 55 passed, oracle pair 8 passed; validator, Ruff, mypy, JSON/YAML, diff checks clean. Skipped duplicate pre-review gate after recording fresh full/focused executions; fixed gate timed out in cycle 1.",
+        "Cycle 2 changes requested: survivor proof passes; split heterogeneous deletion families and bind exact successor/no-authority evidence"
+      ],
       "provider": "__resolved_provider_absent__",
+      "review": null,
+      "review_result": {
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP10-structural-cohort-c/review-cycle-2.md",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP10-structural-cohort-c/review-cycle-2.md",
+        "reviewer": "reviewer-renata",
+        "verdict": "changes_requested"
+      },
       "role": "implementer",
-      "shell_pid": 28365,
+      "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
         "T056": "planned",
@@ -427,17 +448,28 @@
       ]
     },
     "WP13": {
-      "actor": "finalize-tasks",
+      "actor": "wp13-impl",
+      "agent": "wp13-impl",
+      "agent_profile": "architect-alphonso",
+      "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "planned",
-      "last_event_id": "01KZMJP8PKQSNS3VVTWCNFTRFA",
-      "last_transition_at": "2026-08-10T00:55:46.131918+00:00",
+      "lane": "for_review",
+      "last_event_id": "01KZP8AWQ15MKJVEQS0BFHT4KC",
+      "last_transition_at": "2026-08-10T16:33:16.513213+00:00",
+      "model": "__resolved_model_absent__",
+      "notes": [
+        "Ready for review: exact 24-file survivor gate passed 131 tests in 69.77s with 0 skips; built-in sequential scoped gate exceeded its fixed 300s timeout; evidence in wp13-results.json"
+      ],
+      "provider": "__resolved_provider_absent__",
+      "role": "implementer",
+      "shell_pid": 28365,
+      "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T061": "planned",
-        "T062": "planned",
-        "T063": "planned",
-        "T064": "planned",
-        "T065": "planned"
+        "T061": "done",
+        "T062": "done",
+        "T063": "done",
+        "T064": "done",
+        "T065": "done"
       },
       "tracker_refs": [
         "#1931"
