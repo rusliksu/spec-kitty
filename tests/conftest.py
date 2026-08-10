@@ -730,13 +730,21 @@ def _expected_temp_path(temp_path: Path, final_path: Path) -> bool:
     return candidate.parent == final.parent and candidate.name.startswith(f"{final.name}.build-")
 
 
+def _remove_path_without_following_symlinks(path: Path) -> None:
+    """Remove one cache entry without following a file or directory symlink."""
+    if path.is_symlink() or path.is_file():
+        path.unlink(missing_ok=True)
+    elif path.exists():
+        shutil.rmtree(path)
+
+
 def _remove_recorded_temp(lease: _BootstrapLease, final_path: Path) -> None:
     if not _expected_temp_path(lease.temp_path, final_path):
         raise RuntimeError(
             f"Refusing to recover test venv from unsafe temp_path {lease.temp_path}; "
             f"expected a sibling named {final_path.name}.build-* beside {final_path}."
         )
-    shutil.rmtree(lease.temp_path, ignore_errors=True)
+    _remove_path_without_following_symlinks(lease.temp_path)
 
 
 def _lease_owned_by(lease: _BootstrapLease | None, owner: _BootstrapLease) -> bool:
@@ -792,8 +800,8 @@ def _claim_bootstrap_lease(
                 return None, None, lease
             _remove_recorded_temp(lease, final_path)
 
-        if final_path.exists():
-            shutil.rmtree(final_path, ignore_errors=True)
+        if final_path.exists() or final_path.is_symlink():
+            _remove_path_without_following_symlinks(final_path)
         final_path.parent.mkdir(parents=True, exist_ok=True)
         temp_path = Path(tempfile.mkdtemp(prefix=f"{final_path.name}.build-", dir=final_path.parent))
         process_token = _process_start_token(os.getpid())
@@ -833,7 +841,7 @@ def _publish_bootstrap_lease(
 
         validated = lease.with_state("VALIDATED", heartbeat_at=time.time())
         _write_bootstrap_lease(state_path, validated)
-        if final_path.exists():
+        if final_path.exists() or final_path.is_symlink():
             if validate(final_path, source_version):
                 _remove_recorded_temp(validated, final_path)
                 _write_bootstrap_lease(
@@ -841,7 +849,7 @@ def _publish_bootstrap_lease(
                     validated.with_state("PUBLISHED", heartbeat_at=time.time()),
                 )
                 return final_path
-            shutil.rmtree(final_path, ignore_errors=True)
+            _remove_path_without_following_symlinks(final_path)
         owner.temp_path.rename(final_path)
         _write_bootstrap_lease(
             state_path,

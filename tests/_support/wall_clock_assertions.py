@@ -40,7 +40,7 @@ _ClassInitializers = dict[tuple[str, ...], ast.FunctionDef | ast.AsyncFunctionDe
 _SHADOWED_PATH = ("<shadowed>",)
 _SETUP_METHOD_NAMES = {"setup", "setup_method", "setup_class", "setUp", "setUpClass"}
 _MODULE_SETUP_NAMES = {"setup_module", "setup_function", "setUpModule"}
-_SCAN_CACHE_VERSION = 1
+_SCAN_CACHE_VERSION = 2
 _SCAN_CACHE_LOCK_TIMEOUT_S = 600.0
 
 
@@ -159,6 +159,12 @@ def _read_wall_clock_scan_cache(
             return None
         if payload.get("digest") != digest or not isinstance(payload.get("violations"), list):
             return None
+        expected_authenticator = _wall_clock_scan_result_authenticator(
+            digest,
+            payload["violations"],
+        )
+        if payload.get("result_sha256") != expected_authenticator:
+            return None
         violations: list[WallClockAssertionViolation] = []
         for row in payload["violations"]:
             if not isinstance(row, dict):
@@ -185,13 +191,15 @@ def _write_wall_clock_scan_cache(
     digest: str,
     violations: list[WallClockAssertionViolation],
 ) -> None:
+    rows = [
+        {"path": str(violation.path), "line": violation.line, "call": violation.call}
+        for violation in violations
+    ]
     payload = {
         "version": _SCAN_CACHE_VERSION,
         "digest": digest,
-        "violations": [
-            {"path": str(violation.path), "line": violation.line, "call": violation.call}
-            for violation in violations
-        ],
+        "violations": rows,
+        "result_sha256": _wall_clock_scan_result_authenticator(digest, rows),
     }
     temporary = result_path.with_name(f"{result_path.name}.tmp-{os.getpid()}-{uuid.uuid4().hex}")
     try:
@@ -202,6 +210,16 @@ def _write_wall_clock_scan_cache(
         os.replace(temporary, result_path)
     finally:
         temporary.unlink(missing_ok=True)
+
+
+def _wall_clock_scan_result_authenticator(digest: str, rows: object) -> str:
+    """Bind cached result rows to their version and source-input digest."""
+    canonical = json.dumps(
+        {"version": _SCAN_CACHE_VERSION, "digest": digest, "violations": rows},
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()  # noqa: TID251
 
 
 def find_test_python_paths(root: Path) -> list[Path]:

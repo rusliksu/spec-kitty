@@ -254,10 +254,23 @@ def test_expired_heartbeat_is_reclaimed_even_when_pid_is_live(tmp_path: Path) ->
     assert not abandoned.exists()
 
 
-def test_invalid_published_venv_is_rebuilt_once(tmp_path: Path) -> None:
+@pytest.mark.parametrize("entry_kind", ["directory", "file", "symlink"])
+def test_invalid_published_venv_is_rebuilt_once(tmp_path: Path, entry_kind: str) -> None:
     final = tmp_path / root_conftest._VENV_CACHE_PATH
-    final.mkdir(parents=True)
-    (final / "VERSION").write_text("old", encoding="utf-8")
+    final.parent.mkdir(parents=True)
+    symlink_target = tmp_path / "symlink-target"
+    if entry_kind == "directory":
+        final.mkdir()
+        (final / "VERSION").write_text("old", encoding="utf-8")
+    elif entry_kind == "file":
+        final.write_text("not a venv", encoding="utf-8")
+    else:
+        symlink_target.mkdir()
+        (symlink_target / "keep").write_text("safe", encoding="utf-8")
+        try:
+            final.symlink_to(symlink_target, target_is_directory=True)
+        except OSError as exc:
+            pytest.skip(f"directory symlinks unavailable: {exc}")
 
     result = root_conftest._ensure_test_venv(
         tmp_path,
@@ -269,6 +282,8 @@ def test_invalid_published_venv_is_rebuilt_once(tmp_path: Path) -> None:
 
     assert _fake_valid(result, _SOURCE_VERSION)
     assert len((tmp_path / ".pytest_cache" / "build-count.txt").read_text(encoding="utf-8").splitlines()) == 1
+    if entry_kind == "symlink":
+        assert (symlink_target / "keep").read_text(encoding="utf-8") == "safe"
 
 
 def test_corrupt_state_cannot_delete_untrusted_temp_path(tmp_path: Path) -> None:

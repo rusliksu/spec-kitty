@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import json
+import multiprocessing
+import os
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -1115,6 +1119,14 @@ def _write_alias_chain(root: Path, size: int) -> list[Path]:
     return paths
 
 
+def _cached_scan_worker(test_file: str, cache_root: str, results: Any) -> None:
+    violations = find_wall_clock_assertion_violations_cached(
+        [Path(test_file)],
+        Path(cache_root),
+    )
+    results.put((os.getpid(), [violation.render() for violation in violations]))
+
+
 def test_import_alias_worklist_scales_approximately_linearly_with_common_names(tmp_path: Path) -> None:
     small_root = tmp_path / "small"
     large_root = tmp_path / "large"
@@ -1153,6 +1165,50 @@ def test_cached_scan_repairs_corruption_and_invalidates_on_source_change(tmp_pat
     assert repaired == first
     assert cache_files[0].read_text(encoding="utf-8").startswith("{")
 
+    payload = json.loads(cache_files[0].read_text(encoding="utf-8"))
+    payload["violations"] = []
+    cache_files[0].write_text(json.dumps(payload), encoding="utf-8")
+    assert find_wall_clock_assertion_violations_cached([test_file], cache_root) == first
+
+    payload = json.loads(cache_files[0].read_text(encoding="utf-8"))
+    payload["violations"][0]["call"] = "time.time()"
+    cache_files[0].write_text(json.dumps(payload), encoding="utf-8")
+    assert find_wall_clock_assertion_violations_cached([test_file], cache_root) == first
+
     test_file.write_text("def test_good():\n    assert 1 == 1\n", encoding="utf-8")
     assert find_wall_clock_assertion_violations_cached([test_file], cache_root) == []
     assert len(list(cache_root.glob("*.json"))) == 2
+
+
+def test_cached_scan_is_published_and_read_by_distinct_processes(tmp_path: Path) -> None:
+    test_file = tmp_path / "test_bad.py"
+    cache_root = tmp_path / "cache"
+    test_file.write_text(
+        "from datetime import datetime\n\ndef test_bad():\n    assert datetime.now().year == 2026\n",
+        encoding="utf-8",
+    )
+    context = multiprocessing.get_context("spawn")
+    results = context.Queue()
+
+    publisher = context.Process(
+        target=_cached_scan_worker,
+        args=(str(test_file), str(cache_root), results),
+    )
+    publisher.start()
+    publisher.join(timeout=10)
+    assert publisher.exitcode == 0
+
+    reader = context.Process(
+        target=_cached_scan_worker,
+        args=(str(test_file), str(cache_root), results),
+    )
+    reader.start()
+    reader.join(timeout=10)
+    assert reader.exitcode == 0
+
+    first_pid, first_rows = results.get(timeout=1)
+    second_pid, second_rows = results.get(timeout=1)
+    assert first_pid != second_pid
+    assert first_rows == second_rows
+    assert len(first_rows) == 1
+    assert len(list(cache_root.glob("*.json"))) == 1
