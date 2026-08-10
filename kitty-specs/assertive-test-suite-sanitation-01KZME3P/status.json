@@ -1,7 +1,7 @@
 {
   "event_count": 203,
-  "last_event_id": "01KZPSS4XT51NCWYSHF1PCMXS4",
-  "materialized_at": "2026-08-10T21:38:09.466361+00:00",
+  "last_event_id": "01KZPSTNT7X4M1K392BVRTZMNX",
+  "materialized_at": "2026-08-10T21:38:59.527207+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -273,8 +273,8 @@
       "agent_profile_version": "1.0",
       "force_count": 1,
       "lane": "in_review",
-      "last_event_id": "01KZPSS4XT51NCWYSHF1PCMXS4",
-      "last_transition_at": "2026-08-10T21:38:09.466361+00:00",
+      "last_event_id": "01KZPSTNT7X4M1K392BVRTZMNX",
+      "last_transition_at": "2026-08-10T21:38:59.527207+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "Implemented proportional regression/quarantine owner manifests; reconciled integrated shard maps, live baselines, and retired sidecars; replaced recursive #3284 probe; four-stage three-repetition timing evidence records honest criterion outcomes; full architectural hard gate 748 passed, 2 xfailed. Commit b700f116c.",
