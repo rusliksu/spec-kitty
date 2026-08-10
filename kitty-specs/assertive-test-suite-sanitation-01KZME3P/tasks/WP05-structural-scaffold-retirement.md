@@ -47,7 +47,6 @@ owned_files:
 - tests/architectural/test_dead_builtin_doc_paths.py
 - tests/architectural/test_docs_cli_reference_parity.py
 - tests/architectural/test_execution_context_parity.py
-- tests/architectural/test_exemption_registry_ratchet.py
 - tests/architectural/test_glossary_pack_parity.py
 - tests/architectural/test_golden_count_ban.py
 - tests/architectural/test_issue_matrix_json_migration_completeness.py
@@ -61,8 +60,6 @@ owned_files:
 - tests/architectural/test_no_legacy_status_emit_callers.py
 - tests/architectural/test_no_legacy_terminology.py
 - tests/architectural/test_no_parity_scaffold.py
-- tests/architectural/test_ratchet_baselines.py
-- tests/architectural/test_ratchet_positional_anchor_ban.py
 - tests/architectural/test_reference_enum_ratchet.py
 - tests/architectural/test_retired_contracts_absent.py
 - tests/architectural/test_topology_inference_retired.py
@@ -114,6 +111,7 @@ Every surviving assigned structural guard must name a current authority, scan a 
 - Separate “forbidden direct transport” negative invariant from “this exact singleton/module exists” positive shape.
 - Rehome/import the negative invariant through `test_layer_rules.py` only if a realistic direct-client change fails it.
 - Update `test_ratchet_baselines.py` only after proving its referenced ratchet remains meaningful; delete baseline entries for removed guards.
+- After WP05 approval, ownership of `test_exemption_registry_ratchet.py`, `test_ratchet_baselines.py`, and `test_ratchet_positional_anchor_ban.py` transfers to downstream WP07 solely to reconcile reader rows made stale by the final integrated deletion set.
 
 ## T029 — Plausible Fault Probes
 
