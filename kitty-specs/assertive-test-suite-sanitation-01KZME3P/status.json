@@ -1,7 +1,7 @@
 {
-  "event_count": 181,
-  "last_event_id": "01KZPDA2FW5NS9B5HSXYXQBJKM",
-  "materialized_at": "2026-08-10T18:00:12.540767+00:00",
+  "event_count": 182,
+  "last_event_id": "01KZPDEZQ7PFF78HTK3N5A99ZX",
+  "materialized_at": "2026-08-10T18:02:53.543147+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -13,8 +13,8 @@
     "done": 0,
     "for_review": 0,
     "in_progress": 0,
-    "in_review": 2,
-    "planned": 2
+    "in_review": 1,
+    "planned": 3
   },
   "work_packages": {
     "WP01": {
@@ -499,19 +499,25 @@
       ]
     },
     "WP14": {
-      "actor": "wp14-reviewer",
+      "actor": "user",
       "agent": "wp14-reviewer",
       "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "in_review",
-      "last_event_id": "01KZPCYWJ91WAJSTKN5J8J60R3",
-      "last_transition_at": "2026-08-10T17:54:06.025934+00:00",
+      "lane": "planned",
+      "last_event_id": "01KZPDEZQ7PFF78HTK3N5A99ZX",
+      "last_transition_at": "2026-08-10T18:02:53.543147+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "Ready for independent review after broad gate timeout: canonical scoped gate exceeded 300s without failure output. Exact WP14 cohort is 390/390 green in 84.62s; final causal probes 2/2; collection 390; Ruff clean; mypy 60→41 with zero new signatures; 46/46 terminal; no production or central-map edits. Known parallel #3283 pre-Act cascade is owned by approved WP02."
       ],
       "provider": "__resolved_provider_absent__",
+      "review_result": {
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP14-runtime-structural/review-cycle-1.md",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP14-runtime-structural/review-cycle-1.md",
+        "reviewer": "user",
+        "verdict": "changes_requested"
+      },
       "role": "reviewer",
       "shell_pid": 28365,
       "shell_pid_created_at": "1786191813.84724",
