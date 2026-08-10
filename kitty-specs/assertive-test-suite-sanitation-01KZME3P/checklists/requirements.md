@@ -33,7 +33,7 @@
 
 ## Validation Notes
 
-- Pre-spec squad: `reviewer-renata`, `randy-reducer`, and `debugger-debbie` converged on evidence-led assertive deletion.
+- Pre-spec squad: `reviewer-renata`, `randy-reducer`, and `debugger-debbie` converged on evidence-led assertive deletion. The original agent transcripts were not persisted; the later evidence audit and this limitation are recorded in `grounding-report-2026-08-10.md`.
 - Post-spec squad blockers were resolved: contract/architectural gates are unconditional; evidence granularity is family-defined with node expansion on divergence; flake/timing matrices are finite; migration retirement requires compatibility authority; and `FIX_*` states cannot close the mission. Post-plan authority review corrected P0 handling to the accepted red-main ADR: exactly one live blocking red per accepted P0, separately accounted from release authority.
 - Live baseline: 37,444 nodes collected in 94.26 seconds; repeated full-suite start exposed #3283 before test bodies executed.
 - Post-plan squad: all reducer, reviewer, and architect findings resolved. The plan uses a lightweight global census, class-specific deep proof, mission-local audit tooling, WP-owned evidence shards, an explicit #3283 lease/atomic-publish protocol, and typed environment/route/workload evidence.
