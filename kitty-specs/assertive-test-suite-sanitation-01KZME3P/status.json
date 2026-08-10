@@ -308,7 +308,7 @@
     "WP08": {
       "actor": "codex",
       "agent": "codex",
-      "agent_profile": "reviewer-renata",
+      "agent_profile": "implementer-ivan",
       "agent_profile_version": "1.0",
       "force_count": 0,
       "lane": "in_progress",
