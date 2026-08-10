@@ -36,7 +36,7 @@ dispositions:
           skip_reason: null
           markers: [slow]
           duration: {collection: 0.0, setup: 0.0, call: 84.02, cost_class: slow}
-          artifact_hash: d21377282c4fea182fb7925765804c75b48edfe7145c4c950ce9ca0cf47afecf
+          artifact_hash: bbf8f7c93121fd12bb37a1bfbd87f57e6a11dfb929ea69da1b4d51b7f1cf3c89
     evidence:
       profile: contract
       caller_evidence:
@@ -105,7 +105,7 @@ dispositions:
           skip_reason: null
           markers: [fast, unit]
           duration: {collection: 44.66, setup: 0.0, call: 0.01, cost_class: slow_collection}
-          artifact_hash: 830f164c224f56766dffa0404c960b751579dfb9ff3328762235dc039b0339d3
+          artifact_hash: 6159cdbd4b9f6eea7ae73e814d9bca2aeb740461f918fc1ace251dd25b9e2c56
     evidence:
       profile: slow
       cost_evidence:
@@ -120,7 +120,7 @@ dispositions:
         intended_oracle_failed: true
         command: .venv/bin/pytest tests/_support/test_wall_clock_assertions.py -k 'worklist or cached_scan' -q --tb=short
         environment: macOS 15.7.7 arm64, CPython 3.11.15, cold scanner cache
-        raw_artifact_hash: 830f164c224f56766dffa0404c960b751579dfb9ff3328762235dc039b0339d3
+        raw_artifact_hash: 6159cdbd4b9f6eea7ae73e814d9bca2aeb740461f918fc1ace251dd25b9e2c56
     verdict: KEEP
     state: terminal
     action: FIX_TEST completed; retain causal cross-file oracle and new deterministic complexity ratchet

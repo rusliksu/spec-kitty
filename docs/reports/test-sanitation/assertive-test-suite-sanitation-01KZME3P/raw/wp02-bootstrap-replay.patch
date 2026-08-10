@@ -11,7 +11,7 @@ index ea16c2d9b..d739c59fa 100644
                - 'tests/cli/test_agent_status_messaging.py'
                - 'tests/cli/test_migrate_cmd_messaging.py'
 diff --git a/tests/conftest.py b/tests/conftest.py
-index 74d8e22eb..b87a18257 100644
+index 74d8e22eb..8bd73df9e 100644
 --- a/tests/conftest.py
 +++ b/tests/conftest.py
 @@ -1,16 +1,22 @@
@@ -121,7 +121,7 @@ index 74d8e22eb..b87a18257 100644
          "missing=[m for m in mods if importlib.util.find_spec(m) is None];"
          "sys.exit(1 if missing else 0)"
      )
-@@ -578,33 +624,320 @@ def _venv_is_valid(venv_dir: Path, source_version: str) -> bool:
+@@ -578,33 +624,323 @@ def _venv_is_valid(venv_dir: Path, source_version: str) -> bool:
      return _venv_has_required_runtime(venv_dir)
  
  
@@ -159,7 +159,13 @@ index 74d8e22eb..b87a18257 100644
 -    lock_path = project_root / _VENV_LOCK_PATH
 -    lock_path.parent.mkdir(parents=True, exist_ok=True)
 +def _process_start_token(pid: int) -> str | None:
-+    try:
+     try:
+-        with FileLock(str(lock_path), timeout=_LOCK_TIMEOUT_S):
+-            if not _venv_is_valid(venv_path, source_version):
+-                shutil.rmtree(venv_path, ignore_errors=True)
+-                _create_test_venv(venv_path, source_version)
+-                (venv_path / "VERSION").write_text(source_version, encoding="utf-8")
+-    except Timeout:
 +        return f"{psutil.Process(pid).create_time():.6f}"
 +    except (psutil.Error, OSError):
 +        return None
@@ -205,7 +211,12 @@ index 74d8e22eb..b87a18257 100644
 +            environment_hash=environment_hash,
 +        )
 +    except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
-+        raise RuntimeError(
+         raise RuntimeError(
+-            f"Timed out acquiring {lock_path} after {_LOCK_TIMEOUT_S}s. "
+-            f"If no test process is currently running, remove the lock file: "
+-            f"rm {lock_path}"
+-        ) from None
+-    return venv_path
 +            f"Malformed test-venv lease state at {state_path}: {exc}. "
 +            "Inspect and remove that state file only after confirming no test builder is running."
 +        ) from exc
@@ -214,13 +225,7 @@ index 74d8e22eb..b87a18257 100644
 +def _write_bootstrap_lease(state_path: Path, lease: _BootstrapLease) -> None:
 +    state_path.parent.mkdir(parents=True, exist_ok=True)
 +    temporary = state_path.with_name(f"{state_path.name}.tmp-{os.getpid()}-{uuid.uuid4().hex}")
-     try:
--        with FileLock(str(lock_path), timeout=_LOCK_TIMEOUT_S):
--            if not _venv_is_valid(venv_path, source_version):
--                shutil.rmtree(venv_path, ignore_errors=True)
--                _create_test_venv(venv_path, source_version)
--                (venv_path / "VERSION").write_text(source_version, encoding="utf-8")
--    except Timeout:
++    try:
 +        temporary.write_text(
 +            json.dumps(lease.to_json(), sort_keys=True, separators=(",", ":")) + "\n",
 +            encoding="utf-8",
@@ -240,9 +245,12 @@ index 74d8e22eb..b87a18257 100644
 +
 +
 +def _expected_temp_path(temp_path: Path, final_path: Path) -> bool:
-+    candidate = temp_path.resolve(strict=False)
-+    final = final_path.resolve(strict=False)
-+    return candidate.parent == final.parent and candidate.name.startswith(f"{final.name}.build-")
++    candidate = Path(os.path.abspath(temp_path))
++    final = Path(os.path.abspath(final_path))
++    return (
++        os.path.normcase(str(candidate.parent)) == os.path.normcase(str(final.parent))
++        and candidate.name.startswith(f"{final.name}.build-")
++    )
 +
 +
 +def _remove_path_without_following_symlinks(path: Path) -> None:
@@ -255,12 +263,7 @@ index 74d8e22eb..b87a18257 100644
 +
 +def _remove_recorded_temp(lease: _BootstrapLease, final_path: Path) -> None:
 +    if not _expected_temp_path(lease.temp_path, final_path):
-         raise RuntimeError(
--            f"Timed out acquiring {lock_path} after {_LOCK_TIMEOUT_S}s. "
--            f"If no test process is currently running, remove the lock file: "
--            f"rm {lock_path}"
--        ) from None
--    return venv_path
++        raise RuntimeError(
 +            f"Refusing to recover test venv from unsafe temp_path {lease.temp_path}; "
 +            f"expected a sibling named {final_path.name}.build-* beside {final_path}."
 +        )
@@ -467,10 +470,10 @@ index 74d8e22eb..b87a18257 100644
  def _venv_site_packages(venv_dir: Path) -> Path:
 diff --git a/tests/test_test_venv_bootstrap.py b/tests/test_test_venv_bootstrap.py
 new file mode 100644
-index 000000000..7fc7bf62a
+index 000000000..cb221cd3d
 --- /dev/null
 +++ b/tests/test_test_venv_bootstrap.py
-@@ -0,0 +1,367 @@
+@@ -0,0 +1,416 @@
 +from __future__ import annotations
 +
 +import json
@@ -757,6 +760,55 @@ index 000000000..7fc7bf62a
 +    assert len((tmp_path / ".pytest_cache" / "build-count.txt").read_text(encoding="utf-8").splitlines()) == 1
 +    if entry_kind == "symlink":
 +        assert (symlink_target / "keep").read_text(encoding="utf-8") == "safe"
++
++
++def test_stale_lease_recovers_past_invalid_final_symlink_without_following_target(
++    tmp_path: Path,
++) -> None:
++    cache = tmp_path / ".pytest_cache"
++    cache.mkdir()
++    abandoned = cache / "spec-kitty-test-venv.build-abandoned"
++    _fake_build(abandoned, _SOURCE_VERSION)
++    outside_target = tmp_path / "outside-target"
++    outside_target.mkdir()
++    (outside_target / "keep").write_text("safe", encoding="utf-8")
++    final = tmp_path / root_conftest._VENV_CACHE_PATH
++    try:
++        final.symlink_to(outside_target, target_is_directory=True)
++    except OSError as exc:
++        pytest.skip(f"directory symlinks unavailable: {exc}")
++
++    state_path = tmp_path / root_conftest._VENV_STATE_PATH
++    state_path.write_text(
++        json.dumps(
++            {
++                "state": "BUILDING",
++                "owner_pid": 99999999,
++                "process_start_token": "dead",
++                "heartbeat_at": 0.0,
++                "lease_seconds": 0.1,
++                "temp_path": str(abandoned),
++                "source_version": _SOURCE_VERSION,
++                "environment_hash": root_conftest._test_venv_environment_hash(
++                    tmp_path, _SOURCE_VERSION
++                ),
++            }
++        ),
++        encoding="utf-8",
++    )
++
++    result = root_conftest._ensure_test_venv(
++        tmp_path,
++        _SOURCE_VERSION,
++        _build=_fake_build,
++        _validate=_fake_valid,
++        _wait_timeout=5.0,
++    )
++
++    assert _fake_valid(result, _SOURCE_VERSION)
++    assert not result.is_symlink()
++    assert not abandoned.exists()
++    assert (outside_target / "keep").read_text(encoding="utf-8") == "safe"
 +
 +
 +def test_corrupt_state_cannot_delete_untrusted_temp_path(tmp_path: Path) -> None:

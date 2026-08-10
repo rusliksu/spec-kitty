@@ -2,13 +2,14 @@
   "schema_version": "wp02-results/v1",
   "mission": "assertive-test-suite-sanitation-01KZME3P",
   "work_package": "WP02",
-  "captured_at": "2026-08-10T11:33:36Z",
+  "captured_at": "2026-08-10T11:59:06Z",
   "immutable_base": "28ae75ea998c898aba57364db7a06d2088bd2af2",
   "pre_wp_head": "3cbff4a47",
   "implementation_commits": {
     "bootstrap": "a779cd122",
     "scanner": "2e6a32f8d",
-    "review_cycle_2": "8f0d24768"
+    "review_cycle_2": "8f0d24768",
+    "review_cycle_3": "83c8a3a08"
   },
   "environment": {
     "os": "macOS 15.7.7 (24G720), Darwin 24.6.0 arm64",
@@ -43,27 +44,27 @@
   "patches": {
     "bootstrap": {
       "path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-replay.patch",
-      "sha256": "d21377282c4fea182fb7925765804c75b48edfe7145c4c950ce9ca0cf47afecf"
+      "sha256": "bbf8f7c93121fd12bb37a1bfbd87f57e6a11dfb929ea69da1b4d51b7f1cf3c89"
     },
     "scanner": {
       "path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-scanner-replay.patch",
-      "sha256": "830f164c224f56766dffa0404c960b751579dfb9ff3328762235dc039b0339d3"
+      "sha256": "6159cdbd4b9f6eea7ae73e814d9bca2aeb740461f918fc1ace251dd25b9e2c56"
     },
     "replay": {
-      "workspace": "/tmp/spec-kitty-wp02-cycle2-final2.Fiti5u/base",
+      "workspace": "/tmp/spec-kitty-wp02-cycle3-final.R3shCc/base",
       "apply": "both patches applied unchanged to immutable base; all five touched files were byte-identical to HEAD",
-      "bootstrap_result": "12 passed, 2 skipped in 5.47s on the byte-identical lane",
-      "scanner_result": "113 passed in 1.30s on the byte-identical lane"
+      "bootstrap_result": "13 passed, 2 skipped in 30.66s on the byte-identical lane",
+      "scanner_result": "113 passed in 25.42s on the byte-identical lane"
     }
   },
   "verification": [
     {
       "command": ".venv/bin/pytest tests/test_test_venv_bootstrap.py -q --tb=short",
-      "result": "12 passed, 2 skipped in 5.47s on macOS; regular-file and symlink invalid-final cases passed; Windows-only cases skipped"
+      "result": "13 passed, 2 skipped in 30.66s on macOS; combined stale-lease/external-final-symlink recovery preserved the target; Windows-only cases skipped"
     },
     {
       "command": ".venv/bin/pytest tests/_support/test_wall_clock_assertions.py -q --tb=short",
-      "result": "113 passed in 1.30s; schema-valid omission/substitution both forced rescan; distinct spawned publisher/reader passed"
+      "result": "113 passed in 25.42s; erased rows with recomputed self-hash failed the external HMAC authority and rescanned; distinct spawned publisher/reader passed"
     },
     {
       "command": ".venv/bin/pytest tests/integration/test_pytest_venv_concurrency.py -q --tb=short",
@@ -75,7 +76,7 @@
     },
     {
       "command": "identical cached focused scanner rerun",
-      "result": "2 passed in 0.91s; schema-valid corruption and spawned cross-process publication/read selected"
+      "result": "2 passed in 25.02s; recomputed self-hash adversary and spawned cross-process publication/read selected"
     }
   ],
   "parallel_clean_starts": {
