@@ -1,0 +1,240 @@
+{
+  "schema_version": "test-sanitation/v1",
+  "mission": "assertive-test-suite-sanitation-01KZME3P",
+  "work_package": "WP09",
+  "profile": "architect-alphonso",
+  "base_commit": "28ae75ea998c898aba57364db7a06d2088bd2af2",
+  "implementation_parent": "d25eec230295b73d6ec86f39f0001ab9837e942e",
+  "base_census_content_sha256": "08ef931c46e9d6a2608baec729203442640933bf2970cc83e794bf2f78011e08",
+  "decision_rule": "Retain only current negative invariants or behavioral contracts with a nonzero live corpus and a realistic authority-violating fault that reaches the assertion. Historical proof, names, self-presence, exact counts, positive placement, prose pins, synthetic self-tests, and advisory-only findings are deleted.",
+  "summary": {
+    "assigned_files": 37,
+    "reconciled_files": 37,
+    "unowned_files": 0,
+    "baseline_collected_nodes": 504,
+    "surviving_collected_nodes": 35,
+    "removed_collected_nodes": 469,
+    "removed_node_percent": 93.0556,
+    "deleted_files": 26,
+    "modified_test_files": 10,
+    "support_only_files": 1,
+    "product_files_changed": 0,
+    "workflow_files_changed": 0,
+    "shared_map_files_changed": 0,
+    "test_source_insertions_before_evidence": 338,
+    "test_source_deletions": 13837,
+    "skip_xfail_quarantine_added": 0
+  },
+  "environment": {
+    "platform": "macOS arm64",
+    "python": "3.11.15",
+    "venv_command": "uv sync --frozen --all-extras",
+    "pyproject_sha256": "b14b477bea53d1304e7e0e1af63c5389d1c1bffce704444c5f64461f866ca1ee",
+    "pytest_ini_sha256": "b75368c5df52dfd157c5af22de8da32558c9b8382a23ec2c4300d56ec89ae6bc",
+    "uv_lock_sha256": "5dbf66689f0048244c6d47082992e750fa3d047385f8e113d3f25f47382bcd5c"
+  },
+  "node_accounting": {
+    "base_nodeids_ref": "base-census.json collection.nodes[path_ref -> test_files[path_ref]], restricted to manifests.scanner_candidates owner=WP09",
+    "removed_nodeids_rule": "base nodeid set minus the exact survivor_nodeids arrays below; DELETE paths remove their complete base set",
+    "survivors": [
+      {
+        "path": "tests/architectural/test_arch_pole_deserialized.py",
+        "baseline": 39,
+        "current": 1,
+        "survivor_nodeids": ["tests/architectural/test_arch_pole_deserialized.py::test_architectural_suite_has_a_running_job"]
+      },
+      {
+        "path": "tests/architectural/test_arch_shard_marker_completeness.py",
+        "baseline": 2,
+        "current": 2,
+        "survivor_nodeids": [
+          "tests/architectural/test_arch_shard_marker_completeness.py::test_every_group_root_node_has_exactly_one_shard_marker[arch]",
+          "tests/architectural/test_arch_shard_marker_completeness.py::test_every_group_root_node_has_exactly_one_shard_marker[next]"
+        ]
+      },
+      {
+        "path": "tests/architectural/test_ci_collection_completeness.py",
+        "baseline": 7,
+        "current": 1,
+        "survivor_nodeids": ["tests/architectural/test_ci_collection_completeness.py::test_every_test_node_is_collected_on_a_push_to_main"]
+      },
+      {
+        "path": "tests/architectural/test_ci_fast_jobs_have_timeout.py",
+        "baseline": 2,
+        "current": 2,
+        "survivor_nodeids": [
+          "tests/architectural/test_ci_fast_jobs_have_timeout.py::test_ci_quality_fast_jobs_carry_timeout",
+          "tests/architectural/test_ci_fast_jobs_have_timeout.py::test_timeout_exemptions_exist_and_record_a_reason"
+        ]
+      },
+      {
+        "path": "tests/architectural/test_coverage_consumer_needs.py",
+        "baseline": 24,
+        "current": 2,
+        "survivor_nodeids": [
+          "tests/architectural/test_coverage_consumer_needs.py::test_src_coverage_emitters_reach_sonarcloud",
+          "tests/architectural/test_coverage_consumer_needs.py::test_coverage_consumers_depend_only_on_emitters"
+        ]
+      },
+      {
+        "path": "tests/architectural/test_coverage_root_collisions.py",
+        "baseline": 38,
+        "current": 2,
+        "survivor_nodeids": [
+          "tests/architectural/test_coverage_root_collisions.py::test_every_coverage_target_resolves",
+          "tests/architectural/test_coverage_root_collisions.py::test_path_form_coverage_roots_do_not_collide"
+        ]
+      },
+      {
+        "path": "tests/architectural/test_gate_read_literal_ban.py",
+        "baseline": 11,
+        "current": 0,
+        "survivor_nodeids": [],
+        "support_consumers": ["tests/architectural/test_coord_read_residuals_closeout.py"]
+      },
+      {
+        "path": "tests/architectural/test_mission_resolver_walker_gate.py",
+        "baseline": 6,
+        "current": 1,
+        "survivor_nodeids": ["tests/architectural/test_mission_resolver_walker_gate.py::test_no_unsanctioned_raw_kitty_specs_enumeration_in_src"]
+      },
+      {
+        "path": "tests/architectural/test_src_filter_coverage.py",
+        "baseline": 4,
+        "current": 3,
+        "survivor_nodeids": [
+          "tests/architectural/test_src_filter_coverage.py::test_unmatched_refs_equal_parsed_filter_groups_live",
+          "tests/architectural/test_src_filter_coverage.py::test_every_named_group_gates_a_test_running_job_live",
+          "tests/architectural/test_src_filter_coverage.py::test_catch_all_ignore_lists_mirror_owned_roots_live"
+        ]
+      },
+      {
+        "path": "tests/merge/test_push_preflight.py",
+        "baseline": 21,
+        "current": 15,
+        "survivor_nodeids": [
+          "tests/merge/test_push_preflight.py::test_domain_preflight_does_not_import_push_preflight_at_module_load",
+          "tests/merge/test_push_preflight.py::test_is_safe_to_push_predicate[in_sync-True]",
+          "tests/merge/test_push_preflight.py::test_is_safe_to_push_predicate[ahead-True]",
+          "tests/merge/test_push_preflight.py::test_is_safe_to_push_predicate[behind-False]",
+          "tests/merge/test_push_preflight.py::test_is_safe_to_push_predicate[diverged-False]",
+          "tests/merge/test_push_preflight.py::test_is_safe_to_push_predicate[no_tracking_branch-True]",
+          "tests/merge/test_push_preflight.py::test_check_push_safety_fetch_failure_returns_not_safe",
+          "tests/merge/test_push_preflight.py::test_check_push_safety_diverged_returns_not_safe",
+          "tests/merge/test_push_preflight.py::test_check_push_safety_ahead_returns_safe",
+          "tests/merge/test_push_preflight.py::test_push_blocked_but_local_results_preserved_when_diverged",
+          "tests/merge/test_push_preflight.py::test_resume_preserves_original_push_request",
+          "tests/merge/test_push_preflight.py::test_resume_cannot_add_push_to_local_only_merge",
+          "tests/merge/test_push_preflight.py::test_branch_commit_exists_inserts_end_of_options_before_ref",
+          "tests/merge/test_push_preflight.py::test_resolve_tracking_branch_inserts_end_of_options_before_ref",
+          "tests/merge/test_push_preflight.py::test_resolve_tracking_branch_still_resolves_real_upstream"
+        ]
+      },
+      {
+        "path": "tests/specify_cli/cli/commands/test_merge_residue_gate_single_authority_wp13.py",
+        "baseline": 29,
+        "current": 6,
+        "survivor_nodeids": [
+          "tests/specify_cli/cli/commands/test_merge_residue_gate_single_authority_wp13.py::test_ff_advance_ignores_obstructing_coordination_status_residue",
+          "tests/specify_cli/cli/commands/test_merge_residue_gate_single_authority_wp13.py::test_ff_advance_still_raises_on_obstructing_non_residue_file",
+          "tests/specify_cli/cli/commands/test_merge_residue_gate_single_authority_wp13.py::test_take_theirs_recognizes_previously_omitted_residue_member[issue-matrix.md]",
+          "tests/specify_cli/cli/commands/test_merge_residue_gate_single_authority_wp13.py::test_take_theirs_recognizes_previously_omitted_residue_member[acceptance-matrix.json]",
+          "tests/specify_cli/cli/commands/test_merge_residue_gate_single_authority_wp13.py::test_take_theirs_does_not_swallow_non_residue_source_conflict",
+          "tests/specify_cli/cli/commands/test_merge_residue_gate_single_authority_wp13.py::test_take_theirs_does_not_swallow_primary_planning_conflict"
+        ]
+      }
+    ]
+  },
+  "controlled_fault_proofs": [
+    {
+      "family": "ci-route-and-coverage-graph",
+      "authority": "open #1931 and ADR 2026-05-28-1",
+      "production_copy": "/tmp/wp09-probes.OF42ZQ/.github/workflows/ci-quality.yml",
+      "faults": ["remove architectural selector from every owning gate", "remove fast timeout", "disconnect coverage emitter", "add phantom consumer need", "add unresolved coverage root", "add two roots with the same emitted relative filename", "rename a src filter without route wiring"],
+      "act_reached": true,
+      "intended_assertions_failed": 8,
+      "unrelated_assertions_passed": 2,
+      "duration_seconds": 132.14,
+      "command": ".venv/bin/pytest -q test_arch_pole_deserialized.py test_ci_fast_jobs_have_timeout.py test_coverage_consumer_needs.py test_coverage_root_collisions.py test_src_filter_coverage.py",
+      "result": "8 failed, 2 passed"
+    },
+    {
+      "family": "ci-collection-route",
+      "authority": "open #1931",
+      "fault": "remove architectural selector from every primary-push owning gate",
+      "corpus_nodes": 37072,
+      "act_reached": true,
+      "intended_assertion_failed": true,
+      "observed_orphans": 1149,
+      "duration_seconds": 113.49,
+      "command": ".venv/bin/pytest -q tests/architectural/test_ci_collection_completeness.py::test_every_test_node_is_collected_on_a_push_to_main"
+    },
+    {
+      "family": "timeout-exemption-and-catchall-ownership",
+      "authority": "open #3143 and open #1931",
+      "faults": ["remove required exemption rationale", "add tests/ghost_suite catch-all ignore with no owning shard"],
+      "act_reached": true,
+      "intended_assertions_failed": 2,
+      "duration_seconds": 39.62,
+      "result": "2 failed"
+    },
+    {
+      "family": "shard-partition",
+      "authority": "tests._shard_registry and open #1931",
+      "fault": "give a live architectural node all three arch shard markers in the disposable source copy",
+      "corpus_nodes": 37072,
+      "act_reached": true,
+      "intended_assertion_failed": true,
+      "observed_markers": ["arch_shard_1", "arch_shard_2", "arch_shard_3"],
+      "duration_seconds": 97.15
+    },
+    {
+      "family": "mission-resolver-boundary",
+      "authority": "ADR 2026-07-08-1",
+      "fault": "add src/specify_cli/wp09_unsanctioned_walker.py calling iterdir on repo_root/kitty-specs",
+      "act_reached": true,
+      "intended_assertion_failed": true,
+      "observed_hit": "src/specify_cli/wp09_unsanctioned_walker.py:8 iterdir"
+    },
+    {
+      "family": "push-safety-behavior",
+      "authority": "ADR 2026-06-05-1",
+      "fault": "make behind remote state publish-safe while diverged remains blocked",
+      "act_reached": true,
+      "intended_assertions_failed": 1,
+      "compliant_controls_passed": 4,
+      "observed_failure": "behind expected False, got True"
+    },
+    {
+      "family": "coord-residue-behavior",
+      "authority": "current artifact partition and stale-lane auto-rebase ADR",
+      "fault": "make every path coordination residue",
+      "act_reached": true,
+      "intended_assertions_failed": 3,
+      "compliant_coord_residue_controls_passed": 3,
+      "observed_failures": ["author-owned obstruction did not raise", "source conflict was swallowed", "primary plan conflict was swallowed"]
+    },
+    {
+      "family": "coord-read-support-compatibility",
+      "authority": "ADR 2026-06-26-1",
+      "equivalent_live_gate": "tests/architectural/test_coord_read_residuals_closeout.py",
+      "result": "11 passed in 43.85s",
+      "command": ".venv/bin/pytest -q tests/architectural/test_coord_read_residuals_closeout.py"
+    }
+  ],
+  "validation": [
+    {"command": ".venv/bin/pytest --collect-only -q <11 retained WP09 paths>", "result": "35 tests collected in 44.96s"},
+    {"command": ".venv/bin/pytest -q <11 retained WP09 paths>", "result": "35 passed in 180.37s"},
+    {"command": ".venv/bin/pytest -q <15 pre-final-authority-pass retained WP09 paths>", "result": "45 passed in 303.77s; final four paths were then deleted as historical positive-shape scaffolds"},
+    {"command": ".venv/bin/ruff check <retained WP09 paths>", "result": "All checks passed"},
+    {"command": ".venv/bin/mypy <13 changed source files before final four deletions>", "result": "Success: no issues found"},
+    {"command": ".venv/bin/pytest -q tests/architectural/test_coord_read_residuals_closeout.py", "result": "11 passed in 43.85s"}
+  ],
+  "handoff": {
+    "owner": "WP07",
+    "shared_map": "tests/_arch_shard_map.py",
+    "deleted_path_count": 26,
+    "deleted_paths_ref": "WP09.yaml handoff.deleted_paths",
+    "support_only_path_to_keep": "tests/architectural/test_gate_read_literal_ban.py"
+  }
+}
