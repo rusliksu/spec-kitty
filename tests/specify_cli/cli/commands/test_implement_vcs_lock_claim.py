@@ -409,4 +409,6 @@ def test_is_vcs_lock_only_meta_diff_truth_table(
 ) -> None:
     """The pure decision distinguishes a lock-field-only diff from every diff
     that touches a non-lock key (and from an empty diff)."""
+    assert _is_vcs_lock_only_meta_diff(None, {}) is False
+    assert _is_vcs_lock_only_meta_diff({}, {}) is False
     assert _is_vcs_lock_only_meta_diff(committed, working) is expected
