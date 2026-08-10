@@ -28,6 +28,55 @@ _REGRESSION_NODE = (
     "test_mission_create_json_strict_when_sync_skips_ingress"
 )
 
+# Exact pre-split catch-all selector from #3284. Its replacement is evaluated
+# from the live parsed workflow below, over one shared collected universe.
+_LEGACY_CORE_MISC = gc.Gate(
+    workflow="legacy-ci-quality.yml",
+    job="integration-tests-core-misc",
+    shard=None,
+    paths=["tests"],
+    ignores=[
+        "tests/doctrine",
+        "tests/kernel",
+        "tests/status",
+        "tests/specify_cli/status",
+        "tests/sync",
+        "tests/merge",
+        "tests/missions",
+        "tests/post_merge",
+        "tests/release",
+        "tests/review",
+        "tests/next",
+        "tests/specify_cli/next",
+        "tests/lanes",
+        "tests/test_dashboard",
+        "tests/upgrade",
+        "tests/cli",
+        "tests/runtime",
+        "tests/charter",
+        "tests/agent",
+        "tests/docs",
+    ],
+    marker_expr="not windows_ci and (git_repo or integration or architectural)",
+)
+_CORE_MISC_REPLACEMENT_JOBS = frozenset(
+    {
+        "integration-tests-core-misc",
+        "arch-adversarial",
+        "timing-nfr-serial",
+        "regression-tests",
+        "quarantine-visibility",
+        "e2e-cross-cutting",
+        # Subtrees split out of the former catch-all after #3284.
+        "fast-tests-cli",
+        "integration-tests-charter",
+        "integration-tests-cli",
+        "integration-tests-lanes",
+        "integration-tests-missions",
+        "slow-tests",
+    }
+)
+
 
 def _load_workflow() -> dict[str, Any]:
     data: dict[str, Any] = yaml.safe_load(_WORKFLOW.read_text(encoding="utf-8"))
@@ -126,6 +175,45 @@ def _shell_array(run_script: str, name: str) -> tuple[str, ...]:
         assert re.search(rf"(?m)^\s*{re.escape(name)}=\(\)\s*$", run_script)
         return ()
     return tuple(line.strip() for line in match.group(1).splitlines() if line.strip())
+
+
+def test_live_core_misc_replacement_union_covers_legacy_selection() -> None:
+    """#3284: live route union must dominate the exact legacy catch-all.
+
+    One bounded whole-suite collection feeds both sides. Selector evaluation is
+    in-process against the statically parsed workflow, replacing the former
+    eight recursive ``pytest --collect-only`` subprocesses without weakening
+    the legacy-node -> replacement-union boundary.
+    """
+    universe = gc.collect_universe()
+    replacement_gates = [
+        gate
+        for gate in gc.load_gates()
+        if gate.workflow == "ci-quality.yml"
+        and gate.job in _CORE_MISC_REPLACEMENT_JOBS
+    ]
+    legacy_nodes = gc._selected_nodeids([_LEGACY_CORE_MISC], universe)
+    replacement_nodes = gc._selected_nodeids(replacement_gates, universe)
+    missing = legacy_nodes - replacement_nodes
+
+    assert legacy_nodes, "legacy core-misc selector unexpectedly selects no live nodes"
+    assert replacement_gates, "no live replacement gates parsed from ci-quality.yml"
+    assert not missing, (
+        "live route split dropped legacy core-misc nodes: "
+        f"{sorted(missing)[:20]}"
+    )
+
+    # Causal fault: removing the real blocking regression owner must expose the
+    # accepted #2782 reproduction, proving the union assertion can red on an
+    # actual route loss rather than only comparing two vacuous/model-only sets.
+    without_regression = [
+        gate for gate in replacement_gates if gate.job != "regression-tests"
+    ]
+    fault_missing = legacy_nodes - gc._selected_nodeids(without_regression, universe)
+    assert _REGRESSION_NODE in fault_missing, (
+        "removing the live regression route did not expose its #2782 owner; "
+        "the core-misc replacement oracle is no longer causal"
+    )
 
 
 def test_missions_filter_includes_missions_package_and_tests() -> None:

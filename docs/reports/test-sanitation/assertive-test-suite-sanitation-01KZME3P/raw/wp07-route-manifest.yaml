@@ -16,6 +16,18 @@ changed_classes:
     owner_route: quarantine
     secondary_routes: []
 routes:
+  - route_id: install
+    role: setup
+    required: true
+    events: [local]
+    selector:
+      paths: [uv.lock, pyproject.toml]
+      markers: []
+      ignores: []
+      environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+    base_mapping: {route_id: install, selector: "uv sync --frozen --all-extras"}
+    head_mapping: {route_id: install, selector: "uv sync --frozen --all-extras"}
+    mapping_reason: Explicit setup predecessor; measured at every stage under the frozen prewarmed-venv policy.
   - route_id: regression
     role: owner
     required: true
@@ -45,6 +57,30 @@ routes:
     base_mapping: {route_id: full-parallel, selector: tests/}
     head_mapping: {route_id: full-parallel, selector: tests/}
     mapping_reason: Frozen local coverage workload remains in the denominator and secondarily executes the retained P0 node.
+  - route_id: full-collection
+    role: coverage_inventory
+    required: true
+    events: [local]
+    selector:
+      paths: [tests/]
+      markers: []
+      ignores: [tests/sync/test_orphan_sweep.py]
+      environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+    base_mapping: {route_id: full-collection, selector: "tests/ --collect-only"}
+    head_mapping: {route_id: full-collection, selector: "tests/ --collect-only"}
+    mapping_reason: Retained frozen inventory route; measured four stages x three repetitions.
+  - route_id: orphan-sweep
+    role: owner
+    required: true
+    events: [local]
+    selector:
+      paths: [tests/sync/test_orphan_sweep.py]
+      markers: []
+      ignores: []
+      environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+    base_mapping: {route_id: orphan-sweep, selector: tests/sync/test_orphan_sweep.py}
+    head_mapping: {route_id: orphan-sweep, selector: tests/sync/test_orphan_sweep.py}
+    mapping_reason: Retained unchanged; outside WP07 selector change.
   - route_id: quarantine
     role: owner
     required: false
@@ -61,6 +97,42 @@ routes:
       route_id: quarantine
       selector: "explicit empty QUARANTINE_PATHS manifest"
     mapping_reason: Final adjudicated Tier-3 quarantine set is empty; route stays visible and non-blocking without collecting unrelated tests.
+  - route_id: contract
+    role: owner
+    required: true
+    events: [local]
+    selector:
+      paths: [tests/contract/]
+      markers: []
+      ignores: []
+      environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+    base_mapping: {route_id: contract, selector: tests/contract/}
+    head_mapping: {route_id: contract, selector: tests/contract/}
+    mapping_reason: Retained unchanged; outside WP07 selector change.
+  - route_id: architectural
+    role: owner
+    required: true
+    events: [local]
+    selector:
+      paths: [tests/architectural/]
+      markers: []
+      ignores: []
+      environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+    base_mapping: {route_id: architectural, selector: tests/architectural/}
+    head_mapping: {route_id: architectural, selector: tests/architectural/}
+    mapping_reason: Retained unchanged; validates routing architecture and reconciliation.
+  - route_id: sibling-e2e
+    role: owner
+    required: true
+    events: [manual]
+    selector:
+      paths: [scenarios/]
+      markers: []
+      ignores: []
+      environment_id: d2e994e2d7465d82a398fbd8ee7c93fb4efb789b0724c312099488742869fb52
+    base_mapping: {route_id: sibling-e2e, selector: scenarios/}
+    head_mapping: {route_id: sibling-e2e, selector: scenarios/}
+    mapping_reason: Retained unchanged in sibling repository; outside WP07 selector change.
   - route_id: quality-gate
     role: hard_gate
     required: true
@@ -74,12 +146,18 @@ routes:
     head_mapping: {route_id: quality-gate, selector: "needs: regression-tests"}
     mapping_reason: Blocking release authority is unchanged; quarantine remains absent from the aggregate.
 edges:
+  - {from: install, to: full-collection}
   - {from: install, to: regression}
   - {from: install, to: quarantine}
   - {from: install, to: full-parallel}
+  - {from: install, to: orphan-sweep}
+  - {from: install, to: contract}
+  - {from: install, to: architectural}
+  - {from: install, to: sibling-e2e}
   - {from: regression, to: quality-gate}
   - {from: full-parallel, to: quality-gate}
 denominator:
-  frozen_routes: [regression, quarantine, full-parallel, quality-gate]
+  frozen_routes: [full-collection, full-parallel, orphan-sweep, regression, quarantine, contract, architectural, sibling-e2e]
+  control_nodes: [install, quality-gate]
   deleted_routes: []
   renamed_routes: []

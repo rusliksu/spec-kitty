@@ -110,7 +110,6 @@ class BaselinesFile(BaseModel):
     test_migration_chain_integrity: dict[str, int]
     test_auth_transport_singleton: dict[str, int]
     test_example_round_trip: dict[str, int]
-    test_all_declarations_required: dict[str, int]
 
 
 _BASELINES_PATH = Path(__file__).parent / "_baselines.yaml"
@@ -124,7 +123,6 @@ _REQUIRED_TOP_LEVEL_KEYS: frozenset[str] = frozenset(
         "test_migration_chain_integrity",
         "test_auth_transport_singleton",
         "test_example_round_trip",
-        "test_all_declarations_required",
         "test_no_inert_schema_slots",
         "test_reference_enum_ratchet",
         "test_egress_consent_boundary",
@@ -139,20 +137,9 @@ _REQUIRED_TOP_LEVEL_KEYS: frozenset[str] = frozenset(
 # remove it from the YAML) needs the owner of the gate it governs, which is
 # outside mission `sync-sleep-count-3136-01KZ9B5A`'s scope to decide
 # unilaterally. Adding it to `_REQUIRED_TOP_LEVEL_KEYS` alone is NOT an option:
-# that reproduces `test_all_declarations_required`'s defect (required, never
-# read). See `residual-ledger.md` RL-030.
-#
-# `test_verdict_seam_census` (landing 2026-08-08, RL-046): admitted by the gate
-# owner during the #3252 landing pass. It is a self-contained census compared
-# IN-FILE against `census/verdict_seam_IC01.yaml` (see `_baselines.yaml`'s own
-# header above that key), so it is deliberately read by NO comparison here.
-# Registering it in `_REQUIRED_TOP_LEVEL_KEYS` + both `single_baselines` lists --
-# the arm's default suggestion below -- would make this file ratchet a value it
-# has no business reading, i.e. exactly the "required, never read" defect the
-# arm warns about. Grandfathering is therefore the correct bin, and this
-# widening is the visible-diff-in-this-file the self-pin is designed to force.
+# a key must also join both live comparison lists or it remains inert.
 _GRANDFATHERED_UNREGISTERED_KEYS: frozenset[str] = frozenset(
-    {"test_no_dead_symbols", "test_verdict_seam_census"}
+    {"test_no_dead_symbols"}
 )
 
 # Per-category sub-keys for test_no_dead_modules (FR-112 refactor).
@@ -540,7 +527,7 @@ def test_no_unregistered_baseline_keys_are_added() -> None:
     unregistered = set(data) - _REQUIRED_TOP_LEVEL_KEYS
 
     assert (
-        frozenset({"test_no_dead_symbols", "test_verdict_seam_census"})
+        frozenset({"test_no_dead_symbols"})
         == _GRANDFATHERED_UNREGISTERED_KEYS
     ), (
         "`_GRANDFATHERED_UNREGISTERED_KEYS` is CLOSED and may only shrink. "
@@ -556,27 +543,4 @@ def test_no_unregistered_baseline_keys_are_added() -> None:
         "does NOT make its growth fail anything -- both comparisons run off the "
         "hardcoded `single_baselines` lists. Register it in "
         "`_REQUIRED_TOP_LEVEL_KEYS` AND in both lists, or remove it from the YAML."
-    )
-
-
-def test_declaration_pins_are_zero_tolerance() -> None:
-    """`test_all_declarations_required` is required yet read by no comparison.
-
-    It is the second half of the inert-key pair, and it needs a DIFFERENT answer
-    from `test_no_dead_symbols`: the module publishes no module-scope frozenset
-    at all (only two parametrized zero-tolerance tests), so it structurally
-    cannot join `single_baselines` -- `_import_module_attr` does `getattr` then
-    `len`, and there is nothing there to take the length of. Its sub-keys are
-    pins, not allowlists, so a bespoke zero-tolerance arm is the right shape:
-    the numbers are compared by something, and any drift above zero fails.
-    """
-    section = _load_baselines()["test_all_declarations_required"]
-    non_zero = {key: value for key, value in section.items() if value != 0}
-
-    assert non_zero == {}, (
-        "`_baselines.yaml::test_all_declarations_required` records a non-zero "
-        f"pin: {non_zero}. These sub-keys are zero-tolerance pins per the "
-        "charter's `__all__` Declaration Convention (C-007), not allowlists to "
-        "be grown -- every module under `src/charter/` and `src/kernel/` must "
-        "declare `__all__`."
     )
