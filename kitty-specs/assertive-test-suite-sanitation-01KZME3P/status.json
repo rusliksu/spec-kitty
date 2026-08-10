@@ -1,7 +1,7 @@
 {
-  "event_count": 24,
-  "last_event_id": "01KZMS1N2Y29WASBEFVSH34DP0",
-  "materialized_at": "2026-08-10T02:46:50.718069+00:00",
+  "event_count": 27,
+  "last_event_id": "01KZMSCRJ5BJ126CGQ2PX9FNM9",
+  "materialized_at": "2026-08-10T02:52:54.699477+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -12,20 +12,20 @@
     "claimed": 0,
     "done": 0,
     "for_review": 0,
-    "in_progress": 0,
-    "in_review": 1,
+    "in_progress": 1,
+    "in_review": 0,
     "planned": 14
   },
   "work_packages": {
     "WP01": {
       "actor": "codex",
-      "agent": "codex",
-      "agent_profile": "reviewer-renata",
+      "agent": "",
+      "agent_profile": "python-pedro",
       "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "in_review",
-      "last_event_id": "01KZMS1N2Y29WASBEFVSH34DP0",
-      "last_transition_at": "2026-08-10T02:46:50.718069+00:00",
+      "lane": "in_progress",
+      "last_event_id": "01KZMSCRJ5BJ126CGQ2PX9FNM9",
+      "last_transition_at": "2026-08-10T02:52:54.699477+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "Evidence commit 146ba5a4c; lane policy cleanup 5c26ceb8c; snapshot exit 0 (37444 nodes/29755 units, 22.2 MiB); validate exit 0; selftest 13/13 exit 0; ruff exit 0; mypy exit 0; workflow validation exit 0",
@@ -34,21 +34,21 @@
       "provider": "__resolved_provider_absent__",
       "review": null,
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP01-census-evidence-foundation/review-cycle-1.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP01-census-evidence-foundation/review-cycle-1.md",
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP01-census-evidence-foundation/review-cycle-2.md",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP01-census-evidence-foundation/review-cycle-2.md",
         "reviewer": "reviewer-renata",
         "verdict": "changes_requested"
       },
-      "role": "reviewer",
-      "shell_pid": 28365,
+      "role": "implementer",
+      "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T001": "done",
-        "T002": "done",
-        "T003": "done",
-        "T004": "done",
-        "T005": "done",
-        "T006": "done"
+        "T001": "planned",
+        "T002": "planned",
+        "T003": "planned",
+        "T004": "planned",
+        "T005": "planned",
+        "T006": "planned"
       }
     },
     "WP02": {
