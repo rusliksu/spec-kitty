@@ -21,6 +21,7 @@ The mission-local auditor performs AST/ignore discovery and invokes pytest with 
   docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP*.yaml
 .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py aggregate \
   docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json \
+  docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/head-census.json \
   docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-workloads.yaml \
   docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-full-suite-summary.txt \
   docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/legacy-shard-normalization.yaml \

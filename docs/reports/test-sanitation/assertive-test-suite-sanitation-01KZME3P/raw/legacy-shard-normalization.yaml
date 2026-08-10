@@ -8,6 +8,10 @@ authority:
   no_fourth_cycle: true
   source: kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP08-aggregate-closure.md#T044
 source_documents:
+  - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP02.yaml
+    sha256: d5d0f604d5e19b1c079b435c0d14d7c66c82090624c1b1944960326fe296d8ed
+  - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP03.yaml
+    sha256: 9f2e6c050fbb1913f9690009940644b101c53021f8e28f82a1807ea01895082b
   - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP05.yaml
     sha256: facbef4cec824e3f3ee6c38ece5d389ccb5fcae528ae1a3487dc60a5d23f3302
   - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP04.yaml
@@ -20,8 +24,16 @@ source_documents:
     sha256: ef11a0fca778ea6ceb6e434da149eea996370a08111bbb7de9b526036587750f
   - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP10.yaml
     sha256: d01871deb728b8de964bb3167063d8a9a3e0e74ac5289abf08945b4d57c78ae7
+  - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP11.yaml
+    sha256: 69fb58ce9e005ff1be7287842b7e14818c38d550f704bdf8bac614b5c0493d1f
   - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP12.yaml
     sha256: 76e725416f90b3d5faa396f5495d0a39d50ce1d6015320bb086d60db0c012d5b
+  - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP13.yaml
+    sha256: 775f8f17b5c0093b0be7c3e4c14673d84f259564a009eaa063c80128d8c5ba20
+  - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP14.yaml
+    sha256: f37b796475711e8ffe57410bfbdcc96dbdf48008d1328b6ec3200bb4481197b8
+  - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP15.yaml
+    sha256: 78448b08879deae79c34e9a712ab543c5bdaa03f612b72797d062d29972d3b08
 raw_artifacts:
   - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-results.json
     sha256: 33e7958df4272d3571aa0ae6555866a7389d8dd66ae0f25f0a143d65f5a9a913
@@ -42,6 +54,10 @@ historical_blobs:
     path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp10-probes-cycle2.json
     git_blob: ae10e9338394b700b53a620292169a7c990cd1d7
     sha256: b91073daa5e591c78ecc61f923db66e5808f5a9d9202795a23c6ced15ee08be6
+  - commit: 6dec67fa85402f542896cb0cbae8c93cc706be1e
+    path: kitty-specs/assertive-test-suite-sanitation-01KZME3P/status.json
+    git_blob: d662ffdc1cceb369be9173f5d447fe2afa29015f
+    sha256: dc47405b7ffd59c4e977983da440ba44dde24a5ab2672741feab6d3775de1f25
 operations:
   - id: wp05-retained-scanner-closure
     kind: synthesize_wp05_survivors
@@ -107,10 +123,29 @@ operations:
     expected_current: 36
     expected_terminal_deletions: 390
     expected_net_removed: 382
+  - id: approved-review-metadata-closure
+    kind: backfill_approved_review_metadata
+    source: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP02.yaml
+    status_commit: 6dec67fa85402f542896cb0cbae8c93cc706be1e
+    status_path: kitty-specs/assertive-test-suite-sanitation-01KZME3P/status.json
+    packages:
+      WP02: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP02.yaml
+      WP03: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP03.yaml
+      WP04: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP04.yaml
+      WP05: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP05.yaml
+      WP06: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP06.yaml
+      WP07: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP07.yaml
+      WP09: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP09.yaml
+      WP10: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP10.yaml
+      WP11: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP11.yaml
+      WP12: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP12.yaml
+      WP13: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP13.yaml
+      WP14: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP14.yaml
+      WP15: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP15.yaml
 candidate_universe:
   enforce: true
   inert_candidates: exactly_once
   exact_body_members: exactly_once
   promoted_semantic_members: exactly_once
   scanner_source_units: exactly_once
-content_sha256: ab21734c4c469facf0855e0f756a66e35877f37f44061f922c19f202cae6a761
+content_sha256: 13efa3d4718c3ce79f6dd1c7c59588fb54bd871ad29399b3e0dfcf8798a58551

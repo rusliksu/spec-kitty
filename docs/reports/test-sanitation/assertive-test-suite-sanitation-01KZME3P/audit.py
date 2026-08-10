@@ -2756,6 +2756,71 @@ def _synthesize_wp09(
     source["dispositions"] = normalized_rows
 
 
+def _backfill_approved_review_metadata(
+    documents: Sequence[tuple[Path, dict[str, Any]]], operation: Mapping[str, Any],
+    errors: list[str],
+) -> None:
+    status_commit = operation.get("status_commit")
+    status_path = operation.get("status_path")
+    packages = operation.get("packages")
+    if not isinstance(status_commit, str) or not isinstance(status_path, str) or not isinstance(packages, dict):
+        errors.append("normalization review metadata: commit/path/packages authority required")
+        return
+    try:
+        status = json.loads(_git_blob(status_commit, status_path))
+    except (AuditError, json.JSONDecodeError) as exc:
+        errors.append(f"normalization review metadata: {exc}")
+        return
+    work_packages = status.get("work_packages") if isinstance(status, dict) else None
+    if not isinstance(work_packages, dict):
+        errors.append("normalization review metadata: status work_packages mapping missing")
+        return
+    expected_packages = {
+        "WP02", "WP03", "WP04", "WP05", "WP06", "WP07", "WP09",
+        "WP10", "WP11", "WP12", "WP13", "WP14", "WP15",
+    }
+    if set(packages) != expected_packages or not all(isinstance(value, str) for value in packages.values()):
+        errors.append("normalization review metadata: exact approved package/source map drift")
+        return
+    for wp, source_key_value in sorted(packages.items()):
+        source_key = cast(str, source_key_value)
+        source = _normalization_source(documents, source_key)
+        authority = work_packages.get(wp)
+        if source is None or not isinstance(authority, dict):
+            errors.append(f"normalization review metadata: missing {wp} source/status authority")
+            continue
+        rows = source.get("dispositions")
+        profile = authority.get("agent_profile")
+        event_id = authority.get("last_event_id")
+        transition_at = authority.get("last_transition_at")
+        notes = authority.get("notes")
+        if (
+            authority.get("lane") != "approved" or profile != "reviewer-renata"
+            or not all(isinstance(value, str) and value for value in (event_id, transition_at))
+            or not isinstance(notes, list) or not notes or not isinstance(rows, list) or not rows
+        ):
+            errors.append(f"normalization review metadata: {wp} is not a complete approved reviewer authority")
+            continue
+        reviewer_actor = authority.get("agent")
+        if not isinstance(reviewer_actor, str) or not reviewer_actor:
+            reviewer_actor = "root-arbiter"
+        for index, row in enumerate(rows):
+            if not isinstance(row, dict):
+                errors.append(f"normalization review metadata: {wp} dispositions[{index}] must be mapping")
+                continue
+            previous = row.get("review")
+            implementer = previous.get("implementer") if isinstance(previous, dict) else None
+            if not isinstance(implementer, str) or not implementer:
+                errors.append(f"normalization review metadata: {wp} dispositions[{index}] implementer missing")
+                continue
+            row["review"] = {
+                "implementer": implementer,
+                "independent_reviewer": f"{profile}/{reviewer_actor}",
+                "verdict": f"runtime-approved:{event_id}",
+                "timestamp": transition_at,
+            }
+
+
 def _apply_normalization(
     documents: Sequence[tuple[Path, dict[str, Any]]], errors: list[str],
 ) -> list[tuple[Path, dict[str, Any]]]:
@@ -2785,12 +2850,15 @@ def _apply_normalization(
     for operation in operations:
         if not isinstance(operation, dict) or not _nonempty_string(operation.get("id")):
             continue
+        kind = operation.get("kind")
+        if kind == "backfill_approved_review_metadata":
+            _backfill_approved_review_metadata(normalized, operation, errors)
+            continue
         source_key = operation.get("source")
         source = _normalization_source(normalized, source_key) if isinstance(source_key, str) else None
         if source is None:
             errors.append(f"normalization {operation.get('id')}: supplied source document missing")
             continue
-        kind = operation.get("kind")
         if kind == "drop_candidates":
             _drop_normalized_candidates(source, operation, errors)
         elif kind == "patch_wp10":
