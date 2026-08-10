@@ -1,6 +1,6 @@
 ---
 work_package_id: WP09
-title: Structural cohort B sanitation
+title: CI gate and route structural sanitation
 dependencies:
 - WP01
 requirement_refs:
@@ -35,58 +35,40 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp09-results.json
 execution_mode: code_change
 owned_files:
+- tests/architectural/test_arch_pole_deserialized.py
 - tests/architectural/test_arch_shard_marker_completeness.py
-- tests/architectural/test_artifact_selection_completeness.py
-- tests/architectural/test_built_in_location_authority.py
-- tests/architectural/test_charter_no_specify_cli_import.py
-- tests/architectural/test_charter_runtime_canonical_paths.py
+- tests/architectural/test_arch_unblind_matrix.py
+- tests/architectural/test_ci_architectural_gate_coverage.py
 - tests/architectural/test_ci_collection_completeness.py
 - tests/architectural/test_ci_fast_jobs_have_timeout.py
-- tests/architectural/test_commit_target_kind_guard.py
-- tests/architectural/test_coord_read_residuals_closeout.py
-- tests/architectural/test_coord_rollback_coherence_guard.py
+- tests/architectural/test_ci_topology_worklist.py
 - tests/architectural/test_coverage_consumer_needs.py
+- tests/architectural/test_coverage_root_collisions.py
 - tests/architectural/test_cross_gate_churn_agreement.py
 - tests/architectural/test_cross_grain_builtin_gate.py
-- tests/architectural/test_dead_builtin_doc_paths.py
-- tests/architectural/test_execution_context_parity.py
+- tests/architectural/test_docs_scoped_arch_coverage.py
 - tests/architectural/test_gate_coverage.py
-- tests/architectural/test_git_matrix_paths_resolve.py
-- tests/architectural/test_glossary_pack_boundary.py
-- tests/architectural/test_glossary_pack_no_regression.py
+- tests/architectural/test_gate_coverage_parse_model.py
+- tests/architectural/test_gate_read_literal_ban.py
 - tests/architectural/test_inline_meta_read_gate.py
 - tests/architectural/test_job_count_ceiling.py
-- tests/architectural/test_merge_pipeline_ratchets.py
-- tests/architectural/test_merge_reconciliation_class_guard.py
-- tests/architectural/test_migration_chain_integrity.py
-- tests/architectural/test_mission_runtime_surface.py
-- tests/architectural/test_no_dead_cli_paths.py
-- tests/architectural/test_no_inert_schema_slots.py
-- tests/architectural/test_no_op_stable_writes.py
-- tests/architectural/test_no_phantom_worktree_repair.py
-- tests/architectural/test_no_runtime_pypi_dep.py
-- tests/architectural/test_org_activation_seam.py
-- tests/architectural/test_patch_seam_census_control.py
+- tests/architectural/test_marker_baseline.py
+- tests/architectural/test_marker_registry_single_source.py
+- tests/architectural/test_mission_resolver_walker_gate.py
+- tests/architectural/test_next_shard_marker_completeness.py
+- tests/architectural/test_no_primary_anchored_gates.py
 - tests/architectural/test_plugin_validate_workflow.py
-- tests/architectural/test_pyproject_shape.py
 - tests/architectural/test_pytest_marker_convention.py
-- tests/architectural/test_ratchet_positional_anchor_ban.py
-- tests/architectural/test_read_surface_placement_guard.py
-- tests/architectural/test_reference_enum_ratchet.py
-- tests/architectural/test_resolution_activation_foundation.py
-- tests/architectural/test_resume_non_reemission_guard.py
-- tests/architectural/test_status_sync_boundary.py
-- tests/architectural/test_surface_resolution_audit.py
-- tests/architectural/test_tasks_command_surface.py
-- tests/architectural/test_tid251_enforcement.py
+- tests/architectural/test_pytest_marker_correctness.py
+- tests/architectural/test_resolution_authority_gates.py
+- tests/architectural/test_shard_universe_bounded.py
+- tests/architectural/test_src_filter_coverage.py
+- tests/architectural/test_tasks_domain_gate_visibility.py
 - tests/architectural/test_trigger_registry_coverage.py
-- tests/architectural/test_trio_seam_only.py
-- tests/architectural/test_typer_compat_ci.py
-- tests/architectural/test_untrusted_path_containment.py
-- tests/architectural/test_urn_resolver_scalar_fence.py
+- tests/architectural/test_ui_e2e_coverage_discovered.py
+- tests/architectural/test_unit_contract_residual_gate.py
+- tests/architectural/test_workflow_coherence.py
 - tests/architectural/test_workflow_dist_lint.py
-- tests/architectural/test_wp_prompt_build_latency.py
-- tests/architectural/test_write_surface_placement_guard.py
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP09.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp09-results.json
 tags: []
@@ -94,7 +76,7 @@ tracker_refs:
 - '#1931'
 ---
 
-# WP09 — Structural Cohort B Sanitation
+# WP09 — CI Gate and Route Structural Sanitation
 
 ## Do First
 
@@ -102,13 +84,13 @@ Load `architect-alphonso`. Read FR-006/FR-007, the current ADR/contract authorit
 
 ## Objective
 
-Terminally adjudicate every assigned cohort-B structural file. Delete advisory-only, historical, positive-shape, prose/name/count, and migration-completion scaffolds that cannot catch a plausible current bug. Preserve a current negative invariant only when it scans a nonzero live corpus and fails at its intended oracle under a realistic authority violation.
+Terminally adjudicate the coherent CI/gate/coverage/marker/shard structural family. Delete advisory-only and positive-shape route scaffolds that cannot catch a plausible current CI ownership bug. Preserve a negative route/gate invariant only with live corpus and realistic authority-violating fault proof.
 
 ## T051 — Complete Machine Screening
 
 - Reconcile every owned path against WP01's generated structural manifest; missing/unowned paths stop for task replan before edits.
 - Record scanner kind, corpus, positive vs negative shape, asserted oracle, referenced authority/issue, historical mission tokens, count/prose/name pins, and current CI role.
-- Every assigned file gets a terminal screening verdict. Promote suspect survivors/deletions to deep rows; unchanged non-candidates need only the lightweight manifest row.
+- Every assigned file gets a terminal verdict. Every survivor references node-level or valid-family causal proof; group only guards with the same production path, authority, corpus, oracle, and fault.
 - Import/collection failure, an empty corpus, or pasting a searched literal does not prove causal bite.
 
 ## T052 — Delete Spent Scaffolds
@@ -120,7 +102,7 @@ Terminally adjudicate every assigned cohort-B structural file. Delete advisory-o
 
 ## T053 — Controlled Fault Proof
 
-- For each deletion-justifying or materially changed survivor, name current authority, assert a nonzero corpus floor, and introduce a realistic prohibited source/AST/dependency change in a disposable copy.
+- For each survivor or valid equivalent family, name current authority, assert a nonzero corpus floor, and introduce a realistic prohibited source/AST/dependency change in a disposable copy.
 - The Act must execute and intended assertion must fail. Collection/import/setup failures do not count.
 - Use two-sided controls: compliant change remains green; prohibited change reds. Prefer focused deterministic fault injection to mutation theater.
 - A survivor lacking proof is deleted unless HiC supplies a current authority and executable probe.
@@ -128,7 +110,7 @@ Terminally adjudicate every assigned cohort-B structural file. Delete advisory-o
 ## T054 — Focused Validation and Ledger
 
 - Run focused collection/tests for every surviving assigned file, `ruff` changed files, and focused mypy where helpers change.
-- `WP09.yaml` gives every assigned file a terminal verdict and deep evidence only where the class profile requires it.
+- `WP09.yaml` gives every assigned file a terminal verdict and every survivor node-level or valid-family structural evidence.
 - Store commands, environment/hash, outcomes, costs, corpus size, fault result, and deleted/survivor node deltas in `wp09-results.json`.
 - No skip/xfail/quarantine/flaky marker may be introduced to make a structural guard pass.
 
@@ -142,7 +124,7 @@ Terminally adjudicate every assigned cohort-B structural file. Delete advisory-o
 
 - [ ] Every assigned cohort-B file has a terminal structural verdict.
 - [ ] Spent scaffolds are removed; no positive-shape implementation pin is renamed as an invariant.
-- [ ] Every cited survivor has live corpus, current authority, and two-sided controlled-fault bite.
+- [ ] Every survivor has live corpus, current authority, and node-level or valid-family two-sided controlled-fault bite.
 - [ ] Focused survivors pass; all deleted paths appear in deterministic integration handoff.
 - [ ] Worktree clean after focused commit.
 

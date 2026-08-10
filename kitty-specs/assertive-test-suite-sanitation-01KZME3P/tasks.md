@@ -7,11 +7,13 @@
 
 ## Execution Shape
 
-WP01 establishes reproducible census/evidence. WP02 repairs #3283 and the #2645 whole-tree collection scanner. WP03 and WP06 depend on the healthy harness; WP04 and the three structural cohorts (WP05/WP09/WP10) proceed from the census. WP07 integrates the architectural shard map and folds the approved topology into proportional CI. WP08 generates aggregate proof and closure artifacts. Each adjudication WP owns one ledger shard; only WP08 writes the generated aggregate.
+WP01 establishes reproducible census/evidence. WP02 repairs #3283 and the #2645 whole-tree collection scanner. WP03 and WP06 depend on the healthy harness. Duplicate families split across WP04/WP11/WP12; coherent structural authority families split across WP05/WP09/WP10/WP13/WP14/WP15. WP07 integrates all deletion handoffs and the architectural shard map, then folds the approved topology into proportional CI. WP08 generates aggregate proof and closure artifacts. Each adjudication WP owns one ledger shard; only WP08 writes the aggregate.
 
 WP01 is also a discovery gate. Every mechanically discovered inert, duplicate, or structural candidate must map to an exact downstream owner. If the generated candidate manifest contains an unowned path or group, stop before dispatching its adjudication class, amend `owned_files`/dependencies/tasks, rerun `finalize-tasks`, and record the replan. “Out of scope” is not a terminal sanitation verdict.
 
 Before claiming a WP, verify each frontmatter `tracker_refs` issue is assigned to `robertDouglass` and contains the mission reference; tracker drift blocks claim under DIR-012/DIR-013.
+
+After analyze passes and planning artifacts are committed, push `pr/assertive-test-suite-sanitation` and open a draft PR targeting protected `main` before implementation claims. This makes real Linux/Windows PR workflows reachable without adding a permanent dispatch. WP02 records local macOS plus exact platform selectors; WP08 requires the integrated commit's actual PR job URLs/results before closure.
 
 ## Subtask Index
 
@@ -71,6 +73,31 @@ Before claiming a WP, verify each frontmatter `tracker_refs` issue is assigned t
 | T058 | Fault-probe retained cohort-C negative invariants and anti-vacuity | WP10 | No |
 | T059 | Run focused cohort-C collection/contract validation and record terminal verdicts | WP10 | No |
 | T060 | Emit cohort-C shard-map handoff and raw evidence | WP10 | No |
+| T061 | Census doctrine/resolver structural family | WP13 | No |
+| T062 | Delete spent doctrine/resolver shape and prose guards | WP13 | Yes |
+| T063 | Prove every doctrine/resolver survivor or valid family | WP13 | No |
+| T064 | Validate focused family and record terminal ledger | WP13 | No |
+| T065 | Emit doctrine/resolver map handoff | WP13 | No |
+| T066 | Census runtime/coordination structural family | WP14 | No |
+| T067 | Delete spent runtime/coordination structural guards | WP14 | Yes |
+| T068 | Prove every runtime/coordination survivor or valid family | WP14 | No |
+| T069 | Validate focused family and record terminal ledger | WP14 | No |
+| T070 | Emit runtime/coordination map handoff | WP14 | No |
+| T071 | Census packaging/CLI/artifact structural family | WP15 | No |
+| T072 | Delete spent packaging/CLI shape guards | WP15 | Yes |
+| T073 | Prove every packaging/CLI survivor or valid family | WP15 | No |
+| T074 | Validate focused family and record terminal ledger | WP15 | No |
+| T075 | Emit packaging/CLI map handoff | WP15 | No |
+| T076 | Reconcile every Specify CLI duplicate member/group | WP11 | No |
+| T077 | Consolidate CLI/compatibility duplicate families | WP11 | Yes |
+| T078 | Consolidate dashboard/lane duplicate families | WP11 | Yes |
+| T079 | Run causal/mutation and focused validation | WP11 | No |
+| T080 | Record WP11 ledger and deletion handoff | WP11 | No |
+| T081 | Reconcile every sync/status/upgrade duplicate member/group | WP12 | No |
+| T082 | Consolidate status/sync duplicate families | WP12 | Yes |
+| T083 | Consolidate supported upgrade duplicate families | WP12 | Yes |
+| T084 | Run causal/platform/version validation | WP12 | No |
+| T085 | Record WP12 ledger and deletion handoff | WP12 | No |
 | T044 | Generate canonical aggregate ledger and HEAD census from WP shards | WP08 | No |
 | T045 | Generate before/after report, live known-red delta, causal/mutation matrix, and issue matrix | WP08 | No |
 | T046 | Run full parallel suite, orphan sweep, ruff, mypy, and route/platform gates | WP08 | No |
@@ -209,11 +236,11 @@ Before claiming a WP, verify each frontmatter `tracker_refs` issue is assigned t
 - [ ] T042 Execute route-manifest selection and three-run fixed-route timing comparison (WP07)
 - [ ] T043 Record summed compute, critical path, mapping, and WP07 disposition evidence (WP07)
 
-**Dependencies**: WP03, WP04, WP05, WP06, WP09, WP10.  
+**Dependencies**: WP03, WP04, WP05, WP06, WP09, WP10, WP11, WP12, WP13, WP14, WP15.
 **Risks**: stranded tests, manufactured savings, or accidental quality-gate policy change.  
 **Estimated prompt**: ~300 lines.
 
-## WP09: Structural Cohort B Sanitation (P1)
+## WP09: CI Gate and Route Structural Sanitation (P1)
 
 **Prompt**: `tasks/WP09-structural-cohort-b.md`  
 **Independent test**: every assigned cohort-B file has a terminal structural verdict; every survivor reaches and fails its intended oracle under a plausible current-authority violation.
@@ -230,7 +257,7 @@ Before claiming a WP, verify each frontmatter `tracker_refs` issue is assigned t
 **Risks**: a structural file can mix a useful invariant with spent scaffolding; split or rehome the useful oracle before deletion.  
 **Estimated prompt**: ~330 lines.
 
-## WP10: Structural Cohort C Sanitation (P1)
+## WP10: Boundary and Safety Structural Sanitation (P1)
 
 **Prompt**: `tasks/WP10-structural-cohort-c.md`  
 **Independent test**: every assigned cohort-C file has a terminal structural verdict; every survivor reaches and fails its intended oracle under a plausible current-authority violation.
@@ -247,6 +274,91 @@ Before claiming a WP, verify each frontmatter `tracker_refs` issue is assigned t
 **Risks**: CI/governance files have stronger authorities; hand off route-owned paths rather than weakening or duplicating ownership.  
 **Estimated prompt**: ~330 lines.
 
+## WP11: Specify CLI Duplicate Consolidation (P1)
+
+**Prompt**: `tasks/WP11-specify-duplicates.md`
+**Independent test**: every owned strict/normalized duplicate member is terminally mapped; deletions lose no unique CLI/compatibility/live-route boundary.
+
+### Included Subtasks
+
+- [ ] T076 Reconcile every Specify CLI duplicate member/group (WP11)
+- [ ] T077 Consolidate CLI/compatibility duplicate families (WP11)
+- [ ] T078 Consolidate dashboard/lane duplicate families (WP11)
+- [ ] T079 Run causal/mutation and focused validation (WP11)
+- [ ] T080 Record WP11 ledger and deletion handoff (WP11)
+
+**Dependencies**: WP01.
+**Risks**: same bodies can traverse distinct compatibility or CLI seams.
+**Estimated prompt**: ~220 lines.
+
+## WP12: Sync, Status, and Upgrade Duplicate Consolidation (P1)
+
+**Prompt**: `tasks/WP12-sync-upgrade-duplicates.md`
+**Independent test**: every owned duplicate family is terminally mapped with unique persistence/network/version/platform boundaries preserved.
+
+### Included Subtasks
+
+- [ ] T081 Reconcile every sync/status/upgrade duplicate member/group (WP12)
+- [ ] T082 Consolidate status/sync duplicate families (WP12)
+- [ ] T083 Consolidate supported upgrade duplicate families (WP12)
+- [ ] T084 Run causal/platform/version validation (WP12)
+- [ ] T085 Record WP12 ledger and deletion handoff (WP12)
+
+**Dependencies**: WP01.
+**Risks**: same bodies across migration versions or teardown seams can be distinct.
+**Estimated prompt**: ~190 lines.
+
+## WP13: Doctrine and Resolver Structural Sanitation (P1)
+
+**Prompt**: `tasks/WP13-doctrine-structural.md`
+**Independent test**: every assigned doctrine/resolver guard is terminal and every survivor/family fails its intended oracle under a current authority violation.
+
+### Included Subtasks
+
+- [ ] T061 Census doctrine/resolver structural family (WP13)
+- [ ] T062 Delete spent doctrine/resolver shape and prose guards (WP13)
+- [ ] T063 Prove every doctrine/resolver survivor or valid family (WP13)
+- [ ] T064 Validate focused family and record terminal ledger (WP13)
+- [ ] T065 Emit doctrine/resolver map handoff (WP13)
+
+**Dependencies**: WP01.
+**Risks**: similar resolver scanners can enforce different authority doors.
+**Estimated prompt**: ~200 lines.
+
+## WP14: Runtime Coordination Structural Sanitation (P1)
+
+**Prompt**: `tasks/WP14-runtime-structural.md`
+**Independent test**: every runtime/status/mission/worktree guard is terminal and every survivor/family has two-sided operational fault bite.
+
+### Included Subtasks
+
+- [ ] T066 Census runtime/coordination structural family (WP14)
+- [ ] T067 Delete spent runtime/coordination structural guards (WP14)
+- [ ] T068 Prove every runtime/coordination survivor or valid family (WP14)
+- [ ] T069 Validate focused family and record terminal ledger (WP14)
+- [ ] T070 Emit runtime/coordination map handoff (WP14)
+
+**Dependencies**: WP01.
+**Risks**: historical mission/status wording can resemble live operational invariants.
+**Estimated prompt**: ~180 lines.
+
+## WP15: Packaging and CLI Structural Sanitation (P1)
+
+**Prompt**: `tasks/WP15-packaging-structural.md`
+**Independent test**: all packaging/CLI/artifact scanners, including nested enrolment inventory, are terminal and every survivor/family has two-sided consumed-contract bite.
+
+### Included Subtasks
+
+- [ ] T071 Census packaging/CLI/artifact structural family (WP15)
+- [ ] T072 Delete spent packaging/CLI shape guards (WP15)
+- [ ] T073 Prove every packaging/CLI survivor or valid family (WP15)
+- [ ] T074 Validate focused family and record terminal ledger (WP15)
+- [ ] T075 Emit packaging/CLI map handoff (WP15)
+
+**Dependencies**: WP01.
+**Risks**: packaging text/shape may or may not be a consumed compatibility contract.
+**Estimated prompt**: ~170 lines.
+
 ## WP08: Aggregate Evidence and Mission Closure (P1)
 
 **Prompt**: `tasks/WP08-aggregate-closure.md`  
@@ -261,6 +373,6 @@ Before claiming a WP, verify each frontmatter `tracker_refs` issue is assigned t
 - [ ] T048 Update durable test docs/changelog and generated workflow evidence (WP08)
 - [ ] T049 Validate all success criteria, temporary states, tracker verdicts, and PR readiness (WP08)
 
-**Dependencies**: WP02, WP03, WP04, WP05, WP06, WP07, WP09, WP10.  
+**Dependencies**: WP02, WP03, WP04, WP05, WP06, WP07, WP09, WP10, WP11, WP12, WP13, WP14, WP15.
 **Risks**: aggregate prose drifting from canonical evidence; report generation and checksums prevent dual authority.  
 **Estimated prompt**: ~330 lines.

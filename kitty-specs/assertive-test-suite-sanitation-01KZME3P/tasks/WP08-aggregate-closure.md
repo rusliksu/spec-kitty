@@ -10,6 +10,11 @@ dependencies:
 - WP07
 - WP09
 - WP10
+- WP11
+- WP12
+- WP13
+- WP14
+- WP15
 requirement_refs:
 - FR-001
 - FR-002

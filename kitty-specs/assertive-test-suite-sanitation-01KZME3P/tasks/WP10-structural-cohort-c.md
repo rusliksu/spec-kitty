@@ -1,6 +1,6 @@
 ---
 work_package_id: WP10
-title: Structural cohort C sanitation
+title: Boundary and safety structural sanitation
 dependencies:
 - WP01
 requirement_refs:
@@ -35,53 +35,45 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp10-results.json
 execution_mode: code_change
 owned_files:
-- tests/architectural/test_activation_registry_schema.py
+- tests/architectural/test_2093_authority_invariant.py
 - tests/architectural/test_all_declarations_required.py
-- tests/architectural/test_arch_pole_deserialized.py
-- tests/architectural/test_builtin_override_policy.py
-- tests/architectural/test_charter_sole_door_agent_profile_repository.py
-- tests/architectural/test_charter_sole_door_doctrine_service.py
-- tests/architectural/test_charter_sole_door_hardcoded_paths.py
-- tests/architectural/test_charter_sole_door_inner_reacharound.py
-- tests/architectural/test_charter_sole_door_resolver_imports.py
-- tests/architectural/test_cli_console_single_seam.py
-- tests/architectural/test_docs_scoped_arch_coverage.py
+- tests/architectural/test_auth_transport_singleton.py
+- tests/architectural/test_batch_split_single_authority.py
+- tests/architectural/test_compat_shims.py
 - tests/architectural/test_dossier_sync_boundary.py
+- tests/architectural/test_drg_writer_discovery.py
 - tests/architectural/test_egress_consent_boundary.py
-- tests/architectural/test_events_tracker_public_imports.py
-- tests/architectural/test_gate_coverage_parse_model.py
-- tests/architectural/test_gate_read_literal_ban.py
-- tests/architectural/test_glossary_canonical_terms.py
-- tests/architectural/test_glossary_pack_parity.py
-- tests/architectural/test_glossary_pack_urn.py
-- tests/architectural/test_golden_count_ban.py
+- tests/architectural/test_git_matrix_paths_resolve.py
 - tests/architectural/test_guard_capability_call_sites.py
 - tests/architectural/test_innerstatechanged_invariants.py
-- tests/architectural/test_kernel_no_doctrine_import.py
-- tests/architectural/test_mission_resolver_walker_gate.py
-- tests/architectural/test_no_dead_modules.py
-- tests/architectural/test_no_primary_anchored_gates.py
-- tests/architectural/test_no_production_worktree_guard_bypass.py
+- tests/architectural/test_integration_boundary.py
+- tests/architectural/test_layer_rules.py
+- tests/architectural/test_merge_reconciliation_class_guard.py
+- tests/architectural/test_no_authored_applies_edge.py
+- tests/architectural/test_no_inert_schema_slots.py
+- tests/architectural/test_no_invalid_windows_filenames.py
+- tests/architectural/test_no_op_stable_writes.py
 - tests/architectural/test_no_prompt_filtering_added.py
+- tests/architectural/test_no_read_side_bypass.py
+- tests/architectural/test_no_runtime_pypi_dep.py
 - tests/architectural/test_no_shipped_layer_label.py
 - tests/architectural/test_no_tmp_paths_in_tests.py
-- tests/architectural/test_no_worktree_name_guess.py
-- tests/architectural/test_pre_review_scope_singlesource.py
-- tests/architectural/test_profile_load_resolver_guidance.py
-- tests/architectural/test_protection_resolver_call_sites.py
-- tests/architectural/test_pytest_marker_correctness.py
+- tests/architectural/test_no_write_side_rederivation.py
+- tests/architectural/test_patch_seam_census_control.py
+- tests/architectural/test_read_surface_placement_guard.py
 - tests/architectural/test_real_home_isolation_guard.py
-- tests/architectural/test_safe_commit_import_boundary.py
 - tests/architectural/test_safety_registry_completeness.py
 - tests/architectural/test_same_tier_uniqueness.py
 - tests/architectural/test_serial_port_preservation.py
-- tests/architectural/test_tasks_domain_gate_visibility.py
-- tests/architectural/test_template_governance_payload_contract.py
-- tests/architectural/test_ui_e2e_coverage_discovered.py
+- tests/architectural/test_shared_module_object_patches.py
+- tests/architectural/test_tid251_enforcement.py
+- tests/architectural/test_trio_seam_only.py
 - tests/architectural/test_unfiltered_journal_read_boundary.py
-- tests/architectural/test_verdict_seam_census.py
-- tests/architectural/test_verdict_vocab_single_source.py
-- tests/architectural/test_worktrees_index_clean.py
+- tests/architectural/test_unregistered_shim_scanner.py
+- tests/architectural/test_untrusted_path_containment.py
+- tests/architectural/test_wp_owned_files_no_kitty_specs.py
+- tests/architectural/test_wp_prompt_build_latency.py
+- tests/architectural/test_write_surface_placement_guard.py
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP10.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp10-results.json
 tags: []
@@ -89,21 +81,21 @@ tracker_refs:
 - '#1931'
 ---
 
-# WP10 — Structural Cohort C Sanitation
+# WP10 — Boundary and Safety Structural Sanitation
 
 ## Do First
 
-Load `architect-alphonso`. Read FR-006/FR-007, current governance/security/CI authorities referenced by assigned files, WP01's structural manifest, and WP05's survival rule. Claim through `spec-kitty agent action implement WP10 --mission assertive-test-suite-sanitation-01KZME3P --agent codex --profile architect-alphonso` and use only its worktree.
+Load `architect-alphonso`. Read FR-006/FR-007, current boundary/security/path/import authorities referenced by assigned files, WP01's structural manifest, and WP05's survival rule. Claim through `spec-kitty agent action implement WP10 --mission assertive-test-suite-sanitation-01KZME3P --agent codex --profile architect-alphonso` and use only its worktree.
 
 ## Objective
 
-Terminally adjudicate every assigned cohort-C structural file. This cohort contains high-authority governance and safety guards, so deletion remains assertive but evidence-led: remove stale positive shape/history/prose/count scaffolds; retain only live negative invariants with plausible controlled-fault bite.
+Terminally adjudicate the coherent boundary/safety/path/import structural family. These include high-authority guards, so deletion remains assertive but evidence-led: remove stale positive shape/history/prose/count scaffolds; retain only live negative invariants with plausible controlled-fault bite.
 
 ## T056 — Complete Machine Screening
 
 - Reconcile every owned path against WP01's structural candidate manifest; unowned discoveries trigger pre-dispatch task replan.
 - Capture scanner kind, corpus, asserted oracle, positive/negative shape, named current authority, current consumer/route, historical tokens, and count/name/prose pins.
-- Every assigned file receives a terminal screening verdict. Promote suspect files into deep adjudication; unchanged non-candidates retain only lightweight machine rows.
+- Every assigned file receives a terminal verdict. Every survivor references node-level or valid-family causal proof; group only guards with the same production path, authority, corpus, oracle, and fault.
 - Explicitly distinguish active security/governance boundaries from assertions that merely demand exact module names or completed migration layout.
 
 ## T057 — Delete Spent Scaffolds
@@ -115,7 +107,7 @@ Terminally adjudicate every assigned cohort-C structural file. This cohort conta
 
 ## T058 — Controlled Fault Proof
 
-- For each deletion-justifying or materially changed survivor, record authority, nonzero corpus, a realistic prohibited change, Act reached, and intended assertion failure.
+- For each survivor or valid equivalent family, record authority, nonzero corpus, a realistic prohibited change, Act reached, and intended assertion failure.
 - Require compliant control green and prohibited control red. A parser error, missing import, collection failure, or pasted literal is invalid proof.
 - Prefer narrow fault injection; use focused mutation only where it adds non-equivalent causal evidence.
 - If a current high-authority invariant cannot be proven cheaply, preserve it provisionally only by escalating to HiC before terminal verdict; do not silently delete or mark temporary.
@@ -136,7 +128,7 @@ Terminally adjudicate every assigned cohort-C structural file. This cohort conta
 
 - [ ] Every assigned cohort-C file has a terminal verdict.
 - [ ] Spent structural scaffolds removed while live governance/security boundaries remain protected.
-- [ ] Every cited survivor has nonzero corpus, current authority, and two-sided controlled-fault bite.
+- [ ] Every survivor has nonzero corpus, current authority, and node-level or valid-family two-sided controlled-fault bite.
 - [ ] Focused survivors pass; deleted paths are in deterministic map handoff.
 - [ ] No edits outside exact ownership.
 

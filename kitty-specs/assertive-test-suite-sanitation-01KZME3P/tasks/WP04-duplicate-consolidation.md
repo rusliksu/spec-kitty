@@ -34,49 +34,64 @@ create_intent:
 execution_mode: code_change
 owned_files:
 - tests/agent/cli/commands/test_tasks_helpers.py
+- tests/agent/cli/commands/test_tracker.py
+- tests/agent/glossary/test_integration_workflows.py
+- tests/agent/glossary/test_pipeline.py
+- tests/agent/glossary/test_primitives.py
+- tests/agent/glossary/test_strictness.py
 - tests/agent/test_context_validation_unit.py
 - tests/architectural/test_shim_registry_schema.py
+- tests/auth/integration/test_transport_rewired.py
+- tests/auth/test_token_manager.py
 - tests/charter/synthesizer/test_charter_compile_project_root.py
+- tests/charter/test_action_grain.py
+- tests/charter/test_action_sequence_dispatch.py
+- tests/charter/test_bundle_manifest_model.py
+- tests/charter/test_mission_steps_facade.py
+- tests/charter/test_mission_type_profiles.py
+- tests/charter/test_pack_manager.py
+- tests/charter/test_pack_manager_catalog.py
+- tests/charter/test_references_missing_failclosed.py
 - tests/cli/commands/test_merge_strategy.py
+- tests/cli_gate/test_ci_determinism.py
 - tests/cli_gate/test_dashboard_modes.py
 - tests/cli_gate/test_doctor_modes.py
+- tests/contract/test_mission_number_type_coercion.py
+- tests/core/test_adapters.py
+- tests/docs/test_related_validator.py
+- tests/doctrine/directives/test_repository.py
+- tests/doctrine/drg/test_cross_grain_integrity.py
 - tests/doctrine/drg/test_validator.py
 - tests/doctrine/missions/test_action_index.py
+- tests/doctrine/missions/test_primitives.py
 - tests/doctrine/missions/test_step_projection.py
-- tests/runtime/test_home_unit.py
-- tests/kernel/test_paths.py
-- tests/kernel/test_paths_unified_windows_root.py
+- tests/doctrine/shared/test_scoping.py
+- tests/doctrine/shared/test_scoping_any_all.py
+- tests/doctrine/styleguides/test_repository.py
+- tests/doctrine/tactics/test_repository.py
+- tests/doctrine/test_org_pack_subdir.py
+- tests/doctrine/test_scoping.py
+- tests/git_ops/test_detection.py
 - tests/git_ops/test_git_ops.py
 - tests/git_ops/test_git_ops_unit.py
+- tests/git_ops/test_mark_status_pipe_table.py
+- tests/git_ops/test_stale_detection_unit.py
+- tests/init/test_init_minimal_integration.py
+- tests/kernel/test_paths.py
+- tests/kernel/test_paths_unified_windows_root.py
+- tests/lanes/test_auto_rebase_managed_artifact_recognition.py
+- tests/missions/test_mission_loading_integration.py
+- tests/missions/test_mission_v1_events_unit.py
 - tests/research/test_research_plan_missions_integration.py
+- tests/retrospective/test_retrospective_content.py
+- tests/review/test_artifacts.py
+- tests/review/test_baseline.py
 - tests/review/test_gate_registry.py
 - tests/review/test_pre_review_gate_engine.py
 - tests/review/test_scope_source.py
+- tests/runtime/test_home_unit.py
 - tests/runtime/test_resolver_unit.py
 - tests/runtime/test_runtime_seam.py
-- tests/specify_cli/bulk_edit/test_moves.py
-- tests/specify_cli/bulk_edit/test_structural_targets.py
-- tests/specify_cli/cli/commands/agent/test_tasks_outline.py
-- tests/specify_cli/cli/commands/agent/test_tasks_parsing_validation.py
-- tests/specify_cli/cli/commands/review/test_existing_matrix_remediation.py
-- tests/specify_cli/compat/test_planner.py
-- tests/specify_cli/compat/test_registry.py
-- tests/specify_cli/compat/test_remediation_index_url.py
-- tests/specify_cli/compat/test_upgrade_hint_chk028.py
-- tests/specify_cli/coordination/test_worktree_topology.py
-- tests/specify_cli/dashboard/test_glossary_handler.py
-- tests/test_dashboard/test_glossary_handler.py
-- tests/specify_cli/dashboard/test_lint_tile_handler.py
-- tests/specify_cli/ownership/test_audit_scope.py
-- tests/specify_cli/ownership/test_validation.py
-- tests/specify_cli/session_presence/test_claude_code_hook.py
-- tests/specify_cli/shims/test_direct_commands.py
-- tests/specify_cli/shims/test_registry.py
-- tests/specify_cli/test_mid8_contract_sensitive_routing.py
-- tests/specify_cli/tool_surface/test_plugin_build_claude.py
-- tests/specify_cli/tool_surface/test_plugin_build_codex.py
-- tests/test_dashboard/test_lint_tile_handler.py
-- tests/specify_cli/test_template_lane_guard.py
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP04.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-results.json
 tags: []
@@ -94,7 +109,7 @@ Load `randy-reducer`. Read plan IC-04, research R1/R2/R6/R8, current path/compat
 
 Consolidate exact and semantic duplicates, retaining the cheapest deepest live-path guard plus every unique platform, public import, or boundary oracle. Do not keep a slower wrapper test merely because it resides in a historical directory.
 
-WP01's duplicate manifests are mandatory: every normalized candidate and every stricter exact group gets a terminal verdict even when no edit is warranted. Reconcile both planning projections (171 groups/357 functions normalized; 75 groups/162 functions strict; WP01's deterministic manifests win) to exact owners. Any unowned group/path triggers task replan before edits; it is not dismissible as out of scope.
+WP01's duplicate manifests are mandatory: every normalized candidate and strict group gets a terminal verdict even when no edit is warranted. Reconcile the refreshed strict projection (173 groups/365 members across 131 files) and earlier normalized/strict projections; WP01's versioned deterministic manifests win. Any unowned group/path triggers task replan before edits; it is not dismissible as out of scope.
 
 ## T020 — Home/Path Suites
 
@@ -110,16 +125,15 @@ WP01's duplicate manifests are mandatory: every normalized candidate and every s
 - For each proposed deletion, fault the claimed production seam or compare focused mutants; prove survivor fails equivalently.
 - Consolidate helpers only if they reduce test-only indirection and stay within owned files.
 
-## T022 — Dashboard Handler Suites
+## T022 — Charter and Doctrine Duplicate Families
 
-- Compare duplicate glossary handlers across `tests/specify_cli/dashboard` and `tests/test_dashboard`; repeat for lint tile handlers.
-- Determine which reaches the live route/handler wiring rather than mocking the same current implementation.
-- Retain unique HTTP/CLI shape or error boundaries; delete pure repetition and copied setup.
-- Prefer one canonical directory aligned with current source ownership.
+- Adjudicate every core charter/doctrine/repository/scoping fingerprint family in ownership, including the known scoping pairs missed by the first task draft.
+- Distinguish unique pack/authority/input boundaries from copied assertion bodies; retain the deepest current entry point and every incompatible contract case.
+- Use family causal proof only when production path, oracle, input boundary, platform, and outcome match.
 
-## T023 — Lane/Template Guards
+## T023 — Agent, Mission, and Core Families
 
-- Audit `test_template_lane_guard.py` against other fingerprinted lane/template guards from the WP01 census.
+- Audit agent/glossary/mission/review/runtime/core fingerprint families from the WP01 census.
 - Within ownership, remove duplicated positive-shape checks. Preserve one negative current-authority invariant only if a plausible forbidden production change makes it fail.
 - Do not keep exact token/name pinning as a substitute for behavior.
 - If a matching test outside ownership is the survivor, this WP may delete its owned duplicate and cite the external survivor but must not edit that file.

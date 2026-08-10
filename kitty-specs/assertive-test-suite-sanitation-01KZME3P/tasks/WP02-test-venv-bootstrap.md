@@ -34,6 +34,7 @@ create_intent:
 - tests/test_test_venv_bootstrap.py
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP02.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-replay.patch
+- docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-scanner-replay.patch
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-results.json
 execution_mode: code_change
 owned_files:
@@ -44,6 +45,7 @@ owned_files:
 - tests/_support/test_wall_clock_assertions.py
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP02.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-replay.patch
+- docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-scanner-replay.patch
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-results.json
 tags: []
 tracker_refs:
@@ -106,7 +108,7 @@ Replace the fixed 60-second lock held across editable installation with a recove
 - Use same-filesystem directory rename to an absent target; do not assume POSIX replacement of a populated directory.
 - Resolve `bin/python` vs `Scripts/python.exe` from the runtime platform, never infer Windows layout on macOS.
 - Route the new test file explicitly through the Linux quality route and the `windows_ci` discovery contract; add true Windows cases/markers rather than relying on POSIX fakes. Prove macOS locally and require actual Linux and Windows CI outcomes before WP08 PR readiness.
-- Record commands, job IDs/URLs, runner OS/Python, and results for all three OS classes. Platform-neutral fakes may supplement but never replace those outcomes.
+- Record local macOS command/result and exact Linux/Windows PR selectors in WP02. Because the draft PR is opened before claims, WP08 attaches the integrated commit's actual job IDs/URLs, runner OS/Python, and results before closure. Platform-neutral fakes may supplement but never replace those final outcomes.
 - No shell-only locks or signals.
 
 ## T011 — Exact Replay
@@ -125,10 +127,12 @@ Replace the fixed 60-second lock held across editable installation with a recove
 
 ## T050 — Proportional Wall-clock Scan
 
-- Red-first prove that two pytest workers/collections over unchanged test sources do not each repeat the full `tests/` AST scan performed by `_fail_on_wall_clock_assertions` (#2645).
-- Cache or share the scanner result by a content-addressed source/config fingerprint. Publication must be process-safe, corruption-safe, cross-platform, and must invalidate after an eligible test/helper source changes.
+- Red-first reproduce #2645's root cause with deterministic operation counts: scale synthetic alias graphs and common-name assignments, assert bounded approximately-linear alias propagation, and fail the current repeated/full-rescan behavior without relying only on wall time.
+- Bound the scanner algorithm first. Prove common names and alias expansion cannot multiply full-tree work, while injected indirect wall-clock aliases remain detected.
+- Measure one fresh focused collection after the algorithmic fix. Add a content-addressed cross-process shared result only if residual multi-worker repetition remains material; if added, publication must be process-safe, corruption-safe, cross-platform, and invalidate after eligible source/config change.
 - Keep enforcement fail-closed: injected forbidden wall-clock assertions must still fail on the intended oracle, and stale/corrupt cache must rescan rather than pass.
 - Measure repaired base versus HEAD collection/setup/call separately over three cold repetitions with identical workers/cache policy. Record raw results and attribute this optimization separately from CI route changes.
+- Persist and hash `wp02-scanner-replay.patch` containing only the #2645 scanner optimization. Replay it with the #3283 patch on immutable base, no sanitation deletions, to produce the matched scanner-optimized-base stage consumed by WP07's frozen workload DAG.
 
 ## Definition of Done
 

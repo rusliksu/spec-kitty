@@ -35,64 +35,32 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-results.json
 execution_mode: code_change
 owned_files:
-- tests/architectural/test_2093_authority_invariant.py
-- tests/architectural/test_arch_unblind_matrix.py
-- tests/architectural/test_batch_split_single_authority.py
-- tests/architectural/test_charter_facades_reexport_doctrine.py
-- tests/architectural/test_charter_path_literal_authority.py
-- tests/architectural/test_charter_references_resolve.py
-- tests/architectural/test_ci_architectural_gate_coverage.py
-- tests/architectural/test_ci_topology_worklist.py
-- tests/architectural/test_cli_console_render_width.py
-- tests/architectural/test_compat_shims.py
-- tests/architectural/test_coverage_root_collisions.py
+- tests/architectural/test_batch_drain_retired_3167.py
+- tests/architectural/test_contract_registry_parity.py
+- tests/architectural/test_coord_read_residuals_closeout.py
+- tests/architectural/test_dead_builtin_doc_paths.py
 - tests/architectural/test_docs_cli_reference_parity.py
-- tests/architectural/test_doctrine_artefact_layout.py
-- tests/architectural/test_doctrine_wheel_closure.py
-- tests/architectural/test_drg_writer_discovery.py
+- tests/architectural/test_execution_context_parity.py
 - tests/architectural/test_exemption_registry_ratchet.py
-- tests/architectural/test_integration_boundary.py
+- tests/architectural/test_glossary_pack_parity.py
+- tests/architectural/test_golden_count_ban.py
 - tests/architectural/test_issue_matrix_json_migration_completeness.py
-- tests/architectural/test_marker_baseline.py
-- tests/architectural/test_marker_registry_single_source.py
+- tests/architectural/test_merge_pipeline_ratchets.py
+- tests/architectural/test_migration_chain_integrity.py
 - tests/architectural/test_mission_exit_baseline.py
-- tests/architectural/test_next_shard_marker_completeness.py
-- tests/architectural/test_no_absolute_event_timestamp_mixture.py
-- tests/architectural/test_no_authored_applies_edge.py
+- tests/architectural/test_no_dead_cli_paths.py
 - tests/architectural/test_no_dead_doctrine_paths.py
+- tests/architectural/test_no_dead_modules.py
 - tests/architectural/test_no_dead_symbols.py
-- tests/architectural/test_no_invalid_windows_filenames.py
 - tests/architectural/test_no_legacy_status_emit_callers.py
 - tests/architectural/test_no_legacy_terminology.py
-- tests/architectural/test_retired_contracts_absent.py
-- tests/architectural/test_contract_registry_parity.py
 - tests/architectural/test_no_parity_scaffold.py
-- tests/architectural/test_no_raw_mission_spec_paths.py
-- tests/architectural/test_no_read_side_bypass.py
-- tests/architectural/test_no_tracked_test_feature_missions.py
-- tests/architectural/test_no_write_side_rederivation.py
-- tests/architectural/test_resolution_authority_gates.py
-- tests/architectural/test_runtime_charter_doctrine_boundary.py
-- tests/architectural/test_session_reaper.py
-- tests/architectural/test_shard_universe_bounded.py
-- tests/architectural/test_shared_module_object_patches.py
-- tests/architectural/test_shared_package_boundary.py
-- tests/architectural/test_single_mission_surface_resolver.py
-- tests/architectural/test_src_filter_coverage.py
-- tests/architectural/test_status_command_guidance.py
-- tests/architectural/test_status_module_boundary.py
-- tests/architectural/test_topology_inference_retired.py
-- tests/architectural/test_topology_resolution_boundary.py
-- tests/architectural/test_unit_contract_residual_gate.py
-- tests/architectural/test_unregistered_shim_scanner.py
-- tests/architectural/test_uv_lock_pin_drift.py
-- tests/architectural/test_workflow_coherence.py
-- tests/architectural/test_wp_owned_files_no_kitty_specs.py
-- tests/architectural/test_wp05_write_target_drain.py
-- tests/architectural/test_batch_drain_retired_3167.py
-- tests/architectural/test_auth_transport_singleton.py
-- tests/architectural/test_layer_rules.py
 - tests/architectural/test_ratchet_baselines.py
+- tests/architectural/test_ratchet_positional_anchor_ban.py
+- tests/architectural/test_reference_enum_ratchet.py
+- tests/architectural/test_retired_contracts_absent.py
+- tests/architectural/test_topology_inference_retired.py
+- tests/architectural/test_wp05_write_target_drain.py
 - tests/sync/test_no_queue_drain_constructed_3030.py
 - src/specify_cli/coordination/status_transition.py
 - tests/specify_cli/coordination/test_simple_case_flat_topology.py
@@ -114,11 +82,11 @@ Load `architect-alphonso`. Read plan IC-05, current 3.x ADRs referenced by each 
 
 Remove architecture tests that cannot catch a realistic bug: advisory-only findings, historical WP/report proof, self-presence/name/token/count pins, and positive shape after a migration is complete. Preserve only current negative invariants with live corpus and plausible fault bite.
 
-This WP owns structural cohort A plus named cross-cohort migration clusters. Every assigned structural file gets machine-screened and a terminal verdict; deep controlled-fault proof is required for deletion-justifying or materially changed survivors, not fabricated for plainly deleted spent scaffolds.
+This WP owns the coherent historical/migration/ratchet structural family plus its narrowly coupled source/tests. Every assigned file gets a terminal verdict; every survivor uses node-level or valid-family controlled-fault proof.
 
 ## Structural Survival Rule
 
-A survivor must name a current authority, scan a nonzero live corpus, fail when a realistic prohibited production change is introduced, reach its assertion, and have a two-sided oracle. Planting the literal searched by the scanner is insufficient.
+Every surviving assigned structural guard must name a current authority, scan a nonzero live corpus, fail when a realistic prohibited production change is introduced, reach its assertion, and have a two-sided oracle. Node-level proof or a valid family proof is allowed; planting the literal searched by the scanner is insufficient.
 
 ## T026 — Advisory and Historical Validators
 
@@ -143,7 +111,7 @@ A survivor must name a current authority, scan a nonzero live corpus, fail when 
 
 ## T029 — Plausible Fault Probes
 
-- For each survivor, introduce a realistic AST/source change representing the forbidden dependency/call, not merely the exact search literal in a dummy file.
+- For each survivor or valid equivalent family, introduce a realistic AST/source change representing the forbidden dependency/call, not merely the exact search literal in a dummy file.
 - Prove corpus floor nonzero and intended assertion fails.
 - For deleted positives, remove/rename alleged source shape in a disposable copy and show the test either remains green/non-causal or blocks behavior-preserving refactor only.
 - Record current authority paths and consumer searches.
@@ -167,7 +135,7 @@ A survivor must name a current authority, scan a nonzero live corpus, fail when 
 
 - [ ] Never-fail and historical/self/shape scaffolds removed.
 - [ ] Every assigned cohort-A file has a terminal verdict and any deleted path is in the deterministic WP07 handoff.
-- [ ] Every survivor passes live-corpus + plausible fault proof.
+- [ ] Every surviving assigned guard references node-level or valid-family live-corpus + plausible fault proof.
 - [ ] Negative invariants preserved without positive implementation pinning.
 - [ ] Test-only production residue removed only with caller proof.
 - [ ] Focused cohort validation passes; no central-map edit occurs before integration ownership.
