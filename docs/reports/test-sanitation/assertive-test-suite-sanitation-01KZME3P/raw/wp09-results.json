@@ -12,17 +12,17 @@
     "reconciled_files": 37,
     "unowned_files": 0,
     "baseline_collected_nodes": 418,
-    "surviving_collected_nodes": 35,
-    "removed_collected_nodes": 383,
-    "removed_node_percent": 91.6268,
+    "surviving_collected_nodes": 36,
+    "removed_collected_nodes": 382,
+    "removed_node_percent": 91.3876,
     "deleted_files": 26,
     "modified_test_files": 10,
     "support_only_files": 1,
     "product_files_changed": 0,
     "workflow_files_changed": 0,
     "shared_map_files_changed": 0,
-    "test_source_insertions_before_evidence": 338,
-    "test_source_deletions": 13837,
+    "test_source_insertions_before_evidence": 397,
+    "test_source_deletions": 13835,
     "skip_xfail_quarantine_added": 0
   },
   "environment": {
@@ -35,7 +35,7 @@
   },
   "node_accounting": {
     "base_nodeids_ref": "base-census.json collection.nodes[path_ref -> collection.tables.paths[path_ref]], restricted to the exact 37 WP09 owned paths",
-    "removed_nodeids_rule": "cycle_2_reconciliation partitions all 418 frozen nodeids into terminal same-oracle families and separately reconciles the independently collected 35 current nodeids; net reduction is 418 - 35 = 383",
+    "removed_nodeids_rule": "cycle_3_reconciliation partitions all 418 frozen nodeids into terminal same-oracle families and separately reconciles the independently collected 36 current nodeids; net reduction is 418 - 36 = 382",
     "survivors": [
       {
         "path": "tests/architectural/test_arch_pole_deserialized.py",
@@ -55,8 +55,11 @@
       {
         "path": "tests/architectural/test_ci_collection_completeness.py",
         "baseline": 46,
-        "current": 1,
-        "survivor_nodeids": ["tests/architectural/test_ci_collection_completeness.py::test_every_test_node_is_collected_on_a_push_to_main"]
+        "current": 2,
+        "survivor_nodeids": [
+          "tests/architectural/test_ci_collection_completeness.py::test_every_test_node_is_collected_on_a_push_to_main",
+          "tests/architectural/test_ci_collection_completeness.py::test_orphan_sweep_and_parallel_pool_are_disjoint"
+        ]
       },
       {
         "path": "tests/architectural/test_ci_fast_jobs_have_timeout.py",
@@ -170,6 +173,19 @@
       "command": ".venv/bin/pytest -q tests/architectural/test_ci_collection_completeness.py::test_every_test_node_is_collected_on_a_push_to_main"
     },
     {
+      "family": "cross-job-disjointness",
+      "authority": "GC-2/C-007 in ci-test-topology-performance-01KXBJRT",
+      "healthy_topology": "fast-tests-sync-orphan-sweep serial selection intersects unit-contract-residual parallel pool at zero nodes",
+      "corpus_nodes": 9,
+      "fault": "remove the actual --ignore=tests/sync/test_orphan_sweep.py from the unit-contract-residual step in a disposable ci-quality.yml copy, then reparse its live Gate",
+      "act_reached": true,
+      "compliant_control_passed": true,
+      "intended_assertion_failed": true,
+      "observed_overlap_nodes": 9,
+      "command": ".venv/bin/pytest -q tests/architectural/test_ci_collection_completeness.py::test_orphan_sweep_and_parallel_pool_are_disjoint",
+      "result": "1 passed in 102.97s; embedded two-sided control observed empty healthy intersection and exact 9-node faulty overlap"
+    },
+    {
       "family": "timeout-exemption-and-catchall-ownership",
       "authority": "open #3143 and open #1931",
       "faults": ["remove required exemption rationale", "add tests/ghost_suite catch-all ignore with no owning shard"],
@@ -232,7 +248,13 @@
     {"command": ".venv/bin/pytest -q -p no:cacheprovider <11 retained WP09 paths>", "result": "cycle 2: 35 passed in 182.65s"},
     {"command": ".venv/bin/ruff check <11 retained WP09 paths>", "result": "cycle 2: All checks passed"},
     {"command": ".venv/bin/python <fail-closed artifact reconciliation>", "result": "WP09_RECONCILIATION_PASS paths=37 base=418 current=35 delta=383 node_map=418"},
-    {"command": "git diff --check", "result": "cycle 2: clean"}
+    {"command": "git diff --check", "result": "cycle 2: clean"},
+    {"command": ".venv/bin/pytest --collect-only -q -p no:cacheprovider <11 retained WP09 paths>", "result": "cycle 3: 36 tests collected in 42.96s"},
+    {"command": ".venv/bin/pytest -q -p no:cacheprovider <11 retained WP09 paths>", "result": "cycle 3: 36 passed in 251.22s"},
+    {"command": ".venv/bin/ruff check tests/architectural/test_ci_collection_completeness.py", "result": "cycle 3: All checks passed"},
+    {"command": ".venv/bin/mypy tests/architectural/test_ci_collection_completeness.py", "result": "cycle 3: Success: no issues found in 1 source file"},
+    {"command": ".venv/bin/python <fail-closed artifact reconciliation>", "result": "cycle 3: WP09_RECONCILIATION_PASS paths=37 base=418 current=36 delta=382 node_map=418"},
+    {"command": "git diff --check", "result": "cycle 3: clean"}
   ],
   "handoff": {
     "owner": "WP07",
@@ -241,7 +263,7 @@
     "deleted_paths_ref": "WP09.yaml handoff.deleted_paths",
     "support_only_path_to_keep": "tests/architectural/test_gate_read_literal_ban.py"
   },
-  "cycle_2_reconciliation":
+  "cycle_3_reconciliation":
 {
   "authority": {
     "census": "../assertive-test-suite-sanitation-01KZME3P-lane-a/docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json",
@@ -288,9 +310,17 @@
       "outcome": "FOLD_TO_SURVIVOR",
       "basis": "all live --cov targets must resolve; dead-root fault reaches the retained assertion"
     },
-    "cross-job-no-boundary": {
+    "cross-job-disjointness-fold": {
+      "outcome": "FOLD_TO_SURVIVOR",
+      "basis": "the frozen real-topology member folds to the minimal live-corpus GC-2/C-007 guard whose actual pool-ignore removal yields a 9-node overlap"
+    },
+    "cross-job-helper-self-test": {
       "outcome": "DELETE_NO_UNIQUE_BOUNDARY",
-      "basis": "cross-job overlap is duplicate CI cost, not an unexecuted-test bug; no current exclusivity authority or budget exists"
+      "basis": "synthetic helper self-test protects the scanner implementation; the retained real-topology guard executes that helper with two-sided controls"
+    },
+    "cross-job-report-only": {
+      "outcome": "DELETE_NO_UNIQUE_BOUNDARY",
+      "basis": "generic duplicate reporting has no distinct enforcement boundary; GC-2/C-007 is enforced by the specific serial-orphan-sweep/parallel-pool survivor"
     },
     "exact-survivor": {
       "outcome": "KEEP_EXACT",
@@ -391,8 +421,8 @@
     {
       "path": "tests/architectural/test_ci_collection_completeness.py",
       "baseline": 46,
-      "current": 1,
-      "delta": 45,
+      "current": 2,
+      "delta": 44,
       "baseline_nodeids": [
         "tests/architectural/test_ci_collection_completeness.py::test_active_jobs_grow_monotonically_with_the_filter_state",
         "tests/architectural/test_ci_collection_completeness.py::test_analyze_default_still_models_every_job",
@@ -442,10 +472,11 @@
         "tests/architectural/test_ci_collection_completeness.py::test_worst_case_filter_state_is_reachable"
       ],
       "current_nodeids": [
-        "tests/architectural/test_ci_collection_completeness.py::test_every_test_node_is_collected_on_a_push_to_main"
+        "tests/architectural/test_ci_collection_completeness.py::test_every_test_node_is_collected_on_a_push_to_main",
+        "tests/architectural/test_ci_collection_completeness.py::test_orphan_sweep_and_parallel_pool_are_disjoint"
       ],
       "baseline_nodeids_sha256": "9f1b9e93ef8531b2464dce484a3d67059cc2cfe6f2892d59e5514bbe200e7f19",
-      "current_nodeids_sha256": "2131bc655d433f5cf8921a39c5f5ac0c92764da5720fb2ef6d14f08913ed00ce"
+      "current_nodeids_sha256": "dbe18e729c13d1c4efd42c9fc9e8598a3e76748d66d650eb970e9f06cbcf4153"
     },
     {
       "path": "tests/architectural/test_ci_fast_jobs_have_timeout.py",
@@ -1905,13 +1936,13 @@
     [
       "tests/architectural/test_gate_coverage.py::test_cross_job_disjoint_selection_is_pure_and_detects_overlap",
       "DELETE_NO_UNIQUE_BOUNDARY",
-      "cross-job-no-boundary",
+      "cross-job-helper-self-test",
       null
     ],
     [
       "tests/architectural/test_gate_coverage.py::test_duplicate_selection_is_reported",
       "DELETE_NO_UNIQUE_BOUNDARY",
-      "cross-job-no-boundary",
+      "cross-job-report-only",
       null
     ],
     [
@@ -2012,9 +2043,9 @@
     ],
     [
       "tests/architectural/test_gate_coverage.py::test_orphan_sweep_and_sync_pool_are_disjoint_today",
-      "DELETE_NO_UNIQUE_BOUNDARY",
-      "cross-job-no-boundary",
-      null
+      "FOLD_TO_SURVIVOR",
+      "cross-job-disjointness-fold",
+      "tests/architectural/test_ci_collection_completeness.py::test_orphan_sweep_and_parallel_pool_are_disjoint"
     ],
     [
       "tests/architectural/test_gate_coverage.py::test_parser_ignores_non_command_pytest_tokens",
@@ -3706,7 +3737,7 @@
   "set_hashes": {
     "owned_paths_sha256": "91f8618353f79e0d0c79624c1a273e1c9489d017383e595eef1cd4f40e9a9f95",
     "baseline_nodeids_sha256": "d9f4fff14d0efd7c43057cb69e3b88e7a646c38e93db0d7f37d0a8cfa6ab863d",
-    "current_nodeids_sha256": "58ae9e72eb5530d57dc7f1bbfdc4a4aadb980e20ffb0fd4426ef118e51654230"
+    "current_nodeids_sha256": "0da4bd0b13ab43d61f91c59689430f33cb4aebce1fa384c6cd1c01bd4bb8f02f"
   },
   "fail_closed_checks": {
     "owned_paths_exactly_37_unique": true,
@@ -3714,16 +3745,16 @@
     "baseline_nodeids_exactly_418_unique": true,
     "frozen_node_map_is_total_and_unique": true,
     "every_mapping_family_has_matching_outcome": true,
-    "current_nodeids_exactly_35_unique": true,
+    "current_nodeids_exactly_36_unique": true,
     "yaml_path_counts_match_authoritative_sets": true,
-    "arithmetic": "418 - 35 = 383",
+    "arithmetic": "418 - 36 = 382",
     "status": "PASS"
   },
   "focused_route_equivalence": {
     "windows_fault": "remove Windows marker selector from its owning workflow route",
     "intended_assertion": "tests/architectural/test_ci_collection_completeness.py::test_every_test_node_is_collected_on_a_push_to_main",
     "observed": "intended assertion red; 23 Windows nodes became orphans",
-    "cross_job_overlap_decision": "DELETE: overlap only duplicates CI work; no exclusivity authority or correctness oracle"
+    "cross_job_overlap_decision": "KEEP_MINIMAL: GC-2/C-007 is current authority; healthy serial-orphan-sweep/parallel-pool intersection is empty and removal of the actual pool ignore produces the exact 9-node serial overlap"
   }
 }
 }

@@ -12,17 +12,17 @@ base_census:
   content_sha256: 08ef931c46e9d6a2608baec729203442640933bf2970cc83e794bf2f78011e08
   exact_nodeids: >-
     For each path below, base nodeids are collection.nodes whose path_ref maps
-    through collection.tables.paths to that path. The cycle_2_reconciliation
+    through collection.tables.paths to that path. The cycle_3_reconciliation
     block in wp09-results.json records the fail-closed 37-path partition of all
     418 frozen identities into exact terminal families and the independently
-    collected 35 current identities. Net reduction is 383 nodes.
+    collected 36 current identities. Net reduction is 382 nodes.
 
 screening:
   - {path: tests/architectural/test_arch_pole_deserialized.py, scanner: [structural], baseline: 2, current: 1, verdict: MODIFY_KEEP, corpus: .github/workflows/*.yml, polarity: negative-route, oracle: architectural-marked tests have a running CI owner, authority: "open #1931", ci_role: live-route-gate, removed_shape: performance dependency/name/self-tests}
   - {path: tests/architectural/test_arch_shard_marker_completeness.py, scanner: [structural], baseline: 7, current: 2, verdict: MODIFY_KEEP, corpus: live collected arch+next roots, polarity: negative-partition, oracle: every node has exactly one group shard marker, authority: "tests._shard_registry + open #1931", ci_role: shard-integrity, removed_shape: duplicate partition helpers}
   - {path: tests/architectural/test_arch_unblind_matrix.py, scanner: [source, structural], baseline: 3, current: 0, verdict: DELETE, corpus: historical workflow matrix, polarity: positive-shape, oracle: null, authority: null, ci_role: duplicated, removed_shape: historical mission/name/prose pins}
   - {path: tests/architectural/test_ci_architectural_gate_coverage.py, scanner: [source, structural], baseline: 5, current: 0, verdict: DELETE, corpus: workflow text, polarity: positive-shape, oracle: null, authority: null, ci_role: superseded, removed_shape: exact job/trigger/path names}
-  - {path: tests/architectural/test_ci_collection_completeness.py, scanner: [ast, source, structural, text], baseline: 46, current: 1, verdict: MODIFY_KEEP, corpus: full live pytest collection + modeled workflows, polarity: negative-route, oracle: zero primary-push orphan nodes, authority: "open #1931", ci_role: end-to-end-route-gate, removed_shape: parser self-tests/closed-issue pins/count scaffold}
+  - {path: tests/architectural/test_ci_collection_completeness.py, scanner: [ast, source, structural, text], baseline: 46, current: 2, verdict: MODIFY_KEEP, corpus: full live pytest collection + modeled workflows, polarity: negative-route, oracle: zero primary-push orphan nodes + serial-orphan-sweep/parallel-pool disjointness, authority: "open #1931 + GC-2/C-007", ci_role: end-to-end-route-and-disjointness-gate, removed_shape: parser self-tests/closed-issue pins/count scaffold/generic duplicate reporter}
   - {path: tests/architectural/test_ci_fast_jobs_have_timeout.py, scanner: [source, structural, text], baseline: 10, current: 2, verdict: MODIFY_KEEP, corpus: live ci-quality fast jobs, polarity: negative-safety, oracle: timeout or explained exemption, authority: "open #3143", ci_role: timeout-gate, removed_shape: eight synthetic classifier tests}
   - {path: tests/architectural/test_ci_topology_worklist.py, scanner: [source, structural], baseline: 14, current: 0, verdict: DELETE, corpus: historical topology plan, polarity: advisory, oracle: null, authority: null, ci_role: none, removed_shape: worklist/prose/history}
   - {path: tests/architectural/test_coverage_consumer_needs.py, scanner: [source, structural], baseline: 4, current: 2, verdict: MODIFY_KEEP, corpus: live coverage job graph, polarity: negative-dependency, oracle: emitters reach consumers and consumers have no phantom needs, authority: "open #1931 + ADR 2026-05-28-1", ci_role: coverage-graph-gate, removed_shape: synthetic graph/self-tests}
@@ -58,13 +58,14 @@ screening:
 
 handoff:
   shared_map_owner: WP07
-  authoritative_node_delta: {baseline: 418, current: 35, removed: 383, removed_percent: 91.6268}
-  cycle_2_reconciliation: >-
-    wp09-results.json records all 418 frozen nodeids and all 35 current
+  authoritative_node_delta: {baseline: 418, current: 36, removed: 382, removed_percent: 91.3876}
+  cycle_3_reconciliation: >-
+    wp09-results.json records all 418 frozen nodeids and all 36 current
     nodeids, with a total terminal mapping for every frozen identity. The
     Windows route guard folds to the retained full-collection oracle (23
-    observed Windows orphans under route loss); cross-job overlap is deleted
-    because duplicate execution has no current exclusivity authority.
+    observed Windows orphans under route loss). The distinct GC-2/C-007
+    cross-job boundary folds only its real-topology member to the retained
+    disjointness guard; its helper self-test and generic report remain deleted.
   action: remove every deleted path below from tests/_arch_shard_map.py; do not remove support-only path
   deleted_paths:
     - tests/architectural/test_arch_unblind_matrix.py
