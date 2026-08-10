@@ -116,7 +116,7 @@
     },
     "WP04": {
       "actor": "user",
-      "agent": "codex",
+      "agent": "",
       "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "force_count": 1,
@@ -128,6 +128,7 @@
         "Ready for review: consolidated 82 exact duplicate groups; removed 104 collected nodes; retained unique import, platform, and causal seams. Gate override rationale: workflow scoped run times out without JUnit exactly as WP04 baseline records; independent 727-node affected cohort is green (725 passed, 2 skipped), validator/ruff/5 fault sentinels green."
       ],
       "provider": "__resolved_provider_absent__",
+      "review": null,
       "review_result": {
         "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP04-duplicate-consolidation/review-cycle-1.md",
         "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP04-duplicate-consolidation/review-cycle-1.md",
@@ -135,15 +136,15 @@
         "verdict": "changes_requested"
       },
       "role": "reviewer",
-      "shell_pid": 28365,
+      "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T020": "done",
-        "T021": "done",
-        "T022": "done",
-        "T023": "done",
-        "T024": "done",
-        "T025": "done"
+        "T020": "planned",
+        "T021": "planned",
+        "T022": "planned",
+        "T023": "planned",
+        "T024": "planned",
+        "T025": "planned"
       },
       "tracker_refs": [
         "#1931"
