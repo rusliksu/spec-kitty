@@ -1,0 +1,145 @@
+{
+  "schema_version": "test-sanitation/v1",
+  "mission": "assertive-test-suite-sanitation-01KZME3P",
+  "work_package": "WP05",
+  "base_commit": "28ae75ea998c898aba57364db7a06d2088bd2af2",
+  "base_census_content_sha256": "08ef931c46e9d6a2608baec729203442640933bf2970cc83e794bf2f78011e08",
+  "decision_rule": "Retain only current negative invariants or behavioral contracts with a nonzero live corpus and a realistic fault probe that reaches the assertion. Historical proof, names, self-presence, exact counts, positive placement, and advisory-only findings are deleted.",
+  "summary": {
+    "assigned_scanner_files": 35,
+    "deleted_files": 7,
+    "modified_survivor_files": 7,
+    "unchanged_survivor_files": 21,
+    "removed_collected_nodes": 54,
+    "deleted_lines": 2549,
+    "inserted_lines": 5,
+    "net_lines": -2544,
+    "product_behavior_changes": 0,
+    "test_only_product_symbols_removed": 0
+  },
+  "screening": [
+    {"path": "tests/acceptance/test_post_consolidation.py", "verdict": "KEEP", "proof_family": "behavioral-contract", "reason": "Exercises consolidated-tree acceptance outcomes and rollback, not source shape."},
+    {"path": "tests/architectural/test_batch_drain_retired_3167.py", "verdict": "DELETE", "reason": "Frozen watch-list, symbol visibility, and migration-history scaffold; stronger live negative guard survives in tests/sync/test_no_queue_drain_constructed_3030.py."},
+    {"path": "tests/architectural/test_contract_registry_parity.py", "verdict": "DELETE", "reason": "Historical parity driver duplicated enforcing path/terminology gates and pinned an advisory registry surface rather than a product contract."},
+    {"path": "tests/architectural/test_coord_read_residuals_closeout.py", "verdict": "KEEP", "proof_family": "live-ast-negative", "reason": "Scans live coordination readers and includes scope-reversion fault probes."},
+    {"path": "tests/architectural/test_dead_builtin_doc_paths.py", "verdict": "KEEP", "proof_family": "live-doc-negative", "reason": "Live documentation corpus rejects retired built-in paths under current package-boundary authority."},
+    {"path": "tests/architectural/test_docs_cli_reference_parity.py", "verdict": "KEEP", "proof_family": "live-doc-negative", "reason": "Current CLI registry consumer; planted nonexistent command reaches and fails the guard."},
+    {"path": "tests/architectural/test_execution_context_parity.py", "verdict": "KEEP", "proof_family": "behavioral-contract", "reason": "CWD/worktree behavior is exercised and realistic selector divergence is detected under ExecutionContext authority."},
+    {"path": "tests/architectural/test_exemption_registry_ratchet.py", "verdict": "KEEP", "proof_family": "live-ast-negative", "reason": "Live churn surfaces are scanned; ninth-exemption and path-context faults prove two-sided bite."},
+    {"path": "tests/architectural/test_glossary_pack_parity.py", "verdict": "MODIFY_KEEP", "proof_family": "consumer-contract", "reason": "Removed exact term/optional-field counts; kept seed-driven key/value round-trip and no-invention contract."},
+    {"path": "tests/architectural/test_golden_count_ban.py", "verdict": "DELETE", "reason": "Heuristic test-prose/count classifier and frozen per-directory ceilings had no product oracle or current runtime authority."},
+    {"path": "tests/architectural/test_issue_matrix_json_migration_completeness.py", "verdict": "KEEP", "proof_family": "behavioral-contract", "reason": "Exercises canonical JSON writers, finalize behavior, and current doctrine consumers."},
+    {"path": "tests/architectural/test_merge_pipeline_ratchets.py", "verdict": "KEEP", "proof_family": "live-ast-negative", "reason": "Current single ref-advance/environment authority; unexpected-exception fault reaches behavioral oracle."},
+    {"path": "tests/architectural/test_migration_chain_integrity.py", "verdict": "KEEP", "proof_family": "consumer-contract", "reason": "Auto-discovery and registry execution consume the live migration chain; interrupted/incompatible chains fail."},
+    {"path": "tests/architectural/test_mission_exit_baseline.py", "verdict": "DELETE", "reason": "Historical mission-node presence floor was a slow self-census and blocked legitimate suite reduction without a product fault."},
+    {"path": "tests/architectural/test_no_dead_cli_paths.py", "verdict": "KEEP", "proof_family": "live-source-negative", "reason": "Live source corpus plus path-shape discriminators; planted dead-path violations fail without false-red prose matches."},
+    {"path": "tests/architectural/test_no_dead_doctrine_paths.py", "verdict": "KEEP", "proof_family": "live-doc-negative", "reason": "Current built-in doctrine cross-links are consumer-visible; in-boundary and escape probes exercise both sides."},
+    {"path": "tests/architectural/test_no_dead_modules.py", "verdict": "MODIFY_KEEP", "proof_family": "live-reachability", "reason": "Removed exact seven-entry grandfather count; retained bidirectional live import/caller reachability."},
+    {"path": "tests/architectural/test_no_dead_symbols.py", "verdict": "KEEP", "proof_family": "live-reachability", "reason": "Scans public exports against live import/getattr/facade callers and carries realistic false-negative probes."},
+    {"path": "tests/architectural/test_no_legacy_status_emit_callers.py", "verdict": "KEEP", "proof_family": "live-ast-negative", "reason": "Current transaction boundary forbids production callers of the legacy event emitter."},
+    {"path": "tests/architectural/test_no_legacy_terminology.py", "verdict": "KEEP", "proof_family": "live-source-negative", "reason": "Current 3.x terminology authority; phrase-bite fixture proves new prohibited production/docs wording fails."},
+    {"path": "tests/architectural/test_no_parity_scaffold.py", "verdict": "MODIFY_KEEP", "proof_family": "live-ast-negative", "reason": "Deleted self/name/history scan; retained configured-template seam and typeless-compatibility negative invariants."},
+    {"path": "tests/architectural/test_ratchet_baselines.py", "verdict": "KEEP", "proof_family": "consumer-contract", "reason": "Schema is consumed by contract examples and rejects new exception capacity; no removed WP05 guard had a referenced key."},
+    {"path": "tests/architectural/test_ratchet_positional_anchor_ban.py", "verdict": "KEEP", "proof_family": "live-source-negative", "reason": "Current content-addressed evidence rule scans nonempty architectural corpus; realistic line/index/seed anchors fail."},
+    {"path": "tests/architectural/test_reference_enum_ratchet.py", "verdict": "KEEP", "proof_family": "consumer-contract", "reason": "Protects current DRG relationship-enum authority from incompatible widening using consumer-shaped examples."},
+    {"path": "tests/architectural/test_retired_contracts_absent.py", "verdict": "DELETE", "reason": "Primary live sweep only recorded findings with record_property and never failed; seeded checks tested its own advisory scanner."},
+    {"path": "tests/architectural/test_topology_inference_retired.py", "verdict": "KEEP", "proof_family": "live-ast-negative", "reason": "Current stored-topology authority scans live production; reintroduced classifiers and ternary forms fail."},
+    {"path": "tests/architectural/test_wp05_write_target_drain.py", "verdict": "DELETE", "reason": "Source-token and positive test-only helper scaffold for completed selector migration; behavioral write-target tests survive."},
+    {"path": "tests/audit/test_audit_architecture.py", "verdict": "KEEP", "proof_family": "behavioral-contract", "reason": "Behavioral classifier matrix for modern and legacy audit input shapes."},
+    {"path": "tests/core/test_retrospective_filename_constant.py", "verdict": "DELETE", "reason": "Pinned exact constant value, export membership, and literal placement; no behavioral consumer fault."},
+    {"path": "tests/migration/test_backfill_provenance.py", "verdict": "KEEP", "proof_family": "behavioral-contract", "reason": "Exercises provenance backfill idempotence, dry-run, and rollback outcomes."},
+    {"path": "tests/missions/test_wp02_coord_routing_consolidation.py", "verdict": "MODIFY_KEEP", "proof_family": "behavioral-contract", "reason": "Removed exact frozenset/symbol-placement assertion; retained routing truth table and fallback behavior."},
+    {"path": "tests/missions/test_wp17_husk_arm_collapse.py", "verdict": "MODIFY_KEEP", "proof_family": "behavioral-contract", "reason": "Removed positive symbol/caller placement checks; retained canonical predicate outcomes and typed error/default contracts."},
+    {"path": "tests/specify_cli/coordination/test_simple_case_flat_topology.py", "verdict": "MODIFY_KEEP", "proof_family": "behavioral-contract", "reason": "Removed comparison to test-only _current_branch helper; retained full-save target, CWD, and touched-path oracles."},
+    {"path": "tests/specify_cli/write_side/test_characterization_write_target.py", "verdict": "MODIFY_KEEP", "proof_family": "behavioral-contract", "reason": "Removed comparison to test-only _current_branch helper; retained direct target and realistic git-HEAD mutation oracle."},
+    {"path": "tests/sync/test_no_queue_drain_constructed_3030.py", "verdict": "KEEP", "proof_family": "live-ast-negative", "reason": "Stronger live queue-drain negative invariant; synthetic import/call reintroduction reaches and fails the scanner."}
+  ],
+  "survivor_family_proofs": [
+    {
+      "id": "behavioral-contract",
+      "authority": ["docs/adr/3.x/2026-06-03-1-execution-state-domain-model.md", "docs/adr/3.x/2026-06-03-2-executioncontext-owner-and-committarget.md", "docs/adr/3.x/2026-06-22-1-mission-topology-ssot.md"],
+      "corpus": "Production-shaped temporary repositories and current writers/readers; nonzero in every retained test.",
+      "fault": "Diverge worktree/CWD target, corrupt metadata, reintroduce legacy selector, or force transactional write failure.",
+      "oracle": "Behavioral return value, emitted artifact, rollback state, or typed failure differs and the assertion fails."
+    },
+    {
+      "id": "live-ast-negative",
+      "authority": ["docs/adr/3.x/2026-06-26-1-single-authority-seam-and-call-site-gate.md", "docs/adr/3.x/2026-07-16-1-wp-runtime-state-authority-event-log-eviction.md", "docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md"],
+      "corpus": "Nonzero current src/specify_cli AST/source corpus.",
+      "fault": "Insert a production-shaped forbidden call, bypass, classifier arm, or direct authority read in scanner scope.",
+      "oracle": "Scanner reaches the enforcing assertion and reports the concrete path/line; benign authority-routed form passes."
+    },
+    {
+      "id": "live-source-negative",
+      "authority": ["docs/adr/3.x/2026-07-01-1-no-legacy-compat-branches-in-resolvers.md", "docs/adr/3.x/2026-07-23-1-surface-vocabulary-two-domains-and-topology-surface-rename.md", "docs/adr/3.x/2026-07-30-1-consolidated-write-surface-and-consolidate-terminology.md"],
+      "corpus": "Nonzero current production/doctrine/documentation file set with explicit boundary discriminators.",
+      "fault": "Add a realistic retired path, phrase, positional anchor, or cross-boundary reference at a production-shaped consumer.",
+      "oracle": "Guard rejects the new use while documented examples, escaped text, and current aliases remain green."
+    },
+    {
+      "id": "live-doc-negative",
+      "authority": ["docs/adr/3.x/2026-04-08-2-package-bundled-templates-sole-source.md", "docs/adr/3.x/2026-07-26-2-doctrine-artefact-pack-layout-convention.md"],
+      "corpus": "Nonzero shipped built-in doctrine and CLI reference corpus.",
+      "fault": "Introduce an unresolved in-boundary link or nonexistent CLI command in a shipped consumer.",
+      "oracle": "Resolver/registry comparison reaches assertion and names the invalid consumer; valid and intentionally external links pass."
+    },
+    {
+      "id": "live-reachability",
+      "authority": ["src/specify_cli/__init__.py", "src/specify_cli/upgrade/migrations/__init__.py"],
+      "corpus": "All current src/specify_cli modules and public __all__ declarations.",
+      "fault": "Add an unreferenced module/export or remove its only static/dynamic consumer.",
+      "oracle": "Bidirectional import/caller graph reports the new dead identity; auto-discovered and executable entrypoints remain exempt by live consumers."
+    },
+    {
+      "id": "consumer-contract",
+      "authority": ["src/specify_cli/upgrade/registry.py", "src/specify_cli/tasks/issue_matrix.py", "packs/built-in/glossary_packs/spec-kitty-core.glossary-pack.yaml"],
+      "corpus": "Current registry/schema/seed consumers; no frozen occurrence counts.",
+      "fault": "Drop or incompatibly alter a consumed key, migration edge, relationship enum, or seed value.",
+      "oracle": "Consumer round-trip/discovery fails on semantic mismatch; additive optional absence and legitimate count changes pass."
+    }
+  ],
+  "dead_symbol_proof": {
+    "symbol": "specify_cli.coordination.status_transition._current_branch",
+    "caller_search": "rg -n '_current_branch' src tests",
+    "result": "No production caller, but tests/specify_cli/coordination/test_status_transition_adoption.py still imports and calls the helper outside WP05 ownership; deleting it causes collection failure.",
+    "action": "Retained helper. Removed comparison-only uses from the two owned characterization modules while preserving their direct behavioral write-target oracles."
+  },
+  "cross_wp_handoffs": [
+    {
+      "owner": "WP07",
+      "action": "Remove deleted architectural paths from central shard/marker maps after all structural cohorts complete.",
+      "paths": [
+        "tests/architectural/test_batch_drain_retired_3167.py",
+        "tests/architectural/test_contract_registry_parity.py",
+        "tests/architectural/test_golden_count_ban.py",
+        "tests/architectural/test_mission_exit_baseline.py",
+        "tests/architectural/test_retired_contracts_absent.py",
+        "tests/architectural/test_wp05_write_target_drain.py"
+      ],
+      "possible_sidecars": ["tests/architectural/_golden_count_baseline.json", "tests/architectural/mission_exit_baseline.txt"]
+    },
+    {
+      "owner": "WP10",
+      "action": "Adjudicate test_auth_transport_singleton.py and any layer-rules rehome under its scanner-manifest ownership.",
+      "authority": ["docs/adr/3.x/2026-05-18-2-delete-specify-cli-auth-transport.md", "docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md"]
+    }
+  ],
+  "commands": [
+    {
+      "command": ".venv/bin/ruff check <all modified surviving Python paths>",
+      "result": "passed"
+    },
+    {
+      "command": ".venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_glossary_pack_parity.py tests/architectural/test_no_dead_modules.py tests/architectural/test_no_parity_scaffold.py tests/missions/test_wp02_coord_routing_consolidation.py tests/missions/test_wp17_husk_arm_collapse.py tests/specify_cli/coordination/test_simple_case_flat_topology.py tests/specify_cli/write_side/test_characterization_write_target.py tests/sync/test_no_queue_drain_constructed_3030.py",
+      "result": "57 passed in 127.05s"
+    },
+    {
+      "command": ".venv/bin/mypy --strict src/specify_cli/coordination/status_transition.py",
+      "result": "4 pre-existing errors at unchanged lines 123, 139, 148, and 625; helper removal introduced no diagnostic"
+    },
+    {
+      "command": ".venv/bin/pytest -q -p no:cacheprovider <all 28 retained WP05 scanner files>",
+      "result": "314 passed in 223.43s"
+    }
+  ]
+}
