@@ -2,7 +2,7 @@
   "schema_version": "wp06-sync-survivor-map/v1",
   "immutable_base": "28ae75ea998c898aba57364db7a06d2088bd2af2",
   "wp02_harness_source": "c8494d69451cdea7c15866db2b6552979d2db279",
-  "head": "9ba958dc10eb817286683230074795da67f1a5a8",
+  "head": "a23819fb1fda7d5326ddc6975b49b9578299db62",
   "base_wp02": {
     "command": "PWHEADLESS=1 PYTHONHASHSEED=11 .venv/bin/pytest -q --junit-xml=<artifact> <45 selected WP06 nodes> --tb=short",
     "result": "12 failed, 33 passed in 171.37s",
@@ -10,10 +10,10 @@
     "artifact_sha256": "71277a4148c69dbc4e1d1e39cb5d978c9be7bb69cd1d299587f73a819feaa328"
   },
   "head_survivors": {
-    "command": "PWHEADLESS=1 PYTHONHASHSEED=11 .venv/bin/pytest -q --junit-xml=<artifact> <21 exact survivor nodes>",
-    "result": "21 passed in 1.02s",
+    "command": "PWHEADLESS=1 PYTHONHASHSEED=11 .venv/bin/pytest -q --junit-xml=<artifact> <20 exact biting survivor nodes>",
+    "result": "20 passed in 0.88s",
     "artifact": "raw/wp06-sync-survivor-junit.xml",
-    "artifact_sha256": "5913ec8645fef7e7217a2ec9b1a764eb9ca2e7b5e474e1a530b72834d633a0ef"
+    "artifact_sha256": "4c4ce85768768e9a01efb5e11835937b818d8387452b7dbee8adfadca07bafad"
   },
   "classifications": [
     {
@@ -114,19 +114,30 @@
     },
     {
       "candidate": "tests/sync/test_sync_e2e_integration.py::TestFullWorkflowIntegration::test_full_wp_lifecycle",
-      "contract": "status event journal materializes a full WP lifecycle without drift",
+      "contract": "fixture-authored seven-call emitter sequence and ordering",
       "base_wp02_outcome": "passed",
       "head_state": "deleted",
-      "survivor": "tests/status/test_status_e2e_integration.py::TestE2EFullPipeline::test_e2e_full_pipeline",
-      "survivor_outcome": "passed"
+      "disposition": "stale_non_causal",
+      "reason": "The candidate directly invokes seven EventEmitter methods in fixture-authored order and reaches no workflow or orchestration entrypoint; changing real workflow ordering cannot make this oracle fail.",
+      "survivor": null,
+      "survivor_outcome": null
     },
     {
       "candidate": "tests/sync/test_sync_e2e_integration.py::TestFullWorkflowIntegration::test_events_queued_when_offline",
-      "contract": "multiple offline events are retained in queue order",
+      "contract": "multiple offline events remain drainable until mark_synced removes them",
       "base_wp02_outcome": "passed",
       "head_state": "deleted",
-      "survivor": "tests/sync/test_offline_queue.py::TestOfflineQueue::test_queue_multiple_events",
-      "survivor_outcome": "passed"
+      "survivors": [
+        "tests/sync/test_offline_queue.py::TestOfflineQueue::test_queue_multiple_events",
+        "tests/sync/test_offline_queue.py::TestOfflineQueue::test_drain_queue_fifo_order",
+        "tests/sync/test_offline_queue.py::TestOfflineQueue::test_mark_synced_removes_events"
+      ],
+      "proof": [
+        "multiple events are retained",
+        "drain returns them in FIFO order without removal",
+        "mark_synced removes the selected events"
+      ],
+      "survivor_outcome": "3 passed"
     },
     {
       "candidate": "tests/sync/test_sync_e2e_integration.py::TestEventPayloadValidation::test_wp_status_changed_payload",
@@ -166,22 +177,6 @@
       "base_wp02_outcome": "passed",
       "head_state": "deleted",
       "survivor": "tests/status/test_emit.py::TestEmitStatusTransition::test_chained_transitions",
-      "survivor_outcome": "passed"
-    },
-    {
-      "candidate": "tests/sync/test_dual_write_integration.py::TestDualWriteAliasResolvedEverywhere::test_dual_write_alias_resolved_everywhere",
-      "contract": "lane aliases resolve before status persistence",
-      "base_wp02_outcome": "passed",
-      "head_state": "deleted",
-      "survivor": "tests/status/test_emit.py::TestEmitStatusTransition::test_alias_resolution_doing",
-      "survivor_outcome": "passed"
-    },
-    {
-      "candidate": "tests/sync/test_dual_write_integration.py::TestDualWriteForceTransitionRecorded::test_dual_write_force_transition_recorded",
-      "contract": "forced transitions are recorded with actor and reason",
-      "base_wp02_outcome": "passed",
-      "head_state": "deleted",
-      "survivor": "tests/status/test_status_e2e_integration.py::TestE2EEmitForceTransition::test_e2e_emit_force_transition",
       "survivor_outcome": "passed"
     }
   ]

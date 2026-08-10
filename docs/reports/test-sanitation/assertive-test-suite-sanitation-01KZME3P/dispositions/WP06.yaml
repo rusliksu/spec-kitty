@@ -11,7 +11,9 @@
         "source_paths": [
           "tests/charter/test_config_stem_parity.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -30,7 +32,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -127,7 +131,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -181,7 +187,7 @@
           "intended_oracle_failed": true,
           "command": ".venv/bin/pytest -q 'tests/charter/test_config_stem_parity.py::test_every_activated_directive_stem_round_trips_to_canonical_urn[reconcile-change-scope-tensions]'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "f4328345a3b660948bb5ccc0350a399ee643f7d55891dfd8a478f46b1865e0de"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
       "verdict": "KEEP",
@@ -230,7 +236,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -284,7 +292,7 @@
           "intended_oracle_failed": true,
           "command": ".venv/bin/pytest -q 'tests/charter/test_config_stem_parity.py::test_every_activated_directive_stem_round_trips_to_canonical_urn[use-c4-model-techniques]'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "f4328345a3b660948bb5ccc0350a399ee643f7d55891dfd8a478f46b1865e0de"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
       "verdict": "KEEP",
@@ -312,7 +320,9 @@
         "source_paths": [
           "tests/doctrine/drg/test_reachability.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -331,7 +341,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -407,7 +419,9 @@
         "source_paths": [
           "tests/doctrine/drg/test_reachability.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -426,7 +440,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -502,7 +518,9 @@
         "source_paths": [
           "tests/doctrine/drg/test_reachability.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -521,7 +539,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -597,7 +617,9 @@
         "source_paths": [
           "tests/doctrine/drg/test_reachability.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -616,7 +638,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -692,7 +716,9 @@
         "source_paths": [
           "tests/doctrine/drg/migration/test_extractor_projection.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -711,7 +737,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -787,7 +815,9 @@
         "source_paths": [
           "tests/specify_cli/cli/commands/test_completion_fast_path.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -806,7 +836,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -880,7 +912,9 @@
         "source_paths": [
           "tests/specify_cli/cli/commands/test_completion_fast_path.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -899,7 +933,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -973,7 +1009,9 @@
         "source_paths": [
           "tests/specify_cli/cli/commands/test_completion_fast_path.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -992,7 +1030,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -1087,7 +1127,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -1141,7 +1183,7 @@
           "intended_oracle_failed": true,
           "command": ".venv/bin/pytest -q 'tests/specify_cli/cli/commands/test_doctor_restart_daemon_timing.py::test_doctor_restart_daemon_completes_under_nfr_002_threshold'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "f4328345a3b660948bb5ccc0350a399ee643f7d55891dfd8a478f46b1865e0de"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
       "verdict": "KEEP",
@@ -1190,7 +1232,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -1244,7 +1288,7 @@
           "intended_oracle_failed": true,
           "command": ".venv/bin/pytest -q 'tests/cli/test_cli_console.py::test_set_plain_false_restores_colour'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "f4328345a3b660948bb5ccc0350a399ee643f7d55891dfd8a478f46b1865e0de"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
       "verdict": "KEEP",
@@ -1293,7 +1337,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -1347,7 +1393,7 @@
           "intended_oracle_failed": true,
           "command": ".venv/bin/pytest -q 'tests/cli/test_cli_console.py::test_set_plain_true_strips_colour_from_human_output'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "f4328345a3b660948bb5ccc0350a399ee643f7d55891dfd8a478f46b1865e0de"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
       "verdict": "KEEP",
@@ -1396,7 +1442,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -1450,7 +1498,7 @@
           "intended_oracle_failed": true,
           "command": ".venv/bin/pytest -q 'tests/cli/test_cli_console.py::test_vanilla_console_print_json_would_leak_ansi'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "f4328345a3b660948bb5ccc0350a399ee643f7d55891dfd8a478f46b1865e0de"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
       "verdict": "KEEP",
@@ -1499,7 +1547,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -1553,7 +1603,7 @@
           "intended_oracle_failed": true,
           "command": ".venv/bin/pytest -q 'tests/integration/test_mission_type_resolution_integration.py::test_documentation_mission_resolves_authored_templates'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "f4328345a3b660948bb5ccc0350a399ee643f7d55891dfd8a478f46b1865e0de"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
       "verdict": "KEEP",
@@ -1602,7 +1652,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -1656,7 +1708,7 @@
           "intended_oracle_failed": true,
           "command": ".venv/bin/pytest -q 'tests/integration/test_mission_type_resolution_integration.py::test_plan_mission_resolves_authored_templates'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "f4328345a3b660948bb5ccc0350a399ee643f7d55891dfd8a478f46b1865e0de"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
       "verdict": "KEEP",
@@ -1705,7 +1757,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -1759,7 +1813,7 @@
           "intended_oracle_failed": true,
           "command": ".venv/bin/pytest -q 'tests/integration/test_mission_type_resolution_integration.py::test_research_mission_resolves_authored_templates'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "f4328345a3b660948bb5ccc0350a399ee643f7d55891dfd8a478f46b1865e0de"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
       "verdict": "KEEP",
@@ -1787,7 +1841,9 @@
         "source_paths": [
           "tests/contract/test_charter_compact_includes_section_anchors.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -1806,7 +1862,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -1880,7 +1938,9 @@
         "source_paths": [
           "tests/contract/test_charter_compact_includes_section_anchors.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -1899,7 +1959,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -1973,7 +2035,9 @@
         "source_paths": [
           "tests/cli/commands/test_agent_mission_commit_to_branch.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -1992,7 +2056,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -2089,7 +2155,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -2143,7 +2211,7 @@
           "intended_oracle_failed": true,
           "command": ".venv/bin/pytest -q 'tests/e2e/test_charter_epic_golden_path.py::test_charter_epic_golden_path'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "f4328345a3b660948bb5ccc0350a399ee643f7d55891dfd8a478f46b1865e0de"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
       "verdict": "KEEP",
@@ -2192,7 +2260,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -2246,7 +2316,7 @@
           "intended_oracle_failed": true,
           "command": ".venv/bin/pytest -q 'tests/e2e/test_upgrade_post_state.py::test_upgrade_then_branch_context_does_not_gate'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "f4328345a3b660948bb5ccc0350a399ee643f7d55891dfd8a478f46b1865e0de"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
       "verdict": "KEEP",
@@ -2280,7 +2350,6 @@
           "tests/sync/test_sync_e2e_integration.py::TestReadOnlyFallback::test_readonly_directory_fallback",
           "tests/sync/test_sync_e2e_integration.py::TestNoDuplicateEmissions::test_single_emission_per_transition",
           "tests/sync/test_sync_e2e_integration.py::TestNoDuplicateEmissions::test_causation_chain_no_duplicates",
-          "tests/sync/test_sync_e2e_integration.py::TestFullWorkflowIntegration::test_full_wp_lifecycle",
           "tests/sync/test_sync_e2e_integration.py::TestFullWorkflowIntegration::test_events_queued_when_offline",
           "tests/sync/test_sync_e2e_integration.py::TestEventPayloadValidation::test_wp_status_changed_payload",
           "tests/sync/test_sync_e2e_integration.py::TestEventPayloadValidation::test_event_id_is_ulid",
@@ -2290,7 +2359,9 @@
         "source_paths": [
           "tests/sync/test_sync_e2e_integration.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -2309,7 +2380,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -2527,23 +2600,6 @@
           },
           {
             "environment_id": "99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849",
-            "nodeid": "tests/sync/test_sync_e2e_integration.py::TestFullWorkflowIntegration::test_full_wp_lifecycle",
-            "collection_state": "collected",
-            "outcome": "passed",
-            "skip_reason": null,
-            "markers": [
-              "integration"
-            ],
-            "duration": {
-              "collection": 0,
-              "setup": 0,
-              "call": 0.096,
-              "cost_class": "unknown"
-            },
-            "artifact_hash": "71277a4148c69dbc4e1d1e39cb5d978c9be7bb69cd1d299587f73a819feaa328"
-          },
-          {
-            "environment_id": "99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849",
             "nodeid": "tests/sync/test_sync_e2e_integration.py::TestFullWorkflowIntegration::test_events_queued_when_offline",
             "collection_state": "collected",
             "outcome": "passed",
@@ -2620,7 +2676,9 @@
           "platform": "macos",
           "disposition": "DELETE"
         },
-        "divergent_dimensions": []
+        "divergent_dimensions": [
+
+        ]
       },
       "evidence": {
         "profile": "duplicate",
@@ -2628,87 +2686,92 @@
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestIdentityAwareFlow::test_init_creates_identity",
             "right": "tests/sync/test_project_identity.py::TestEnsureIdentity::test_generates_missing_fields",
-            "result": "missing project identity is generated; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "missing project identity is generated; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestIdentityAwareFlow::test_identity_is_idempotent",
             "right": "tests/sync/test_project_identity.py::TestEnsureIdentity::test_returns_existing_complete_identity",
-            "result": "complete project identity is preserved idempotently; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "complete project identity is preserved idempotently; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestIdentityAwareFlow::test_event_contains_identity",
             "right": "tests/sync/test_event_emission.py::TestIdentityInjection::test_wp_status_changed_includes_identity",
-            "result": "status events inject project identity; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "status events inject project identity; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestIdentityAwareFlow::test_implement_emits_status_change",
             "right": "tests/sync/test_event_emission.py::TestImplementEmitsWPStatusChanged::test_planned_to_doing",
-            "result": "implement transition emits WPStatusChanged; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "implement transition emits WPStatusChanged; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestUnauthenticatedGracefulDegradation::test_unauthenticated_queues_only",
             "right": "tests/sync/test_event_emission.py::TestMissingIdentityQueuesOnly::test_missing_identity_queues_only",
-            "result": "missing identity/auth routes the event to the offline queue only; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "missing identity/auth routes the event to the offline queue only; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestUnauthenticatedGracefulDegradation::test_runtime_no_websocket_when_unauthenticated",
             "right": "tests/sync/test_runtime.py::TestUnauthenticatedBehavior::test_no_websocket_when_unauthenticated",
-            "result": "unauthenticated runtime does not create a websocket; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "unauthenticated runtime does not create a websocket; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestConfigBackfill::test_backfill_existing_config",
             "right": "tests/sync/test_project_identity.py::TestAtomicWriteConfig::test_preserves_existing_keys",
-            "result": "identity persistence preserves unrelated existing configuration; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "identity persistence preserves unrelated existing configuration; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestConfigBackfill::test_backfill_partial_identity",
             "right": "tests/sync/test_project_identity.py::TestEnsureIdentity::test_backfills_partial_identity",
-            "result": "partial identity is backfilled; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "partial identity is backfilled; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestReadOnlyFallback::test_readonly_fallback_existing_config",
             "right": "tests/sync/test_project_identity.py::TestEnsureIdentity::test_handles_read_only_filesystem",
-            "result": "read-only identity configuration falls back without mutation; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "read-only identity configuration falls back without mutation; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestReadOnlyFallback::test_readonly_directory_fallback",
             "right": "tests/sync/test_project_identity.py::TestIsWritable::test_nonexistent_in_readonly_dir",
-            "result": "a missing config in a read-only directory is detected as non-writable; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "a missing config in a read-only directory is detected as non-writable; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestNoDuplicateEmissions::test_single_emission_per_transition",
             "right": "tests/sync/test_event_emission.py::TestNoDuplicateEmissions::test_implement_emits_once",
-            "result": "implement emits once per transition; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "implement emits once per transition; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestNoDuplicateEmissions::test_causation_chain_no_duplicates",
             "right": "tests/sync/test_event_emission.py::TestFinalizeTasksEmitsBatch::test_feature_created_plus_wp_created",
-            "result": "finalize-tasks batch has one causation chain without duplicate emissions; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
-          },
-          {
-            "left": "tests/sync/test_sync_e2e_integration.py::TestFullWorkflowIntegration::test_full_wp_lifecycle",
-            "right": "tests/status/test_status_e2e_integration.py::TestE2EFullPipeline::test_e2e_full_pipeline",
-            "result": "status event journal materializes a full WP lifecycle without drift; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "finalize-tasks batch has one causation chain without duplicate emissions; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestFullWorkflowIntegration::test_events_queued_when_offline",
             "right": "tests/sync/test_offline_queue.py::TestOfflineQueue::test_queue_multiple_events",
-            "result": "multiple offline events are retained in queue order; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "multiple events are retained; candidate passed on base+WP02 and biting survivor passed on HEAD"
+          },
+          {
+            "left": "tests/sync/test_sync_e2e_integration.py::TestFullWorkflowIntegration::test_events_queued_when_offline",
+            "right": "tests/sync/test_offline_queue.py::TestOfflineQueue::test_drain_queue_fifo_order",
+            "result": "drain returns them in FIFO order without removal; candidate passed on base+WP02 and biting survivor passed on HEAD"
+          },
+          {
+            "left": "tests/sync/test_sync_e2e_integration.py::TestFullWorkflowIntegration::test_events_queued_when_offline",
+            "right": "tests/sync/test_offline_queue.py::TestOfflineQueue::test_mark_synced_removes_events",
+            "result": "mark_synced removes the selected events; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestEventPayloadValidation::test_wp_status_changed_payload",
             "right": "tests/sync/test_events.py::TestWPStatusChanged::test_basic_emission",
-            "result": "WPStatusChanged emits the canonical payload; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "WPStatusChanged emits the canonical payload; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestEventPayloadValidation::test_event_id_is_ulid",
             "right": "tests/sync/test_events.py::TestEventEnvelope::test_event_id_is_valid_ulid",
-            "result": "event identifiers are valid ULIDs; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "event identifiers are valid ULIDs; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
           {
             "left": "tests/sync/test_sync_e2e_integration.py::TestEventPayloadValidation::test_timestamp_is_iso8601",
             "right": "tests/sync/test_events.py::TestEventEnvelope::test_timestamp_is_iso8601",
-            "result": "event timestamps are ISO-8601; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "result": "event timestamps are ISO-8601; candidate passed on base+WP02 and biting survivor passed on HEAD"
           }
         ],
         "causal_probe": {
@@ -2718,14 +2781,123 @@
           "act_reached": true,
           "intended_oracle": "the mapped exact survivor fails for each contract regression",
           "intended_oracle_failed": true,
-          "command": "PWHEADLESS=1 PYTHONHASHSEED=11 .venv/bin/pytest -q <17 exact contract-specific survivor nodes>",
+          "command": "PWHEADLESS=1 PYTHONHASHSEED=11 .venv/bin/pytest -q <20 combined exact biting survivor nodes; 18 cover this cluster>",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "5913ec8645fef7e7217a2ec9b1a764eb9ca2e7b5e474e1a530b72834d633a0ef"
+          "raw_artifact_hash": "4c4ce85768768e9a01efb5e11835937b818d8387452b7dbee8adfadca07bafad"
+        },
+        "authority_evidence": [
+          {
+            "reference": "raw/wp06-sync-survivor-map.json@sha256:95decfac07315d5f60a37afe2a63882830e476bc8317cb7e578a973b0edefa87",
+            "result": "all candidate-to-survivor mappings and proof roles are content-addressed"
+          }
+        ]
+      },
+      "verdict": "DELETE",
+      "state": "terminal",
+      "action": "DELETE 16-node dominated internal-mock scaffold; content-addressed map names every biting survivor and proof role",
+      "survivor": null,
+      "issue": "#3284",
+      "owner": "WP06",
+      "expires": null,
+      "hic_approval": null,
+      "review": {
+        "implementer": "codex/debugger-debbie",
+        "independent_reviewer": "unassigned-at-implementation-handoff",
+        "verdict": "pending-independent-review",
+        "timestamp": "2026-08-10T13:05:00Z"
+      }
+    },
+    {
+      "candidate": {
+        "id": "wp06-sync-full-workflow-noncausal",
+        "members": [
+          "tests/sync/test_sync_e2e_integration.py::TestFullWorkflowIntegration::test_full_wp_lifecycle"
+        ],
+        "granularity": "node",
+        "source_paths": [
+          "tests/sync/test_sync_e2e_integration.py"
+        ],
+        "production_paths": [
+
+        ],
+        "oracle": null,
+        "contract_claim": null,
+        "authority": [
+          "issue:#3284"
+        ],
+        "duplicate_group": null,
+        "route_memberships": [
+          {
+            "route_id": "full-parallel",
+            "role": "owner",
+            "required": true,
+            "events": [
+              "local"
+            ],
+            "selector": {
+              "paths": [
+                "tests/"
+              ],
+              "markers": [
+
+              ],
+              "ignores": [
+                "tests/sync/test_orphan_sweep.py"
+              ],
+              "environment_id": "99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849"
+            }
+          }
+        ],
+        "platforms": [
+          "macos"
+        ],
+        "observations": [
+          {
+            "environment_id": "99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849",
+            "nodeid": "tests/sync/test_sync_e2e_integration.py::TestFullWorkflowIntegration::test_full_wp_lifecycle",
+            "collection_state": "collected",
+            "outcome": "passed",
+            "skip_reason": null,
+            "markers": [
+              "integration"
+            ],
+            "duration": {
+              "collection": 0,
+              "setup": 0,
+              "call": 0.096,
+              "cost_class": "unknown"
+            },
+            "artifact_hash": "71277a4148c69dbc4e1d1e39cb5d978c9be7bb69cd1d299587f73a819feaa328"
+          }
+        ]
+      },
+      "evidence": {
+        "profile": "structural",
+        "authority_evidence": [
+          {
+            "reference": "issue:#3284",
+            "result": "The candidate directly invokes seven EventEmitter methods in fixture-authored order and reaches no workflow or orchestration entrypoint; changing real workflow ordering cannot make this oracle fail."
+          },
+          {
+            "reference": "raw/wp06-sync-survivor-map.json@sha256:95decfac07315d5f60a37afe2a63882830e476bc8317cb7e578a973b0edefa87",
+            "result": "the stale/non-causal classification is content-addressed"
+          }
+        ],
+        "causal_probe": {
+          "kind": "call-graph non-causality inspection",
+          "fault": "reorder or remove a real workflow orchestration step while leaving EventEmitter methods unchanged",
+          "authority_violated": "a workflow test must reach a workflow or orchestration entrypoint",
+          "act_reached": true,
+          "intended_oracle": "the candidate should fail on a real workflow-ordering regression",
+          "intended_oracle_failed": true,
+          "command": "git show 28ae75ea998c898aba57364db7a06d2088bd2af2:tests/sync/test_sync_e2e_integration.py",
+          "environment": "immutable base plus WP02 repaired harness; static call-graph inspection and passing base replay",
+          "raw_artifact_hash": "71277a4148c69dbc4e1d1e39cb5d978c9be7bb69cd1d299587f73a819feaa328"
         }
       },
       "verdict": "DELETE",
       "state": "terminal",
-      "action": "DELETE 17-node dominated internal-mock scaffold; every node has an exact contract-specific survivor in raw/wp06-sync-survivor-map.json",
+      "action": "DELETE non-causal synthetic sequence: it authors the asserted order by direct EventEmitter calls and cannot observe real workflow ordering",
       "survivor": null,
       "issue": "#3284",
       "owner": "WP06",
@@ -2743,15 +2915,15 @@
         "id": "wp06-dual-write-spent-scaffold",
         "members": [
           "tests/sync/test_dual_write_integration.py::TestDualWriteEventAndFrontmatterConsistent::test_dual_write_event_and_frontmatter_consistent",
-          "tests/sync/test_dual_write_integration.py::TestDualWriteMultipleTransitions::test_dual_write_multiple_transitions",
-          "tests/sync/test_dual_write_integration.py::TestDualWriteAliasResolvedEverywhere::test_dual_write_alias_resolved_everywhere",
-          "tests/sync/test_dual_write_integration.py::TestDualWriteForceTransitionRecorded::test_dual_write_force_transition_recorded"
+          "tests/sync/test_dual_write_integration.py::TestDualWriteMultipleTransitions::test_dual_write_multiple_transitions"
         ],
         "granularity": "duplicate_cluster",
         "source_paths": [
           "tests/sync/test_dual_write_integration.py"
         ],
-        "production_paths": [],
+        "production_paths": [
+
+        ],
         "oracle": null,
         "contract_claim": null,
         "authority": [
@@ -2770,7 +2942,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -2815,7 +2989,116 @@
               "cost_class": "unknown"
             },
             "artifact_hash": "71277a4148c69dbc4e1d1e39cb5d978c9be7bb69cd1d299587f73a819feaa328"
+          }
+        ],
+        "equivalence": {
+          "production_path": "retired internal-mock integration scaffold",
+          "oracle": "same contract asserted through current public-boundary survivor",
+          "outcome": "passed on immutable base plus WP02",
+          "route_role": "full-parallel owner",
+          "cost_class": "unknown",
+          "platform": "macos",
+          "disposition": "DELETE"
+        },
+        "divergent_dimensions": [
+
+        ]
+      },
+      "evidence": {
+        "profile": "duplicate",
+        "overlap_evidence": [
+          {
+            "left": "tests/sync/test_dual_write_integration.py::TestDualWriteEventAndFrontmatterConsistent::test_dual_write_event_and_frontmatter_consistent",
+            "right": "tests/specify_cli/status/test_cutover_byte_stability.py::test_lane_mirror_activation_does_not_change_lane_read",
+            "result": "phase-1 lane mirror activation preserves canonical lane reads; candidate passed on base+WP02 and biting survivor passed on HEAD"
           },
+          {
+            "left": "tests/sync/test_dual_write_integration.py::TestDualWriteMultipleTransitions::test_dual_write_multiple_transitions",
+            "right": "tests/status/test_emit.py::TestEmitStatusTransition::test_chained_transitions",
+            "result": "chained status transitions persist in canonical order; candidate passed on base+WP02 and biting survivor passed on HEAD"
+          }
+        ],
+        "causal_probe": {
+          "kind": "survivor fault comparison",
+          "fault": "violate any mapped contract at its current public boundary",
+          "authority_violated": "candidate claim evaluated against #3284 and current mission authorities",
+          "act_reached": true,
+          "intended_oracle": "the mapped exact survivor fails for each contract regression",
+          "intended_oracle_failed": true,
+          "command": "PWHEADLESS=1 PYTHONHASHSEED=11 .venv/bin/pytest -q <20 combined exact biting survivor nodes; 2 cover this cluster>",
+          "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
+          "raw_artifact_hash": "4c4ce85768768e9a01efb5e11835937b818d8387452b7dbee8adfadca07bafad"
+        },
+        "authority_evidence": [
+          {
+            "reference": "raw/wp06-sync-survivor-map.json@sha256:95decfac07315d5f60a37afe2a63882830e476bc8317cb7e578a973b0edefa87",
+            "result": "all candidate-to-survivor mappings and proof roles are content-addressed"
+          }
+        ]
+      },
+      "verdict": "DELETE",
+      "state": "terminal",
+      "action": "DELETE 2-node dominated internal-mock scaffold; content-addressed map names each biting survivor and proof role",
+      "survivor": null,
+      "issue": "#3284",
+      "owner": "WP06",
+      "expires": null,
+      "hic_approval": null,
+      "review": {
+        "implementer": "codex/debugger-debbie",
+        "independent_reviewer": "unassigned-at-implementation-handoff",
+        "verdict": "pending-independent-review",
+        "timestamp": "2026-08-10T13:05:00Z"
+      }
+    },
+    {
+      "candidate": {
+        "id": "wp06-dual-write-alias-persistence",
+        "members": [
+          "tests/sync/test_dual_write_integration.py::TestDualWriteAliasResolvedEverywhere::test_dual_write_alias_resolved_everywhere"
+        ],
+        "granularity": "node",
+        "source_paths": [
+          "tests/sync/test_dual_write_integration.py"
+        ],
+        "production_paths": [
+          "src/specify_cli/status/emit.py",
+          "src/specify_cli/status/models.py",
+          "src/specify_cli/status/reducer.py",
+          "src/specify_cli/status/store.py"
+        ],
+        "oracle": "doing canonicalizes to in_progress across the returned event, typed journal, raw JSONL, and materialized snapshot",
+        "contract_claim": "doing canonicalizes to in_progress across the returned event, typed journal, raw JSONL, and materialized snapshot",
+        "authority": [
+          "issue:#3284"
+        ],
+        "duplicate_group": null,
+        "route_memberships": [
+          {
+            "route_id": "full-parallel",
+            "role": "owner",
+            "required": true,
+            "events": [
+              "local"
+            ],
+            "selector": {
+              "paths": [
+                "tests/"
+              ],
+              "markers": [
+
+              ],
+              "ignores": [
+                "tests/sync/test_orphan_sweep.py"
+              ],
+              "environment_id": "99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849"
+            }
+          }
+        ],
+        "platforms": [
+          "macos"
+        ],
+        "observations": [
           {
             "environment_id": "99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849",
             "nodeid": "tests/sync/test_dual_write_integration.py::TestDualWriteAliasResolvedEverywhere::test_dual_write_alias_resolved_everywhere",
@@ -2832,7 +3115,98 @@
               "cost_class": "unknown"
             },
             "artifact_hash": "71277a4148c69dbc4e1d1e39cb5d978c9be7bb69cd1d299587f73a819feaa328"
-          },
+          }
+        ]
+      },
+      "evidence": {
+        "profile": "contract",
+        "caller_evidence": [
+          {
+            "command": "PWHEADLESS=1 PYTHONHASHSEED=11 .venv/bin/pytest -q 'tests/sync/test_dual_write_integration.py::TestDualWriteAliasResolvedEverywhere::test_dual_write_alias_resolved_everywhere'",
+            "result": "focused strengthened persistence replay reached the behavioral Act and passed"
+          }
+        ],
+        "authority_evidence": [
+          {
+            "reference": "issue:#3284",
+            "result": "doing canonicalizes to in_progress across the returned event, typed journal, raw JSONL, and materialized snapshot"
+          }
+        ],
+        "causal_probe": {
+          "kind": "owned strengthened persistence oracle",
+          "fault": "retain canonical in_progress only in the return object while persisting raw doing in JSONL or snapshot",
+          "authority_violated": "doing canonicalizes to in_progress across the returned event, typed journal, raw JSONL, and materialized snapshot",
+          "act_reached": true,
+          "intended_oracle": "the strengthened node fails at the exact returned, serialized, or materialized boundary",
+          "intended_oracle_failed": true,
+          "command": "PWHEADLESS=1 PYTHONHASHSEED=11 .venv/bin/pytest -q 'tests/sync/test_dual_write_integration.py::TestDualWriteAliasResolvedEverywhere::test_dual_write_alias_resolved_everywhere'",
+          "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
+        }
+      },
+      "verdict": "KEEP",
+      "state": "terminal",
+      "action": "KEEP lean strengthened alias-persistence oracle; delete unrelated dual-write scaffold",
+      "survivor": null,
+      "issue": "#3284",
+      "owner": "WP06",
+      "expires": null,
+      "hic_approval": null,
+      "review": {
+        "implementer": "codex/debugger-debbie",
+        "independent_reviewer": "unassigned-at-implementation-handoff",
+        "verdict": "pending-independent-review",
+        "timestamp": "2026-08-10T13:05:00Z"
+      }
+    },
+    {
+      "candidate": {
+        "id": "wp06-dual-write-force-persistence",
+        "members": [
+          "tests/sync/test_dual_write_integration.py::TestDualWriteForceTransitionRecorded::test_dual_write_force_transition_recorded"
+        ],
+        "granularity": "node",
+        "source_paths": [
+          "tests/sync/test_dual_write_integration.py"
+        ],
+        "production_paths": [
+          "src/specify_cli/status/emit.py",
+          "src/specify_cli/status/models.py",
+          "src/specify_cli/status/reducer.py",
+          "src/specify_cli/status/store.py"
+        ],
+        "oracle": "forced transition actor and reason persist across return, typed journal, raw JSONL, and snapshot force-count reduction",
+        "contract_claim": "forced transition actor and reason persist across return, typed journal, raw JSONL, and snapshot force-count reduction",
+        "authority": [
+          "issue:#3284"
+        ],
+        "duplicate_group": null,
+        "route_memberships": [
+          {
+            "route_id": "full-parallel",
+            "role": "owner",
+            "required": true,
+            "events": [
+              "local"
+            ],
+            "selector": {
+              "paths": [
+                "tests/"
+              ],
+              "markers": [
+
+              ],
+              "ignores": [
+                "tests/sync/test_orphan_sweep.py"
+              ],
+              "environment_id": "99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849"
+            }
+          }
+        ],
+        "platforms": [
+          "macos"
+        ],
+        "observations": [
           {
             "environment_id": "99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849",
             "nodeid": "tests/sync/test_dual_write_integration.py::TestDualWriteForceTransitionRecorded::test_dual_write_force_transition_recorded",
@@ -2850,57 +3224,37 @@
             },
             "artifact_hash": "71277a4148c69dbc4e1d1e39cb5d978c9be7bb69cd1d299587f73a819feaa328"
           }
-        ],
-        "equivalence": {
-          "production_path": "retired internal-mock integration scaffold",
-          "oracle": "same contract asserted through current public-boundary survivor",
-          "outcome": "passed on immutable base plus WP02",
-          "route_role": "full-parallel owner",
-          "cost_class": "unknown",
-          "platform": "macos",
-          "disposition": "DELETE"
-        },
-        "divergent_dimensions": []
+        ]
       },
       "evidence": {
-        "profile": "duplicate",
-        "overlap_evidence": [
+        "profile": "contract",
+        "caller_evidence": [
           {
-            "left": "tests/sync/test_dual_write_integration.py::TestDualWriteEventAndFrontmatterConsistent::test_dual_write_event_and_frontmatter_consistent",
-            "right": "tests/specify_cli/status/test_cutover_byte_stability.py::test_lane_mirror_activation_does_not_change_lane_read",
-            "result": "phase-1 lane mirror activation preserves canonical lane reads; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
-          },
+            "command": "PWHEADLESS=1 PYTHONHASHSEED=11 .venv/bin/pytest -q 'tests/sync/test_dual_write_integration.py::TestDualWriteForceTransitionRecorded::test_dual_write_force_transition_recorded'",
+            "result": "focused strengthened persistence replay reached the behavioral Act and passed"
+          }
+        ],
+        "authority_evidence": [
           {
-            "left": "tests/sync/test_dual_write_integration.py::TestDualWriteMultipleTransitions::test_dual_write_multiple_transitions",
-            "right": "tests/status/test_emit.py::TestEmitStatusTransition::test_chained_transitions",
-            "result": "chained status transitions persist in canonical order; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
-          },
-          {
-            "left": "tests/sync/test_dual_write_integration.py::TestDualWriteAliasResolvedEverywhere::test_dual_write_alias_resolved_everywhere",
-            "right": "tests/status/test_emit.py::TestEmitStatusTransition::test_alias_resolution_doing",
-            "result": "lane aliases resolve before status persistence; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
-          },
-          {
-            "left": "tests/sync/test_dual_write_integration.py::TestDualWriteForceTransitionRecorded::test_dual_write_force_transition_recorded",
-            "right": "tests/status/test_status_e2e_integration.py::TestE2EEmitForceTransition::test_e2e_emit_force_transition",
-            "result": "forced transitions are recorded with actor and reason; candidate passed on base+WP02 and exact stronger survivor passed on HEAD"
+            "reference": "issue:#3284",
+            "result": "forced transition actor and reason persist across return, typed journal, raw JSONL, and snapshot force-count reduction"
           }
         ],
         "causal_probe": {
-          "kind": "survivor fault comparison",
-          "fault": "violate any mapped contract at its current public boundary",
-          "authority_violated": "candidate claim evaluated against #3284 and current mission authorities",
+          "kind": "owned strengthened persistence oracle",
+          "fault": "drop or rewrite force actor/reason at serialization, readback, or snapshot reduction",
+          "authority_violated": "forced transition actor and reason persist across return, typed journal, raw JSONL, and snapshot force-count reduction",
           "act_reached": true,
-          "intended_oracle": "the mapped exact survivor fails for each contract regression",
+          "intended_oracle": "the strengthened node fails at the exact returned, serialized, or materialized boundary",
           "intended_oracle_failed": true,
-          "command": "PWHEADLESS=1 PYTHONHASHSEED=11 .venv/bin/pytest -q <4 exact contract-specific survivor nodes>",
+          "command": "PWHEADLESS=1 PYTHONHASHSEED=11 .venv/bin/pytest -q 'tests/sync/test_dual_write_integration.py::TestDualWriteForceTransitionRecorded::test_dual_write_force_transition_recorded'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "5913ec8645fef7e7217a2ec9b1a764eb9ca2e7b5e474e1a530b72834d633a0ef"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
-      "verdict": "DELETE",
+      "verdict": "KEEP",
       "state": "terminal",
-      "action": "DELETE 4-node dominated internal-mock scaffold; every node has an exact contract-specific survivor in raw/wp06-sync-survivor-map.json",
+      "action": "KEEP lean strengthened force-metadata persistence oracle; delete unrelated lifecycle setup",
       "survivor": null,
       "issue": "#3284",
       "owner": "WP06",
@@ -2944,7 +3298,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -2998,7 +3354,7 @@
           "intended_oracle_failed": true,
           "command": ".venv/bin/pytest -q 'tests/sync/test_daemon_self_retirement.py::TestRunSyncDaemonWiring::test_sigterm_exits_without_deadlocking_server_shutdown'",
           "environment": "macOS 15.7.7 arm64; CPython 3.11.15; WP02 repaired harness",
-          "raw_artifact_hash": "f4328345a3b660948bb5ccc0350a399ee643f7d55891dfd8a478f46b1865e0de"
+          "raw_artifact_hash": "4a1376c1ce4d7c61b2957be6e7f2c0df871f2809d7af27952d5cb89da35bc736"
         }
       },
       "verdict": "KEEP",
@@ -3047,7 +3403,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
@@ -3092,7 +3450,9 @@
               "paths": [
                 "tests/"
               ],
-              "markers": [],
+              "markers": [
+
+              ],
               "ignores": [
                 "tests/sync/test_orphan_sweep.py"
               ],
