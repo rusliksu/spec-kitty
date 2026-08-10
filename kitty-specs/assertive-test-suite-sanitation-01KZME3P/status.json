@@ -383,7 +383,8 @@
       "last_transition_at": "2026-08-10T14:43:48.785469+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
-        "Ready for review: 79 source tests consolidated/removed into 10 causal result-matrix successors; focused 472/472 green; audit ledger valid. Canonical broad pre-review scope timed out after 300s without failure output, so explicit skip-pre-review-gate override applied."
+        "Ready for review: 79 source tests consolidated/removed into 10 causal result-matrix successors; focused 472/472 green; audit ledger valid. Canonical broad pre-review scope timed out after 300s without failure output, so explicit skip-pre-review-gate override applied.",
+        "Review passed cycle 1: independent 541→472 (-69) replay; 79 deletions/10 successors; 25-row ledger covers 98 unique members and every deletion once; 18/18 changed plus 17/17 retained-expanded causal faults failed after Act; network, persistence, teardown, provider, platform, timeout, error, and migration-version boundaries retained; focused 472 passed; ruff/diff clean; broad 300s pre-review timeout attributable to unbounded no-coverage gate, not WP failures."
       ],
       "provider": "__resolved_provider_absent__",
       "review_result": {
