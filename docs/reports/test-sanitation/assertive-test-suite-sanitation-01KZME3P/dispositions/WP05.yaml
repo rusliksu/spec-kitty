@@ -82,9 +82,9 @@ dispositions:
         act_reached: true
         intended_oracle: The survivor reports the importing/calling production path.
         intended_oracle_failed: true
-        command: .venv/bin/pytest -q tests/sync/test_no_queue_drain_constructed_3030.py
-        environment: CPython 3.11 local serial, cache disabled
-        raw_artifact_hash: ad8113a5e77c06fe9febb8e2d36bb1f64515c121a4fc2072474a1868e582d988
+        command: Apply patch 241dddc5 in detached f8ab59dbe^ worktree; run exact survivor node; restore patch; rerun exact node.
+        environment: CPython 3.11 detached disposable worktree, cache disabled
+        raw_artifact_hash: 241dddc5150e310352db7806b6faf91fcfa28511fd996ef26e5c3644b0bae570
     verdict: DELETE
     state: terminal
     action: Delete frozen symbol/count/history scaffold; keep stronger live negative invariant.
@@ -127,9 +127,9 @@ dispositions:
         act_reached: true
         intended_oracle: Product-shaped gate tests fail independently; driver agreement does not establish product correctness.
         intended_oracle_failed: true
-        command: rg -n 'contract_registry_parity|path_literal_driver|terminology_driver' src tests
-        environment: CPython 3.11 local source/consumer search
-        raw_artifact_hash: ad8113a5e77c06fe9febb8e2d36bb1f64515c121a4fc2072474a1868e582d988
+        command: Apply patch ca9d643a in detached f8ab59dbe^ worktree; run contract parity plus exact live terminology gate; restore; rerun.
+        environment: CPython 3.11 detached disposable worktree, cache disabled
+        raw_artifact_hash: ca9d643ad1729a86793648a6062821fbb613f7e0ef5f518d29d1e598994516fe
     verdict: DELETE
     state: terminal
     action: Delete historical parity driver duplicated by enforcing consumer tests.
@@ -176,9 +176,9 @@ dispositions:
         act_reached: true
         intended_oracle: Product behavior remains green while the structural count ratchet fails.
         intended_oracle_failed: true
-        command: .venv/bin/pytest -q tests/architectural/test_golden_count_ban.py
-        environment: CPython 3.11 local serial, cache disabled
-        raw_artifact_hash: ad8113a5e77c06fe9febb8e2d36bb1f64515c121a4fc2072474a1868e582d988
+        command: Apply patch 2937c3d2 in detached f8ab59dbe^ worktree; run exact count gate; restore; rerun.
+        environment: CPython 3.11 detached disposable worktree, cache disabled
+        raw_artifact_hash: 2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa
     verdict: DELETE
     state: terminal
     action: Delete heuristic prose classifier and frozen directory-count ceilings.
@@ -223,9 +223,9 @@ dispositions:
         act_reached: true
         intended_oracle: Focused current behavior remains green while baseline subset comparison fails.
         intended_oracle_failed: true
-        command: .venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_mission_exit_baseline.py
-        environment: CPython 3.11 local serial, cache disabled
-        raw_artifact_hash: ad8113a5e77c06fe9febb8e2d36bb1f64515c121a4fc2072474a1868e582d988
+        command: Apply patch 2937c3d2 behavior-preserving node rename in detached f8ab59dbe^ worktree; run exact floor; restore; rerun.
+        environment: CPython 3.11 detached disposable worktree, cache disabled
+        raw_artifact_hash: 2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa
     verdict: DELETE
     state: terminal
     action: Delete historical collected-node floor and its known-failure pins.
@@ -270,9 +270,9 @@ dispositions:
         act_reached: true
         intended_oracle: A required negative invariant must fail; advisory record_property remains green instead.
         intended_oracle_failed: true
-        command: .venv/bin/pytest -q tests/architectural/test_retired_contracts_absent.py
-        environment: CPython 3.11 local serial, cache disabled
-        raw_artifact_hash: ad8113a5e77c06fe9febb8e2d36bb1f64515c121a4fc2072474a1868e582d988
+        command: Apply patch 2937c3d2 with live retired anchor; run advisory node; restore; rerun.
+        environment: CPython 3.11 detached disposable worktree, cache disabled
+        raw_artifact_hash: 2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa
     verdict: DELETE
     state: terminal
     action: Delete never-fail advisory sweep and self-tests of its private scanner.
@@ -316,13 +316,61 @@ dispositions:
         act_reached: true
         intended_oracle: Behavioral mutation test remains red and names target divergence.
         intended_oracle_failed: true
-        command: .venv/bin/pytest -q tests/specify_cli/write_side/test_characterization_write_target.py
-        environment: CPython 3.11 local serial, temporary Git repository
-        raw_artifact_hash: ad8113a5e77c06fe9febb8e2d36bb1f64515c121a4fc2072474a1868e582d988
+        command: Apply patch 2937c3d2 with Git-HEAD selector reintroduction; run behavioral survivor; restore; rerun.
+        environment: CPython 3.11 detached disposable worktree and temporary Git repository
+        raw_artifact_hash: 2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa
     verdict: DELETE
     state: terminal
     action: Delete source-token/test-only-helper scaffold and retain behavioral write-target oracle.
     survivor: tests/specify_cli/write_side/test_characterization_write_target.py
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP05-private-name-parity-scaffold
+      members:
+        - tests/architectural/test_no_parity_scaffold.py::test_no_parity_scaffold_artifact_survives
+        - tests/architectural/test_no_parity_scaffold.py::test_plan_legacy_selector_is_confined_to_typeless_compatibility_branch
+        - tests/architectural/test_no_parity_scaffold.py::test_production_readers_use_configured_mapping_seam
+        - tests/architectural/test_no_parity_scaffold.py::test_scaffold_bytecode_is_not_hidden_by_self_artifact_exception
+        - tests/architectural/test_no_parity_scaffold.py::test_typeless_guard_helper_rejects_inverse_mutation
+        - tests/architectural/test_no_parity_scaffold.py::test_typeless_guard_helper_rejects_wrong_receiver
+      granularity: function
+      source_paths: [tests/architectural/test_no_parity_scaffold.py]
+      production_paths: [src/specify_cli/cli/commands/agent/mission_setup_plan.py]
+      oracle: Configured template mapping is used for typed missions; typeless missions alone take legacy selection.
+      contract_claim: Plan-template selection behavior must preserve configured and typeless branches independent of private local names.
+      authority:
+        - tests/specify_cli/cli/commands/agent/test_mission_setup_plan_phases.py::test_resolve_plan_template_uses_context_and_configured_seam
+        - tests/specify_cli/cli/commands/agent/test_mission_setup_plan_phases.py::test_resolve_plan_template_preserves_missing_meta_legacy_boundary
+      duplicate_group: null
+      route_memberships: [*architectural_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *architectural_observation
+          nodeid: tests/architectural/test_no_parity_scaffold.py::test_plan_legacy_selector_is_confined_to_typeless_compatibility_branch
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/specify_cli/cli/commands/agent/test_mission_setup_plan_phases.py
+          result: Two behavioral nodes execute both authoritative plan-template branches without inspecting private AST names.
+      causal_probe:
+        kind: behavior-preserving-private-local-rename
+        fault: Rename resolved_mission_type to resolved_context consistently inside plan-template selection.
+        authority_violated: No product authority is violated; both configured and typeless behavioral nodes pass.
+        act_reached: true
+        intended_oracle: A valid structural guard should remain green under a private local rename.
+        intended_oracle_failed: true
+        command: Apply patch db326e55 in detached f8ab59dbe^ worktree; run old AST node plus two behavioral nodes; restore; rerun all three.
+        environment: CPython 3.11 detached disposable worktree, cache disabled
+        raw_artifact_hash: db326e55aac5a444da2161a8dec47f24d722bc85261b386d57a8690331f79794
+    verdict: DELETE
+    state: terminal
+    action: Delete exact-name AST and self-presence scaffold; retain direct configured/typeless behavioral coverage.
+    survivor: tests/specify_cli/cli/commands/agent/test_mission_setup_plan_phases.py
     issue: null
     owner: null
     expires: null
@@ -359,9 +407,9 @@ dispositions:
         act_reached: true
         intended_oracle: Retrospective behavioral consumers stay green while the placement scaffold fails.
         intended_oracle_failed: true
-        command: rg -n 'RETROSPECTIVE_FILENAME|retrospective.md' src tests
-        environment: CPython 3.11 local source/caller search
-        raw_artifact_hash: ad8113a5e77c06fe9febb8e2d36bb1f64515c121a4fc2072474a1868e582d988
+        command: Apply patch 7a194861 behavior-preserving constant rename in detached f8ab59dbe^ worktree; run old shape guard plus behavioral round-trip; restore; rerun.
+        environment: CPython 3.11 detached disposable worktree, cache disabled
+        raw_artifact_hash: 7a1948617f72b0e829357f9863b3ee8e2deeac2a342ac70fdd73a62e59b291c1
     verdict: DELETE
     state: terminal
     action: Delete positive constant value/export/literal-placement scaffold.

@@ -7,13 +7,13 @@
   "decision_rule": "Retain only current negative invariants or behavioral contracts with a nonzero live corpus and a realistic fault probe that reaches the assertion. Historical proof, names, self-presence, exact counts, positive placement, and advisory-only findings are deleted.",
   "summary": {
     "assigned_scanner_files": 35,
-    "deleted_files": 7,
-    "modified_survivor_files": 7,
+    "deleted_files": 8,
+    "modified_survivor_files": 6,
     "unchanged_survivor_files": 21,
-    "removed_collected_nodes": 54,
-    "deleted_lines": 2549,
-    "inserted_lines": 5,
-    "net_lines": -2544,
+    "removed_collected_nodes": 61,
+    "deleted_lines": 2682,
+    "inserted_lines": 1,
+    "net_lines": -2681,
     "product_behavior_changes": 0,
     "test_only_product_symbols_removed": 0
   },
@@ -38,7 +38,7 @@
     {"path": "tests/architectural/test_no_dead_symbols.py", "verdict": "KEEP", "proof_family": "live-reachability", "reason": "Scans public exports against live import/getattr/facade callers and carries realistic false-negative probes."},
     {"path": "tests/architectural/test_no_legacy_status_emit_callers.py", "verdict": "KEEP", "proof_family": "live-ast-negative", "reason": "Current transaction boundary forbids production callers of the legacy event emitter."},
     {"path": "tests/architectural/test_no_legacy_terminology.py", "verdict": "KEEP", "proof_family": "live-source-negative", "reason": "Current 3.x terminology authority; phrase-bite fixture proves new prohibited production/docs wording fails."},
-    {"path": "tests/architectural/test_no_parity_scaffold.py", "verdict": "MODIFY_KEEP", "proof_family": "live-ast-negative", "reason": "Deleted self/name/history scan; retained configured-template seam and typeless-compatibility negative invariants."},
+    {"path": "tests/architectural/test_no_parity_scaffold.py", "verdict": "DELETE", "reason": "Exact private-name AST matcher false-reds on a behavior-preserving local rename; existing plan-template behavior tests cover configured and typeless branches directly."},
     {"path": "tests/architectural/test_ratchet_baselines.py", "verdict": "KEEP", "proof_family": "consumer-contract", "reason": "Schema is consumed by contract examples and rejects new exception capacity; no removed WP05 guard had a referenced key."},
     {"path": "tests/architectural/test_ratchet_positional_anchor_ban.py", "verdict": "KEEP", "proof_family": "live-source-negative", "reason": "Current content-addressed evidence rule scans nonempty architectural corpus; realistic line/index/seed anchors fail."},
     {"path": "tests/architectural/test_reference_enum_ratchet.py", "verdict": "KEEP", "proof_family": "consumer-contract", "reason": "Protects current DRG relationship-enum authority from incompatible widening using consumer-shaped examples."},
@@ -54,49 +54,47 @@
     {"path": "tests/specify_cli/write_side/test_characterization_write_target.py", "verdict": "MODIFY_KEEP", "proof_family": "behavioral-contract", "reason": "Removed comparison to test-only _current_branch helper; retained direct target and realistic git-HEAD mutation oracle."},
     {"path": "tests/sync/test_no_queue_drain_constructed_3030.py", "verdict": "KEEP", "proof_family": "live-ast-negative", "reason": "Stronger live queue-drain negative invariant; synthetic import/call reintroduction reaches and fails the scanner."}
   ],
-  "survivor_family_proofs": [
-    {
-      "id": "behavioral-contract",
-      "authority": ["docs/adr/3.x/2026-06-03-1-execution-state-domain-model.md", "docs/adr/3.x/2026-06-03-2-executioncontext-owner-and-committarget.md", "docs/adr/3.x/2026-06-22-1-mission-topology-ssot.md"],
-      "corpus": "Production-shaped temporary repositories and current writers/readers; nonzero in every retained test.",
-      "fault": "Diverge worktree/CWD target, corrupt metadata, reintroduce legacy selector, or force transactional write failure.",
-      "oracle": "Behavioral return value, emitted artifact, rollback state, or typed failure differs and the assertion fails."
-    },
-    {
-      "id": "live-ast-negative",
-      "authority": ["docs/adr/3.x/2026-06-26-1-single-authority-seam-and-call-site-gate.md", "docs/adr/3.x/2026-07-16-1-wp-runtime-state-authority-event-log-eviction.md", "docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md"],
-      "corpus": "Nonzero current src/specify_cli AST/source corpus.",
-      "fault": "Insert a production-shaped forbidden call, bypass, classifier arm, or direct authority read in scanner scope.",
-      "oracle": "Scanner reaches the enforcing assertion and reports the concrete path/line; benign authority-routed form passes."
-    },
-    {
-      "id": "live-source-negative",
-      "authority": ["docs/adr/3.x/2026-07-01-1-no-legacy-compat-branches-in-resolvers.md", "docs/adr/3.x/2026-07-23-1-surface-vocabulary-two-domains-and-topology-surface-rename.md", "docs/adr/3.x/2026-07-30-1-consolidated-write-surface-and-consolidate-terminology.md"],
-      "corpus": "Nonzero current production/doctrine/documentation file set with explicit boundary discriminators.",
-      "fault": "Add a realistic retired path, phrase, positional anchor, or cross-boundary reference at a production-shaped consumer.",
-      "oracle": "Guard rejects the new use while documented examples, escaped text, and current aliases remain green."
-    },
-    {
-      "id": "live-doc-negative",
-      "authority": ["docs/adr/3.x/2026-04-08-2-package-bundled-templates-sole-source.md", "docs/adr/3.x/2026-07-26-2-doctrine-artefact-pack-layout-convention.md"],
-      "corpus": "Nonzero shipped built-in doctrine and CLI reference corpus.",
-      "fault": "Introduce an unresolved in-boundary link or nonexistent CLI command in a shipped consumer.",
-      "oracle": "Resolver/registry comparison reaches assertion and names the invalid consumer; valid and intentionally external links pass."
-    },
-    {
-      "id": "live-reachability",
-      "authority": ["src/specify_cli/__init__.py", "src/specify_cli/upgrade/migrations/__init__.py"],
-      "corpus": "All current src/specify_cli modules and public __all__ declarations.",
-      "fault": "Add an unreferenced module/export or remove its only static/dynamic consumer.",
-      "oracle": "Bidirectional import/caller graph reports the new dead identity; auto-discovered and executable entrypoints remain exempt by live consumers."
-    },
-    {
-      "id": "consumer-contract",
-      "authority": ["src/specify_cli/upgrade/registry.py", "src/specify_cli/tasks/issue_matrix.py", "packs/built-in/glossary_packs/spec-kitty-core.glossary-pack.yaml"],
-      "corpus": "Current registry/schema/seed consumers; no frozen occurrence counts.",
-      "fault": "Drop or incompatibly alter a consumed key, migration edge, relationship enum, or seed value.",
-      "oracle": "Consumer round-trip/discovery fails on semantic mismatch; additive optional absence and legitimate count changes pass."
-    }
+  "survivor_proofs": {
+    "collection": {"collected_nodes": 307, "artifact_sha256": "20b951058d97b5c06bb3b18e4dfe3978222f50aa64014839c6536795badeda9a", "command": ".venv/bin/pytest --collect-only -q <27 retained WP05 files>"},
+    "nodes": [
+      {"path": "tests/acceptance/test_post_consolidation.py", "collected_nodes": 10, "nodeid": "tests/acceptance/test_post_consolidation.py::test_c7_still_present_fails_op_and_names_invariant", "production_surface": "specify_cli.acceptance.post_consolidation invariant evaluation", "authority": "docs/adr/3.x/2026-06-03-1-execution-state-domain-model.md", "fault": "Leave a deferred invariant present after consolidation", "act_assertion": "evaluator runs and reports the named invariant as failed", "command": ".venv/bin/pytest -q tests/acceptance/test_post_consolidation.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_coord_read_residuals_closeout.py", "collected_nodes": 11, "nodeid": "tests/architectural/test_coord_read_residuals_closeout.py::test_fr005_runtime_next_floor_fails_if_scope_reverted", "production_surface": "runtime_next coordination identity readers", "authority": "docs/adr/3.x/2026-06-26-1-single-authority-seam-and-call-site-gate.md", "fault": "Revert a runtime_next reader to direct coordination scope", "act_assertion": "fault fixture reaches scope scanner and fails", "command": ".venv/bin/pytest -q tests/architectural/test_coord_read_residuals_closeout.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_dead_builtin_doc_paths.py", "collected_nodes": 1, "nodeid": "tests/architectural/test_dead_builtin_doc_paths.py::test_no_live_doc_names_a_pre_move_builtin_path", "production_surface": "docs/**/*.md shipped doctrine references", "authority": "docs/adr/3.x/2026-04-08-2-package-bundled-templates-sole-source.md", "fault": "Add a pre-move built-in tactic path to docs/index.md", "act_assertion": "live-doc scan reports docs/index.md:153", "command": ".venv/bin/pytest -q tests/architectural/test_dead_builtin_doc_paths.py::test_no_live_doc_names_a_pre_move_builtin_path", "raw_artifact_hash": "322c1764f7a50937125f8c215159679d89c4215b3aa40dd490ddeea950ff1cab"},
+      {"path": "tests/architectural/test_docs_cli_reference_parity.py", "collected_nodes": 7, "nodeid": "tests/architectural/test_docs_cli_reference_parity.py::test_guard_rejects_planted_nonexistent_command", "production_surface": "CLI registry and generated reference docs", "authority": "src/specify_cli/cli", "fault": "Plant a nonexistent command in a shipped reference", "act_assertion": "registry comparison reaches assertion and names command", "command": ".venv/bin/pytest -q tests/architectural/test_docs_cli_reference_parity.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_execution_context_parity.py", "collected_nodes": 22, "nodeid": "tests/architectural/test_execution_context_parity.py::test_full_sequence_ratchet_catches_divergence", "production_surface": "ExecutionContext read/write target sequence", "authority": "docs/adr/3.x/2026-06-03-2-executioncontext-owner-and-committarget.md", "fault": "Diverge worktree and CWD target during a full sequence", "act_assertion": "sequence executes and parity oracle fails", "command": ".venv/bin/pytest -q tests/architectural/test_execution_context_parity.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_exemption_registry_ratchet.py", "collected_nodes": 12, "nodeid": "tests/architectural/test_exemption_registry_ratchet.py::test_ninth_filename_exemption_is_refused_naming_the_owner", "production_surface": "architectural exemption registry consumers", "authority": "tests/architectural/ratchet_baselines.json", "fault": "Add a ninth filename exemption", "act_assertion": "live registry scan rejects growth and names owner", "command": ".venv/bin/pytest -q tests/architectural/test_exemption_registry_ratchet.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_glossary_pack_parity.py", "collected_nodes": 3, "nodeid": "tests/architectural/test_glossary_pack_parity.py::test_every_seed_term_every_present_key_round_trips_identically", "production_surface": "built-in glossary seed and pack loader", "authority": "packs/built-in/glossary_packs/spec-kitty-core.glossary-pack.yaml", "fault": "Change action context definition incompatibly", "act_assertion": "round-trip compares consumed value and fails", "command": ".venv/bin/pytest -q tests/architectural/test_glossary_pack_parity.py::test_every_seed_term_every_present_key_round_trips_identically", "raw_artifact_hash": "322c1764f7a50937125f8c215159679d89c4215b3aa40dd490ddeea950ff1cab"},
+      {"path": "tests/architectural/test_issue_matrix_json_migration_completeness.py", "collected_nodes": 12, "nodeid": "tests/architectural/test_issue_matrix_json_migration_completeness.py::test_canonical_writer_never_emits_markdown", "production_surface": "tasks.issue_matrix canonical writer and finalize readers", "authority": "src/specify_cli/tasks/issue_matrix.py", "fault": "Route canonical writer back to Markdown", "act_assertion": "writer runs and emitted artifact assertion fails", "command": ".venv/bin/pytest -q tests/architectural/test_issue_matrix_json_migration_completeness.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_merge_pipeline_ratchets.py", "collected_nodes": 8, "nodeid": "tests/architectural/test_merge_pipeline_ratchets.py::test_genesis_fallback_propagates_unexpected_exceptions", "production_surface": "merge pipeline genesis fallback", "authority": "src/specify_cli/merge", "fault": "Swallow an unexpected exception as genesis fallback", "act_assertion": "merge reader runs and typed unexpected error must propagate", "command": ".venv/bin/pytest -q tests/architectural/test_merge_pipeline_ratchets.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_migration_chain_integrity.py", "collected_nodes": 2, "nodeid": "tests/architectural/test_migration_chain_integrity.py::test_migration_chain_does_not_exceed_current_project_version", "production_surface": "upgrade.registry migration discovery", "authority": "src/specify_cli/upgrade/registry.py", "fault": "Set project version below terminal migration 3.2.6", "act_assertion": "registry discovery runs and rejects terminal version", "command": ".venv/bin/pytest -q tests/architectural/test_migration_chain_integrity.py::test_migration_chain_does_not_exceed_current_project_version", "raw_artifact_hash": "322c1764f7a50937125f8c215159679d89c4215b3aa40dd490ddeea950ff1cab"},
+      {"path": "tests/architectural/test_no_dead_cli_paths.py", "collected_nodes": 13, "nodeid": "tests/architectural/test_no_dead_cli_paths.py::test_gate_a_rejects_a_planted_violation", "production_surface": "src CLI path literals", "authority": "docs/adr/3.x/2026-07-01-1-no-legacy-compat-branches-in-resolvers.md", "fault": "Plant a retired DRG monolith path in production-shaped source", "act_assertion": "path discriminator reaches gate and rejects it", "command": ".venv/bin/pytest -q tests/architectural/test_no_dead_cli_paths.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_no_dead_doctrine_paths.py", "collected_nodes": 10, "nodeid": "tests/architectural/test_no_dead_doctrine_paths.py::test_gate_c_rejects_a_planted_broken_link", "production_surface": "built-in doctrine cross-links", "authority": "docs/adr/3.x/2026-07-26-2-doctrine-artefact-pack-layout-convention.md", "fault": "Plant an unresolved in-boundary doctrine link", "act_assertion": "resolver runs and reports broken link", "command": ".venv/bin/pytest -q tests/architectural/test_no_dead_doctrine_paths.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_no_dead_modules.py", "collected_nodes": 1, "nodeid": "tests/architectural/test_no_dead_modules.py::test_no_new_dead_modules_under_src", "production_surface": "src/specify_cli import graph", "authority": "src/specify_cli", "fault": "Add unreferenced specify_cli.wp05_disposable_orphan", "act_assertion": "reachability scan reports the orphan module", "command": ".venv/bin/pytest -q tests/architectural/test_no_dead_modules.py::test_no_new_dead_modules_under_src", "raw_artifact_hash": "322c1764f7a50937125f8c215159679d89c4215b3aa40dd490ddeea950ff1cab"},
+      {"path": "tests/architectural/test_no_dead_symbols.py", "collected_nodes": 24, "nodeid": "tests/architectural/test_no_dead_symbols.py::test_no_false_negative_call_accessor_detector_unreferenced_stays_dead", "production_surface": "public __all__ exports and live static/dynamic callers", "authority": "src/specify_cli/__init__.py", "fault": "Add an exported symbol with no consumer behind a call accessor", "act_assertion": "caller graph leaves symbol dead and assertion fails", "command": ".venv/bin/pytest -q tests/architectural/test_no_dead_symbols.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_no_legacy_status_emit_callers.py", "collected_nodes": 1, "nodeid": "tests/architectural/test_no_legacy_status_emit_callers.py::test_production_code_has_no_legacy_status_emit_callers", "production_surface": "src/specify_cli transaction callers", "authority": "docs/adr/3.x/2026-07-16-1-wp-runtime-state-authority-event-log-eviction.md", "fault": "Import and call emit_status_transition in sync/background.py", "act_assertion": "AST scan reports import line 924 and call line 926", "command": ".venv/bin/pytest -q tests/architectural/test_no_legacy_status_emit_callers.py::test_production_code_has_no_legacy_status_emit_callers", "raw_artifact_hash": "322c1764f7a50937125f8c215159679d89c4215b3aa40dd490ddeea950ff1cab"},
+      {"path": "tests/architectural/test_no_legacy_terminology.py", "collected_nodes": 10, "nodeid": "tests/architectural/test_no_legacy_terminology.py::test_lane_consolidation_phrase_bite_fixture_fails_on_new_phrasing", "production_surface": "live production/docs terminology corpus", "authority": "docs/adr/3.x/2026-07-23-1-surface-vocabulary-two-domains-and-topology-surface-rename.md", "fault": "Add prohibited legacy wording to sync/background.py", "act_assertion": "live corpus scan reaches assertion and names path", "command": ".venv/bin/pytest -q tests/architectural/test_no_legacy_terminology.py", "raw_artifact_hash": "2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa"},
+      {"path": "tests/architectural/test_ratchet_baselines.py", "collected_nodes": 5, "nodeid": "tests/architectural/test_ratchet_baselines.py::test_growing_an_allowlist_above_baseline_fails", "production_surface": "architectural ratchet baseline consumers", "authority": "tests/architectural/ratchet_baselines.json", "fault": "Grow a registered allowlist beyond its ceiling", "act_assertion": "consumer validates schema and rejects growth", "command": ".venv/bin/pytest -q tests/architectural/test_ratchet_baselines.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_ratchet_positional_anchor_ban.py", "collected_nodes": 37, "nodeid": "tests/architectural/test_ratchet_positional_anchor_ban.py::test_non_vacuity_plants_int_line_sink_and_reds", "production_surface": "architectural evidence seeds", "authority": "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-014", "fault": "Plant an integer line-number sink", "act_assertion": "non-vacuity fixture reaches detector and reds", "command": ".venv/bin/pytest -q tests/architectural/test_ratchet_positional_anchor_ban.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_reference_enum_ratchet.py", "collected_nodes": 23, "nodeid": "tests/architectural/test_reference_enum_ratchet.py::TestRatchetNonVacuity::test_planted_smuggled_member_is_flagged_as_growth", "production_surface": "DRG reference schemas and inliners", "authority": "built-in DRG relationship schema enums", "fault": "Smuggle a new reference enum member", "act_assertion": "schema consumer resolves enum and flags growth", "command": ".venv/bin/pytest -q tests/architectural/test_reference_enum_ratchet.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/architectural/test_topology_inference_retired.py", "collected_nodes": 8, "nodeid": "tests/architectural/test_topology_inference_retired.py::test_negative_control_gate_catches_reintroduced_classifier", "production_surface": "stored-topology production readers", "authority": "docs/adr/3.x/2026-06-22-1-mission-topology-ssot.md", "fault": "Reintroduce a directory-shape topology classifier", "act_assertion": "negative fixture reaches live AST detector and fails", "command": ".venv/bin/pytest -q tests/architectural/test_topology_inference_retired.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/audit/test_audit_architecture.py", "collected_nodes": 25, "nodeid": "tests/audit/test_audit_architecture.py::test_forbidden_event_type", "production_surface": "audit event classifier", "authority": "src/specify_cli/audit", "fault": "Feed a forbidden event type", "act_assertion": "classifier executes and returns the expected finding", "command": ".venv/bin/pytest -q tests/audit/test_audit_architecture.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/migration/test_backfill_provenance.py", "collected_nodes": 16, "nodeid": "tests/migration/test_backfill_provenance.py::test_migration_failure_partway_reverts_every_already_written_file", "production_surface": "provenance backfill transaction", "authority": "src/specify_cli/upgrade", "fault": "Fail midway through a multi-file migration", "act_assertion": "transaction runs and byte-for-byte rollback is asserted", "command": ".venv/bin/pytest -q tests/migration/test_backfill_provenance.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/missions/test_wp02_coord_routing_consolidation.py", "collected_nodes": 18, "nodeid": "tests/missions/test_wp02_coord_routing_consolidation.py::test_husk_short_circuit_unreadable_meta_degrades_true", "production_surface": "coordination topology routing predicate", "authority": "docs/adr/3.x/2026-06-22-1-mission-topology-ssot.md", "fault": "Supply unreadable mission metadata", "act_assertion": "routing predicate executes and degrades to documented result", "command": ".venv/bin/pytest -q tests/missions/test_wp02_coord_routing_consolidation.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/missions/test_wp17_husk_arm_collapse.py", "collected_nodes": 15, "nodeid": "tests/missions/test_wp17_husk_arm_collapse.py::test_corrupt_meta_raises_typed_error_not_classified_primary", "production_surface": "mission metadata topology resolver", "authority": "docs/adr/3.x/2026-06-22-1-mission-topology-ssot.md", "fault": "Supply corrupt mission metadata", "act_assertion": "resolver executes and raises typed error instead of misclassification", "command": ".venv/bin/pytest -q tests/missions/test_wp17_husk_arm_collapse.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/specify_cli/coordination/test_simple_case_flat_topology.py", "collected_nodes": 4, "nodeid": "tests/specify_cli/coordination/test_simple_case_flat_topology.py::test_flat_write_target_is_cwd_invariant_base_not_head", "production_surface": "flat-topology full-save target", "authority": "docs/adr/3.x/2026-06-03-2-executioncontext-owner-and-committarget.md", "fault": "Run from a CWD whose Git HEAD differs from base target", "act_assertion": "save executes and target remains base", "command": ".venv/bin/pytest -q tests/specify_cli/coordination/test_simple_case_flat_topology.py", "raw_artifact_hash": "fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"},
+      {"path": "tests/specify_cli/write_side/test_characterization_write_target.py", "collected_nodes": 4, "nodeid": "tests/specify_cli/write_side/test_characterization_write_target.py::test_mutation_reintroducing_git_head_selector_keeps_oracle_red", "production_surface": "coordination.status_transition write-target resolver", "authority": "docs/adr/3.x/2026-06-24-2-write-branch-resolution-primary-anchor.md", "fault": "Reintroduce Git HEAD selector while stored topology points elsewhere", "act_assertion": "behavioral mutation runs and reports destination divergence", "command": ".venv/bin/pytest -q tests/specify_cli/write_side/test_characterization_write_target.py::test_mutation_reintroducing_git_head_selector_keeps_oracle_red", "raw_artifact_hash": "2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa"},
+      {"path": "tests/sync/test_no_queue_drain_constructed_3030.py", "collected_nodes": 5, "nodeid": "tests/sync/test_no_queue_drain_constructed_3030.py::test_no_production_module_constructs_the_queue_backed_drain", "production_surface": "src/specify_cli/sync import/call/export surfaces", "authority": "docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md", "fault": "Import and call batch_sync in sync/background.py", "act_assertion": "scan reports importing and calling lines 924/926", "command": ".venv/bin/pytest -q tests/sync/test_no_queue_drain_constructed_3030.py::test_no_production_module_constructs_the_queue_backed_drain", "raw_artifact_hash": "241dddc5150e310352db7806b6faf91fcfa28511fd996ef26e5c3644b0bae570"}
+    ]
+  },
+  "two_sided_probe_runs": [
+    {"candidate": "WP05-batch-drain-history-scaffold", "base": "f8ab59dbe^", "patch_sha256": "241dddc5150e310352db7806b6faf91fcfa28511fd996ef26e5c3644b0bae570", "mutation": "Import and call batch_sync in sync/background.py", "fault_result": "survivor failed: importing/calling lines 924/926; 1 failed in 106.28s", "restore": "git restore production file", "restored_result": "same survivor node: 1 passed in 43.64s"},
+    {"candidate": "WP05-contract-registry-historical-parity-driver", "base": "f8ab59dbe^", "patch_sha256": "ca9d643ad1729a86793648a6062821fbb613f7e0ef5f518d29d1e598994516fe", "mutation": "Plant prohibited legacy wording in live sync source", "fault_result": "all 5 parity-driver nodes passed while enforcing live gate failed and named background.py:922; 1 failed, 5 passed in 193.71s", "restore": "git restore production file", "restored_result": "parity driver plus enforcing gate: 6 passed in 233.24s"},
+    {"candidate": "WP05-golden-count-prose-ratchet", "base": "f8ab59dbe^", "patch_sha256": "2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa", "mutation": "Add legitimate measured len(observed)==73 assertion", "fault_result": "count ratchet false-red: tests/acceptance count exceeded frozen zero baseline", "restore": "git restore changed test", "restored_result": "combined restored controls: 13 passed in 103.71s"},
+    {"candidate": "WP05-mission-exit-self-census-floor", "base": "f8ab59dbe^", "patch_sha256": "2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa", "mutation": "Behavior-preserving rename of an exact test node", "fault_result": "floor false-red: exactly the old node vanished while product behavior was unchanged", "restore": "git restore changed test", "restored_result": "combined restored controls: 13 passed in 103.71s"},
+    {"candidate": "WP05-advisory-retired-contract-sweep", "base": "f8ab59dbe^", "patch_sha256": "2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa", "mutation": "Plant a seeded retired anchor in a live source file", "fault_result": "advisory node remained green although enforcing terminology gate failed", "restore": "git restore production file", "restored_result": "combined restored controls: 13 passed in 103.71s"},
+    {"candidate": "WP05-write-target-positive-shape-scaffold", "base": "f8ab59dbe^", "patch_sha256": "2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa", "mutation": "Reintroduce Git HEAD as status-transition destination", "fault_result": "behavioral survivor failed on lane-head versus main destination", "restore": "git restore production file", "restored_result": "combined restored controls: 13 passed in 103.71s"},
+    {"candidate": "WP05-private-name-parity-scaffold", "base": "f8ab59dbe^", "patch_sha256": "db326e55aac5a444da2161a8dec47f24d722bc85261b386d57a8690331f79794", "mutation": "Rename resolved_mission_type local consistently to resolved_context", "fault_result": "old AST guard failed while both configured/typeless behavioral nodes passed; 1 failed, 2 passed in 44.04s", "restore": "git restore production file", "restored_result": "old guard plus both behavioral nodes: 3 passed in 101.44s"},
+    {"candidate": "WP05-retrospective-constant-placement-scaffold", "base": "f8ab59dbe^", "patch_sha256": "7a1948617f72b0e829357f9863b3ee8e2deeac2a342ac70fdd73a62e59b291c1", "mutation": "Rename RETROSPECTIVE_FILENAME consistently to CANONICAL_RETROSPECTIVE_NAME", "fault_result": "behavioral round-trip: 4 passed; old shape guard: 2 failed, 1 passed", "restore": "git restore six production files", "restored_result": "combined restored controls: 13 passed in 103.71s"}
   ],
   "dead_symbol_proof": {
     "symbol": "specify_cli.coordination.status_transition._current_branch",
@@ -113,6 +111,7 @@
         "tests/architectural/test_contract_registry_parity.py",
         "tests/architectural/test_golden_count_ban.py",
         "tests/architectural/test_mission_exit_baseline.py",
+        "tests/architectural/test_no_parity_scaffold.py",
         "tests/architectural/test_retired_contracts_absent.py",
         "tests/architectural/test_wp05_write_target_drain.py"
       ],
@@ -126,20 +125,28 @@
   ],
   "commands": [
     {
-      "command": ".venv/bin/ruff check <all modified surviving Python paths>",
+      "command": ".venv/bin/pytest --collect-only -q <all 27 retained WP05 scanner files>",
+      "result": "307 tests collected in 43.55s; sha256 20b951058d97b5c06bb3b18e4dfe3978222f50aa64014839c6536795badeda9a"
+    },
+    {
+      "command": ".venv/bin/pytest -q -p no:cacheprovider <all 27 retained WP05 scanner files> (first cycle-2 run)",
+      "result": "306 passed; one evidence self-hit failed because this JSON quoted the exact retired path; classified and corrected"
+    },
+    {
+      "command": ".venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_dead_builtin_doc_paths.py::test_no_live_doc_names_a_pre_move_builtin_path",
+      "result": "1 passed in 116.08s after evidence wording correction"
+    },
+    {
+      "command": ".venv/bin/pytest -q -p no:cacheprovider <all 27 retained WP05 scanner files> (clean rerun)",
+      "result": "307 passed in 297.93s; sha256 fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc"
+    },
+    {
+      "command": "audit.py validate base-census.json base-workloads.yaml dispositions/WP05.yaml --today 2026-08-10",
+      "result": "valid=true; 8 dispositions; 45 unique source members; 0 errors"
+    },
+    {
+      "command": "jq empty wp05-results.json && git diff --check",
       "result": "passed"
-    },
-    {
-      "command": ".venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_glossary_pack_parity.py tests/architectural/test_no_dead_modules.py tests/architectural/test_no_parity_scaffold.py tests/missions/test_wp02_coord_routing_consolidation.py tests/missions/test_wp17_husk_arm_collapse.py tests/specify_cli/coordination/test_simple_case_flat_topology.py tests/specify_cli/write_side/test_characterization_write_target.py tests/sync/test_no_queue_drain_constructed_3030.py",
-      "result": "57 passed in 127.05s"
-    },
-    {
-      "command": ".venv/bin/mypy --strict src/specify_cli/coordination/status_transition.py",
-      "result": "4 pre-existing errors at unchanged lines 123, 139, 148, and 625; helper removal introduced no diagnostic"
-    },
-    {
-      "command": ".venv/bin/pytest -q -p no:cacheprovider <all 28 retained WP05 scanner files>",
-      "result": "314 passed in 223.43s"
     }
   ]
 }
