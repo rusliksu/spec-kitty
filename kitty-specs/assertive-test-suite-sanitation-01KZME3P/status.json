@@ -1,7 +1,7 @@
 {
-  "event_count": 132,
-  "last_event_id": "01KZP4B4F4GB933J99DW1VE1GG",
-  "materialized_at": "2026-08-10T15:23:30.148891+00:00",
+  "event_count": 134,
+  "last_event_id": "01KZP4H5XVSJAYFJ0GFQ97PYCG",
+  "materialized_at": "2026-08-10T15:26:48.216795+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -12,9 +12,9 @@
     "claimed": 0,
     "done": 0,
     "for_review": 0,
-    "in_progress": 1,
+    "in_progress": 2,
     "in_review": 1,
-    "planned": 6
+    "planned": 5
   },
   "work_packages": {
     "WP01": {
@@ -306,11 +306,19 @@
       ]
     },
     "WP09": {
-      "actor": "finalize-tasks",
+      "actor": "wp09-impl",
+      "agent": "wp09-impl",
+      "agent_profile": "architect-alphonso",
+      "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "planned",
-      "last_event_id": "01KZMHHX2YBWDB03REKQRWDRA1",
-      "last_transition_at": "2026-08-10T00:35:54.590501+00:00",
+      "lane": "in_progress",
+      "last_event_id": "01KZP4H5XVSJAYFJ0GFQ97PYCG",
+      "last_transition_at": "2026-08-10T15:26:48.216795+00:00",
+      "model": "__resolved_model_absent__",
+      "provider": "__resolved_provider_absent__",
+      "role": "implementer",
+      "shell_pid": 28365,
+      "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
         "T051": "planned",
         "T052": "planned",
