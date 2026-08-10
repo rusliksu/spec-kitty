@@ -1,7 +1,7 @@
 {
-  "event_count": 130,
-  "last_event_id": "01KZP3ZDQT97ZG948VF0K335D6",
-  "materialized_at": "2026-08-10T15:17:06.426316+00:00",
+  "event_count": 131,
+  "last_event_id": "01KZP49N4JMX3R1R8N92C391CP",
+  "materialized_at": "2026-08-10T15:22:41.682484+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -11,8 +11,8 @@
     "canceled": 0,
     "claimed": 0,
     "done": 0,
-    "for_review": 0,
-    "in_progress": 2,
+    "for_review": 1,
+    "in_progress": 1,
     "in_review": 0,
     "planned": 6
   },
@@ -226,9 +226,9 @@
       "agent_profile_version": "1.0",
       "assignee": "wp06-impl",
       "force_count": 0,
-      "lane": "in_progress",
-      "last_event_id": "01KZP3WG5F1J8BB0SBX3NA1ZBZ",
-      "last_transition_at": "2026-08-10T15:15:30.607752+00:00",
+      "lane": "for_review",
+      "last_event_id": "01KZP49N4JMX3R1R8N92C391CP",
+      "last_transition_at": "2026-08-10T15:22:41.682484+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "Bounded pre-review override after two terminal 300s gate timeouts with no failing node/stderr. Exact owned cohort: 139 passed in 45.68s under xdist; daemon matrix 20/20 isolated + 10/10 CI-parallel; Ruff, ledger validator, JSON, diff checks green; zero src edits; #2782 remains WP03 and CI route node remains WP07. 38 nodes removed, net -1794 test LOC.",
@@ -365,9 +365,8 @@
       "provider": "__resolved_provider_absent__",
       "review": null,
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP11-specify-duplicates/review-cycle-3.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP11-specify-duplicates/review-cycle-3.md",
-        "reviewer": "reviewer-renata",
+        "reference": "Review passed (cycle 3/final): independently replayed 143-11=132=89+43 exact deletion equality, 132 functions to 477 nodes, 43 final terminal rows, six normalized records/10 former SPLIT contradictions, both VCS empty partitions, current 120-row schema validation, focused 2662 passed/1 skipped, 26/26 survivor baseline, 21/21 production faults, 5/5 structural faults, Ruff/diff clean, no production edits or unique boundary loss.",
+        "reviewer": "Robert Douglass",
         "verdict": "approved"
       },
       "role": "reviewer",
