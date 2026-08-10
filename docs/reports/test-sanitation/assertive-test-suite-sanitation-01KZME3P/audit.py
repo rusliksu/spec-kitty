@@ -49,6 +49,11 @@ FROZEN_ROUTE_AUTHORITY_HASHES = {
     "architectural": "8f4bf7d0f12e095ded2a8c044f5f4d8abcde84e18661c25816f5aa5c73a62de0",
     "sibling-e2e": "d0185c8ffc5775bd68db1611de83d513ce45fcf8f537103ca4d570f41a3e41c6",
 }
+FROZEN_BASE_CENSUS_FILE_SHA256 = "c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b"
+FROZEN_BASE_CENSUS_CONTENT_SHA256 = "08ef931c46e9d6a2608baec729203442640933bf2970cc83e794bf2f78011e08"
+FROZEN_BASE_RAW_RESULT_SHA256 = "67120f918ecef7e45791aa81d3c6823b1546820f478e53fa24d075f1adbfb60c"
+FROZEN_BASE_RAW_RESULT_REFERENCE = f"sha256:{FROZEN_BASE_RAW_RESULT_SHA256}"
+FROZEN_BASE_EXECUTION_CONTENT_SHA256 = "62d9db3a9dfbde24dc9c4e887eb840f65664afd8aa9aea3fcef28c4584cbbd93"
 VERDICTS = {"KEEP", "CONSOLIDATE", "FIX_TEST", "FIX_PRODUCT", "DELETE", "TEMPORARY"}
 PROFILES = {
     "inert", "duplicate", "structural", "contract", "slow", "flake",
@@ -1120,7 +1125,10 @@ def validate_causal_probe(probe: Any, where: str, errors: list[str]) -> None:
         errors.append(f"{where}: causal proof must reach Act and fail intended oracle")
 
 
-def validate_workload(dag: Mapping[str, Any], where: str, errors: list[str], environment_ids: set[str]) -> None:  # noqa: C901 - schema branches are intentionally explicit
+def validate_workload(  # noqa: C901 - schema branches are intentionally explicit
+    dag: Mapping[str, Any], where: str, errors: list[str], environment_ids: set[str],
+    *, frozen_route_authorities: Mapping[str, str] = FROZEN_ROUTE_AUTHORITY_HASHES,
+) -> None:
     _keys(dag, ("routes", "edges", "repetitions", "measurements"), where, errors)
     routes = dag.get("routes", [])
     edges = dag.get("edges", [])
@@ -1152,6 +1160,11 @@ def validate_workload(dag: Mapping[str, Any], where: str, errors: list[str], env
         if route_id_string in route_ids:
             errors.append(f"{route_where}: duplicate route id {route_id_string}")
         route_ids.add(route_id_string)
+        if route_id_string not in frozen_route_authorities:
+            errors.append(
+                f"{route_where}: unknown frozen route id {route_id_string}; "
+                "future HEAD routes require separately pinned tracked authority"
+            )
         if not _str_list(route.get("argv"), nonempty=True):
             errors.append(f"{route_where}: argv must be nonempty string list")
         route_env = route.get("env")
@@ -1206,7 +1219,7 @@ def validate_workload(dag: Mapping[str, Any], where: str, errors: list[str], env
             expected_authority = _sha(_json_bytes(_route_projection(route)))
             if provenance.get("authority_sha256") != expected_authority:
                 errors.append(f"{route_where}.provenance: authority_sha256 does not bind complete route")
-            pinned_authority = FROZEN_ROUTE_AUTHORITY_HASHES.get(route_id_string)
+            pinned_authority = frozen_route_authorities.get(route_id_string)
             if pinned_authority is not None and provenance.get("authority_sha256") != pinned_authority:
                 errors.append(f"{route_where}.provenance: authority_sha256 does not match pinned frozen route")
             if provenance.get("kind") == "tracked_ci":
@@ -1231,6 +1244,12 @@ def validate_workload(dag: Mapping[str, Any], where: str, errors: list[str], env
                             )
             else:
                 errors.append(f"{route_where}.provenance: unknown provenance kind")
+    expected_route_ids = set(frozen_route_authorities)
+    if route_ids != expected_route_ids:
+        errors.append(
+            f"{where}: route id universe does not match immutable authority; "
+            f"missing={sorted(expected_route_ids - route_ids)!r} unknown={sorted(route_ids - expected_route_ids)!r}"
+        )
     graph: dict[Any, set[Any]] = {route_id: set() for route_id in route_ids}
     edge_ids: set[tuple[str, str]] = set()
     for index, edge in enumerate(edges):
@@ -1429,6 +1448,8 @@ def validate_base_execution(  # noqa: C901 - compact exact-outcome matrix is int
     _keys(execution, fields, where, errors)
     if execution.get("inventory_commit") != TARGET_INVENTORY_SHA:
         errors.append(f"{where}: inventory_commit mismatch")
+    if execution.get("census_sha256") != FROZEN_BASE_CENSUS_FILE_SHA256:
+        errors.append(f"{where}: census_sha256 does not match immutable base census authority")
     if execution.get("census_sha256") not in census_hashes:
         errors.append(f"{where}: census_sha256 does not identify a validated census")
     if execution.get("ordered_nodeids_sha256") != _sha(_json_bytes(list(census_nodeids))):
@@ -1458,10 +1479,18 @@ def validate_base_execution(  # noqa: C901 - compact exact-outcome matrix is int
             errors.append(f"{where}: {timestamp} must be ISO-8601")
     if len(parsed_timestamps) == 2 and parsed_timestamps[1] < parsed_timestamps[0]:
         errors.append(f"{where}: ended_at precedes started_at")
+    if len(parsed_timestamps) == 2 and _nonnegative_number(execution.get("wall_seconds")):
+        elapsed = (parsed_timestamps[1] - parsed_timestamps[0]).total_seconds()
+        if abs(elapsed - cast(float, execution["wall_seconds"])) > 1.0:
+            errors.append(f"{where}: timestamp interval does not reconcile wall_seconds")
     if not _nonnegative_number(execution.get("wall_seconds")) or not isinstance(execution.get("exit_code"), int):
         errors.append(f"{where}: wall_seconds/exit_code invalid")
     if not _nonempty_string(execution.get("raw_result_path")) or not _hash_value(execution.get("raw_result_sha256")):
         errors.append(f"{where}: raw result path and SHA-256 required")
+    if execution.get("raw_result_path") != FROZEN_BASE_RAW_RESULT_REFERENCE:
+        errors.append(f"{where}: raw result reference does not match immutable capture authority")
+    if execution.get("raw_result_sha256") != FROZEN_BASE_RAW_RESULT_SHA256:
+        errors.append(f"{where}: raw result SHA-256 does not match immutable capture authority")
     if execution.get("default_outcome") != "passed":
         errors.append(f"{where}: default_outcome must be passed")
     overrides = execution.get("outcome_overrides")
@@ -1492,6 +1521,7 @@ def validate_base_execution(  # noqa: C901 - compact exact-outcome matrix is int
         errors.append(f"{where}: outcome counts do not reconcile every census node")
     details = execution.get("outcome_details")
     detail_nodes: dict[str, str] = {}
+    detail_phases: dict[str, str] = {}
     if not isinstance(details, list):
         errors.append(f"{where}: outcome_details list required")
         details = []
@@ -1506,6 +1536,8 @@ def validate_base_execution(  # noqa: C901 - compact exact-outcome matrix is int
         if detail_nodeid in detail_nodes:
             errors.append(f"{where}.outcome_details[{index}]: duplicate detail nodeid")
         detail_nodes[detail_nodeid] = detail_outcome
+        if isinstance(detail.get("phase"), str):
+            detail_phases[detail_nodeid] = detail["phase"]
         if detail_outcome == "not_run":
             if detail.get("phase") != "route_excluded" or not _nonempty_string(detail.get("reason")):
                 errors.append(f"{where}.outcome_details[{index}]: not_run attribution required")
@@ -1517,6 +1549,7 @@ def validate_base_execution(  # noqa: C901 - compact exact-outcome matrix is int
     if not isinstance(phase_errors, list):
         errors.append(f"{where}: phase_errors list required")
         phase_errors = []
+    phase_error_keys: set[tuple[str, str]] = set()
     for index, phase_error in enumerate(phase_errors):
         if not isinstance(phase_error, dict):
             errors.append(f"{where}.phase_errors[{index}]: mapping required")
@@ -1527,10 +1560,29 @@ def validate_base_execution(  # noqa: C901 - compact exact-outcome matrix is int
             or not _hash_value(phase_error.get("longrepr_sha256"))
         ):
             errors.append(f"{where}.phase_errors[{index}]: exact node/phase/hash attribution required")
+            continue
+        phase_error_key = (cast(str, phase_error["nodeid"]), cast(str, phase_error["phase"]))
+        if phase_error_key in phase_error_keys:
+            errors.append(f"{where}.phase_errors[{index}]: duplicate node/phase record")
+        phase_error_keys.add(phase_error_key)
+        if phase_error["phase"] == "setup" and (
+            override_nodes.get(cast(str, phase_error["nodeid"])) != "error"
+            or detail_phases.get(cast(str, phase_error["nodeid"])) != "setup"
+        ):
+            errors.append(f"{where}.phase_errors[{index}]: setup error must reconcile exact error outcome")
+    failure_count = expected_counts.get("failed", 0) + expected_counts.get("error", 0) + len(phase_errors)
+    if execution.get("exit_code") == 0 and failure_count:
+        errors.append(f"{where}: zero exit_code contradicts failed/error phase outcomes")
+    elif execution.get("exit_code") == 1 and not failure_count:
+        errors.append(f"{where}: nonzero exit_code lacks failed/error phase outcome")
+    elif execution.get("exit_code") not in {0, 1}:
+        errors.append(f"{where}: exact base execution exit_code must be 0 or 1")
     body = dict(data)
     expected_hash = body.pop("content_sha256", None)
     if not _hash_value(expected_hash) or expected_hash != _sha(_json_bytes(body)):
         errors.append(f"{where}: content_sha256 mismatch")
+    if expected_hash != FROZEN_BASE_EXECUTION_CONTENT_SHA256:
+        errors.append(f"{where}: content_sha256 does not match immutable base execution authority")
 
 
 def _validate_temporary(row: Mapping[str, Any], where: str, profile: Any, today: dt.date, errors: list[str]) -> None:
@@ -1990,6 +2042,11 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
     for path, data in documents:
         if "source_units" in data and "reconciliation" in data:
             validate_census(data, errors)
+            if path.name == "base-census.json":
+                if _sha(path.read_bytes()) != FROZEN_BASE_CENSUS_FILE_SHA256:
+                    errors.append(f"{path}: bytes do not match immutable base census authority")
+                if data.get("content_sha256") != FROZEN_BASE_CENSUS_CONTENT_SHA256:
+                    errors.append(f"{path}: content does not match immutable base census authority")
             document_nodeids, _ = _census_nodeids(data)
             if census_nodeids and census_nodeids != document_nodeids:
                 errors.append(f"{path}: multiple census node universes disagree")
@@ -2753,6 +2810,85 @@ def selftest() -> dict[str, Any]:  # noqa: C901 - independent adversarial probes
         checks["base_execution_unaccounted_default_rejected"] = any(
             "default_outcome must be passed" in error for error in base_execution_errors(unaccounted)
         )
+        raw_sha_tamper = copy.deepcopy(committed_summary)
+        raw_sha_tamper["base_execution"]["raw_result_sha256"] = "0" * 64
+        rehash_execution(raw_sha_tamper)
+        checks["base_execution_resigned_raw_sha_rejected"] = any(
+            "raw result SHA-256 does not match immutable capture authority" in error
+            for error in base_execution_errors(raw_sha_tamper)
+        )
+        raw_path_tamper = copy.deepcopy(committed_summary)
+        raw_path_tamper["base_execution"]["raw_result_path"] = "sha256:" + "0" * 64
+        rehash_execution(raw_path_tamper)
+        checks["base_execution_resigned_raw_path_rejected"] = any(
+            "raw result reference does not match immutable capture authority" in error
+            for error in base_execution_errors(raw_path_tamper)
+        )
+        timestamp_tamper = copy.deepcopy(committed_summary)
+        timestamp_tamper["base_execution"]["started_at"] = "2026-08-11T08:17:59.453215Z"
+        timestamp_tamper["base_execution"]["ended_at"] = "2026-08-11T08:43:38.174467Z"
+        rehash_execution(timestamp_tamper)
+        checks["base_execution_resigned_timestamps_rejected"] = any(
+            "content_sha256 does not match immutable base execution authority" in error
+            for error in base_execution_errors(timestamp_tamper)
+        )
+        exit_code_tamper = copy.deepcopy(committed_summary)
+        exit_code_tamper["base_execution"]["exit_code"] = 0
+        rehash_execution(exit_code_tamper)
+        checks["base_execution_resigned_exit_code_rejected"] = all(
+            any(fragment in error for error in base_execution_errors(exit_code_tamper))
+            for fragment in (
+                "zero exit_code contradicts failed/error phase outcomes",
+                "content_sha256 does not match immutable base execution authority",
+            )
+        )
+        phase_removal_tamper = copy.deepcopy(committed_summary)
+        phase_removal_tamper["base_execution"]["phase_errors"] = []
+        rehash_execution(phase_removal_tamper)
+        checks["base_execution_resigned_phase_removal_rejected"] = any(
+            "content_sha256 does not match immutable base execution authority" in error
+            for error in base_execution_errors(phase_removal_tamper)
+        )
+        duplicate_phase_tamper = copy.deepcopy(committed_summary)
+        duplicate_phase_tamper["base_execution"]["phase_errors"].append(
+            copy.deepcopy(duplicate_phase_tamper["base_execution"]["phase_errors"][0])
+        )
+        rehash_execution(duplicate_phase_tamper)
+        checks["base_execution_resigned_duplicate_phase_rejected"] = all(
+            any(fragment in error for error in base_execution_errors(duplicate_phase_tamper))
+            for fragment in (
+                "duplicate node/phase record",
+                "content_sha256 does not match immutable base execution authority",
+            )
+        )
+        identity_tamper = copy.deepcopy(committed_summary)
+        phase_error_nodes = {
+            row["nodeid"] for row in identity_tamper["base_execution"]["phase_errors"]
+        }
+        replaced_failed = next(
+            nodeid for nodeid in identity_tamper["base_execution"]["outcome_overrides"]["failed"]
+            if nodeid not in phase_error_nodes
+        )
+        overridden_nodes = {
+            nodeid
+            for nodeids in identity_tamper["base_execution"]["outcome_overrides"].values()
+            for nodeid in nodeids
+        }
+        replacement_passed = next(nodeid for nodeid in committed_nodeids if nodeid not in overridden_nodes)
+        failed_nodes = identity_tamper["base_execution"]["outcome_overrides"]["failed"]
+        failed_nodes[failed_nodes.index(replaced_failed)] = replacement_passed
+        failed_nodes.sort()
+        detail = next(
+            row for row in identity_tamper["base_execution"]["outcome_details"]
+            if row["nodeid"] == replaced_failed
+        )
+        detail["nodeid"] = replacement_passed
+        identity_tamper["base_execution"]["outcome_details"].sort(key=lambda row: row["nodeid"])
+        rehash_execution(identity_tamper)
+        checks["base_execution_resigned_failed_identity_rejected"] = any(
+            "content_sha256 does not match immutable base execution authority" in error
+            for error in base_execution_errors(identity_tamper)
+        )
 
         combined_bypass = copy.deepcopy(committed_positive)
         combined_bypass["candidate"]["observations"][0]["nodeid"] = "tests/not-in-census.py::test_fabricated"
@@ -2774,6 +2910,56 @@ def selftest() -> dict[str, Any]:  # noqa: C901 - independent adversarial probes
             )
         )
 
+        def committed_workload_errors(document: dict[str, Any]) -> list[str]:
+            found: list[str] = []
+            validate_workload(
+                document["frozen_workload_dag"], "committed-workload", found,
+                committed_environment_ids,
+            )
+            return found
+
+        fabricated_owner_workload = copy.deepcopy(committed_workload)
+        fabricated_owner_route = copy.deepcopy(
+            fabricated_owner_workload["frozen_workload_dag"]["routes"][0]
+        )
+        fabricated_owner_route.update({
+            "id": "fabricated-owner", "argv": ["false"], "cwd": "fabricated-cwd",
+            "env": {"FAKE": "1"}, "base_mapping": "fabricated-base",
+            "head_mapping": "fabricated-head",
+        })
+        fabricated_owner_route["memberships"][0]["selector"] = _selector_from_argv(
+            fabricated_owner_route["argv"], fabricated_owner_route["environment_id"],
+        )
+        fabricated_owner_route["provenance"] = {
+            "kind": "frozen_command", "repository": "primary",
+            "source_commit": TARGET_INVENTORY_SHA,
+            "authority_sha256": _sha(_json_bytes(_route_projection(fabricated_owner_route))),
+        }
+        fabricated_owner_workload["frozen_workload_dag"]["routes"].append(fabricated_owner_route)
+        fabricated_owner_errors = committed_workload_errors(fabricated_owner_workload)
+        checks["workload_self_signed_unknown_owner_rejected"] = all(
+            any(fragment in error for error in fabricated_owner_errors)
+            for fragment in ("unknown frozen route id fabricated-owner", "route id universe")
+        )
+        renamed_route_workload = copy.deepcopy(committed_workload)
+        renamed_regression = next(
+            route for route in renamed_route_workload["frozen_workload_dag"]["routes"]
+            if route["id"] == "regression"
+        )
+        renamed_regression["id"] = "fabricated-regression"
+        renamed_regression["provenance"]["authority_sha256"] = _sha(
+            _json_bytes(_route_projection(renamed_regression))
+        )
+        for edge in renamed_route_workload["frozen_workload_dag"]["edges"]:
+            for field in ("from", "to"):
+                if edge[field] == "regression":
+                    edge[field] = "fabricated-regression"
+        renamed_route_errors = committed_workload_errors(renamed_route_workload)
+        checks["workload_self_signed_renamed_route_rejected"] = all(
+            any(fragment in error for error in renamed_route_errors)
+            for fragment in ("unknown frozen route id fabricated-regression", "route id universe")
+        )
+
         valid_route = {
             "id": "route", "argv": ["pytest"], "environment_id": environment_id,
             "base_mapping": "tests/", "head_mapping": "tests/", "cwd": ".", "env": {},
@@ -2793,7 +2979,14 @@ def selftest() -> dict[str, Any]:  # noqa: C901 - independent adversarial probes
 
         def find_workload_errors(dag: dict[str, Any]) -> list[str]:
             found: list[str] = []
-            validate_workload(dag, "workload", found, {environment_id})
+            validate_workload(
+                dag, "workload", found, {environment_id},
+                frozen_route_authorities={
+                    "route": cast(
+                        str, cast(dict[str, Any], valid_route["provenance"])["authority_sha256"],
+                    ),
+                },
+            )
             return found
 
         valid_workload: dict[str, Any] = {
@@ -2847,6 +3040,7 @@ def selftest() -> dict[str, Any]:  # noqa: C901 - independent adversarial probes
             validate_workload(
                 {"routes": [route], "edges": [], "repetitions": 3, "measurements": []},
                 "ci-workload", found, committed_environment_ids,
+                frozen_route_authorities={"regression": FROZEN_ROUTE_AUTHORITY_HASHES["regression"]},
             )
             return found
 
