@@ -286,6 +286,55 @@ def test_invalid_published_venv_is_rebuilt_once(tmp_path: Path, entry_kind: str)
         assert (symlink_target / "keep").read_text(encoding="utf-8") == "safe"
 
 
+def test_stale_lease_recovers_past_invalid_final_symlink_without_following_target(
+    tmp_path: Path,
+) -> None:
+    cache = tmp_path / ".pytest_cache"
+    cache.mkdir()
+    abandoned = cache / "spec-kitty-test-venv.build-abandoned"
+    _fake_build(abandoned, _SOURCE_VERSION)
+    outside_target = tmp_path / "outside-target"
+    outside_target.mkdir()
+    (outside_target / "keep").write_text("safe", encoding="utf-8")
+    final = tmp_path / root_conftest._VENV_CACHE_PATH
+    try:
+        final.symlink_to(outside_target, target_is_directory=True)
+    except OSError as exc:
+        pytest.skip(f"directory symlinks unavailable: {exc}")
+
+    state_path = tmp_path / root_conftest._VENV_STATE_PATH
+    state_path.write_text(
+        json.dumps(
+            {
+                "state": "BUILDING",
+                "owner_pid": 99999999,
+                "process_start_token": "dead",
+                "heartbeat_at": 0.0,
+                "lease_seconds": 0.1,
+                "temp_path": str(abandoned),
+                "source_version": _SOURCE_VERSION,
+                "environment_hash": root_conftest._test_venv_environment_hash(
+                    tmp_path, _SOURCE_VERSION
+                ),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = root_conftest._ensure_test_venv(
+        tmp_path,
+        _SOURCE_VERSION,
+        _build=_fake_build,
+        _validate=_fake_valid,
+        _wait_timeout=5.0,
+    )
+
+    assert _fake_valid(result, _SOURCE_VERSION)
+    assert not result.is_symlink()
+    assert not abandoned.exists()
+    assert (outside_target / "keep").read_text(encoding="utf-8") == "safe"
+
+
 def test_corrupt_state_cannot_delete_untrusted_temp_path(tmp_path: Path) -> None:
     outside = tmp_path / "outside"
     outside.mkdir()

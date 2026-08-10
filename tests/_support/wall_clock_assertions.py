@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import hmac
 import json
 import os
+import secrets
 import uuid
 from collections import deque
 from collections.abc import Callable, Iterable, Mapping
@@ -40,8 +42,10 @@ _ClassInitializers = dict[tuple[str, ...], ast.FunctionDef | ast.AsyncFunctionDe
 _SHADOWED_PATH = ("<shadowed>",)
 _SETUP_METHOD_NAMES = {"setup", "setup_method", "setup_class", "setUp", "setUpClass"}
 _MODULE_SETUP_NAMES = {"setup_module", "setup_function", "setUpModule"}
-_SCAN_CACHE_VERSION = 2
+_SCAN_CACHE_VERSION = 3
 _SCAN_CACHE_LOCK_TIMEOUT_S = 600.0
+_SCAN_CACHE_AUTHORITY_KEY_NAME = "authority.key"
+_SCAN_CACHE_AUTHORITY_KEY_BYTES = 32
 
 
 @dataclass(frozen=True, order=True)
@@ -108,11 +112,12 @@ def find_wall_clock_assertion_violations_cached(
     result_path = cache_root / f"{digest}.json"
     lock_path = cache_root / "scan.lock"
     with FileLock(str(lock_path), timeout=_SCAN_CACHE_LOCK_TIMEOUT_S):
-        cached = _read_wall_clock_scan_cache(result_path, digest)
+        authority_key = _load_or_create_wall_clock_scan_authority_key(cache_root)
+        cached = _read_wall_clock_scan_cache(result_path, digest, authority_key)
         if cached is not None:
             return cached
         violations = _find_wall_clock_assertion_violations_from_sources(python_paths, sources)
-        _write_wall_clock_scan_cache(result_path, digest, violations)
+        _write_wall_clock_scan_cache(result_path, digest, violations, authority_key)
         return violations
 
 
@@ -150,6 +155,7 @@ def _wall_clock_scan_digest(
 def _read_wall_clock_scan_cache(
     result_path: Path,
     digest: str,
+    authority_key: bytes,
 ) -> list[WallClockAssertionViolation] | None:
     if not result_path.is_file():
         return None
@@ -164,6 +170,14 @@ def _read_wall_clock_scan_cache(
             payload["violations"],
         )
         if payload.get("result_sha256") != expected_authenticator:
+            return None
+        expected_authority = _wall_clock_scan_authority(
+            digest,
+            payload["violations"],
+            authority_key,
+        )
+        authority = payload.get("authority_hmac_sha256")
+        if not isinstance(authority, str) or not hmac.compare_digest(authority, expected_authority):
             return None
         violations: list[WallClockAssertionViolation] = []
         for row in payload["violations"]:
@@ -190,6 +204,7 @@ def _write_wall_clock_scan_cache(
     result_path: Path,
     digest: str,
     violations: list[WallClockAssertionViolation],
+    authority_key: bytes,
 ) -> None:
     rows = [
         {"path": str(violation.path), "line": violation.line, "call": violation.call}
@@ -200,6 +215,7 @@ def _write_wall_clock_scan_cache(
         "digest": digest,
         "violations": rows,
         "result_sha256": _wall_clock_scan_result_authenticator(digest, rows),
+        "authority_hmac_sha256": _wall_clock_scan_authority(digest, rows, authority_key),
     }
     temporary = result_path.with_name(f"{result_path.name}.tmp-{os.getpid()}-{uuid.uuid4().hex}")
     try:
@@ -220,6 +236,39 @@ def _wall_clock_scan_result_authenticator(digest: str, rows: object) -> str:
         separators=(",", ":"),
     ).encode("utf-8")
     return hashlib.sha256(canonical).hexdigest()  # noqa: TID251
+
+
+def _wall_clock_scan_authority(digest: str, rows: object, authority_key: bytes) -> str:
+    """Authenticate result rows with authority held outside the result document."""
+    canonical = json.dumps(
+        {"version": _SCAN_CACHE_VERSION, "digest": digest, "violations": rows},
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    # Cache-integrity HMAC, not charter content hashing.
+    return hmac.new(authority_key, canonical, hashlib.sha256).hexdigest()  # noqa: TID251
+
+
+def _load_or_create_wall_clock_scan_authority_key(cache_root: Path) -> bytes:
+    """Return the cross-process cache authority key, replacing malformed keys."""
+    key_path = cache_root / _SCAN_CACHE_AUTHORITY_KEY_NAME
+    try:
+        key = key_path.read_bytes()
+    except FileNotFoundError:
+        key = b""
+    if len(key) == _SCAN_CACHE_AUTHORITY_KEY_BYTES:
+        return key
+
+    key = secrets.token_bytes(_SCAN_CACHE_AUTHORITY_KEY_BYTES)
+    temporary = key_path.with_name(f"{key_path.name}.tmp-{os.getpid()}-{uuid.uuid4().hex}")
+    try:
+        descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(key)
+        os.replace(temporary, key_path)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return key
 
 
 def find_test_python_paths(root: Path) -> list[Path]:

@@ -725,9 +725,12 @@ def _lease_is_live_and_fresh(lease: _BootstrapLease, now: float) -> bool:
 
 
 def _expected_temp_path(temp_path: Path, final_path: Path) -> bool:
-    candidate = temp_path.resolve(strict=False)
-    final = final_path.resolve(strict=False)
-    return candidate.parent == final.parent and candidate.name.startswith(f"{final.name}.build-")
+    candidate = Path(os.path.abspath(temp_path))
+    final = Path(os.path.abspath(final_path))
+    return (
+        os.path.normcase(str(candidate.parent)) == os.path.normcase(str(final.parent))
+        and candidate.name.startswith(f"{final.name}.build-")
+    )
 
 
 def _remove_path_without_following_symlinks(path: Path) -> None:

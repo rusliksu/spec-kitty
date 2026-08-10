@@ -13,6 +13,7 @@ pytestmark = [pytest.mark.unit]
 from tests._support.wall_clock_assertions import (
     _ImportAliasMetrics,
     _collect_import_aliases,
+    _wall_clock_scan_result_authenticator,
     find_wall_clock_assertion_violations,
     find_wall_clock_assertion_violations_cached,
     find_test_python_paths,
@@ -1175,6 +1176,16 @@ def test_cached_scan_repairs_corruption_and_invalidates_on_source_change(tmp_pat
     cache_files[0].write_text(json.dumps(payload), encoding="utf-8")
     assert find_wall_clock_assertion_violations_cached([test_file], cache_root) == first
 
+    payload = json.loads(cache_files[0].read_text(encoding="utf-8"))
+    payload["violations"] = []
+    payload["result_sha256"] = _wall_clock_scan_result_authenticator(
+        payload["digest"],
+        payload["violations"],
+    )
+    cache_files[0].write_text(json.dumps(payload), encoding="utf-8")
+    assert find_wall_clock_assertion_violations_cached([test_file], cache_root) == first
+    assert json.loads(cache_files[0].read_text(encoding="utf-8"))["violations"]
+
     test_file.write_text("def test_good():\n    assert 1 == 1\n", encoding="utf-8")
     assert find_wall_clock_assertion_violations_cached([test_file], cache_root) == []
     assert len(list(cache_root.glob("*.json"))) == 2
@@ -1212,3 +1223,4 @@ def test_cached_scan_is_published_and_read_by_distinct_processes(tmp_path: Path)
     assert first_rows == second_rows
     assert len(first_rows) == 1
     assert len(list(cache_root.glob("*.json"))) == 1
+    assert (cache_root / "authority.key").stat().st_size == 32
