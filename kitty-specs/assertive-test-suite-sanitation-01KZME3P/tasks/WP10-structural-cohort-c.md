@@ -35,6 +35,21 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp10-results.json
 execution_mode: code_change
 owned_files:
+- tests/git/test_guard_capability_regression.py
+- tests/integration/test_cross_seam_consumers.py
+- tests/specify_cli/cli/commands/test_identity_audit.py
+- tests/specify_cli/cli/commands/test_sparse_checkout_doctor.py
+- tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py
+- tests/specify_cli/core/test_load_meta_fail_closed_authority.py
+- tests/specify_cli/decisions/test_ownership_3111.py
+- tests/specify_cli/saas_client/test_client_consent_gate_3030.py
+- tests/specify_cli/test_egress_consolidation_3110.py
+- tests/specify_cli/test_meta_fail_closed_full_census_contract.py
+- tests/specify_cli/test_meta_reader_sweep.py
+- tests/sync/test_consent_resolver_3030.py
+- tests/sync/test_project_identity_resolver_3030.py
+- tests/sync/test_sync_action_gate.py
+- tests/sync/tracker/test_saas_client_consent_gate_3030.py
 - tests/architectural/test_2093_authority_invariant.py
 - tests/architectural/test_all_declarations_required.py
 - tests/architectural/test_auth_transport_singleton.py
