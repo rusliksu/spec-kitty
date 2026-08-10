@@ -1,7 +1,7 @@
 {
-  "event_count": 52,
-  "last_event_id": "01KZNKAWFDEKYR0N7FNSNBRSFA",
-  "materialized_at": "2026-08-10T10:26:16.173947+00:00",
+  "event_count": 53,
+  "last_event_id": "01KZNKBPGBR64KCJT4RAMC3FD2",
+  "materialized_at": "2026-08-10T10:26:42.827366+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -11,9 +11,9 @@
     "canceled": 0,
     "claimed": 0,
     "done": 0,
-    "for_review": 1,
+    "for_review": 0,
     "in_progress": 1,
-    "in_review": 1,
+    "in_review": 2,
     "planned": 11
   },
   "work_packages": {
@@ -114,15 +114,18 @@
     "WP04": {
       "actor": "codex",
       "agent": "codex",
-      "agent_profile": "implementer-ivan",
+      "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "for_review",
-      "last_event_id": "01KZNKAWFDEKYR0N7FNSNBRSFA",
-      "last_transition_at": "2026-08-10T10:26:16.173947+00:00",
+      "lane": "in_review",
+      "last_event_id": "01KZNKBPGBR64KCJT4RAMC3FD2",
+      "last_transition_at": "2026-08-10T10:26:42.827366+00:00",
       "model": "__resolved_model_absent__",
+      "notes": [
+        "Ready for review: consolidated 82 exact duplicate groups; removed 104 collected nodes; retained unique import, platform, and causal seams. Gate override rationale: workflow scoped run times out without JUnit exactly as WP04 baseline records; independent 727-node affected cohort is green (725 passed, 2 skipped), validator/ruff/5 fault sentinels green."
+      ],
       "provider": "__resolved_provider_absent__",
-      "role": "implementer",
+      "role": "reviewer",
       "shell_pid": 28365,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
