@@ -248,6 +248,80 @@ def test_lanes_filter_and_jobs_include_lanes_package_tests() -> None:
     )
     assert "tests/specify_cli/lanes/" in fast_run
     assert "tests/specify_cli/lanes/" in integration_run
+def _glob_matches(pattern: str, path: str) -> bool:
+    """Approximate GitHub Actions / dorny ``on.paths``-style glob matching.
+
+    ``**`` matches any sequence of characters including path separators (zero
+    or more intervening segments); a single ``*`` matches within one segment
+    (never crosses ``/``). Sufficient for asserting concrete example paths
+    against the corpus glob set below -- not a general-purpose glob engine.
+    """
+    escaped = re.escape(pattern)
+    escaped = escaped.replace(r"\*\*", "\x00DOUBLESTAR\x00")
+    escaped = escaped.replace(r"\*", "[^/]*")
+    escaped = escaped.replace("\x00DOUBLESTAR\x00", ".*")
+    return re.fullmatch(escaped, path) is not None
+
+
+def test_corpus_filter_claims_the_discrete_glob_set() -> None:
+    """The `corpus` dorny filter must claim the exact T001/T002 glob set.
+
+    Mirrors the `on.paths` trigger allowlists (Gate 0, checked separately by
+    test_ci_corpus_trigger_completeness.py) -- discrete globs only, never
+    bare `kitty-specs/**` or `status.events.jsonl` (C-001).
+    """
+    data = _load_workflow()
+    corpus_filter = set(_path_filters(data)["corpus"])
+    assert corpus_filter == {
+        "packs/**",
+        "kitty-specs/**/spec.md",
+        "kitty-specs/**/plan.md",
+        "kitty-specs/**/tasks/**",
+        "kitty-specs/**/contracts/**",
+        "kitty-specs/**/acceptance-matrix.json",
+        ".kittify/charter/**",
+        ".kittify/glossaries/**",
+        ".kittify/doctrine/**",
+        ".kittify/release/downstream-verified.json",
+    }
+
+
+def test_corpus_filter_selects_a_packs_built_in_only_diff() -> None:
+    """SC-001: a packs/built-in/**-only diff must select the corpus group."""
+    data = _load_workflow()
+    corpus_filter = _path_filters(data)["corpus"]
+    changed_path = "packs/built-in/agent_profiles/implementer-ivan.agent.yaml"
+    assert any(_glob_matches(g, changed_path) for g in corpus_filter)
+
+
+def test_corpus_filter_selects_a_narrow_kitty_specs_spec_leaf() -> None:
+    """SC-001: a narrow kitty-specs/<mission>/spec.md diff selects corpus."""
+    data = _load_workflow()
+    corpus_filter = _path_filters(data)["corpus"]
+    changed_path = "kitty-specs/example-mission-01ABCDEF/spec.md"
+    assert any(_glob_matches(g, changed_path) for g in corpus_filter)
+
+
+def test_corpus_filter_does_not_select_status_events_churn() -> None:
+    """SC-002: routine WP status-event churn must NOT select the corpus group.
+
+    Guards C-001 -- a bare `kitty-specs/**` or `status.events.jsonl` glob
+    would fire on every WP status transition, defeating the point of a
+    narrow corpus trigger.
+    """
+    data = _load_workflow()
+    corpus_filter = _path_filters(data)["corpus"]
+    changed_path = "kitty-specs/example-mission-01ABCDEF/status.events.jsonl"
+    assert not any(_glob_matches(g, changed_path) for g in corpus_filter)
+
+
+def test_corpus_filter_globs_are_all_non_src() -> None:
+    """M2: every corpus glob must stay non-src so ci_topology_census.json and
+    the `unmatched` catch-all loop (both src/specify_cli-scoped) never need to
+    change for this non-src data group."""
+    data = _load_workflow()
+    corpus_filter = _path_filters(data)["corpus"]
+    assert all(not g.startswith("src/") for g in corpus_filter)
 
 
 def test_next_filter_includes_canonical_runtime_packages() -> None:
