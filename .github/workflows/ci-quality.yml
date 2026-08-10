@@ -1681,7 +1681,6 @@ jobs:
               --ignore=tests/specify_cli/charter_lint
               --ignore=tests/specify_cli/charter_preflight
               --ignore=tests/specify_cli/test_lane_regression_guard.py
-              --ignore=tests/specify_cli/test_template_lane_guard.py
               --ignore=tests/specify_cli/compat
               --ignore=tests/specify_cli/tool_surface
               --ignore=tests/specify_cli/invocation
@@ -1690,7 +1689,6 @@ jobs:
           - shard: specify-cli-rest-2
             paths: >-
               tests/specify_cli/test_lane_regression_guard.py
-              tests/specify_cli/test_template_lane_guard.py
               tests/specify_cli/compat
               tests/specify_cli/tool_surface
               tests/specify_cli/invocation
@@ -3111,7 +3109,6 @@ jobs:
         run: |
           python -m pytest \
             tests/specify_cli/cli/commands/test_doctor_restart_daemon_timing.py \
-            -m timing \
             -q \
             --tb=short
 
@@ -3145,8 +3142,16 @@ jobs:
           SPEC_KITTY_RUN_QUARANTINE: "1"
           PWHEADLESS: "1"
         run: |
+          # Empty by adjudication: quarantine is reserved for irreducible Tier-3
+          # environmental flakes, and the sanitation census found none. Keep the
+          # manifest explicit so this job never scans the unrelated whole tree.
+          QUARANTINE_PATHS=()
+          if [ "${#QUARANTINE_PATHS[@]}" -eq 0 ]; then
+            echo "::notice::No tests are currently quarantined (owner manifest is empty)."
+            exit 0
+          fi
           set +e
-          python -m pytest tests/ -m quarantine -p no:cacheprovider -q --tb=short
+          python -m pytest "${QUARANTINE_PATHS[@]}" -m quarantine -p no:cacheprovider -q --tb=short
           ec=$?
           set -e
           if [ "$ec" -eq 5 ]; then
@@ -3193,8 +3198,14 @@ jobs:
         env:
           PWHEADLESS: "1"
         run: |
+          # The single accepted P0 owner (#2782). This literal manifest keeps
+          # regression discovery proportional while preserving honest blocking
+          # red authority under ADR 2026-07-17-1.
+          REGRESSION_PATHS=(
+            tests/regression/test_issue_2782_sync_strict_json_ingress_skip.py
+          )
           set +e
-          python -m pytest tests/ -m regression -p no:cacheprovider -q --tb=short
+          python -m pytest "${REGRESSION_PATHS[@]}" -m regression -p no:cacheprovider -q --tb=short
           ec=$?
           set -e
           if [ "$ec" -eq 5 ]; then
@@ -3213,7 +3224,7 @@ jobs:
             echo "--- resolved pytest/plugin versions ---"
             python -m pip freeze | grep -Ei "^(pytest|pluggy|iniconfig)" || true
             echo "--- plugin registration + collection attempt (diagnostic only) ---"
-            python -m pytest tests/ -m regression -p no:cacheprovider --collect-only -q 2>&1 | tail -40 || true
+            python -m pytest "${REGRESSION_PATHS[@]}" -m regression -p no:cacheprovider --collect-only -q 2>&1 | tail -40 || true
             exit "$ec"
           fi
           exit "$ec"

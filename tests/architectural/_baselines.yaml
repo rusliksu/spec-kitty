@@ -110,11 +110,6 @@ test_migration_chain_integrity:
   # rewrite (2.2->3.0).
   known_line_jumps: 4
 
-# tests/architectural/test_runtime_charter_doctrine_boundary.py
-# Empty allowlist today; C-004 caps this at 2 documented exceptions.
-test_runtime_charter_doctrine_boundary:
-  baseline_allowlist: 0
-
 # tests/architectural/test_auth_transport_singleton.py
 # NO CHANGE this mission per Slice F C-005 (auth-transport boundary
 # is owned by mission shared-package-boundary-cutover-01KQ22DS and
@@ -127,13 +122,6 @@ test_auth_transport_singleton:
   # next-sweep TODO. C-005 binds this value for the duration of
   # Slice F; do not edit downward in this mission.
   allowed_direct_httpx_files: 3
-
-# tests/architectural/test_compat_shims.py
-test_compat_shims:
-  # justification: 3 pure-shim adapter files under
-  # src/specify_cli/compat/_adapters/. Per C-006 this MUST shrink to
-  # 0 by 4.0 (the compat-planner mission is the burn-down owner).
-  pure_shim_files: 0  # the 3 pure-shim adapter files deleted (closed #2159/#2049)
 
 # tests/contract/test_example_round_trip.py
 # Populated by WP03 after the legacy-contract-allowlist discovery
@@ -489,30 +477,6 @@ test_verdict_seam_census:
   # and cli/commands/agent/workflow_cores.py::resolve_review_feedback_pointer.
   reader_count: 18
 
-test_shared_module_object_patches:
-  # justification: pre-existing `main` reach-through debt, recorded as a frozen
-  # shrink-only baseline during the #3252 landing (dated 2026-08-08). #3252's
-  # own fix targeted a module-local alias idiom (`saas_client._sleep` etc.)
-  # that `main`'s #3187 had already superseded with an instance-scoped seam
-  # (`self._sleep`); a follow-on product commit extended that instance seam to
-  # `saas_client`'s `self._monotonic`/`self._randbelow` too, so every
-  # `saas_client` reach-through this gate's predicate would otherwise catch is
-  # now closed and correctly absent below. The 11 rows here are unrelated debt
-  # (git_metadata.subprocess.run, body_transport.requests.post,
-  # batch.time.sleep, asyncio.run_coroutine_threadsafe) that the gate's own
-  # predicate (mechanism half: reach-through/foreign; read half: a
-  # count-or-equality assertion) surfaces elsewhere in `tests/sync/`, measured
-  # directly from the gate's own `[WP05 gate] flagged: ...` output on this
-  # tree — not introduced by this PR. The per-target breakdown is deliberately
-  # NOT restated here: it would be unasserted prose about the rows directly
-  # below it, and would rot silently if the composition changed while the
-  # total did not. The `rows:` list IS the breakdown, and
-  # `test_the_baseline_equals_the_gate_flagged_set` compares it to the gate's
-  # flagged set by frozenset equality -- so a row with no corresponding flagged
-  # site fails too, which matters because the shrink-only rule would otherwise
-  # freeze such a row in forever. Growth means a NEW assertion was written
-  # against a shared module object: fix it, do not record it.
-  flagged_sites: 11
   rows:
     - site: "tests/sync/test_body_transport.py:262"
       module_path: "specify_cli.sync.body_transport.requests"

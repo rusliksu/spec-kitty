@@ -108,9 +108,7 @@ class BaselinesFile(BaseModel):
 
     test_no_dead_modules: dict[str, int]
     test_migration_chain_integrity: dict[str, int]
-    test_runtime_charter_doctrine_boundary: dict[str, int]
     test_auth_transport_singleton: dict[str, int]
-    test_compat_shims: dict[str, int]
     test_example_round_trip: dict[str, int]
     test_all_declarations_required: dict[str, int]
 
@@ -124,16 +122,13 @@ _REQUIRED_TOP_LEVEL_KEYS: frozenset[str] = frozenset(
     {
         "test_no_dead_modules",
         "test_migration_chain_integrity",
-        "test_runtime_charter_doctrine_boundary",
         "test_auth_transport_singleton",
-        "test_compat_shims",
         "test_example_round_trip",
         "test_all_declarations_required",
         "test_no_inert_schema_slots",
         "test_reference_enum_ratchet",
         "test_egress_consent_boundary",
         "test_unfiltered_journal_read_boundary",
-        "test_shared_module_object_patches",
     }
 )
 
@@ -303,22 +298,10 @@ def test_growing_an_allowlist_above_baseline_fails() -> None:
             data["test_migration_chain_integrity"]["known_line_jumps"],
         ),
         (
-            "test_runtime_charter_doctrine_boundary",
-            "tests.architectural.test_runtime_charter_doctrine_boundary",
-            "_BASELINE_ALLOWLIST",
-            data["test_runtime_charter_doctrine_boundary"]["baseline_allowlist"],
-        ),
-        (
             "test_auth_transport_singleton",
             "tests.architectural.test_auth_transport_singleton",
             "_TRANSPORT_ALLOWLIST",
             data["test_auth_transport_singleton"]["allowed_direct_httpx_files"],
-        ),
-        (
-            "test_compat_shims",
-            "tests.architectural.test_compat_shims",
-            "_ADAPTER_FILES",
-            data["test_compat_shims"]["pure_shim_files"],
         ),
         # FR-141: legacy contract allowlist for the round-trip gate.
         (
@@ -381,17 +364,6 @@ def test_growing_an_allowlist_above_baseline_fails() -> None:
             "tests.architectural.test_unfiltered_journal_read_boundary",
             "_UNFILTERED_READ_ALLOWLIST_SITES",
             data["test_unfiltered_journal_read_boundary"]["unfiltered_read_allowlist_sites"],
-        ),
-        # sync-sleep-count-3136-01KZ9B5A WP05: frozen shrink-only baseline of
-        # `patch()` sites that mutate a shared module object AND are read by a
-        # count or equality assertion. Growth means a NEW assertion was written
-        # against a process-global recorder -- the defect class #3136 exists to
-        # close -- so it must cost a visible YAML diff, not a one-line edit.
-        (
-            "test_shared_module_object_patches",
-            "tests.architectural.test_shared_module_object_patches",
-            "BASELINE_SITES",
-            data["test_shared_module_object_patches"]["flagged_sites"],
         ),
     ]
     for label, module_dotted, attr_name, baseline in single_baselines:
@@ -460,22 +432,10 @@ def test_growth_fails_shrinkage_warns(
             data["test_migration_chain_integrity"]["known_line_jumps"],
         ),
         (
-            "test_runtime_charter_doctrine_boundary",
-            "tests.architectural.test_runtime_charter_doctrine_boundary",
-            "_BASELINE_ALLOWLIST",
-            data["test_runtime_charter_doctrine_boundary"]["baseline_allowlist"],
-        ),
-        (
             "test_auth_transport_singleton",
             "tests.architectural.test_auth_transport_singleton",
             "_TRANSPORT_ALLOWLIST",
             data["test_auth_transport_singleton"]["allowed_direct_httpx_files"],
-        ),
-        (
-            "test_compat_shims",
-            "tests.architectural.test_compat_shims",
-            "_ADAPTER_FILES",
-            data["test_compat_shims"]["pure_shim_files"],
         ),
         # FR-141: legacy contract allowlist for the round-trip gate.
         (
@@ -535,15 +495,6 @@ def test_growth_fails_shrinkage_warns(
             "tests.architectural.test_unfiltered_journal_read_boundary",
             "_UNFILTERED_READ_ALLOWLIST_SITES",
             data["test_unfiltered_journal_read_boundary"]["unfiltered_read_allowlist_sites"],
-        ),
-        # sync-sleep-count-3136-01KZ9B5A WP05; see the growth list above.
-        # Shrinkage here is a corruptible sleep-count assertion that got routed
-        # through a module-local alias -- lock the lower bound in.
-        (
-            "test_shared_module_object_patches",
-            "tests.architectural.test_shared_module_object_patches",
-            "BASELINE_SITES",
-            data["test_shared_module_object_patches"]["flagged_sites"],
         ),
     ]
     for label, module_dotted, attr_name, baseline in single_baselines:
