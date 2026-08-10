@@ -511,13 +511,14 @@
       "model": "__resolved_model_absent__",
       "notes": [
         "Ready for independent review after broad gate timeout: canonical scoped gate exceeded 300s without failure output. Exact WP14 cohort is 390/390 green in 84.62s; final causal probes 2/2; collection 390; Ruff clean; mypy 60→41 with zero new signatures; 46/46 terminal; no production or central-map edits. Known parallel #3283 pre-Act cascade is owned by approved WP02.",
-        "Cycle 2 ready: frozen 698->390/-308; 25 live-production fault families red as intended; focused control 390 passed; canonical ledger 557 exact members/0 errors. Mandatory broad pre-review gate attempted and timed out at 300s with 0 reported failures, so transition uses documented timeout override. Commit 069445033."
+        "Cycle 2 ready: frozen 698->390/-308; 25 live-production fault families red as intended; focused control 390 passed; canonical ledger 557 exact members/0 errors. Mandatory broad pre-review gate attempted and timed out at 300s with 0 reported failures, so transition uses documented timeout override. Commit 069445033.",
+        "Review cycle 2 passed: independently confirmed 698->390 (-308); canonical test-sanitation/v1 shard validates with 557 exact identities, 698 observations, and zero WP01-auditor errors; no production/route/non-owned changes; CPython 3.11.15; all 25 detached live-production fault families replayed to their exact intended call/assertion failures (41 failed, 349 passed, zero collection/setup errors), while the unchanged 25-family control passed 390/390; diff-scoped ruff and git diff --check pass. Anti-patterns: dead code N/A, synthetic fixture PASS via live corpus mutation, silent empty return N/A, FR coverage PASS, frozen surface PASS, locked decisions PASS, shared ownership PASS, production fragility N/A."
       ],
       "provider": "__resolved_provider_absent__",
       "review": null,
       "review_result": {
-        "reference": "Review cycle 2 passed: independently confirmed 698->390 (-308); canonical test-sanitation/v1 shard validates with 557 exact identities, 698 observations, and zero WP01-auditor errors; no production/route/non-owned changes; CPython 3.11.15; all 25 detached live-production fault families replayed to their exact intended call/assertion failures (41 failed, 349 passed, zero collection/setup errors), while the unchanged 25-family control passed 390/390; diff-scoped ruff and git diff --check pass. Anti-patterns: dead code N/A, synthetic fixture PASS via live corpus mutation, silent empty return N/A, FR coverage PASS, frozen surface PASS, locked decisions PASS, shared ownership PASS, production fragility N/A.",
-        "reviewer": "Robert Douglass",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP14-runtime-structural/review-cycle-2.md",
+        "reviewer": "reviewer-renata",
         "verdict": "approved"
       },
       "role": "reviewer",
