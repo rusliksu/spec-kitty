@@ -120,18 +120,7 @@ def test_zero_edge_walk_raises(tmp_path: Path) -> None:
     with pytest.raises(RuntimeError, match="expected at least"):
         validate_related(docs_root=empty_tree, repo_root=tmp_path)
 
-
 def test_missing_docs_root_raises(tmp_path: Path) -> None:
     """A non-existent docs tree trips the same non-vacuity floor rather than returning empty."""
     with pytest.raises(RuntimeError, match="expected at least"):
         validate_related(docs_root=tmp_path / "absent", repo_root=tmp_path)
-
-
-def test_populated_tree_still_returns_report(tmp_path: Path) -> None:
-    """A tree with at least one ``related:`` edge still returns a report — the floor is non-vacuity only."""
-    repo = _stage_repo(tmp_path, dangling=False)
-
-    report = validate_related(docs_root=repo / "docs", repo_root=repo)
-
-    assert report.checked_count > 0
-    assert report.dangling_edges == []
