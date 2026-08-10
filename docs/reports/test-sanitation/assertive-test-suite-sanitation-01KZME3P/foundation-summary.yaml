@@ -38,8 +38,11 @@ selftest:
     - aggregate_malformed_candidate_controlled_error
     - aggregate_malformed_controlled_error
     - byte_identical
+    - candidate_route_environment_rejected
     - collection_crash_fails_closed
     - collection_error
+    - combined_relational_bypass_rejected
+    - committed_positive_delete_valid
     - deselected_class_parameter_family
     - divergent_dimension_coverage_rejected
     - divergent_dimension_must_vary
@@ -54,6 +57,14 @@ selftest:
     - duplicate_environment_id_rejected
     - dynamic_ignore
     - equivalence_dimension_type_rejected
+    - evidence_nested_authority_evidence_rejected
+    - evidence_nested_base_evidence_rejected
+    - evidence_nested_caller_evidence_rejected
+    - evidence_nested_cost_evidence_rejected
+    - evidence_nested_overlap_evidence_rejected
+    - evidence_nested_routing_evidence_rejected
+    - evidence_route_environment_rejected
+    - evidence_route_role_rejected
     - evidence_scalar_member_rejected
     - evidence_type_authority_evidence_rejected
     - evidence_type_base_evidence_rejected
@@ -62,8 +73,15 @@ selftest:
     - evidence_type_cost_evidence_rejected
     - evidence_type_overlap_evidence_rejected
     - evidence_type_routing_evidence_rejected
+    - evidence_vacuous_authority_evidence_rejected
+    - evidence_vacuous_base_evidence_rejected
+    - evidence_vacuous_caller_evidence_rejected
+    - evidence_vacuous_cost_evidence_rejected
+    - evidence_vacuous_overlap_evidence_rejected
+    - evidence_vacuous_routing_evidence_rejected
     - exact_duplicate
     - explicit_empty_census
+    - fabricated_observation_node_rejected
     - inherited_marker
     - ledger_types_refs_keep_family_rejected
     - malformed_shard_fails_without_crash
@@ -77,6 +95,8 @@ selftest:
     - measurement_setup_rejected
     - measurement_wall_rejected
     - modifyitems_crash_fails_closed
+    - null_collected_observation_rejected
+    - observation_candidate_membership_rejected
     - recursive_nested_once
     - same_name_membership
     - static_ignore
@@ -86,10 +106,13 @@ selftest:
     - temporary_issue_type_rejected
     - temporary_owner_type_rejected
     - temporary_renewal_type_rejected
+    - unknown_candidate_route_rejected
+    - unknown_evidence_route_rejected
     - unowned_fails
     - valid_divergent_family_expansion
     - valid_empty_environment
     - valid_empty_markers
+    - valid_source_only_null_observation
     - valid_temporary
     - valid_typed_measurement
     - workload_duplicate_argv_env_edge_rejected

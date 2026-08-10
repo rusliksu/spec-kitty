@@ -641,14 +641,71 @@ def validate_environment(env: Mapping[str, Any], where: str, errors: list[str]) 
         errors.append(f"{where}: id is not SHA-256 of normalized environment fields")
 
 
-def validate_route(route: Mapping[str, Any], where: str, errors: list[str]) -> None:
+def validate_route(
+    route: Mapping[str, Any], where: str, errors: list[str],
+    route_authority: Mapping[str, Mapping[str, Any]],
+) -> None:
     _keys(route, ("route_id", "role", "required", "events", "selector"), where, errors)
     if not _enum_string(route.get("role"), ROUTE_ROLES):
         errors.append(f"{where}: invalid route role")
     if not isinstance(route.get("required"), bool):
         errors.append(f"{where}: required must be boolean")
-    if not _nonempty_string(route.get("route_id")) or not _str_list(route.get("events")) or not isinstance(route.get("selector"), dict):
+    route_id = route.get("route_id")
+    selector = route.get("selector")
+    if not _nonempty_string(route_id) or not _str_list(route.get("events")) or not isinstance(selector, dict):
         errors.append(f"{where}: route_id must be nonempty string, events string list, and selector mapping")
+        return
+    route_id_string = cast(str, route_id)
+    authority = route_authority.get(route_id_string)
+    if authority is None:
+        errors.append(f"{where}: unknown frozen route_id {route_id_string}")
+    selector_fields = ("paths", "markers", "ignores", "environment_id")
+    _keys(selector, selector_fields, f"{where}.selector", errors)
+    if any(not _str_list(selector.get(field)) for field in ("paths", "markers", "ignores")):
+        errors.append(f"{where}.selector: paths, markers, and ignores must be string lists")
+    selector_environment = selector.get("environment_id")
+    if not _nonempty_string(selector_environment):
+        errors.append(f"{where}.selector: environment_id must be nonempty string")
+    elif authority is not None and selector_environment != authority.get("environment_id"):
+        errors.append(f"{where}.selector: environment_id does not match frozen route")
+
+
+def _validate_result_field(row: Mapping[str, Any], where: str, errors: list[str]) -> None:
+    _keys(row, ("result",), where, errors)
+    if not _nonempty_string(row.get("result")):
+        errors.append(f"{where}: result must be nonempty string")
+
+
+def _validate_command_evidence(row: Mapping[str, Any], where: str, errors: list[str]) -> None:
+    _keys(row, ("command", "result"), where, errors)
+    command = row.get("command")
+    if not (_nonempty_string(command) or _str_list(command, nonempty=True)):
+        errors.append(f"{where}: command must be nonempty string or argv list")
+    _validate_result_field(row, where, errors)
+
+
+def _validate_authority_evidence(row: Mapping[str, Any], where: str, errors: list[str]) -> None:
+    _keys(row, ("reference", "result"), where, errors)
+    if not _nonempty_string(row.get("reference")):
+        errors.append(f"{where}: reference must be nonempty string")
+    _validate_result_field(row, where, errors)
+
+
+def _validate_overlap_evidence(row: Mapping[str, Any], where: str, errors: list[str]) -> None:
+    _keys(row, ("left", "right", "result"), where, errors)
+    if not _nonempty_string(row.get("left")) or not _nonempty_string(row.get("right")):
+        errors.append(f"{where}: left/right identities must be nonempty strings")
+    _validate_result_field(row, where, errors)
+
+
+def _validate_named_result_mapping(value: Any, where: str, errors: list[str]) -> None:
+    if not isinstance(value, dict):
+        errors.append(f"{where}: mapping required")
+        return
+    _keys(value, ("identity", "result"), where, errors)
+    if not _nonempty_string(value.get("identity")):
+        errors.append(f"{where}: identity must be nonempty string")
+    _validate_result_field(value, where, errors)
 
 
 def validate_causal_probe(probe: Any, where: str, errors: list[str]) -> None:
@@ -911,22 +968,26 @@ def _validate_temporary(row: Mapping[str, Any], where: str, profile: Any, today:
         errors.append(f"{where}: invalid TEMPORARY expiry")
 
 
-def _validate_evidence(evidence: Mapping[str, Any], where: str, errors: list[str]) -> Any:
+def _validate_evidence(  # noqa: C901 - each EvidenceBundle field has a distinct nested schema
+    evidence: Mapping[str, Any], where: str, errors: list[str],
+    route_authority: Mapping[str, Mapping[str, Any]], candidate_route_roles: Mapping[str, str],
+) -> Any:
     _keys(evidence, ("profile",), where, errors)
     profile = evidence.get("profile")
     if not _enum_string(profile, PROFILES):
         errors.append(f"{where}: invalid evidence profile {profile!r}")
     list_fields = ("caller_evidence", "authority_evidence", "routing_evidence", "overlap_evidence")
-    mapping_fields = ("base_evidence", "causal_probe", "cost_evidence")
     for field in list_fields:
         value = evidence.get(field)
         if field in evidence and (
             not isinstance(value, list) or not all(isinstance(item, dict) for item in value)
         ):
             errors.append(f"{where}.{field}: list of mapping evidence rows required")
-    for field in mapping_fields:
-        if field in evidence and not isinstance(evidence.get(field), dict):
-            errors.append(f"{where}.{field}: mapping required")
+    for field in ("base_evidence", "cost_evidence"):
+        if field in evidence:
+            _validate_named_result_mapping(evidence.get(field), f"{where}.{field}", errors)
+    if "causal_probe" in evidence and not isinstance(evidence.get("causal_probe"), dict):
+        errors.append(f"{where}.causal_probe: mapping required")
     requirements = {
         "inert": ("routing_evidence", "authority_evidence"),
         "duplicate": ("overlap_evidence", "causal_probe"),
@@ -943,6 +1004,32 @@ def _validate_evidence(evidence: Mapping[str, Any], where: str, errors: list[str
         value = evidence.get(field)
         if field not in evidence or value in (None, [], {}):
             errors.append(f"{where}[{profile}]: nonempty {field} required")
+    validators = {
+        "caller_evidence": _validate_command_evidence,
+        "authority_evidence": _validate_authority_evidence,
+        "overlap_evidence": _validate_overlap_evidence,
+    }
+    for field, validator in validators.items():
+        rows = evidence.get(field)
+        if not isinstance(rows, list):
+            continue
+        for row_index, nested_row in enumerate(rows):
+            if isinstance(nested_row, dict):
+                validator(nested_row, f"{where}.{field}[{row_index}]", errors)
+    routing_rows = evidence.get("routing_evidence")
+    if isinstance(routing_rows, list):
+        for row_index, nested_row in enumerate(routing_rows):
+            if not isinstance(nested_row, dict):
+                continue
+            row_where = f"{where}.routing_evidence[{row_index}]"
+            validate_route(nested_row, row_where, errors, route_authority)
+            _validate_result_field(nested_row, row_where, errors)
+            route_id = nested_row.get("route_id")
+            role = nested_row.get("role")
+            if isinstance(route_id, str) and route_id not in candidate_route_roles:
+                errors.append(f"{row_where}: route_id is not a candidate RouteMembership")
+            elif isinstance(route_id, str) and role != candidate_route_roles.get(route_id):
+                errors.append(f"{row_where}: role does not match candidate RouteMembership")
     if "causal_probe" in evidence:
         validate_causal_probe(evidence.get("causal_probe"), f"{where}.causal_probe", errors)
     return profile
@@ -1040,7 +1127,9 @@ def _validate_family(  # noqa: C901 - family anti-vacuity matrix is intentionall
 
 def validate_disposition(  # noqa: C901 - fail-closed schema matrix
     row: Mapping[str, Any], index: int, today: dt.date, errors: list[str],
-    census_members: set[str], environment_ids: set[str],
+    census_members: set[str], environment_ids: set[str], census_nodes: set[str],
+    census_member_nodes: Mapping[str, set[str]], census_member_states: Mapping[str, str],
+    route_authority: Mapping[str, Mapping[str, Any]],
 ) -> None:
     where = f"dispositions[{index}]"
     _keys(row, ("candidate", "evidence", "verdict", "state", "action", "survivor", "issue", "owner", "expires", "hic_approval", "review"), where, errors)
@@ -1095,7 +1184,31 @@ def validate_disposition(  # noqa: C901 - fail-closed schema matrix
             errors.append(f"{where}: {field} must be string or null")
     if not _enum_string(candidate.get("granularity"), GRANULARITIES):
         errors.append(f"{where}: invalid granularity")
-    profile = _validate_evidence(evidence, f"{where}.evidence", errors)
+    memberships = candidate.get("route_memberships", [])
+    if not isinstance(memberships, list):
+        errors.append(f"{where}.route_memberships: list required")
+        memberships = []
+    candidate_route_roles: dict[str, str] = {}
+    for route_index, route in enumerate(memberships):
+        if isinstance(route, dict):
+            validate_route(route, f"{where}.routes[{route_index}]", errors, route_authority)
+            route_id = route.get("route_id")
+            role = route.get("role")
+            if isinstance(route_id, str) and isinstance(role, str):
+                if route_id in candidate_route_roles:
+                    errors.append(f"{where}.routes[{route_index}]: duplicate candidate route_id {route_id}")
+                else:
+                    candidate_route_roles[route_id] = role
+        else:
+            errors.append(f"{where}.routes[{route_index}]: mapping required")
+    if sum(isinstance(item, dict) and item.get("role") == "owner" for item in memberships) != 1:
+        errors.append(f"{where}: exactly one owner route required")
+    profile = _validate_evidence(
+        evidence, f"{where}.evidence", errors, route_authority, candidate_route_roles,
+    )
+    allowed_candidate_nodes: set[str] = set()
+    for member in candidate_members:
+        allowed_candidate_nodes.update(census_member_nodes.get(member, set()))
     observations = candidate.get("observations", [])
     if not isinstance(observations, list):
         errors.append(f"{where}.observations: list required")
@@ -1121,8 +1234,19 @@ def validate_disposition(  # noqa: C901 - fail-closed schema matrix
             errors.append(f"{where}.observations[{obs_index}]: unknown environment_id")
         if obs.get("nodeid") is not None and not isinstance(obs.get("nodeid"), str):
             errors.append(f"{where}.observations[{obs_index}]: nodeid must be string/null")
-        if not _enum_string(collection_state, {"zero_node", "ignored", "error"}) and obs.get("nodeid") is None:
-            errors.append(f"{where}.observations[{obs_index}]: nodeid null only for non-collected source states")
+        observation_nodeid = obs.get("nodeid")
+        if isinstance(observation_nodeid, str):
+            if observation_nodeid not in census_nodes:
+                errors.append(f"{where}.observations[{obs_index}]: nodeid absent from census")
+            if observation_nodeid not in allowed_candidate_nodes:
+                errors.append(f"{where}.observations[{obs_index}]: nodeid does not belong to candidate members")
+            if not _enum_string(collection_state, {"collected", "deselected"}):
+                errors.append(f"{where}.observations[{obs_index}]: non-null nodeid requires collected/deselected state")
+        elif observation_nodeid is None:
+            if not _enum_string(collection_state, {"zero_node", "ignored", "error"}):
+                errors.append(f"{where}.observations[{obs_index}]: nodeid null only for source-only states")
+            elif not any(census_member_states.get(member) == collection_state for member in candidate_members):
+                errors.append(f"{where}.observations[{obs_index}]: null node state does not match candidate source state")
         if obs.get("skip_reason") is not None and not isinstance(obs.get("skip_reason"), str):
             errors.append(f"{where}.observations[{obs_index}]: skip_reason must be string/null")
         if not _str_list(obs.get("markers")) or not _hash_value(obs.get("artifact_hash")):
@@ -1137,17 +1261,6 @@ def validate_disposition(  # noqa: C901 - fail-closed schema matrix
         quarantined = isinstance(markers, list) and "quarantine" in markers
         if (skip_like or quarantined) and not obs.get("skip_reason"):
             errors.append(f"{where}.observations[{obs_index}]: skip_reason required")
-    memberships = candidate.get("route_memberships", [])
-    if not isinstance(memberships, list):
-        errors.append(f"{where}.route_memberships: list required")
-        memberships = []
-    for route_index, route in enumerate(memberships):
-        if isinstance(route, dict):
-            validate_route(route, f"{where}.routes[{route_index}]", errors)
-        else:
-            errors.append(f"{where}.routes[{route_index}]: mapping required")
-    if sum(isinstance(item, dict) and item.get("role") == "owner" for item in memberships) != 1:
-        errors.append(f"{where}: exactly one owner route required")
     if verdict == "KEEP":
         if not _str_list(candidate.get("production_paths"), nonempty=True):
             errors.append(f"{where}.KEEP: nonempty production_paths required")
@@ -1182,6 +1295,82 @@ def validate_disposition(  # noqa: C901 - fail-closed schema matrix
         _validate_family(candidate, candidate_members, observations, where, census_members, errors)
 
 
+def _collect_census_authority(  # noqa: C901 - compact collected/deselected authority has distinct forms
+    data: Mapping[str, Any], census_members: set[str], census_nodes: set[str],
+    member_nodes: dict[str, set[str]], member_states: dict[str, str],
+) -> None:
+    collection = data.get("collection", {})
+    if not isinstance(collection, dict):
+        return
+    compact_nodes = collection.get("nodes", [])
+    if not isinstance(compact_nodes, list):
+        compact_nodes = []
+    nodeids_by_ref: list[str | None] = []
+    for compact_row in compact_nodes:
+        nodeid = compact_row[0] if isinstance(compact_row, list) and compact_row and isinstance(compact_row[0], str) else None
+        nodeids_by_ref.append(nodeid)
+        if nodeid is not None:
+            census_nodes.add(nodeid)
+            census_members.add(nodeid)
+            member_nodes[nodeid] = {nodeid}
+            member_states[nodeid] = "collected"
+    deselected_by_source: dict[tuple[str, str], set[str]] = {}
+    deselected_items = collection.get("deselected_items", [])
+    if isinstance(deselected_items, list):
+        for item in deselected_items:
+            if not isinstance(item, dict):
+                continue
+            nodeid, path, source = item.get("nodeid"), item.get("path"), item.get("parent_source_function")
+            if not all(isinstance(value, str) for value in (nodeid, path, source)):
+                continue
+            nodeid_string = cast(str, nodeid)
+            census_nodes.add(nodeid_string)
+            census_members.add(nodeid_string)
+            member_nodes[nodeid_string] = {nodeid_string}
+            member_states[nodeid_string] = "deselected"
+            deselected_by_source.setdefault((cast(str, path), cast(str, source)), set()).add(nodeid_string)
+    units = data.get("source_units", [])
+    if not isinstance(units, list):
+        return
+    for unit in units:
+        if not isinstance(unit, dict) or not isinstance(unit.get("id"), str):
+            continue
+        member = cast(str, unit["id"])
+        census_members.add(member)
+        resolved: set[str] = set()
+        refs = unit.get("node_refs", [])
+        if isinstance(refs, list):
+            for ref in refs:
+                if isinstance(ref, int) and 0 <= ref < len(nodeids_by_ref) and nodeids_by_ref[ref] is not None:
+                    resolved.add(cast(str, nodeids_by_ref[ref]))
+        path, qualname = unit.get("path"), unit.get("qualname")
+        if isinstance(path, str) and isinstance(qualname, str):
+            resolved.update(deselected_by_source.get((path, qualname), set()))
+        member_nodes[member] = resolved
+        state = unit.get("collection_state")
+        if isinstance(state, str):
+            member_states[member] = state
+
+
+def _collect_route_authority(
+    data: Mapping[str, Any], path: Path, route_authority: dict[str, Mapping[str, Any]],
+    route_locations: dict[str, str], errors: list[str],
+) -> None:
+    workload = data.get("frozen_workload_dag")
+    if not isinstance(workload, dict) or not isinstance(workload.get("routes"), list):
+        return
+    for route_index, route in enumerate(workload["routes"]):
+        if not isinstance(route, dict) or not isinstance(route.get("id"), str):
+            continue
+        route_id = cast(str, route["id"])
+        location = f"{path}.frozen_workload_dag.routes[{route_index}]"
+        if route_id in route_locations:
+            errors.append(f"{location}: duplicate global frozen route id {route_id}; first at {route_locations[route_id]}")
+            continue
+        route_locations[route_id] = location
+        route_authority[route_id] = route
+
+
 def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str], dict[str, Any]]:  # noqa: C901 - heterogeneous document fail-closed dispatch
     errors: list[str] = []
     members: dict[str, str] = {}
@@ -1201,19 +1390,20 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
         loaded.append(path.as_posix())
         documents.append((path, data))
     census_members: set[str] = set()
+    census_nodes: set[str] = set()
+    census_member_nodes: dict[str, set[str]] = {}
+    census_member_states: dict[str, str] = {}
     environment_ids: set[str] = set()
     environment_locations: dict[str, str] = {}
+    route_authority: dict[str, Mapping[str, Any]] = {}
+    route_locations: dict[str, str] = {}
     for path, data in documents:
         if "source_units" in data and "reconciliation" in data:
             validate_census(data, errors)
-            for unit in data.get("source_units", []):
-                if isinstance(unit, dict) and isinstance(unit.get("id"), str):
-                    census_members.add(unit["id"])
-            collection = data.get("collection", {})
-            if isinstance(collection, dict):
-                for node in collection.get("nodes", []):
-                    if isinstance(node, list) and node and isinstance(node[0], str):
-                        census_members.add(node[0])
+            _collect_census_authority(
+                data, census_members, census_nodes, census_member_nodes, census_member_states,
+            )
+        _collect_route_authority(data, path, route_authority, route_locations, errors)
         environments = data.get("run_environments", data.get("environments", []))
         if isinstance(environments, dict):
             environments = list(environments.values())
@@ -1256,7 +1446,10 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
             if not isinstance(row, dict):
                 errors.append(f"{path}: dispositions[{index}] must be mapping")
                 continue
-            validate_disposition(row, index, today, errors, census_members, environment_ids)
+            validate_disposition(
+                row, index, today, errors, census_members, environment_ids, census_nodes,
+                census_member_nodes, census_member_states, route_authority,
+            )
             disposition_count += 1
             candidate = row.get("candidate", {})
             candidate_id = candidate.get("id") if isinstance(candidate, dict) else None
@@ -1516,13 +1709,18 @@ def selftest() -> dict[str, Any]:
                 "source_paths": ["tests/test_schema.py"], "production_paths": [], "oracle": None,
                 "contract_claim": None, "authority": ["selftest-authority"], "duplicate_group": None,
                 "route_memberships": [{
-                    "route_id": "selftest", "role": "owner", "required": True, "events": [], "selector": {},
+                    "route_id": "selftest", "role": "owner", "required": True, "events": [],
+                    "selector": {"paths": ["tests/"], "markers": [], "ignores": [], "environment_id": environment_id},
                 }],
                 "platforms": ["selftest-os"], "observations": [valid_observation],
             },
             "evidence": {
-                "profile": "inert", "routing_evidence": [{"route_id": "selftest"}],
-                "authority_evidence": [{"reference": "selftest-authority"}],
+                "profile": "inert", "routing_evidence": [{
+                    "route_id": "selftest", "role": "owner", "required": True, "events": [],
+                    "selector": {"paths": ["tests/"], "markers": [], "ignores": [], "environment_id": environment_id},
+                    "result": "selected by frozen route",
+                }],
+                "authority_evidence": [{"reference": "selftest-authority", "result": "current authority"}],
             },
             "verdict": "DELETE", "state": "terminal", "action": "delete", "survivor": None,
             "issue": None, "owner": None, "expires": None, "hic_approval": None,
@@ -1532,9 +1730,19 @@ def selftest() -> dict[str, Any]:
             },
         }
 
+        synthetic_nodes = {member_a, member_b}
+        synthetic_member_nodes = {member_a: {member_a}, member_b: {member_b}}
+        synthetic_member_states = {member_a: "collected", member_b: "collected"}
+        synthetic_route_authority: dict[str, Mapping[str, Any]] = {
+            "selftest": {"environment_id": environment_id, "env": {}},
+        }
+
         def disposition_errors(row: dict[str, Any]) -> list[str]:
             found: list[str] = []
-            validate_disposition(row, 0, dt.date(2026, 8, 10), found, census_identities, {environment_id})
+            validate_disposition(
+                row, 0, dt.date(2026, 8, 10), found, census_identities, {environment_id},
+                synthetic_nodes, synthetic_member_nodes, synthetic_member_states, synthetic_route_authority,
+            )
             return found
 
         checks["valid_empty_markers"] = disposition_errors(copy.deepcopy(valid_disposition)) == []
@@ -1560,6 +1768,84 @@ def selftest() -> dict[str, Any]:
         checks["evidence_scalar_member_rejected"] = any(
             "list of mapping evidence rows" in error for error in disposition_errors(scalar_evidence_member)
         )
+        vacuous_values: dict[str, Any] = {
+            "caller_evidence": [{}], "authority_evidence": [{}], "routing_evidence": [{}],
+            "overlap_evidence": [{}], "base_evidence": {}, "cost_evidence": {},
+        }
+        for field, vacuous_value in vacuous_values.items():
+            vacuous_evidence = copy.deepcopy(valid_disposition)
+            vacuous_evidence["evidence"][field] = vacuous_value
+            checks[f"evidence_vacuous_{field}_rejected"] = any(
+                field in error for error in disposition_errors(vacuous_evidence)
+            )
+        nested_bad_values: dict[str, Any] = {
+            "caller_evidence": [{"command": 123, "result": {}}],
+            "authority_evidence": [{"reference": 123, "result": []}],
+            "routing_evidence": [{"route_id": 123, "role": [], "required": "yes", "events": {}, "selector": [], "result": 0}],
+            "overlap_evidence": [{"left": 1, "right": [], "result": {}}],
+            "base_evidence": {"identity": [], "result": {}},
+            "cost_evidence": {"identity": 123, "result": []},
+        }
+        for field, bad_value in nested_bad_values.items():
+            invalid_nested = copy.deepcopy(valid_disposition)
+            invalid_nested["evidence"][field] = bad_value
+            checks[f"evidence_nested_{field}_rejected"] = any(
+                field in error for error in disposition_errors(invalid_nested)
+            )
+        fabricated_observation = copy.deepcopy(valid_disposition)
+        fabricated_observation["candidate"]["observations"][0]["nodeid"] = "tests/not-in-census.py::test_fabricated"
+        checks["fabricated_observation_node_rejected"] = any(
+            "nodeid absent from census" in error for error in disposition_errors(fabricated_observation)
+        )
+        wrong_member_observation = copy.deepcopy(valid_disposition)
+        wrong_member_observation["candidate"]["observations"][0]["nodeid"] = member_b
+        checks["observation_candidate_membership_rejected"] = any(
+            "does not belong to candidate members" in error for error in disposition_errors(wrong_member_observation)
+        )
+        null_collected_observation = copy.deepcopy(valid_disposition)
+        null_collected_observation["candidate"]["observations"][0]["nodeid"] = None
+        checks["null_collected_observation_rejected"] = any(
+            "nodeid null only for source-only states" in error for error in disposition_errors(null_collected_observation)
+        )
+        unknown_candidate_route = copy.deepcopy(valid_disposition)
+        unknown_candidate_route["candidate"]["route_memberships"][0]["route_id"] = "missing-route"
+        checks["unknown_candidate_route_rejected"] = any(
+            "unknown frozen route_id" in error for error in disposition_errors(unknown_candidate_route)
+        )
+        mismatched_route_environment = copy.deepcopy(valid_disposition)
+        mismatched_route_environment["candidate"]["route_memberships"][0]["selector"]["environment_id"] = "missing-env"
+        checks["candidate_route_environment_rejected"] = any(
+            "environment_id does not match frozen route" in error
+            for error in disposition_errors(mismatched_route_environment)
+        )
+        mismatched_evidence_role = copy.deepcopy(valid_disposition)
+        mismatched_evidence_role["evidence"]["routing_evidence"][0]["role"] = "coverage"
+        checks["evidence_route_role_rejected"] = any(
+            "role does not match candidate" in error for error in disposition_errors(mismatched_evidence_role)
+        )
+        unknown_evidence_route = copy.deepcopy(valid_disposition)
+        unknown_evidence_route["evidence"]["routing_evidence"][0]["route_id"] = "missing-route"
+        checks["unknown_evidence_route_rejected"] = any(
+            "unknown frozen route_id" in error for error in disposition_errors(unknown_evidence_route)
+        )
+        mismatched_evidence_environment = copy.deepcopy(valid_disposition)
+        mismatched_evidence_environment["evidence"]["routing_evidence"][0]["selector"]["environment_id"] = "missing-env"
+        checks["evidence_route_environment_rejected"] = any(
+            "environment_id does not match frozen route" in error
+            for error in disposition_errors(mismatched_evidence_environment)
+        )
+        source_only_observation = copy.deepcopy(valid_disposition)
+        source_only_observation["candidate"]["observations"][0].update({
+            "nodeid": None, "collection_state": "zero_node", "outcome": "not_run",
+        })
+        source_only_errors: list[str] = []
+        validate_disposition(
+            source_only_observation, 0, dt.date(2026, 8, 10), source_only_errors,
+            census_identities, {environment_id}, synthetic_nodes,
+            {member_a: set(), member_b: {member_b}},
+            {member_a: "zero_node", member_b: "collected"}, synthetic_route_authority,
+        )
+        checks["valid_source_only_null_observation"] = source_only_errors == []
 
         valid_temporary = copy.deepcopy(valid_disposition)
         valid_temporary.update({
@@ -1567,8 +1853,9 @@ def selftest() -> dict[str, Any]:
             "expires": "2026-08-20", "hic_approval": "one-time approval", "renewal": False,
         })
         valid_temporary["evidence"] = {
-            "profile": "environmental_platform", "base_evidence": {"failure": "environmental"},
-            "routing_evidence": [{"route_id": "selftest"}],
+            "profile": "environmental_platform",
+            "base_evidence": {"identity": "environmental failure", "result": "reproduced"},
+            "routing_evidence": copy.deepcopy(valid_disposition["evidence"]["routing_evidence"]),
         }
         checks["valid_temporary"] = disposition_errors(valid_temporary) == []
         for field, bad_value in {
@@ -1654,6 +1941,95 @@ def selftest() -> dict[str, Any]:
         duplicate_candidate_errors, _ = validate_documents([duplicate_candidates], dt.date.today())
         checks["duplicate_candidate_id_rejected"] = any(
             "duplicate candidate id" in error for error in duplicate_candidate_errors
+        )
+
+        report_root = Path(__file__).resolve().parent
+        committed_census_path = report_root / "raw" / "base-census.json"
+        committed_workload_path = report_root / "raw" / "base-workloads.yaml"
+        committed_census = cast(dict[str, Any], json.loads(committed_census_path.read_text(encoding="utf-8")))
+        committed_workload = cast(dict[str, Any], yaml.safe_load(committed_workload_path.read_text(encoding="utf-8")))
+        inert_manifest = committed_census["manifests"]["inert_candidates"][0]
+        committed_member = cast(str, inert_manifest["member"])
+        source_row = next(row for row in committed_census["source_units"] if row["id"] == committed_member)
+        committed_node_ref = cast(list[int], source_row["node_refs"])[0]
+        compact_node = cast(list[Any], committed_census["collection"]["nodes"][committed_node_ref])
+        committed_nodeid = cast(str, compact_node[0])
+        marker_ref = cast(int, compact_node[4])
+        reason_ref = compact_node[6]
+        committed_markers = cast(list[str], committed_census["collection"]["tables"]["marker_sets"][marker_ref])
+        committed_reason = (
+            cast(str, committed_census["collection"]["tables"]["reasons"][reason_ref])
+            if isinstance(reason_ref, int) else "; ".join(cast(list[str], inert_manifest["reasons"]))
+        )
+        full_collection_route = next(
+            route for route in committed_workload["frozen_workload_dag"]["routes"]
+            if route["id"] == "full-collection"
+        )
+        committed_environment_id = cast(str, full_collection_route["environment_id"])
+        committed_selector = {
+            "paths": ["tests/"], "markers": [], "ignores": ["tests/sync/test_orphan_sweep.py"],
+            "environment_id": committed_environment_id,
+        }
+        committed_membership = {
+            "route_id": "full-collection", "role": "owner", "required": True,
+            "events": ["local"], "selector": committed_selector,
+        }
+        committed_positive: dict[str, Any] = {
+            "candidate": {
+                "id": "selftest-committed-inert-delete", "members": [committed_member], "granularity": "function",
+                "source_paths": [cast(str, source_row["path"])], "production_paths": [], "oracle": None,
+                "contract_claim": None, "authority": ["WP03 inert-state adjudication"], "duplicate_group": None,
+                "route_memberships": [committed_membership], "platforms": ["macOS"],
+                "observations": [{
+                    "environment_id": committed_environment_id, "nodeid": committed_nodeid,
+                    "collection_state": "collected", "outcome": "skipped", "skip_reason": committed_reason,
+                    "markers": committed_markers,
+                    "duration": {"collection": 0.0, "setup": 0.0, "call": 0.0, "cost_class": "not_run"},
+                    "artifact_hash": _sha(committed_census_path.read_bytes()),
+                }],
+            },
+            "evidence": {
+                "profile": "inert",
+                "routing_evidence": [{**committed_membership, "result": "present in frozen full collection route"}],
+                "authority_evidence": [{
+                    "reference": "kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP03-inert-test-states.md",
+                    "result": "assigned inert-state authority for adjudication",
+                }],
+            },
+            "verdict": "DELETE", "state": "terminal", "action": "delete after inert adjudication",
+            "survivor": None, "issue": None, "owner": None, "expires": None, "hic_approval": None,
+            "review": {
+                "implementer": "selftest", "independent_reviewer": "selftest-reviewer", "verdict": "approved",
+                "timestamp": "2026-08-10T00:00:00Z",
+            },
+        }
+        committed_positive_shard = root / "committed-positive-delete.yaml"
+        committed_positive_shard.write_text(
+            yaml.safe_dump({"schema_version": SCHEMA, "dispositions": [committed_positive]}), encoding="utf-8",
+        )
+        committed_positive_errors, _ = validate_documents(
+            [committed_census_path, committed_workload_path, committed_positive_shard], dt.date(2026, 8, 10),
+        )
+        checks["committed_positive_delete_valid"] = committed_positive_errors == []
+
+        combined_bypass = copy.deepcopy(committed_positive)
+        combined_bypass["candidate"]["observations"][0]["nodeid"] = "tests/not-in-census.py::test_fabricated"
+        combined_bypass["candidate"]["route_memberships"][0]["route_id"] = "does-not-exist"
+        combined_bypass["evidence"]["authority_evidence"] = [{}]
+        combined_bypass["evidence"]["routing_evidence"] = [{}]
+        combined_bypass_shard = root / "committed-combined-bypass.yaml"
+        combined_bypass_shard.write_text(
+            yaml.safe_dump({"schema_version": SCHEMA, "dispositions": [combined_bypass]}), encoding="utf-8",
+        )
+        combined_errors, _ = validate_documents(
+            [committed_census_path, committed_workload_path, combined_bypass_shard], dt.date(2026, 8, 10),
+        )
+        checks["combined_relational_bypass_rejected"] = all(
+            any(fragment in error for error in combined_errors)
+            for fragment in (
+                "nodeid absent from census", "nodeid does not belong", "unknown frozen route_id",
+                "authority_evidence[0]", "routing_evidence[0]",
+            )
         )
 
         valid_route = {
