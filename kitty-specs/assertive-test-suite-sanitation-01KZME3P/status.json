@@ -500,7 +500,7 @@
     },
     "WP14": {
       "actor": "user",
-      "agent": "wp14-reviewer",
+      "agent": "",
       "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "force_count": 0,
@@ -512,21 +512,22 @@
         "Ready for independent review after broad gate timeout: canonical scoped gate exceeded 300s without failure output. Exact WP14 cohort is 390/390 green in 84.62s; final causal probes 2/2; collection 390; Ruff clean; mypy 60→41 with zero new signatures; 46/46 terminal; no production or central-map edits. Known parallel #3283 pre-Act cascade is owned by approved WP02."
       ],
       "provider": "__resolved_provider_absent__",
+      "review": null,
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP14-runtime-structural/review-cycle-1.md",
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP14-runtime-structural/review-cycle-1.md",
         "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP14-runtime-structural/review-cycle-1.md",
-        "reviewer": "user",
+        "reviewer": "reviewer-renata",
         "verdict": "changes_requested"
       },
       "role": "reviewer",
-      "shell_pid": 28365,
+      "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T066": "done",
-        "T067": "done",
-        "T068": "done",
-        "T069": "done",
-        "T070": "done"
+        "T066": "planned",
+        "T067": "planned",
+        "T068": "planned",
+        "T069": "planned",
+        "T070": "planned"
       },
       "tracker_refs": [
         "#1931"
