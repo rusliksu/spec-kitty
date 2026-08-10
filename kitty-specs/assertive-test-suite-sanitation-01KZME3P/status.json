@@ -1,19 +1,19 @@
 {
-  "event_count": 122,
-  "last_event_id": "01KZP1R76KB8FVPTBC0QWTQWWF",
-  "materialized_at": "2026-08-10T14:38:13.163887+00:00",
+  "event_count": 123,
+  "last_event_id": "01KZP22EXHR23FCNR5D04N9HCW",
+  "materialized_at": "2026-08-10T14:43:48.785469+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
   "summary": {
-    "approved": 5,
+    "approved": 6,
     "blocked": 0,
     "canceled": 0,
     "claimed": 0,
     "done": 0,
     "for_review": 0,
     "in_progress": 1,
-    "in_review": 1,
+    "in_review": 0,
     "planned": 8
   },
   "work_packages": {
@@ -220,7 +220,7 @@
       ]
     },
     "WP06": {
-      "actor": "user",
+      "actor": "reviewer-renata",
       "agent": "",
       "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
@@ -373,19 +373,24 @@
       ]
     },
     "WP12": {
-      "actor": "wp12-reviewer",
+      "actor": "user",
       "agent": "wp12-reviewer",
       "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "in_review",
-      "last_event_id": "01KZP1B8C6SQ1KPXJ7ST06EB1W",
-      "last_transition_at": "2026-08-10T14:31:08.422311+00:00",
+      "lane": "approved",
+      "last_event_id": "01KZP22EXHR23FCNR5D04N9HCW",
+      "last_transition_at": "2026-08-10T14:43:48.785469+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "Ready for review: 79 source tests consolidated/removed into 10 causal result-matrix successors; focused 472/472 green; audit ledger valid. Canonical broad pre-review scope timed out after 300s without failure output, so explicit skip-pre-review-gate override applied."
       ],
       "provider": "__resolved_provider_absent__",
+      "review_result": {
+        "reference": "Review passed cycle 1: independent 541→472 (-69) replay; 79 deletions/10 successors; 25-row ledger covers 98 unique members and every deletion once; 18/18 changed plus 17/17 retained-expanded causal faults failed after Act; network, persistence, teardown, provider, platform, timeout, error, and migration-version boundaries retained; focused 472 passed; ruff/diff clean; broad 300s pre-review timeout attributable to unbounded no-coverage gate, not WP failures.",
+        "reviewer": "Robert Douglass",
+        "verdict": "approved"
+      },
       "role": "reviewer",
       "shell_pid": 28365,
       "shell_pid_created_at": "1786191813.84724",
