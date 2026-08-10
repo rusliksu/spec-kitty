@@ -13,6 +13,11 @@ requirement_refs:
 - FR-009
 - FR-010
 - FR-014
+- NFR-002
+- NFR-004
+- NFR-005
+- NFR-007
+- NFR-010
 planning_base_branch: pr/assertive-test-suite-sanitation
 merge_target_branch: pr/assertive-test-suite-sanitation
 branch_strategy: Planning artifacts for this mission were generated on pr/assertive-test-suite-sanitation. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into pr/assertive-test-suite-sanitation unless the human explicitly redirects the landing branch.
@@ -39,6 +44,7 @@ owned_files:
 - tests/doctrine/drg/test_reachability.py
 - tests/doctrine/drg/migration/test_extractor_projection.py
 - tests/specify_cli/cli/commands/test_completion_fast_path.py
+- tests/specify_cli/cli/commands/test_doctor_restart_daemon_timing.py
 - tests/cli/test_cli_console.py
 - tests/integration/test_mission_type_resolution_integration.py
 - tests/contract/test_charter_compact_includes_section_anchors.py
@@ -47,10 +53,12 @@ owned_files:
 - tests/e2e/test_upgrade_post_state.py
 - tests/sync/test_sync_e2e_integration.py
 - tests/sync/test_dual_write_integration.py
+- tests/sync/test_daemon_self_retirement.py
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP06.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp06-results.json
 tags: []
-tracker_refs: []
+tracker_refs:
+- '#3284'
 ---
 
 # WP06 — Pre-existing Red and Error Adjudication
@@ -66,17 +74,19 @@ Classify every #3284 failure/error under the repaired harness. Delete stale, obs
 ## Classification Taxonomy
 
 1. Mission regression: base green/HEAD red — block/fix.
-2. Live defect: repaired base + HEAD deterministic red — preserve one issue-linked reproduction.
-3. Confirmed flake: mixed fixed-matrix outcomes — root-cause test or delete if non-unique.
-4. Infrastructure/setup before Act — fix owned test harness only; no product verdict.
-5. Obsolete/stale contract — delete.
-6. Non-causal/synthetic — delete.
-7. Dominated duplicate — consolidate to named survivor.
+2. Accepted P0 live defect: repaired base + HEAD deterministic red — preserve exactly one issue-linked blocking reproduction under the red-main ADR.
+3. Any other live code defect: block/escalate for an authorized prerequisite/follow-up fix. It may not become a terminal `KEEP`, known-red exception, skip, xfail, quarantine, or normalized release result.
+4. Confirmed flake: mixed fixed-matrix outcomes — root-cause test or delete if non-unique.
+5. Infrastructure/setup before Act — fix owned test harness only; no product verdict.
+6. Obsolete/stale contract — delete.
+7. Non-causal/synthetic — delete.
+8. Dominated duplicate — consolidate to named survivor.
 
 ## T032 — Reproduce All Nodes
 
 - Use WP02 exact harness patch on disposable immutable base and current lane.
 - Re-run every #3284 node individually, then in its CI-parallel cluster. Record exact nodeid/outcome/environment.
+- Reconcile every #3284 node to one exact owner. WP06 terminalizes its owned nodes; `test_ci_quality_path_filters.py` is an explicit WP07 handoff. No node may be claimed from WP03 or left unowned.
 - Distinguish cross-test contamination from stable isolated outcome.
 - If a new untracked base failure appears, file issue evidence before accepting it.
 
@@ -96,10 +106,10 @@ Classify every #3284 failure/error under the repaired harness. Delete stale, obs
 ## T035 — Timing, Git, Sync, E2E
 
 - Completion tests miss 500ms on this runner. Require an owned, statistically sound budget and representative environment; otherwise delete brittle threshold while retaining functional completion tests elsewhere.
+- Reproduce daemon self-retirement and doctor restart timing from the two exact WP06-owned files; classify functional timeout vs brittle threshold using repaired-base/HEAD evidence.
 - Safe-commit test fails during git commit: identify invalid fixture state vs live defect; fix fixture only if valid behavior is protected.
 - E2E tests look for `Scripts/python.exe` on macOS: determine whether WP02 resolves shared cache portability. Delete/fix owned assertions only after repaired harness rerun.
 - Sync integration teardown errors: isolate resource cleanup vs product defect; repair owned teardown or delete redundant high-cost integration if a stronger live survivor exists.
-- Daemon/timing files owned by WP03 are evidence inputs but not editable here; cite WP03 disposition.
 
 ## T036 — Flake Matrix
 
@@ -111,7 +121,9 @@ Classify every #3284 failure/error under the repaired harness. Delete stale, obs
 ## T037 — Known-Red Delta
 
 - Start from exact repaired-base node/outcome set.
-- Preserve live product defects. #2782 is owned by WP03 and remains known red.
+- Preserve only accepted P0 product defects. #2782 is owned by WP03 and remains the separately accounted known red; WP06 does not aggregate or mutate it.
+- Record only WP06-owned terminal deltas. Emit exact downstream handoffs for WP07; WP08 alone generates the cross-WP known-red/issue aggregate.
+- If any WP06-owned node is a live non-P0 code defect, stop and request an authorized prerequisite/follow-up fix; do not close WP06 around it.
 - A stale/obsolete/non-causal red may disappear only with ledger evidence and explicit delta reason.
 - Base-green/HEAD-red must be zero at handoff.
 
@@ -124,8 +136,8 @@ Classify every #3284 failure/error under the repaired harness. Delete stale, obs
 
 ## Definition of Done
 
-- [ ] Every #3284 failure/error reproduced and terminally classified.
-- [ ] Stale/non-causal reds removed; valid tests repaired or live defects preserved.
+- [ ] Every WP06-owned #3284 failure/error terminally classified; every downstream-owned node has one exact machine-readable handoff.
+- [ ] Stale/non-causal reds removed; valid tests repaired; only accepted P0 live defects may remain red.
 - [ ] Fixed flake matrix supports every flake claim; no masking introduced.
 - [ ] Exact known-red delta is explicit; zero mission regressions.
 - [ ] Focused suites and ledger validation pass subject only to accepted live reds.

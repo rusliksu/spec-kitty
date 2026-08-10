@@ -6,11 +6,18 @@ dependencies:
 - WP04
 - WP05
 - WP06
+- WP09
+- WP10
 requirement_refs:
 - FR-009
 - FR-012
 - FR-014
 - FR-015
+- NFR-003
+- NFR-005
+- NFR-006
+- NFR-007
+- NFR-010
 planning_base_branch: pr/assertive-test-suite-sanitation
 merge_target_branch: pr/assertive-test-suite-sanitation
 branch_strategy: Planning artifacts for this mission were generated on pr/assertive-test-suite-sanitation. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into pr/assertive-test-suite-sanitation unless the human explicitly redirects the landing branch.
@@ -33,6 +40,7 @@ create_intent:
 execution_mode: code_change
 owned_files:
 - .github/workflows/ci-quality.yml
+- tests/_arch_shard_map.py
 - tests/architectural/test_ci_quality_path_filters.py
 - tests/architectural/test_marker_job_completeness.py
 - tests/architectural/test_quarantine_marker.py
@@ -41,7 +49,10 @@ owned_files:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-route-manifest.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-results.json
 tags: []
-tracker_refs: []
+tracker_refs:
+- '#2645'
+- '#2782'
+- '#3284'
 ---
 
 # WP07 — Proportional CI Route Ownership
@@ -70,8 +81,9 @@ Stop paying whole-tree collection for stable narrow classes. Each changed narrow
 
 ## T041 — Architectural Contracts
 
+- Consume deterministic deleted/renamed-path handoffs from WP03/WP04/WP05/WP09/WP10 and update `_arch_shard_map.py` exactly once. Prove no deleted entry, missing assigned survivor, or duplicate explicit assignment remains before running the hard gate.
 - Update existing owned architecture tests; do not add redundant new test files.
-- `test_ci_quality_path_filters.py`: validate exact manifest/selector without recursively collecting the entire suite inside a 240-second test. Use static workflow parsing plus bounded owned-path collection.
+- `test_ci_quality_path_filters.py`: terminalize WP06's #3284 handoff and validate exact manifest/selector without recursively collecting the entire suite inside a 240-second test. Use static workflow parsing plus bounded owned-path collection.
 - `test_marker_job_completeness.py`: distinguish owner vs secondary routes.
 - `test_quarantine_marker.py`: preserve Tier-3-only, non-blocking semantics; no test-specific exception for #2342.
 - `test_suite_jobs_gate_blocking.py`: preserve red-main regression blocking contract and release authority. No governance reversal.
@@ -80,8 +92,9 @@ Stop paying whole-tree collection for stable narrow classes. Each changed narrow
 
 - Collect each HEAD selector and compare exact expected node set from approved shards/census.
 - Prove no retained expected node is unrouted and no narrow class has duplicate owner.
-- Run frozen base and HEAD route workloads three equivalent cold repetitions with same runner, workers, cache/install/env.
+- Run at least three frozen stages with three equivalent cold repetitions each under identical runner/workers/cache/install/env: repaired base, integrated sanitation HEAD before routing changes, and routed HEAD. Preserve raw pre-fix bootstrap separately.
 - Report median/max, summed compute, and DAG critical path. Attribute deletion, routing, and bootstrap effects separately.
+- A route rename/deletion maps back to the frozen base route universe; it cannot disappear from the denominator. Report `<15%` as a criterion miss unless HiC explicitly waives it—filing a follow-up does not manufacture success.
 - Whole-tree collection comparison uses the frozen command, not a post-change subset.
 
 ## T043 — Evidence/Validation
@@ -97,7 +110,9 @@ Stop paying whole-tree collection for stable narrow classes. Each changed narrow
 - [ ] Exactly one owner plus explicit secondary roles per changed class.
 - [ ] #2782 owner stays blocking red; quarantine stays non-blocking Tier-3 only.
 - [ ] Static/bounded route tests replace 240-second recursive collection probe.
+- [ ] Central shard map integrates all deletion handoffs and the full architectural hard gate passes.
 - [ ] Three-run fixed workload comparison records compute and critical path.
+- [ ] Repaired-base, pre-routing HEAD, and routed-HEAD stages attribute scanner/deletion/routing effects separately.
 
 ## Reviewer Guidance
 

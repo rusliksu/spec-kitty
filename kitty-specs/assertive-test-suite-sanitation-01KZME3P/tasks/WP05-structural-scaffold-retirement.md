@@ -10,6 +10,10 @@ requirement_refs:
 - FR-008
 - FR-014
 - FR-016
+- NFR-002
+- NFR-003
+- NFR-007
+- NFR-009
 planning_base_branch: pr/assertive-test-suite-sanitation
 merge_target_branch: pr/assertive-test-suite-sanitation
 branch_strategy: Planning artifacts for this mission were generated on pr/assertive-test-suite-sanitation. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into pr/assertive-test-suite-sanitation unless the human explicitly redirects the landing branch.
@@ -31,15 +35,64 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-results.json
 execution_mode: code_change
 owned_files:
+- tests/architectural/test_2093_authority_invariant.py
+- tests/architectural/test_arch_unblind_matrix.py
+- tests/architectural/test_batch_split_single_authority.py
+- tests/architectural/test_charter_facades_reexport_doctrine.py
+- tests/architectural/test_charter_path_literal_authority.py
+- tests/architectural/test_charter_references_resolve.py
+- tests/architectural/test_ci_architectural_gate_coverage.py
+- tests/architectural/test_ci_topology_worklist.py
+- tests/architectural/test_cli_console_render_width.py
+- tests/architectural/test_compat_shims.py
+- tests/architectural/test_coverage_root_collisions.py
+- tests/architectural/test_docs_cli_reference_parity.py
+- tests/architectural/test_doctrine_artefact_layout.py
+- tests/architectural/test_doctrine_wheel_closure.py
+- tests/architectural/test_drg_writer_discovery.py
+- tests/architectural/test_exemption_registry_ratchet.py
+- tests/architectural/test_integration_boundary.py
+- tests/architectural/test_issue_matrix_json_migration_completeness.py
+- tests/architectural/test_marker_baseline.py
+- tests/architectural/test_marker_registry_single_source.py
+- tests/architectural/test_mission_exit_baseline.py
+- tests/architectural/test_next_shard_marker_completeness.py
+- tests/architectural/test_no_absolute_event_timestamp_mixture.py
+- tests/architectural/test_no_authored_applies_edge.py
+- tests/architectural/test_no_dead_doctrine_paths.py
+- tests/architectural/test_no_dead_symbols.py
+- tests/architectural/test_no_invalid_windows_filenames.py
+- tests/architectural/test_no_legacy_status_emit_callers.py
+- tests/architectural/test_no_legacy_terminology.py
 - tests/architectural/test_retired_contracts_absent.py
 - tests/architectural/test_contract_registry_parity.py
 - tests/architectural/test_no_parity_scaffold.py
+- tests/architectural/test_no_raw_mission_spec_paths.py
+- tests/architectural/test_no_read_side_bypass.py
+- tests/architectural/test_no_tracked_test_feature_missions.py
+- tests/architectural/test_no_write_side_rederivation.py
+- tests/architectural/test_resolution_authority_gates.py
+- tests/architectural/test_runtime_charter_doctrine_boundary.py
+- tests/architectural/test_session_reaper.py
+- tests/architectural/test_shard_universe_bounded.py
+- tests/architectural/test_shared_module_object_patches.py
+- tests/architectural/test_shared_package_boundary.py
+- tests/architectural/test_single_mission_surface_resolver.py
+- tests/architectural/test_src_filter_coverage.py
+- tests/architectural/test_status_command_guidance.py
+- tests/architectural/test_status_module_boundary.py
+- tests/architectural/test_topology_inference_retired.py
+- tests/architectural/test_topology_resolution_boundary.py
+- tests/architectural/test_unit_contract_residual_gate.py
+- tests/architectural/test_unregistered_shim_scanner.py
+- tests/architectural/test_uv_lock_pin_drift.py
+- tests/architectural/test_workflow_coherence.py
+- tests/architectural/test_wp_owned_files_no_kitty_specs.py
 - tests/architectural/test_wp05_write_target_drain.py
 - tests/architectural/test_batch_drain_retired_3167.py
 - tests/architectural/test_auth_transport_singleton.py
 - tests/architectural/test_layer_rules.py
 - tests/architectural/test_ratchet_baselines.py
-- tests/_arch_shard_map.py
 - tests/sync/test_no_queue_drain_constructed_3030.py
 - src/specify_cli/coordination/status_transition.py
 - tests/specify_cli/coordination/test_simple_case_flat_topology.py
@@ -47,7 +100,8 @@ owned_files:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP05.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-results.json
 tags: []
-tracker_refs: []
+tracker_refs:
+- '#1931'
 ---
 
 # WP05 — Structural and Spent-Scaffold Retirement
@@ -60,12 +114,15 @@ Load `architect-alphonso`. Read plan IC-05, current 3.x ADRs referenced by each 
 
 Remove architecture tests that cannot catch a realistic bug: advisory-only findings, historical WP/report proof, self-presence/name/token/count pins, and positive shape after a migration is complete. Preserve only current negative invariants with live corpus and plausible fault bite.
 
+This WP owns structural cohort A plus named cross-cohort migration clusters. Every assigned structural file gets machine-screened and a terminal verdict; deep controlled-fault proof is required for deletion-justifying or materially changed survivors, not fabricated for plainly deleted spent scaffolds.
+
 ## Structural Survival Rule
 
 A survivor must name a current authority, scan a nonzero live corpus, fail when a realistic prohibited production change is introduced, reach its assertion, and have a two-sided oracle. Planting the literal searched by the scanner is insufficient.
 
 ## T026 — Advisory and Historical Validators
 
+- Machine-screen every assigned cohort-A file for source/AST/text scanning, positive-shape/name/prose/count pins, retired migration/WP references, advisory-only outcomes, live corpus size, and declared current authority. Give every file a terminal screening verdict; promote suspects into T027–T029 deep adjudication.
 - `test_retired_contracts_absent.py` currently records live findings via `record_property` without failing. Prove which checks are advisory-only; delete never-fail tests/helpers.
 - Update `test_contract_registry_parity.py` imports if deleted helpers were coupled historically. Preserve consumed contract registry behavior only with a live consumer/incompatible-shape probe.
 - Historical mission acceptance/report checks are not permanent regression guards. Remove them unless an active ADR/spec adopted the invariant.
@@ -91,12 +148,13 @@ A survivor must name a current authority, scan a nonzero live corpus, fail when 
 - For deleted positives, remove/rename alleged source shape in a disposable copy and show the test either remains green/non-causal or blocks behavior-preserving refactor only.
 - Record current authority paths and consumer searches.
 
-## T030 — Integration Cleanup
+## T030 — Cohort Handoff
 
-- Update `_arch_shard_map.py` for files actually removed; no dead entries.
-- Remove imports/baselines/helpers in the other owned architecture files.
+- Emit a deterministic list of deleted/renamed cohort-A paths and expected central-map removals.
+- Do not edit `_arch_shard_map.py`; WP07 exclusively integrates WP03/WP04/WP05/WP09/WP10 handoffs after every deleting cohort completes.
+- Remove imports/baselines/helpers only in owned files.
 - Do not edit route workflow tests owned by WP07.
-- Run the affected arch shard(s), then the complete architectural hard gate.
+- Run focused surviving cohort files. The complete architectural gate is deferred to WP07 after central-map integration, then repeated by WP08.
 
 ## T031 — Evidence
 
@@ -108,10 +166,11 @@ A survivor must name a current authority, scan a nonzero live corpus, fail when 
 ## Definition of Done
 
 - [ ] Never-fail and historical/self/shape scaffolds removed.
+- [ ] Every assigned cohort-A file has a terminal verdict and any deleted path is in the deterministic WP07 handoff.
 - [ ] Every survivor passes live-corpus + plausible fault proof.
 - [ ] Negative invariants preserved without positive implementation pinning.
 - [ ] Test-only production residue removed only with caller proof.
-- [ ] Architecture shards and full architectural gate pass.
+- [ ] Focused cohort validation passes; no central-map edit occurs before integration ownership.
 
 ## Reviewer Guidance
 

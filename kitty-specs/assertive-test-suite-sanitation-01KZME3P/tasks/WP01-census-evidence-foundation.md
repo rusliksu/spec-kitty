@@ -8,6 +8,10 @@ requirement_refs:
 - FR-003
 - FR-014
 - FR-015
+- NFR-001
+- NFR-002
+- NFR-005
+- NFR-009
 planning_base_branch: pr/assertive-test-suite-sanitation
 merge_target_branch: pr/assertive-test-suite-sanitation
 branch_strategy: Planning artifacts for this mission were generated on pr/assertive-test-suite-sanitation. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into pr/assertive-test-suite-sanitation unless the human explicitly redirects the landing branch.
@@ -40,7 +44,10 @@ owned_files:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-full-suite-summary.txt
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/foundation-summary.yaml
 tags: []
-tracker_refs: []
+tracker_refs:
+- '#1931'
+- '#2645'
+- '#3284'
 ---
 
 # WP01 — Reproducible Census and Evidence Foundation
@@ -99,6 +106,8 @@ Create a deterministic mission-local auditor and immutable base evidence. It mus
 ## T006 — Evidence Handoff
 
 - Write compact raw artifacts and SHA-256 hashes. Do not copy the entire 28-minute log when a complete node/outcome summary plus hash is sufficient.
+- Generate complete class manifests for inert candidates, exact-body groups, promoted semantic groups, and structural/source/AST/text scanners under every test root. Resolve every entry to exactly one downstream WP and editable path owner.
+- Fail closed before class dispatch when any candidate/group is unowned. Amend tasks/ownership, rerun `finalize-tasks`, and record the replan; “out of scope” is not a sanitation verdict.
 - `foundation-summary.yaml` records counts, commands, environment IDs, discovery/collection reconciliation, and known raw artifacts.
 - Keep human prose derived and minimal; raw + schema are authority.
 - Commit all owned files and mark T001–T006 complete.
@@ -109,6 +118,7 @@ Create a deterministic mission-local auditor and immutable base evidence. It mus
 - [ ] Identical runs are deterministic; divergent observations fail closed.
 - [ ] Base census and workload DAG are hash-addressed and reproducible.
 - [ ] Validator enforces grouping, evidence profiles, and exception rules.
+- [ ] Candidate-owner reconciliation is 100%; an injected unowned candidate fails the gate.
 - [ ] No production CLI/module or permanent sanitation test subtree added.
 - [ ] Worktree clean after a focused commit.
 

@@ -8,6 +8,8 @@ dependencies:
 - WP05
 - WP06
 - WP07
+- WP09
+- WP10
 requirement_refs:
 - FR-001
 - FR-002
@@ -25,6 +27,16 @@ requirement_refs:
 - FR-014
 - FR-015
 - FR-016
+- NFR-001
+- NFR-002
+- NFR-003
+- NFR-004
+- NFR-005
+- NFR-006
+- NFR-007
+- NFR-008
+- NFR-009
+- NFR-010
 planning_base_branch: pr/assertive-test-suite-sanitation
 merge_target_branch: pr/assertive-test-suite-sanitation
 branch_strategy: Planning artifacts for this mission were generated on pr/assertive-test-suite-sanitation. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into pr/assertive-test-suite-sanitation unless the human explicitly redirects the landing branch.
@@ -57,7 +69,16 @@ owned_files:
 - tests/README.md
 - CHANGELOG.md
 tags: []
-tracker_refs: []
+tracker_refs:
+- '#1931'
+- '#2309'
+- '#2316'
+- '#2342'
+- '#2645'
+- '#2782'
+- '#3184'
+- '#3283'
+- '#3284'
 ---
 
 # WP08 — Aggregate Evidence and Mission Closure
@@ -74,6 +95,7 @@ Generate—not hand-maintain—the canonical aggregate and final report from val
 
 - Run WP01 auditor on integrated HEAD; generate `head-census.json` and canonical `dispositions.yaml` from WP shards.
 - Fail on missing global source/collection reconciliation, duplicate membership, incomplete class profile, invalid family grouping, terminal `FIX_*`, or invalid temporary exception.
+- Fail unless every WP01 inert candidate, exact/promoted duplicate group, and structural candidate is terminally covered by exactly one shard. Lightweight unchanged screening is allowed; an unowned/out-of-scope candidate is not.
 - Aggregate ordering/checksums deterministic; two generations without input change must be byte-identical.
 - Do not manually correct generated output. Fix source shard or auditor in its owning WP via review cycle if needed.
 
@@ -81,7 +103,7 @@ Generate—not hand-maintain—the canonical aggregate and final report from val
 
 - Generate before/after: test files, functions/nodes, LOC, collected/ignored/skipped/xfail/quarantine/flaky states, duplicate groups, collection/setup/call, route compute/critical path, and #3283 startup.
 - Report causal/mutation ownership for every deletion cluster and changed survivor.
-- Exact live known-red set: repaired base vs HEAD with explicit stale/non-causal deltas.
+- Exact live known-red set: repaired base vs HEAD with explicit stale/non-causal deltas. Only accepted P0 reproductions may remain red; any other live defect blocks closure pending authorized fix.
 - Issue matrix covers all nine referenced issues with mission action, evidence, final state, owner, and follow-up/closure recommendation.
 - A <15% target remains a criterion miss unless explicit HiC waiver is recorded; never delete signal to hit target.
 
@@ -90,7 +112,7 @@ Generate—not hand-maintain—the canonical aggregate and final report from val
 - Full parallel suite excluding serial orphan sweep, then orphan sweep serially.
 - Compare failures to accepted live known-red set; base-green/HEAD-red is a blocker.
 - Run `.venv/bin/ruff check .` and project mypy command from charter/CI.
-- Validate changed route manifest/selection and applicable Linux/macOS/Windows ownership evidence.
+- Validate changed route manifest/selection and actual Linux/macOS/Windows #3283 process/publication outcomes. Local fakes or declared ownership do not replace platform results; record CI job URLs/IDs and commit SHA.
 - Run frozen workloads three times; record environment and raw hashes.
 
 ## T047 — Mission-Review Hard Gates
@@ -114,6 +136,7 @@ Generate—not hand-maintain—the canonical aggregate and final report from val
 - SC-004: contract/architectural/E2E/route/platform causal gates.
 - SC-005: three fresh-start #3283 proofs.
 - SC-006: aggregate, report, issue matrix, independent WP approvals.
+- Reconcile every #3284 node: WP06-owned terminal rows plus WP07 route-test row; no cross-WP handoff remains unresolved.
 - Verify no expired/renewed/forbidden `TEMPORARY`, no unresolved `FIX_*`, clean worktree, and PR-ready evidence.
 
 ## Definition of Done
@@ -121,6 +144,7 @@ Generate—not hand-maintain—the canonical aggregate and final report from val
 - [ ] Deterministic aggregate/report generated from canonical shards/raw artifacts.
 - [ ] All success criteria and issue rows have evidence or explicit blocking miss.
 - [ ] Integrated suite differs only by accepted known reds; no mission regression.
+- [ ] Every inert/duplicate/structural candidate and #3284 node is terminally owned; actual three-OS bootstrap evidence is attached.
 - [ ] Contract and architecture gates green; E2E green/valid environmental exception.
 - [ ] Durable docs/changelog accurate; generated report includes workflow deviations.
 - [ ] WP08 committed and independently approved.

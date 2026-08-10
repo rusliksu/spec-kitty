@@ -7,7 +7,11 @@
 
 ## Execution Shape
 
-WP01 establishes reproducible census/evidence. WP02 repairs #3283. WP03 and WP06 depend on the healthy harness; WP04/WP05 can proceed from the census in parallel. WP07 folds the approved test topology into proportional CI. WP08 generates aggregate proof and closure artifacts. Each adjudication WP owns one ledger shard; only WP08 writes the generated aggregate.
+WP01 establishes reproducible census/evidence. WP02 repairs #3283 and the #2645 whole-tree collection scanner. WP03 and WP06 depend on the healthy harness; WP04 and the three structural cohorts (WP05/WP09/WP10) proceed from the census. WP07 integrates the architectural shard map and folds the approved topology into proportional CI. WP08 generates aggregate proof and closure artifacts. Each adjudication WP owns one ledger shard; only WP08 writes the generated aggregate.
+
+WP01 is also a discovery gate. Every mechanically discovered inert, duplicate, or structural candidate must map to an exact downstream owner. If the generated candidate manifest contains an unowned path or group, stop before dispatching its adjudication class, amend `owned_files`/dependencies/tasks, rerun `finalize-tasks`, and record the replan. “Out of scope” is not a terminal sanitation verdict.
+
+Before claiming a WP, verify each frontmatter `tracker_refs` issue is assigned to `robertDouglass` and contains the mission reference; tracker drift blocks claim under DIR-012/DIR-013.
 
 ## Subtask Index
 
@@ -25,6 +29,7 @@ WP01 establishes reproducible census/evidence. WP02 repairs #3283. WP03 and WP06
 | T010 | Prove macOS/Linux/Windows publication semantics and no half-built consumer | WP02 | No |
 | T011 | Persist exact replay patch and run identical base/HEAD harness comparison | WP02 | No |
 | T012 | Record three consecutive fresh-start results and WP02 disposition shard | WP02 | No |
+| T050 | Cache/share the whole-tree wall-clock assertion scan and prove proportional collection | WP02 | No |
 | T013 | Census every unconditional skip, permanent xfail, quarantine, placeholder, and flaky marker | WP03 | No |
 | T014 | Delete ten #2309 daemon-reaper skipped bodies and two #2316 upgrade skipped bodies | WP03 | Yes |
 | T015 | Delete live-server placeholder and obsolete missing-ref/advisory skipped tests | WP03 | Yes |
@@ -42,25 +47,35 @@ WP01 establishes reproducible census/evidence. WP02 repairs #3283. WP03 and WP06
 | T027 | Remove name/token/count/prose/self-presence scaffolds with no current authority | WP05 | Yes |
 | T028 | Re-evaluate auth transport and batch-drain positive-shape guards against current ADRs | WP05 | Yes |
 | T029 | Preserve/rehome only plausible-authority-violating negative invariants | WP05 | No |
-| T030 | Update architectural shard/import/baseline consumers after deletions | WP05 | No |
+| T030 | Emit cohort-A structural handoff; defer central shard-map integration to WP07 | WP05 | No |
 | T031 | Record structural causal probes, dead-symbol caller proof, and WP05 verdicts | WP05 | No |
 | T032 | Reproduce and classify every #3284 base failure/error under repaired harness | WP06 | No |
 | T033 | Adjudicate doctrine reachability/count pins and charter compact-size threshold | WP06 | Yes |
 | T034 | Adjudicate ANSI console and mission-template-resolution assertions | WP06 | Yes |
 | T035 | Adjudicate timing, daemon, safe-commit, sync teardown, and E2E portability failures | WP06 | Yes |
 | T036 | Run fixed flake matrix for nondeterministic candidates; no retry-to-green | WP06 | No |
-| T037 | Preserve live known-red set and record stale/non-causal explicit deltas | WP06 | No |
+| T037 | Record owned known-red deltas and exact unresolved handoffs for downstream terminalization | WP06 | No |
 | T038 | Complete WP06 shard and focused regression validation | WP06 | No |
 | T039 | Replace whole-tree regression/quarantine marker discovery with explicit owned selectors | WP07 | No |
 | T040 | Model one owner plus documented coverage/platform/hard-gate overlaps | WP07 | No |
 | T041 | Update architectural workflow contracts without weakening red-main authority | WP07 | No |
 | T042 | Execute route-manifest selection and three-run fixed-route timing comparison | WP07 | No |
 | T043 | Record summed compute, critical path, mapping, and WP07 disposition evidence | WP07 | No |
+| T051 | Machine-screen structural cohort B and bind every file to current authority | WP09 | No |
+| T052 | Delete spent cohort-B shape/prose/count/history guards | WP09 | Yes |
+| T053 | Fault-probe retained cohort-B negative invariants and anti-vacuity | WP09 | No |
+| T054 | Run focused cohort-B collection/contract validation and record terminal verdicts | WP09 | No |
+| T055 | Emit cohort-B shard-map handoff and raw evidence | WP09 | No |
+| T056 | Machine-screen structural cohort C and bind every file to current authority | WP10 | No |
+| T057 | Delete spent cohort-C shape/prose/count/history guards | WP10 | Yes |
+| T058 | Fault-probe retained cohort-C negative invariants and anti-vacuity | WP10 | No |
+| T059 | Run focused cohort-C collection/contract validation and record terminal verdicts | WP10 | No |
+| T060 | Emit cohort-C shard-map handoff and raw evidence | WP10 | No |
 | T044 | Generate canonical aggregate ledger and HEAD census from WP shards | WP08 | No |
 | T045 | Generate before/after report, live known-red delta, causal/mutation matrix, and issue matrix | WP08 | No |
 | T046 | Run full parallel suite, orphan sweep, ruff, mypy, and route/platform gates | WP08 | No |
 | T047 | Run contract, architectural, and sibling cross-repository E2E hard gates | WP08 | No |
-| T048 | Update durable test docs/changelog and complete tracer evidence | WP08 | No |
+| T048 | Update durable test docs/changelog and generated workflow evidence | WP08 | No |
 | T049 | Validate all success criteria, temporary states, tracker verdicts, and PR readiness | WP08 | No |
 
 ---
@@ -97,6 +112,7 @@ WP01 establishes reproducible census/evidence. WP02 repairs #3283. WP03 and WP06
 - [ ] T010 Prove macOS/Linux/Windows publication semantics and no half-built consumer (WP02)
 - [ ] T011 Persist exact replay patch and run identical base/HEAD harness comparison (WP02)
 - [ ] T012 Record three consecutive fresh-start results and WP02 disposition shard (WP02)
+- [ ] T050 Cache/share the whole-tree wall-clock assertion scan and prove proportional collection (WP02)
 
 **Dependencies**: WP01.  
 **Risks**: deadlock, stale-owner theft, unsafe directory replacement, divergent replay patch.  
@@ -105,7 +121,7 @@ WP01 establishes reproducible census/evidence. WP02 repairs #3283. WP03 and WP06
 ## WP03: Inert, Skipped, Quarantined, and Flaky States (P1)
 
 **Prompt**: `tasks/WP03-inert-test-states.md`  
-**Independent test**: global census has terminal verdicts for every inert state; permanent non-executing `KEEP` count is zero; #2782 remains exactly one live blocking red; no new masking marker exists.
+**Independent test**: repaired-base and HEAD matrices cover every inert state; permanent non-executing `KEEP` count is zero; #2782 remains exactly one live blocking red; no new masking marker exists.
 
 ### Included Subtasks
 
@@ -125,7 +141,7 @@ WP01 establishes reproducible census/evidence. WP02 repairs #3283. WP03 and WP06
 ## WP04: Duplicate and Compatibility-Shim Consolidation (P1)
 
 **Prompt**: `tasks/WP04-duplicate-consolidation.md`  
-**Independent test**: deleted duplicate members contribute no unique non-equivalent mutant, platform boundary, public import contract, or live path beyond the named survivor.
+**Independent test**: every mechanically discovered exact group and every promoted semantic group has a terminal verdict; deleted members contribute no unique non-equivalent mutant, platform boundary, public import contract, or live path beyond the named survivor.
 
 ### Included Subtasks
 
@@ -152,7 +168,7 @@ WP01 establishes reproducible census/evidence. WP02 repairs #3283. WP03 and WP06
 - [ ] T027 Remove name/token/count/prose/self-presence scaffolds with no current authority (WP05)
 - [ ] T028 Re-evaluate auth transport and batch-drain positive-shape guards against current ADRs (WP05)
 - [ ] T029 Preserve/rehome only plausible-authority-violating negative invariants (WP05)
-- [ ] T030 Update architectural shard/import/baseline consumers after deletions (WP05)
+- [ ] T030 Emit cohort-A structural handoff; defer central shard-map integration to WP07 (WP05)
 - [ ] T031 Record structural causal probes, dead-symbol caller proof, and WP05 verdicts (WP05)
 
 **Dependencies**: WP01.  
@@ -163,7 +179,7 @@ WP01 establishes reproducible census/evidence. WP02 repairs #3283. WP03 and WP06
 ## WP06: Pre-existing Red and Error Adjudication (P1)
 
 **Prompt**: `tasks/WP06-baseline-red-adjudication.md`  
-**Independent test**: all #3284 nodes receive reproducible classifications; live defects remain explicit; stale/non-causal failures are removed; base-green/HEAD-red count is zero.
+**Independent test**: all WP06-owned #3284 nodes receive reproducible terminal classifications; exact downstream-owned handoffs are machine-readable; only accepted P0 reproductions may remain red; base-green/HEAD-red count is zero.
 
 ### Included Subtasks
 
@@ -172,7 +188,7 @@ WP01 establishes reproducible census/evidence. WP02 repairs #3283. WP03 and WP06
 - [ ] T034 Adjudicate ANSI console and mission-template-resolution assertions (WP06)
 - [ ] T035 Adjudicate timing, daemon, safe-commit, sync teardown, and E2E portability failures (WP06)
 - [ ] T036 Run fixed flake matrix for nondeterministic candidates; no retry-to-green (WP06)
-- [ ] T037 Preserve live known-red set and record stale/non-causal explicit deltas (WP06)
+- [ ] T037 Record owned known-red deltas and exact unresolved handoffs for downstream terminalization (WP06)
 - [ ] T038 Complete WP06 shard and focused regression validation (WP06)
 
 **Dependencies**: WP01, WP02.  
@@ -193,9 +209,43 @@ WP01 establishes reproducible census/evidence. WP02 repairs #3283. WP03 and WP06
 - [ ] T042 Execute route-manifest selection and three-run fixed-route timing comparison (WP07)
 - [ ] T043 Record summed compute, critical path, mapping, and WP07 disposition evidence (WP07)
 
-**Dependencies**: WP03, WP04, WP05, WP06.  
+**Dependencies**: WP03, WP04, WP05, WP06, WP09, WP10.  
 **Risks**: stranded tests, manufactured savings, or accidental quality-gate policy change.  
 **Estimated prompt**: ~300 lines.
+
+## WP09: Structural Cohort B Sanitation (P1)
+
+**Prompt**: `tasks/WP09-structural-cohort-b.md`  
+**Independent test**: every assigned cohort-B file has a terminal structural verdict; every survivor reaches and fails its intended oracle under a plausible current-authority violation.
+
+### Included Subtasks
+
+- [ ] T051 Machine-screen structural cohort B and bind every file to current authority (WP09)
+- [ ] T052 Delete spent cohort-B shape/prose/count/history guards (WP09)
+- [ ] T053 Fault-probe retained cohort-B negative invariants and anti-vacuity (WP09)
+- [ ] T054 Run focused cohort-B collection/contract validation and record terminal verdicts (WP09)
+- [ ] T055 Emit cohort-B shard-map handoff and raw evidence (WP09)
+
+**Dependencies**: WP01.  
+**Risks**: a structural file can mix a useful invariant with spent scaffolding; split or rehome the useful oracle before deletion.  
+**Estimated prompt**: ~330 lines.
+
+## WP10: Structural Cohort C Sanitation (P1)
+
+**Prompt**: `tasks/WP10-structural-cohort-c.md`  
+**Independent test**: every assigned cohort-C file has a terminal structural verdict; every survivor reaches and fails its intended oracle under a plausible current-authority violation.
+
+### Included Subtasks
+
+- [ ] T056 Machine-screen structural cohort C and bind every file to current authority (WP10)
+- [ ] T057 Delete spent cohort-C shape/prose/count/history guards (WP10)
+- [ ] T058 Fault-probe retained cohort-C negative invariants and anti-vacuity (WP10)
+- [ ] T059 Run focused cohort-C collection/contract validation and record terminal verdicts (WP10)
+- [ ] T060 Emit cohort-C shard-map handoff and raw evidence (WP10)
+
+**Dependencies**: WP01.  
+**Risks**: CI/governance files have stronger authorities; hand off route-owned paths rather than weakening or duplicating ownership.  
+**Estimated prompt**: ~330 lines.
 
 ## WP08: Aggregate Evidence and Mission Closure (P1)
 
@@ -208,9 +258,9 @@ WP01 establishes reproducible census/evidence. WP02 repairs #3283. WP03 and WP06
 - [ ] T045 Generate before/after report, live known-red delta, causal/mutation matrix, and issue matrix (WP08)
 - [ ] T046 Run full parallel suite, orphan sweep, ruff, mypy, and route/platform gates (WP08)
 - [ ] T047 Run contract, architectural, and sibling cross-repository E2E hard gates (WP08)
-- [ ] T048 Update durable test docs/changelog and complete tracer evidence (WP08)
+- [ ] T048 Update durable test docs/changelog and generated workflow evidence (WP08)
 - [ ] T049 Validate all success criteria, temporary states, tracker verdicts, and PR readiness (WP08)
 
-**Dependencies**: WP02, WP03, WP04, WP05, WP06, WP07.  
+**Dependencies**: WP02, WP03, WP04, WP05, WP06, WP07, WP09, WP10.  
 **Risks**: aggregate prose drifting from canonical evidence; report generation and checksums prevent dual authority.  
 **Estimated prompt**: ~330 lines.

@@ -8,6 +8,11 @@ requirement_refs:
 - FR-013
 - FR-014
 - FR-015
+- NFR-004
+- NFR-005
+- NFR-006
+- NFR-008
+- NFR-010
 planning_base_branch: pr/assertive-test-suite-sanitation
 merge_target_branch: pr/assertive-test-suite-sanitation
 branch_strategy: Planning artifacts for this mission were generated on pr/assertive-test-suite-sanitation. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into pr/assertive-test-suite-sanitation unless the human explicitly redirects the landing branch.
@@ -18,6 +23,7 @@ subtasks:
 - T010
 - T011
 - T012
+- T050
 history:
 - status: planned
   at: '2026-08-10T00:06:32Z'
@@ -31,13 +37,18 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-results.json
 execution_mode: code_change
 owned_files:
+- .github/workflows/ci-windows.yml
 - tests/conftest.py
 - tests/test_test_venv_bootstrap.py
+- tests/_support/wall_clock_assertions.py
+- tests/_support/test_wall_clock_assertions.py
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP02.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-replay.patch
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-results.json
 tags: []
-tracker_refs: []
+tracker_refs:
+- '#3283'
+- '#2645'
 ---
 
 # WP02 — Shared Test-Venv Bootstrap Reliability
@@ -68,7 +79,7 @@ Replace the fixed 60-second lock held across editable installation with a recove
 
 - Extract small seams only as needed for deterministic time/process/rename injection.
 - Test a builder whose install exceeds the former 60-second timeout while heartbeat remains fresh; waiter must not error or steal.
-- Test two simultaneous fresh starts: exactly one build function runs; both callers receive the same validated final.
+- Test two simultaneous fresh starts in real spawned OS processes: exactly one build function runs; both callers receive the same validated final. Thread-only or whole-function fake races do not satisfy #3283.
 - Test that a consumer cannot resolve final executable before publication.
 - Confirm tests fail against base behavior for the right reason before implementation.
 
@@ -79,6 +90,7 @@ Replace the fixed 60-second lock held across editable installation with a recove
 - Crash after temp creation/before validation: recovery does not publish temp.
 - Invalid published venv: quarantine/remove under lock, rebuild once.
 - Crash after validation/before rename: recovery safely cleans/rebuilds.
+- Kill a spawned builder mid-build and prove a second process reclaims only its recorded sibling temp path. Use real process/file-lock/publication behavior for race and crash acceptance; narrow clock/install seams may remain injected.
 - Never delete arbitrary paths from corrupt state; validate temp is an expected cache sibling.
 
 ## T009 — Implementation
@@ -93,7 +105,8 @@ Replace the fixed 60-second lock held across editable installation with a recove
 
 - Use same-filesystem directory rename to an absent target; do not assume POSIX replacement of a populated directory.
 - Resolve `bin/python` vs `Scripts/python.exe` from the runtime platform, never infer Windows layout on macOS.
-- Prove path safety and rename behavior with platform-neutral fakes locally; record CI platform owners for Windows/Linux evidence.
+- Route the new test file explicitly through the Linux quality route and the `windows_ci` discovery contract; add true Windows cases/markers rather than relying on POSIX fakes. Prove macOS locally and require actual Linux and Windows CI outcomes before WP08 PR readiness.
+- Record commands, job IDs/URLs, runner OS/Python, and results for all three OS classes. Platform-neutral fakes may supplement but never replace those outcomes.
 - No shell-only locks or signals.
 
 ## T011 — Exact Replay
@@ -110,12 +123,21 @@ Replace the fixed 60-second lock held across editable installation with a recove
 - Record environment, commands, outcomes, durations, patch hash, and WP02 `FIX_TEST → KEEP` disposition.
 - Run `ruff` and focused mypy/pytest; commit and mark tasks complete.
 
+## T050 — Proportional Wall-clock Scan
+
+- Red-first prove that two pytest workers/collections over unchanged test sources do not each repeat the full `tests/` AST scan performed by `_fail_on_wall_clock_assertions` (#2645).
+- Cache or share the scanner result by a content-addressed source/config fingerprint. Publication must be process-safe, corruption-safe, cross-platform, and must invalidate after an eligible test/helper source changes.
+- Keep enforcement fail-closed: injected forbidden wall-clock assertions must still fail on the intended oracle, and stale/corrupt cache must rescan rather than pass.
+- Measure repaired base versus HEAD collection/setup/call separately over three cold repetitions with identical workers/cache policy. Record raw results and attribute this optimization separately from CI route changes.
+
 ## Definition of Done
 
 - [ ] Base-red concurrency tests become green with state machine.
 - [ ] Slow live builder never stolen; dead/crashed builder recovers.
 - [ ] No half-built final path is observable.
 - [ ] Platform executable/publication semantics are explicit.
+- [ ] Real spawned-process race/crash tests pass; actual macOS/Linux/Windows outcomes are recorded by closure.
+- [ ] Whole-tree wall-clock scan is shared/cached safely and invalidates under a controlled source fault.
 - [ ] Exact replay artifact and three clean-start results exist.
 - [ ] #3283 evidence row is terminal and independently reviewable.
 

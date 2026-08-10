@@ -9,6 +9,9 @@ requirement_refs:
 - FR-008
 - FR-014
 - FR-016
+- NFR-002
+- NFR-007
+- NFR-010
 planning_base_branch: pr/assertive-test-suite-sanitation
 merge_target_branch: pr/assertive-test-suite-sanitation
 branch_strategy: Planning artifacts for this mission were generated on pr/assertive-test-suite-sanitation. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into pr/assertive-test-suite-sanitation unless the human explicitly redirects the landing branch.
@@ -30,20 +33,55 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-results.json
 execution_mode: code_change
 owned_files:
+- tests/agent/cli/commands/test_tasks_helpers.py
+- tests/agent/test_context_validation_unit.py
+- tests/architectural/test_shim_registry_schema.py
+- tests/charter/synthesizer/test_charter_compile_project_root.py
+- tests/cli/commands/test_merge_strategy.py
+- tests/cli_gate/test_dashboard_modes.py
+- tests/cli_gate/test_doctor_modes.py
+- tests/doctrine/drg/test_validator.py
+- tests/doctrine/missions/test_action_index.py
+- tests/doctrine/missions/test_step_projection.py
 - tests/runtime/test_home_unit.py
 - tests/kernel/test_paths.py
 - tests/kernel/test_paths_unified_windows_root.py
 - tests/git_ops/test_git_ops.py
 - tests/git_ops/test_git_ops_unit.py
+- tests/research/test_research_plan_missions_integration.py
+- tests/review/test_gate_registry.py
+- tests/review/test_pre_review_gate_engine.py
+- tests/review/test_scope_source.py
+- tests/runtime/test_resolver_unit.py
+- tests/runtime/test_runtime_seam.py
+- tests/specify_cli/bulk_edit/test_moves.py
+- tests/specify_cli/bulk_edit/test_structural_targets.py
+- tests/specify_cli/cli/commands/agent/test_tasks_outline.py
+- tests/specify_cli/cli/commands/agent/test_tasks_parsing_validation.py
+- tests/specify_cli/cli/commands/review/test_existing_matrix_remediation.py
+- tests/specify_cli/compat/test_planner.py
+- tests/specify_cli/compat/test_registry.py
+- tests/specify_cli/compat/test_remediation_index_url.py
+- tests/specify_cli/compat/test_upgrade_hint_chk028.py
+- tests/specify_cli/coordination/test_worktree_topology.py
 - tests/specify_cli/dashboard/test_glossary_handler.py
 - tests/test_dashboard/test_glossary_handler.py
 - tests/specify_cli/dashboard/test_lint_tile_handler.py
+- tests/specify_cli/ownership/test_audit_scope.py
+- tests/specify_cli/ownership/test_validation.py
+- tests/specify_cli/session_presence/test_claude_code_hook.py
+- tests/specify_cli/shims/test_direct_commands.py
+- tests/specify_cli/shims/test_registry.py
+- tests/specify_cli/test_mid8_contract_sensitive_routing.py
+- tests/specify_cli/tool_surface/test_plugin_build_claude.py
+- tests/specify_cli/tool_surface/test_plugin_build_codex.py
 - tests/test_dashboard/test_lint_tile_handler.py
 - tests/specify_cli/test_template_lane_guard.py
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP04.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-results.json
 tags: []
-tracker_refs: []
+tracker_refs:
+- '#1931'
 ---
 
 # WP04 — Duplicate and Compatibility-Shim Consolidation
@@ -55,6 +93,8 @@ Load `randy-reducer`. Read plan IC-04, research R1/R2/R6/R8, current path/compat
 ## Objective
 
 Consolidate exact and semantic duplicates, retaining the cheapest deepest live-path guard plus every unique platform, public import, or boundary oracle. Do not keep a slower wrapper test merely because it resides in a historical directory.
+
+WP01's duplicate manifests are mandatory: every normalized candidate and every stricter exact group gets a terminal verdict even when no edit is warranted. Reconcile both planning projections (171 groups/357 functions normalized; 75 groups/162 functions strict; WP01's deterministic manifests win) to exact owners. Any unowned group/path triggers task replan before edits; it is not dismissible as out of scope.
 
 ## T020 — Home/Path Suites
 
@@ -93,14 +133,15 @@ Consolidate exact and semantic duplicates, retaining the cheapest deepest live-p
 
 ## T025 — Evidence/Validation
 
-- `WP04.yaml` records family basis, members, production path, oracle, route roles, platform, cost evidence, survivor, and causal/overlap result.
+- `WP04.yaml` records every mechanically discovered exact group and every promoted semantic group: family basis, members, production path, oracle, route roles, platform, cost evidence, survivor, causal/overlap result, and terminal verdict.
+- Validation rejects any fingerprint from WP01's duplicate manifest without a WP04 verdict or pre-dispatch exact owner transfer.
 - Expand parameters to node rows on any divergence.
 - Run focused suites before/after and record node/time delta.
 - `ruff` changed files and relevant platform-friendly tests.
 
 ## Definition of Done
 
-- [ ] All owned duplicate groups adjudicated with named survivor/unique boundaries.
+- [ ] 100% of WP01 exact-body and promoted semantic groups adjudicated with named survivor/unique boundaries or a recorded pre-dispatch ownership replan.
 - [ ] Dominated cases removed; canonical live seams retained.
 - [ ] Windows/public-import compatibility evidence prevents unsafe deletion.
 - [ ] Focused causal/mutation comparison shows no lost unique kill.

@@ -11,6 +11,12 @@ requirement_refs:
 - FR-010
 - FR-011
 - FR-014
+- NFR-001
+- NFR-002
+- NFR-004
+- NFR-007
+- NFR-009
+- NFR-010
 planning_base_branch: pr/assertive-test-suite-sanitation
 merge_target_branch: pr/assertive-test-suite-sanitation
 branch_strategy: Planning artifacts for this mission were generated on pr/assertive-test-suite-sanitation. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into pr/assertive-test-suite-sanitation unless the human explicitly redirects the landing branch.
@@ -44,7 +50,12 @@ owned_files:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP03.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp03-results.json
 tags: []
-tracker_refs: []
+tracker_refs:
+- '#2309'
+- '#2316'
+- '#2342'
+- '#2782'
+- '#3184'
 ---
 
 # WP03 — Inert, Skipped, Quarantined, and Flaky States
@@ -63,6 +74,7 @@ Remove tests that never execute or cannot block a regression. Distinguish perman
 - The known unconditional set includes ten #2309 tests and two #2316 tests; the live-server client placeholder calls `pytest.skip` unconditionally after its docstring.
 - Classify conditional platform/dependency skips separately; do not delete them merely because this machine cannot execute the branch.
 - Every inert candidate gets a terminal ledger verdict. `KEEP` cannot remain permanently non-executing. No `TEMPORARY` for these classes.
+- Reconcile the generated WP01 inert manifest to this WP's exact ownership before editing. Any newly discovered mandatory deletion outside this manifest triggers task/ownership replan and re-finalization; it may not be ignored as out of scope.
 
 ## T014 — Known Permanent Skips
 
@@ -76,13 +88,13 @@ Remove tests that never execute or cannot block a regression. Distinguish perman
 - Delete `test_connect_to_server` from client integration; its manual-server recipe belongs outside pytest and is stale relative to token provisioning.
 - `test_verdict_name_truthfulness.py` depends on deleted branch/history: prove current authority/caller absence and delete stale cases/file. If any live negative invariant remains, it must pass a plausible current fault and may stay.
 - `test_diff_coverage_policy.py` validates a historical mission report. Delete if no current release consumer; do not drag historical contract prose into live pytest.
-- Remove unused imports and shard references only within owned files; WP05 owns central arch-shard updates.
+- Remove unused imports and local references within owned files. WP07, after WP03 and all structural cohorts, exclusively owns central arch-shard integration.
 
 ## T016 — Quarantine and Flaky Marker
 
 - `test_summary_tolerance.py` is a Tier-1 threshold marked quarantine. Timing/correctness thresholds cannot hide in Tier-3 environmental quarantine.
-- Run measured repetitions under fixed conditions. If the budget is current and statistically defensible, remove quarantine and make the test a stable blocking gate; if it has no active contract/owner or cannot distinguish regression from runner noise, delete the threshold test. Do not fix the product.
-- `tests/agent/test_create_feature_branch.py` has a lingering file-level `flaky` TODO without issue/expiry. Reproduce using the 20 isolated + 10 parallel/5-seed matrix. Root-cause test state leakage if local; otherwise remove dominated cases with no unique contract. Never leave the marker as the outcome.
+- Replay the exact WP02 bootstrap patch on immutable base, then run identical repaired-base and HEAD repetitions under the same environment hash. If the budget is current and statistically defensible, remove quarantine and make the test a stable blocking gate; if it has no active contract/owner or cannot distinguish regression from runner noise, delete the threshold test. Do not fix the product.
+- `tests/agent/test_create_feature_branch.py` has a lingering file-level `flaky` TODO without issue/expiry. Run the same 20 isolated + 10 CI-parallel matrix across five recorded `PYTHONHASHSEED`s on repaired base and HEAD. Mixed outcomes confirm flake; all-green is “not reproduced,” never proof of non-flakiness. Root-cause test state leakage if local; otherwise remove dominated cases with no unique contract. Never leave the marker as the outcome.
 
 ## T017 — Honest #2782 Red
 
@@ -103,6 +115,7 @@ Remove tests that never execute or cannot block a regression. Distinguish perman
 - Focused pytest for every retained/changed file.
 - Collect census and assert zero permanent `KEEP` non-executors, zero unauthorized quarantine/flaky markers, exactly one #2782 node selected.
 - Run fixed repetition/seed topology for any flake claim and store outcomes.
+- Hash the identical base/HEAD commands, environment, bootstrap patch, seeds, worker topology, and every outcome; base-red/head-red is pre-existing, base-green/head-red blocks as introduced.
 - `ruff` changed files; no broad assertion weakening.
 
 ## Definition of Done
@@ -110,6 +123,7 @@ Remove tests that never execute or cannot block a regression. Distinguish perman
 - [ ] 12 known permanent skipped bodies and live-server placeholder removed.
 - [ ] Every inert census entry has terminal verdict; zero forbidden temporary states.
 - [ ] Invalid quarantine/flaky marker resolved, not renamed.
+- [ ] Repaired-base/HEAD repetition matrices are identical and raw outcomes are hash-addressed.
 - [ ] Exactly one honest blocking #2782 red remains.
 - [ ] Focused tests/collection prove no required node is silently unrouted.
 
