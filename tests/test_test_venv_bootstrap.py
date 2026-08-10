@@ -13,6 +13,8 @@ import pytest
 from tests import conftest as root_conftest
 
 
+pytestmark = pytest.mark.fast
+
 _SOURCE_VERSION = "9.9.9"
 
 
@@ -75,19 +77,19 @@ def _bootstrap_worker(
         results.put(("ok", str(path)))
 
 
-def _spawn_context() -> multiprocessing.context.BaseContext:
+def _spawn_context() -> Any:
     return multiprocessing.get_context("spawn")
 
 
 def _start_worker(
-    context: multiprocessing.context.BaseContext,
+    context: Any,
     project_root: Path,
     start: Any,
     results: Any,
     *,
     blocking: bool = False,
 ) -> multiprocessing.Process:
-    process = context.Process(
+    process: multiprocessing.Process = context.Process(
         target=_bootstrap_worker,
         args=(str(project_root), start, results),
         kwargs={"blocking": blocking},

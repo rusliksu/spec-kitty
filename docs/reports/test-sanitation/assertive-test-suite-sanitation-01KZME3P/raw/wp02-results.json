@@ -1,0 +1,106 @@
+{
+  "schema_version": "wp02-results/v1",
+  "mission": "assertive-test-suite-sanitation-01KZME3P",
+  "work_package": "WP02",
+  "captured_at": "2026-08-10T10:23:57Z",
+  "immutable_base": "28ae75ea998c898aba57364db7a06d2088bd2af2",
+  "pre_wp_head": "3cbff4a47",
+  "implementation_commits": {
+    "bootstrap": "a779cd122",
+    "scanner": "2e6a32f8d"
+  },
+  "environment": {
+    "os": "macOS 15.7.7 (24G720), Darwin 24.6.0 arm64",
+    "python": "CPython 3.11.15",
+    "runner": "local Apple Silicon",
+    "install": "uv sync --frozen --all-extras"
+  },
+  "pre_existing_attribution": [
+    {
+      "issue": "#3283",
+      "status": "pre-existing on immutable base",
+      "evidence": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/bootstrap-failure.txt",
+      "sha256": "0f288e5ea1009eeaf7f4f5b37a71b881b3aa73572adb838836277ff6cccb1955",
+      "summary": "A 60-second lock was held across an editable install exceeding 90 seconds; sibling workers cascaded setup errors before test bodies."
+    },
+    {
+      "issue": "#2645",
+      "status": "pre-existing on immutable base",
+      "summary": "Each focused collection reparsed and repeatedly rescanned the complete tests tree; ordinary result aliases amplified propagation."
+    }
+  ],
+  "red_first": {
+    "command": ".venv/bin/pytest tests/test_test_venv_bootstrap.py -k malformed -q --tb=short",
+    "result": "1 failed, 9 deselected in 118.56s",
+    "failure": "AttributeError: module 'tests.conftest' has no attribute '_VENV_STATE_PATH'",
+    "collection_probe": {
+      "command": ".venv/bin/pytest tests/test_test_venv_bootstrap.py --collect-only",
+      "result": "10 tests collected in 41.39s"
+    }
+  },
+  "patches": {
+    "bootstrap": {
+      "path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-replay.patch",
+      "sha256": "a8db3e4a7155370a7f2decffaff1fe08bdd198c895e4c7a8a967d66c3419f91d"
+    },
+    "scanner": {
+      "path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-scanner-replay.patch",
+      "sha256": "1dbe7454d2592f1a5dd6744f5fc77fd99cf43e6f27af2ce8d457d1b435ed41f5"
+    },
+    "replay": {
+      "workspace": "/tmp/spec-kitty-wp02-final4.q7dVH3/base",
+      "apply": "both patches applied unchanged to immutable base; all five touched files were byte-identical to HEAD",
+      "bootstrap_result": "10 passed, 2 skipped in 94.58s",
+      "scanner_result": "2 passed, 110 deselected in 0.63s"
+    }
+  },
+  "verification": [
+    {
+      "command": ".venv/bin/pytest tests/test_test_venv_bootstrap.py -q --tb=short",
+      "result": "10 passed, 2 skipped on macOS; Windows-only cases skipped"
+    },
+    {
+      "command": ".venv/bin/pytest tests/_support/test_wall_clock_assertions.py -q --tb=short",
+      "result": "112 passed in 26.09s"
+    },
+    {
+      "command": ".venv/bin/pytest tests/integration/test_pytest_venv_concurrency.py -q --tb=short",
+      "result": "1 passed in 84.02s"
+    },
+    {
+      "command": "three consecutive runs of test_two_spawned_processes_publish_one_shared_venv",
+      "result": "1 passed in 1.26s; 1 passed in 1.02s; 1 passed in 0.97s"
+    },
+    {
+      "command": "identical cached focused scanner rerun",
+      "result": "2 passed in 0.70s; real 1.80s"
+    }
+  ],
+  "matched_cold_scanner_timing": {
+    "command": ".venv/bin/pytest tests/_support/test_wall_clock_assertions.py -k 'resolves_cross_file_clock_aliases or format_wall_clock' -q --tb=short",
+    "cache_policy": "remove only .pytest_cache/wall-clock-assertion-scan before each HEAD run; bootstrap-only base has no scanner cache",
+    "bootstrap_only_base_real_seconds": [117.92, 52.97, 54.42],
+    "bootstrap_only_base_median_seconds": 54.42,
+    "head_real_seconds": [44.65, 44.66, 45.07],
+    "head_median_seconds": 44.66,
+    "median_reduction_percent": 17.93,
+    "scanner_optimized_base_real_seconds": [45.01, 44.36, 44.75],
+    "scanner_optimized_base_median_seconds": 44.75,
+    "attribution": "#2645 scanner optimization only; no test sanitation deletion or CI routing savings included"
+  },
+  "platform_routes": {
+    "macos": "local results above",
+    "linux": {
+      "workflow": ".github/workflows/ci-quality.yml",
+      "job": "fast-tests-core-misc (core-misc)",
+      "selector": "-m 'fast and not windows_ci and not regression' with residual tests/ root",
+      "status": "actual PR job ID/URL deferred to WP08 integrated-commit closure"
+    },
+    "windows": {
+      "workflow": ".github/workflows/ci-windows.yml",
+      "job": "windows-critical",
+      "selector": "git grep -l '@pytest.mark.windows_ci' -- tests; pytest -m windows_ci",
+      "status": "actual PR job ID/URL deferred to WP08 integrated-commit closure"
+    }
+  }
+}

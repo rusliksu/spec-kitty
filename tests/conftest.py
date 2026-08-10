@@ -925,13 +925,13 @@ def _ensure_test_venv(
             heartbeat.join(timeout=max(1.0, _heartbeat_interval * 2))
 
     age = "unknown"
-    owner = "unknown"
+    owner_summary = "unknown"
     if last_observed is not None:
         age = f"{max(0.0, time.time() - last_observed.heartbeat_at):.1f}s"
-        owner = f"pid={last_observed.owner_pid} start={last_observed.process_start_token}"
+        owner_summary = f"pid={last_observed.owner_pid} start={last_observed.process_start_token}"
     raise RuntimeError(
         f"Timed out waiting {_wait_timeout:.1f}s for shared test venv {final_path}; "
-        f"owner={owner}, heartbeat_age={age}, state={state_path}. "
+        f"owner={owner_summary}, heartbeat_age={age}, state={state_path}. "
         "Confirm the owner process is stopped, then inspect the state file before removing it."
     )
 
