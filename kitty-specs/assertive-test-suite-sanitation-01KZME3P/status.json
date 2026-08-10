@@ -1,7 +1,7 @@
 {
-  "event_count": 180,
-  "last_event_id": "01KZPD98CXKAHK2MSD9FQZQPT3",
-  "materialized_at": "2026-08-10T17:59:45.821180+00:00",
+  "event_count": 181,
+  "last_event_id": "01KZPDA2FW5NS9B5HSXYXQBJKM",
+  "materialized_at": "2026-08-10T18:00:12.540767+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -11,9 +11,9 @@
     "canceled": 0,
     "claimed": 0,
     "done": 0,
-    "for_review": 1,
+    "for_review": 0,
     "in_progress": 0,
-    "in_review": 1,
+    "in_review": 2,
     "planned": 2
   },
   "work_packages": {
@@ -527,20 +527,20 @@
       ]
     },
     "WP15": {
-      "actor": "wp15-impl",
-      "agent": "wp15-impl",
-      "agent_profile": "architect-alphonso",
+      "actor": "wp15-reviewer",
+      "agent": "wp15-reviewer",
+      "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "for_review",
-      "last_event_id": "01KZPD98CXKAHK2MSD9FQZQPT3",
-      "last_transition_at": "2026-08-10T17:59:45.821180+00:00",
+      "lane": "in_review",
+      "last_event_id": "01KZPDA2FW5NS9B5HSXYXQBJKM",
+      "last_transition_at": "2026-08-10T18:00:12.540767+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "Implemented 12-path packaging/CLI sanitation: 109 to 10 nodes; focused 10 passed; WP01 auditor, ruff, mypy, diff clean; overlap 111 passed with 3 inherited ANSI assumptions. Runtime pre-review cli/docs shard produced zero failures but timed out at 300s, so transition uses the explicit skip-pre-review-gate override."
       ],
       "provider": "__resolved_provider_absent__",
-      "role": "implementer",
+      "role": "reviewer",
       "shell_pid": 28365,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
