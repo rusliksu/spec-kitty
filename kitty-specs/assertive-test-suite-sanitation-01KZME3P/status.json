@@ -337,7 +337,7 @@
     },
     "WP11": {
       "actor": "user",
-      "agent": "wp11-reviewer",
+      "agent": "",
       "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "force_count": 0,
@@ -349,21 +349,22 @@
         "Ready for review: canonical gate timed out after 300s on unrelated planning-repo tests; WP11 owned gate passed 2662/2662 with 1 skip; removed 477 dominated nodes; 77-group ledger and causal receipts validate"
       ],
       "provider": "__resolved_provider_absent__",
+      "review": null,
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP11-specify-duplicates/review-cycle-2.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP11-specify-duplicates/review-cycle-2.md",
-        "reviewer": "user",
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP11-specify-duplicates/review-cycle-1.md",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP11-specify-duplicates/review-cycle-1.md",
+        "reviewer": "reviewer-renata",
         "verdict": "changes_requested"
       },
       "role": "reviewer",
-      "shell_pid": 28365,
+      "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T076": "done",
-        "T077": "done",
-        "T078": "done",
-        "T079": "done",
-        "T080": "done"
+        "T076": "planned",
+        "T077": "planned",
+        "T078": "planned",
+        "T079": "planned",
+        "T080": "planned"
       },
       "tracker_refs": [
         "#1931"
