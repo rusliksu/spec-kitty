@@ -122,7 +122,7 @@
     },
     {
       "family": "GuardCapability flow boundary",
-      "control": "STANDARD capability is classified without protected authority",
+      "control": "STANDARD capability produces no violation through the exact protected-flow enforcement callable",
       "fault": "plant GuardCapability.TEST_MODE at a non-authority site",
       "act_reached": true,
       "intended_oracle_failed": true
@@ -172,6 +172,27 @@
       "exit_code": 0
     }
   ],
+  "cycle2_review_remediation": {
+    "probe_artifact": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp10-probes-cycle2.json",
+    "probe_artifact_sha256": "b91073daa5e591c78ecc61f923db66e5808f5a9d9202795a23c6ced15ee08be6",
+    "deep_keep_rows": 42,
+    "deleted_family_mappings": 12,
+    "selected_probe_execution": {
+      "command": ".venv/bin/pytest -q -p no:cacheprovider <42 exact selected probe nodes>",
+      "outcome": "55 passed in 50.36s",
+      "exit_code": 0
+    },
+    "live_oracle_execution": {
+      "command": ".venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_guard_capability_call_sites.py tests/architectural/test_dossier_sync_boundary.py",
+      "outcome": "8 passed in 64.50s",
+      "exit_code": 0
+    },
+    "restored_green_execution": {
+      "command": ".venv/bin/pytest -q -p no:cacheprovider <42 exact surviving WP10 paths>",
+      "outcome": "535 passed, 2 xfailed in 261.21s",
+      "exit_code": 0
+    }
+  },
   "integration_handoff": {
     "central_map_edited": false,
     "expected_arch_shard_map_removals": [

@@ -50,6 +50,17 @@ def _collect_imports(
     return edges
 
 
+def _sync_import_violations(
+    package_path: Path, *, source_root: Path = SRC
+) -> list[str]:
+    """Run the live dossier-to-sync boundary oracle for one source corpus."""
+    return [
+        f"  {source}: imports '{module}'"
+        for source, module in _collect_imports(package_path, source_root=source_root)
+        if module == "specify_cli.sync" or module.startswith("specify_cli.sync.")
+    ]
+
+
 class TestDossierSyncBoundary:
     """specify_cli.dossier must not import specify_cli.sync."""
 
@@ -61,11 +72,7 @@ class TestDossierSyncBoundary:
         """
         edges = _collect_imports(DOSSIER_PATH)
         assert edges, "dossier import scan reached no live source edges"
-        violations = [
-            f"  {src}: imports '{mod}'"
-            for src, mod in edges
-            if mod == "specify_cli.sync" or mod.startswith("specify_cli.sync.")
-        ]
+        violations = _sync_import_violations(DOSSIER_PATH)
         assert not violations, (
             "specify_cli.dossier must not import specify_cli.sync.\n"
             "Violations found (including lazy and TYPE_CHECKING imports):\n"
@@ -79,15 +86,9 @@ class TestDossierSyncBoundary:
         package.mkdir()
         source = package / "consumer.py"
         source.write_text("from specify_cli.identity import project\n", encoding="utf-8")
-        assert not [
-            mod
-            for _path, mod in _collect_imports(package, source_root=tmp_path)
-            if mod.startswith("specify_cli.sync")
-        ]
+        assert _sync_import_violations(package, source_root=tmp_path) == []
 
         source.write_text("from specify_cli.sync import consent\n", encoding="utf-8")
-        assert [
-            mod
-            for _path, mod in _collect_imports(package, source_root=tmp_path)
-            if mod.startswith("specify_cli.sync")
+        assert _sync_import_violations(package, source_root=tmp_path) == [
+            "  dossier/consumer.py: imports 'specify_cli.sync'"
         ]
