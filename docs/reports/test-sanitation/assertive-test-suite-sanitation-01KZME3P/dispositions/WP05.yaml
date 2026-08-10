@@ -84,7 +84,8 @@ dispositions:
         intended_oracle_failed: true
         command: Apply patch 241dddc5 in detached f8ab59dbe^ worktree; run exact survivor node; restore patch; rerun exact node.
         environment: CPython 3.11 detached disposable worktree, cache disabled
-        raw_artifact_hash: 241dddc5150e310352db7806b6faf91fcfa28511fd996ef26e5c3644b0bae570
+        raw_artifact_path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-probes/batch-drain.json
+        raw_artifact_hash: e2d7774f0e8c9d8d4bdf552e9451e4773fe5e51d002c46a9ebe34495257e702f
     verdict: DELETE
     state: terminal
     action: Delete frozen symbol/count/history scaffold; keep stronger live negative invariant.
@@ -129,7 +130,8 @@ dispositions:
         intended_oracle_failed: true
         command: Apply patch ca9d643a in detached f8ab59dbe^ worktree; run contract parity plus exact live terminology gate; restore; rerun.
         environment: CPython 3.11 detached disposable worktree, cache disabled
-        raw_artifact_hash: ca9d643ad1729a86793648a6062821fbb613f7e0ef5f518d29d1e598994516fe
+        raw_artifact_path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-probes/contract-parity.json
+        raw_artifact_hash: 69e5e8fd1ba2d4fda18c3924444103a009b871d3bf54101fd5e736e95e9151df
     verdict: DELETE
     state: terminal
     action: Delete historical parity driver duplicated by enforcing consumer tests.
@@ -178,7 +180,8 @@ dispositions:
         intended_oracle_failed: true
         command: Apply patch 2937c3d2 in detached f8ab59dbe^ worktree; run exact count gate; restore; rerun.
         environment: CPython 3.11 detached disposable worktree, cache disabled
-        raw_artifact_hash: 2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa
+        raw_artifact_path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-probes/shape-ratchets-combined.json
+        raw_artifact_hash: 171e90f915ef970184c29156b05ec1a4fed312760404b3553be008404d2648b1
     verdict: DELETE
     state: terminal
     action: Delete heuristic prose classifier and frozen directory-count ceilings.
@@ -225,7 +228,8 @@ dispositions:
         intended_oracle_failed: true
         command: Apply patch 2937c3d2 behavior-preserving node rename in detached f8ab59dbe^ worktree; run exact floor; restore; rerun.
         environment: CPython 3.11 detached disposable worktree, cache disabled
-        raw_artifact_hash: 2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa
+        raw_artifact_path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-probes/shape-ratchets-combined.json
+        raw_artifact_hash: 171e90f915ef970184c29156b05ec1a4fed312760404b3553be008404d2648b1
     verdict: DELETE
     state: terminal
     action: Delete historical collected-node floor and its known-failure pins.
@@ -272,7 +276,8 @@ dispositions:
         intended_oracle_failed: true
         command: Apply patch 2937c3d2 with live retired anchor; run advisory node; restore; rerun.
         environment: CPython 3.11 detached disposable worktree, cache disabled
-        raw_artifact_hash: 2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa
+        raw_artifact_path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-probes/shape-ratchets-combined.json
+        raw_artifact_hash: 171e90f915ef970184c29156b05ec1a4fed312760404b3553be008404d2648b1
     verdict: DELETE
     state: terminal
     action: Delete never-fail advisory sweep and self-tests of its private scanner.
@@ -318,7 +323,8 @@ dispositions:
         intended_oracle_failed: true
         command: Apply patch 2937c3d2 with Git-HEAD selector reintroduction; run behavioral survivor; restore; rerun.
         environment: CPython 3.11 detached disposable worktree and temporary Git repository
-        raw_artifact_hash: 2937c3d29abd916336246ebc07e4fd2ab9f4f20642ed82aa1bcdb0f06443baaa
+        raw_artifact_path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-probes/shape-ratchets-combined.json
+        raw_artifact_hash: 171e90f915ef970184c29156b05ec1a4fed312760404b3553be008404d2648b1
     verdict: DELETE
     state: terminal
     action: Delete source-token/test-only-helper scaffold and retain behavioral write-target oracle.
@@ -366,7 +372,8 @@ dispositions:
         intended_oracle_failed: true
         command: Apply patch db326e55 in detached f8ab59dbe^ worktree; run old AST node plus two behavioral nodes; restore; rerun all three.
         environment: CPython 3.11 detached disposable worktree, cache disabled
-        raw_artifact_hash: db326e55aac5a444da2161a8dec47f24d722bc85261b386d57a8690331f79794
+        raw_artifact_path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-probes/private-name-plan.json
+        raw_artifact_hash: 676a2e5c77a1c100f4056ec34aab416a68181d592f27d3795f631bc729531bfc
     verdict: DELETE
     state: terminal
     action: Delete exact-name AST and self-presence scaffold; retain direct configured/typeless behavioral coverage.
@@ -409,7 +416,8 @@ dispositions:
         intended_oracle_failed: true
         command: Apply patch 7a194861 behavior-preserving constant rename in detached f8ab59dbe^ worktree; run old shape guard plus behavioral round-trip; restore; rerun.
         environment: CPython 3.11 detached disposable worktree, cache disabled
-        raw_artifact_hash: 7a1948617f72b0e829357f9863b3ee8e2deeac2a342ac70fdd73a62e59b291c1
+        raw_artifact_path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-probes/retrospective-constant.json
+        raw_artifact_hash: fb3bb6a679d7ae7312ce59205ad51bda9d0e05d36f67eb30740d396310b6591d
     verdict: DELETE
     state: terminal
     action: Delete positive constant value/export/literal-placement scaffold.
