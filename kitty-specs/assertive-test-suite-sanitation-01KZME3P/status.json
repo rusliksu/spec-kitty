@@ -236,9 +236,9 @@
       "provider": "__resolved_provider_absent__",
       "review": null,
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP06-baseline-red-adjudication/review-cycle-3.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP06-baseline-red-adjudication/review-cycle-3.md",
-        "reviewer": "user",
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP06-baseline-red-adjudication/review-cycle-2.md",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP06-baseline-red-adjudication/review-cycle-2.md",
+        "reviewer": "reviewer-renata",
         "verdict": "changes_requested"
       },
       "role": "reviewer",
