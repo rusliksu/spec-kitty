@@ -1,7 +1,7 @@
 {
-  "event_count": 186,
-  "last_event_id": "01KZPF4TA42WQVZWGX34T946MM",
-  "materialized_at": "2026-08-10T18:32:17.476839+00:00",
+  "event_count": 188,
+  "last_event_id": "01KZPF7WH4FPFHSMVEFWE9Z0N4",
+  "materialized_at": "2026-08-10T18:33:58.017548+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -12,9 +12,9 @@
     "claimed": 0,
     "done": 0,
     "for_review": 0,
-    "in_progress": 1,
+    "in_progress": 2,
     "in_review": 0,
-    "planned": 3
+    "planned": 2
   },
   "work_packages": {
     "WP01": {
@@ -463,14 +463,14 @@
       ]
     },
     "WP13": {
-      "actor": "root-arbiter",
+      "actor": "wp13-schema-c3",
       "agent": "root-arbiter",
-      "agent_profile": "reviewer-renata",
+      "agent_profile": "architect-alphonso",
       "agent_profile_version": "1.0",
       "force_count": 1,
-      "lane": "planned",
-      "last_event_id": "01KZPF4TA42WQVZWGX34T946MM",
-      "last_transition_at": "2026-08-10T18:32:17.476839+00:00",
+      "lane": "in_progress",
+      "last_event_id": "01KZPF7WH4FPFHSMVEFWE9Z0N4",
+      "last_transition_at": "2026-08-10T18:33:58.017548+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "Ready for review: exact 24-file survivor gate passed 131 tests in 69.77s with 0 skips; built-in sequential scoped gate exceeded its fixed 300s timeout; evidence in wp13-results.json",
