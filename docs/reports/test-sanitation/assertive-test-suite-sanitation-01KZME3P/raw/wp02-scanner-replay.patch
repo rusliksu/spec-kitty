@@ -1,8 +1,18 @@
 diff --git a/tests/_support/test_wall_clock_assertions.py b/tests/_support/test_wall_clock_assertions.py
-index cd3d7c95f..1f615b675 100644
+index cd3d7c95f..775126ab8 100644
 --- a/tests/_support/test_wall_clock_assertions.py
 +++ b/tests/_support/test_wall_clock_assertions.py
-@@ -7,7 +7,10 @@ import pytest
+@@ -1,13 +1,20 @@
+ from __future__ import annotations
+ 
++import json
++import multiprocessing
++import os
+ from pathlib import Path
++from typing import Any
+ 
+ import pytest
+ 
  pytestmark = [pytest.mark.unit]
  
  from tests._support.wall_clock_assertions import (
@@ -13,7 +23,7 @@ index cd3d7c95f..1f615b675 100644
      find_test_python_paths,
      format_wall_clock_assertion_violations,
  )
-@@ -1096,3 +1099,60 @@ def test_format_wall_clock_assertion_violations_names_injection_pattern(tmp_path
+@@ -1096,3 +1103,112 @@ def test_format_wall_clock_assertion_violations_names_injection_pattern(tmp_path
  
      assert "Inject a stable `now=`/clock" in message
      assert "test_bad.py:4: datetime.now()" in message
@@ -31,6 +41,14 @@ index cd3d7c95f..1f615b675 100644
 +        path.write_text(source, encoding="utf-8")
 +        paths.append(path)
 +    return paths
++
++
++def _cached_scan_worker(test_file: str, cache_root: str, results: Any) -> None:
++    violations = find_wall_clock_assertion_violations_cached(
++        [Path(test_file)],
++        Path(cache_root),
++    )
++    results.put((os.getpid(), [violation.render() for violation in violations]))
 +
 +
 +def test_import_alias_worklist_scales_approximately_linearly_with_common_names(tmp_path: Path) -> None:
@@ -71,11 +89,55 @@ index cd3d7c95f..1f615b675 100644
 +    assert repaired == first
 +    assert cache_files[0].read_text(encoding="utf-8").startswith("{")
 +
++    payload = json.loads(cache_files[0].read_text(encoding="utf-8"))
++    payload["violations"] = []
++    cache_files[0].write_text(json.dumps(payload), encoding="utf-8")
++    assert find_wall_clock_assertion_violations_cached([test_file], cache_root) == first
++
++    payload = json.loads(cache_files[0].read_text(encoding="utf-8"))
++    payload["violations"][0]["call"] = "time.time()"
++    cache_files[0].write_text(json.dumps(payload), encoding="utf-8")
++    assert find_wall_clock_assertion_violations_cached([test_file], cache_root) == first
++
 +    test_file.write_text("def test_good():\n    assert 1 == 1\n", encoding="utf-8")
 +    assert find_wall_clock_assertion_violations_cached([test_file], cache_root) == []
 +    assert len(list(cache_root.glob("*.json"))) == 2
++
++
++def test_cached_scan_is_published_and_read_by_distinct_processes(tmp_path: Path) -> None:
++    test_file = tmp_path / "test_bad.py"
++    cache_root = tmp_path / "cache"
++    test_file.write_text(
++        "from datetime import datetime\n\ndef test_bad():\n    assert datetime.now().year == 2026\n",
++        encoding="utf-8",
++    )
++    context = multiprocessing.get_context("spawn")
++    results = context.Queue()
++
++    publisher = context.Process(
++        target=_cached_scan_worker,
++        args=(str(test_file), str(cache_root), results),
++    )
++    publisher.start()
++    publisher.join(timeout=10)
++    assert publisher.exitcode == 0
++
++    reader = context.Process(
++        target=_cached_scan_worker,
++        args=(str(test_file), str(cache_root), results),
++    )
++    reader.start()
++    reader.join(timeout=10)
++    assert reader.exitcode == 0
++
++    first_pid, first_rows = results.get(timeout=1)
++    second_pid, second_rows = results.get(timeout=1)
++    assert first_pid != second_pid
++    assert first_rows == second_rows
++    assert len(first_rows) == 1
++    assert len(list(cache_root.glob("*.json"))) == 1
 diff --git a/tests/_support/wall_clock_assertions.py b/tests/_support/wall_clock_assertions.py
-index cefa2d3b6..50f156d8b 100644
+index cefa2d3b6..5c6b00cb4 100644
 --- a/tests/_support/wall_clock_assertions.py
 +++ b/tests/_support/wall_clock_assertions.py
 @@ -1,11 +1,18 @@
@@ -102,12 +164,12 @@ index cefa2d3b6..50f156d8b 100644
  _SHADOWED_PATH = ("<shadowed>",)
  _SETUP_METHOD_NAMES = {"setup", "setup_method", "setup_class", "setUp", "setUpClass"}
  _MODULE_SETUP_NAMES = {"setup_module", "setup_function", "setUpModule"}
-+_SCAN_CACHE_VERSION = 1
++_SCAN_CACHE_VERSION = 2
 +_SCAN_CACHE_LOCK_TIMEOUT_S = 600.0
  
  
  @dataclass(frozen=True, order=True)
-@@ -45,54 +54,239 @@ class WallClockAssertionViolation:
+@@ -45,54 +54,257 @@ class WallClockAssertionViolation:
          return f"{self.path}:{self.line}: {self.call}"
  
  
@@ -223,6 +285,12 @@ index cefa2d3b6..50f156d8b 100644
 +            return None
 +        if payload.get("digest") != digest or not isinstance(payload.get("violations"), list):
 +            return None
++        expected_authenticator = _wall_clock_scan_result_authenticator(
++            digest,
++            payload["violations"],
++        )
++        if payload.get("result_sha256") != expected_authenticator:
++            return None
 +        violations: list[WallClockAssertionViolation] = []
 +        for row in payload["violations"]:
 +            if not isinstance(row, dict):
@@ -249,13 +317,15 @@ index cefa2d3b6..50f156d8b 100644
 +    digest: str,
 +    violations: list[WallClockAssertionViolation],
 +) -> None:
++    rows = [
++        {"path": str(violation.path), "line": violation.line, "call": violation.call}
++        for violation in violations
++    ]
 +    payload = {
 +        "version": _SCAN_CACHE_VERSION,
 +        "digest": digest,
-+        "violations": [
-+            {"path": str(violation.path), "line": violation.line, "call": violation.call}
-+            for violation in violations
-+        ],
++        "violations": rows,
++        "result_sha256": _wall_clock_scan_result_authenticator(digest, rows),
 +    }
 +    temporary = result_path.with_name(f"{result_path.name}.tmp-{os.getpid()}-{uuid.uuid4().hex}")
 +    try:
@@ -266,6 +336,16 @@ index cefa2d3b6..50f156d8b 100644
 +        os.replace(temporary, result_path)
 +    finally:
 +        temporary.unlink(missing_ok=True)
++
++
++def _wall_clock_scan_result_authenticator(digest: str, rows: object) -> str:
++    """Bind cached result rows to their version and source-input digest."""
++    canonical = json.dumps(
++        {"version": _SCAN_CACHE_VERSION, "digest": digest, "violations": rows},
++        sort_keys=True,
++        separators=(",", ":"),
++    ).encode("utf-8")
++    return hashlib.sha256(canonical).hexdigest()  # noqa: TID251
 +
 +
  def find_test_python_paths(root: Path) -> list[Path]:
@@ -368,7 +448,7 @@ index cefa2d3b6..50f156d8b 100644
  def _module_names(path: Path, root: Path) -> set[str]:
      try:
          relative = path.with_suffix("").relative_to(root)
-@@ -118,13 +312,19 @@ def _module_exports(scope: _AliasMap) -> _AliasMap:
+@@ -118,13 +330,19 @@ def _module_exports(scope: _AliasMap) -> _AliasMap:
  def _collect_conftest_aliases(
      paths: list[Path],
      import_aliases: dict[str, _AliasMap],
@@ -389,7 +469,7 @@ index cefa2d3b6..50f156d8b 100644
          visitor = _WallClockAssertionVisitor(path, import_aliases)
          visitor.visit(tree)
          conftest_fixture_aliases[path] = visitor.fixture_return_aliases()
-@@ -1448,6 +1648,7 @@ def _is_test_function(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+@@ -1448,6 +1666,7 @@ def _is_test_function(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
      return node.name.startswith("test_")
  
  
@@ -397,7 +477,7 @@ index cefa2d3b6..50f156d8b 100644
  def _function_bound_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
      names = _argument_names(node.args)
      visitor = _FunctionBindingVisitor()
-@@ -1457,6 +1658,7 @@ def _function_bound_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[s
+@@ -1457,6 +1676,7 @@ def _function_bound_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[s
      return names
  
  
@@ -406,7 +486,7 @@ index cefa2d3b6..50f156d8b 100644
      visitor = _FunctionBindingVisitor()
      for statement in node.body:
 diff --git a/tests/conftest.py b/tests/conftest.py
-index 95dfca3f7..906a5ff18 100644
+index b87a18257..52f311908 100644
 --- a/tests/conftest.py
 +++ b/tests/conftest.py
 @@ -31,7 +31,7 @@ from tests._support.quarantine import (

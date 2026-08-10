@@ -2,12 +2,13 @@
   "schema_version": "wp02-results/v1",
   "mission": "assertive-test-suite-sanitation-01KZME3P",
   "work_package": "WP02",
-  "captured_at": "2026-08-10T10:23:57Z",
+  "captured_at": "2026-08-10T11:33:36Z",
   "immutable_base": "28ae75ea998c898aba57364db7a06d2088bd2af2",
   "pre_wp_head": "3cbff4a47",
   "implementation_commits": {
     "bootstrap": "a779cd122",
-    "scanner": "2e6a32f8d"
+    "scanner": "2e6a32f8d",
+    "review_cycle_2": "8f0d24768"
   },
   "environment": {
     "os": "macOS 15.7.7 (24G720), Darwin 24.6.0 arm64",
@@ -19,9 +20,10 @@
     {
       "issue": "#3283",
       "status": "pre-existing on immutable base",
-      "evidence": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/bootstrap-failure.txt",
-      "sha256": "0f288e5ea1009eeaf7f4f5b37a71b881b3aa73572adb838836277ff6cccb1955",
-      "summary": "A 60-second lock was held across an editable install exceeding 90 seconds; sibling workers cascaded setup errors before test bodies."
+      "evidence": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-pre-fix.txt",
+      "probe": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-pre-fix-probe.py",
+      "sha256": "236a30ed498f08aa7694f0ac80fc5c7688880ef1e4343cf8f6b8026abd52c57c",
+      "summary": "Controlled immutable-base topology fault: a live builder held the fixed lock across a slow direct-to-final build; the waiter timed out and the incomplete final path was observable."
     },
     {
       "issue": "#2645",
@@ -30,52 +32,67 @@
     }
   ],
   "red_first": {
-    "command": ".venv/bin/pytest tests/test_test_venv_bootstrap.py -k malformed -q --tb=short",
-    "result": "1 failed, 9 deselected in 118.56s",
-    "failure": "AttributeError: module 'tests.conftest' has no attribute '_VENV_STATE_PATH'",
-    "collection_probe": {
-      "command": ".venv/bin/pytest tests/test_test_venv_bootstrap.py --collect-only",
-      "result": "10 tests collected in 41.39s"
-    }
+    "command": ".venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-pre-fix-probe.py",
+    "fault": "Preserve immutable-base fixed-lock/direct-to-final topology while compressing its 60s/>90s timeout/build duration to 0.25s/1.0s; heartbeat remains absent.",
+    "act": "Two spawned OS processes; waiter starts only after the live builder enters the locked build and publishes an incomplete final directory.",
+    "intended_oracle": "The live owner completes while its waiter never errors and no incomplete final cache path is visible.",
+    "result": "exit 0 for reproduced fault; partial_final_observed=true; one published outcome and one timeout outcome; oracle_failed=true",
+    "raw_artifact": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-pre-fix.txt",
+    "raw_artifact_sha256": "236a30ed498f08aa7694f0ac80fc5c7688880ef1e4343cf8f6b8026abd52c57c"
   },
   "patches": {
     "bootstrap": {
       "path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-replay.patch",
-      "sha256": "a8db3e4a7155370a7f2decffaff1fe08bdd198c895e4c7a8a967d66c3419f91d"
+      "sha256": "d21377282c4fea182fb7925765804c75b48edfe7145c4c950ce9ca0cf47afecf"
     },
     "scanner": {
       "path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-scanner-replay.patch",
-      "sha256": "1dbe7454d2592f1a5dd6744f5fc77fd99cf43e6f27af2ce8d457d1b435ed41f5"
+      "sha256": "830f164c224f56766dffa0404c960b751579dfb9ff3328762235dc039b0339d3"
     },
     "replay": {
-      "workspace": "/tmp/spec-kitty-wp02-final4.q7dVH3/base",
+      "workspace": "/tmp/spec-kitty-wp02-cycle2-final2.Fiti5u/base",
       "apply": "both patches applied unchanged to immutable base; all five touched files were byte-identical to HEAD",
-      "bootstrap_result": "10 passed, 2 skipped in 94.58s",
-      "scanner_result": "2 passed, 110 deselected in 0.63s"
+      "bootstrap_result": "12 passed, 2 skipped in 5.47s on the byte-identical lane",
+      "scanner_result": "113 passed in 1.30s on the byte-identical lane"
     }
   },
   "verification": [
     {
       "command": ".venv/bin/pytest tests/test_test_venv_bootstrap.py -q --tb=short",
-      "result": "10 passed, 2 skipped on macOS; Windows-only cases skipped"
+      "result": "12 passed, 2 skipped in 5.47s on macOS; regular-file and symlink invalid-final cases passed; Windows-only cases skipped"
     },
     {
       "command": ".venv/bin/pytest tests/_support/test_wall_clock_assertions.py -q --tb=short",
-      "result": "112 passed in 26.09s"
+      "result": "113 passed in 1.30s; schema-valid omission/substitution both forced rescan; distinct spawned publisher/reader passed"
     },
     {
       "command": ".venv/bin/pytest tests/integration/test_pytest_venv_concurrency.py -q --tb=short",
       "result": "1 passed in 84.02s"
     },
     {
-      "command": "three consecutive runs of test_two_spawned_processes_publish_one_shared_venv",
-      "result": "1 passed in 1.26s; 1 passed in 1.02s; 1 passed in 0.97s"
+      "command": ".venv/bin/ruff check tests/conftest.py tests/test_test_venv_bootstrap.py tests/_support/wall_clock_assertions.py tests/_support/test_wall_clock_assertions.py docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-pre-fix-probe.py",
+      "result": "All checks passed"
     },
     {
       "command": "identical cached focused scanner rerun",
-      "result": "2 passed in 0.70s; real 1.80s"
+      "result": "2 passed in 0.91s; schema-valid corruption and spawned cross-process publication/read selected"
     }
   ],
+  "parallel_clean_starts": {
+    "evidence": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-parallel-clean-starts.txt",
+    "sha256": "29e5808e45becb085f4771e6fb89880a328ebc00d918caa7e55ac03e2d937fd4",
+    "command": "PWHEADLESS=1 .venv/bin/pytest tests/ -n auto --dist loadfile -p no:cacheprovider --deselect tests/sync/test_orphan_sweep.py",
+    "cache_reset": "Before every run, the final venv, lease state/lock, and scanner cache were moved to a run-specific recoverable /tmp directory; all four live paths began absent.",
+    "worker_topology": "10/10 xdist workers; 37,452 collected items on every run",
+    "runs": [
+      {"run": 1, "publication_seconds": 161.716, "body_proof": "progress 0% through 100%; JUnit tests=37455", "outcome": "full completion rc=1: 37314 passed, 110 skipped, 5 xfailed, 23 failed, 3 errors in 1627.18s; no bootstrap-cascade signature"},
+      {"run": 2, "publication_seconds": 126.824, "body_proof": "3553 passed JUnit cases; progress reached 5%", "outcome": "controlled operator SIGINT after body-start oracle; deliberately not a complete-suite outcome; no bootstrap-cascade signature"},
+      {"run": 3, "publication_seconds": 138.587, "body_proof": "JUnit tests=7499 with 0 failures/0 errors; progress reached 18%", "outcome": "controlled operator SIGINT after body-start oracle; deliberately not a complete-suite outcome; no bootstrap-cascade signature"}
+    ],
+    "publication_median_seconds": 138.587,
+    "publication_maximum_seconds": 161.716,
+    "result": "Three consecutive equivalent clean starts published exactly one validated final venv and began test bodies without sibling lock-timeout cascades."
+  },
   "matched_cold_scanner_timing": {
     "command": ".venv/bin/pytest tests/_support/test_wall_clock_assertions.py -k 'resolves_cross_file_clock_aliases or format_wall_clock' -q --tb=short",
     "cache_policy": "remove only .pytest_cache/wall-clock-assertion-scan before each HEAD run; bootstrap-only base has no scanner cache",

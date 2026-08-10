@@ -36,7 +36,7 @@ dispositions:
           skip_reason: null
           markers: [slow]
           duration: {collection: 0.0, setup: 0.0, call: 84.02, cost_class: slow}
-          artifact_hash: a8db3e4a7155370a7f2decffaff1fe08bdd198c895e4c7a8a967d66c3419f91d
+          artifact_hash: d21377282c4fea182fb7925765804c75b48edfe7145c4c950ce9ca0cf47afecf
     evidence:
       profile: contract
       caller_evidence:
@@ -44,19 +44,20 @@ dispositions:
           result: 1 passed in 84.02s after two real concurrent subprocess collections
       authority_evidence:
         - reference: issue:#3283
-          result: assigned to robertDouglass and linked to this Mission; immutable-base failure reproduced before product test bodies
+          result: assigned to robertDouglass and linked to this Mission; controlled immutable-base fixed-lock topology fault reached the live-owner timeout and partial-publication oracle
         - reference: research.md:R4
           result: lease/temp-build/validate/atomic-publish state machine implemented exactly
       causal_probe:
-        kind: red-first spawned-process concurrency fault
-        fault: remove the recoverable lease and restore the fixed 60-second lock held across editable installation
+        kind: controlled immutable-base spawned-process fixed-lock fault
+        fault: preserve the immutable-base fixed lock around direct-to-final installation and compress 60s/>90s to 0.25s/1.0s with no heartbeat
         authority_violated: FR-013 and BootstrapLease live-owner/publication contract
         act_reached: true
-        intended_oracle: one build publishes exactly once while every waiter receives the same validated final path
+        intended_oracle: the live owner completes while its waiter never errors and no incomplete final cache path is visible
         intended_oracle_failed: true
-        command: .venv/bin/pytest tests/test_test_venv_bootstrap.py -k malformed -q --tb=short
-        environment: macOS 15.7.7 arm64, CPython 3.11.15, clean pre-fix shared cache
-        raw_artifact_hash: 0f288e5ea1009eeaf7f4f5b37a71b881b3aa73572adb838836277ff6cccb1955
+        command: .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-pre-fix-probe.py
+        environment: macOS 15.7.7 arm64, CPython 3.11.15, two spawned OS processes, isolated temporary cache
+        result: partial_final_observed=true; outcomes contain one published and one timeout; oracle_failed=true
+        raw_artifact_hash: 236a30ed498f08aa7694f0ac80fc5c7688880ef1e4343cf8f6b8026abd52c57c
     verdict: KEEP
     state: terminal
     action: FIX_TEST completed; retain executable spawned-process regression coverage
@@ -104,7 +105,7 @@ dispositions:
           skip_reason: null
           markers: [fast, unit]
           duration: {collection: 44.66, setup: 0.0, call: 0.01, cost_class: slow_collection}
-          artifact_hash: 1dbe7454d2592f1a5dd6744f5fc77fd99cf43e6f27af2ce8d457d1b435ed41f5
+          artifact_hash: 830f164c224f56766dffa0404c960b751579dfb9ff3328762235dc039b0339d3
     evidence:
       profile: slow
       cost_evidence:
@@ -119,7 +120,7 @@ dispositions:
         intended_oracle_failed: true
         command: .venv/bin/pytest tests/_support/test_wall_clock_assertions.py -k 'worklist or cached_scan' -q --tb=short
         environment: macOS 15.7.7 arm64, CPython 3.11.15, cold scanner cache
-        raw_artifact_hash: 1dbe7454d2592f1a5dd6744f5fc77fd99cf43e6f27af2ce8d457d1b435ed41f5
+        raw_artifact_hash: 830f164c224f56766dffa0404c960b751579dfb9ff3328762235dc039b0339d3
     verdict: KEEP
     state: terminal
     action: FIX_TEST completed; retain causal cross-file oracle and new deterministic complexity ratchet
