@@ -35,6 +35,9 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp09-results.json
 execution_mode: code_change
 owned_files:
+- tests/merge/test_push_preflight.py
+- tests/review/test_pre_review_gate_sole_caller_audit.py
+- tests/specify_cli/cli/commands/test_merge_residue_gate_single_authority_wp13.py
 - tests/architectural/test_arch_pole_deserialized.py
 - tests/architectural/test_arch_shard_marker_completeness.py
 - tests/architectural/test_arch_unblind_matrix.py

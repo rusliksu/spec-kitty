@@ -19,6 +19,19 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp13-results.json
 execution_mode: code_change
 owned_files:
+- tests/charter/test_append_promotion_primitive.py
+- tests/charter/test_charter_ownership_invariant.py
+- tests/charter/test_chokepoint_coverage.py
+- tests/charter/test_context_decomposition_completion.py
+- tests/charter/test_mission_type_key.py
+- tests/charter/test_operational_context.py
+- tests/charter/test_surface_calibration.py
+- tests/cli/test_charter_mission_type_commands.py
+- tests/doctrine/drg/test_kind_mapping_totality.py
+- tests/doctrine/test_activation_parity_guard.py
+- tests/doctrine/test_pack_root_resolver.py
+- tests/specify_cli/cli/commands/test_doctrine_collect.py
+- tests/specify_cli/test_doctrine_service_factory.py
 - tests/architectural/test_activation_registry_schema.py
 - tests/architectural/test_built_in_location_authority.py
 - tests/architectural/test_builtin_override_policy.py
