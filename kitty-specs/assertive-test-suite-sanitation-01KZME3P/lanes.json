@@ -656,6 +656,7 @@
         "tests/_arch_shard_map.py",
         "tests/_next_shard_map.py",
         "tests/architectural/_baselines.yaml",
+        "tests/architectural/_gate_coverage.py",
         "tests/architectural/_golden_count_baseline.json",
         "tests/architectural/baselines/fast-tests-core-misc-nodeids.txt",
         "tests/architectural/baselines/integration-tests-next-nodeids.txt",
@@ -733,8 +734,8 @@
       "parallel_group": 4
     }
   ],
-  "computed_at": "2026-08-10T20:37:00.065848+00:00",
+  "computed_at": "2026-08-10T20:57:44.553927+00:00",
   "computed_from": "dependency_graph+ownership",
   "planning_artifact_wps": [],
-  "planning_commit_sha": "eec525ad8322f5a17a9529f31d371521c791cee3"
+  "planning_commit_sha": "5794e4f2fbd19adb355a41c28181b9cdd4df00bb"
 }
