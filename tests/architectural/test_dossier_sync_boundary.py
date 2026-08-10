@@ -28,7 +28,9 @@ DOSSIER_PATH = SRC / "specify_cli" / "dossier"
 pytestmark = pytest.mark.architectural
 
 
-def _collect_imports(package_path: Path) -> list[tuple[str, str]]:
+def _collect_imports(
+    package_path: Path, *, source_root: Path = SRC
+) -> list[tuple[str, str]]:
     """Return (source_file, imported_module) for all imports in a package.
 
     Walks the full AST including function bodies and TYPE_CHECKING blocks.
@@ -41,10 +43,10 @@ def _collect_imports(package_path: Path) -> list[tuple[str, str]]:
             continue
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom) and node.module:
-                edges.append((str(py_file.relative_to(SRC)), node.module))
+                edges.append((str(py_file.relative_to(source_root)), node.module))
             elif isinstance(node, ast.Import):
                 for alias in node.names:
-                    edges.append((str(py_file.relative_to(SRC)), alias.name))
+                    edges.append((str(py_file.relative_to(source_root)), alias.name))
     return edges
 
 
@@ -58,6 +60,7 @@ class TestDossierSyncBoundary:
         function-body). Zero exceptions are allowed.
         """
         edges = _collect_imports(DOSSIER_PATH)
+        assert edges, "dossier import scan reached no live source edges"
         violations = [
             f"  {src}: imports '{mod}'"
             for src, mod in edges
@@ -71,9 +74,20 @@ class TestDossierSyncBoundary:
             "(or import from specify_cli.identity.project for ProjectIdentity)."
         )
 
-    def test_dossier_path_exists(self) -> None:
-        """Sanity check: dossier package must exist so the boundary test is non-vacuous."""
-        assert DOSSIER_PATH.is_dir(), (
-            f"specify_cli.dossier not found at {DOSSIER_PATH}. "
-            "Update SRC or DOSSIER_PATH if the package moved."
-        )
+    def test_import_scanner_has_two_sided_fault_bite(self, tmp_path: Path) -> None:
+        package = tmp_path / "dossier"
+        package.mkdir()
+        source = package / "consumer.py"
+        source.write_text("from specify_cli.identity import project\n", encoding="utf-8")
+        assert not [
+            mod
+            for _path, mod in _collect_imports(package, source_root=tmp_path)
+            if mod.startswith("specify_cli.sync")
+        ]
+
+        source.write_text("from specify_cli.sync import consent\n", encoding="utf-8")
+        assert [
+            mod
+            for _path, mod in _collect_imports(package, source_root=tmp_path)
+            if mod.startswith("specify_cli.sync")
+        ]

@@ -103,6 +103,15 @@ def _guard_capability_members_referenced(path: Path) -> set[str]:
     return members
 
 
+def test_guard_capability_scanner_has_two_sided_fault_bite(tmp_path: Path) -> None:
+    probe = tmp_path / "probe.py"
+    probe.write_text("capability = GuardCapability.STANDARD\n", encoding="utf-8")
+    assert _guard_capability_members_referenced(probe) == {"STANDARD"}
+
+    probe.write_text("capability = GuardCapability.TEST_MODE\n", encoding="utf-8")
+    assert _guard_capability_members_referenced(probe) == {"TEST_MODE"}
+
+
 @pytest.mark.parametrize("member", sorted(_PROTECTED_FLOW_ALLOWLISTS))
 def test_protected_flow_capability_call_sites_are_allowlisted(member: str) -> None:
     """Each protected-flow GuardCapability member binds to its ONE flow.

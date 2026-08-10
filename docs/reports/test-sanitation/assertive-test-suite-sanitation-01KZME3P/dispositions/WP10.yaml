@@ -1,0 +1,549 @@
+schema_version: test-sanitation/v1
+
+_architectural_route: &architectural_route
+  route_id: architectural
+  role: owner
+  required: true
+  events: [local]
+  selector:
+    paths: [tests/architectural/]
+    markers: []
+    ignores: []
+    environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+
+_full_parallel_route: &full_parallel_route
+  route_id: full-parallel
+  role: owner
+  required: true
+  events: [local]
+  selector:
+    paths: [tests/]
+    markers: []
+    ignores: [tests/sync/test_orphan_sweep.py]
+    environment_id: 99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849
+
+_architectural_observation: &architectural_observation
+  environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+  nodeid: null
+  collection_state: collected
+  outcome: passed
+  skip_reason: null
+  markers: []
+  duration: {collection: 0.0, setup: 0.0, call: 0.0, cost_class: fast}
+  artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+
+_full_parallel_observation: &full_parallel_observation
+  environment_id: 99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849
+  nodeid: null
+  collection_state: collected
+  outcome: passed
+  skip_reason: null
+  markers: []
+  duration: {collection: 0.0, setup: 0.0, call: 0.0, cost_class: fast}
+  artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+
+_shape_evidence: &shape_evidence
+  profile: structural
+  authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Positive implementation shape, exact names, prose, counts, and historical self-presence lack a distinct current product oracle.
+  causal_probe:
+    kind: behavior-preserving-structural-change
+    fault: Rename, relocate, or simplify the pinned implementation while preserving its current behavioral consumers.
+    authority_violated: No current product authority is violated; only the structural scaffold changes.
+    act_reached: true
+    intended_oracle: Current behavior remains green while the scaffold rejects a harmless implementation change.
+    intended_oracle_failed: true
+    command: Screen candidate Act/assertions against current consumers, delete scaffold, then run the complete surviving WP10 cohort.
+    environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+    raw_artifact_hash: 1de143279b8b949b8e98a6f9e8a70fa9a2bda0a8b603e000444c37c8ae4b6108
+
+_migration_evidence: &migration_evidence
+  profile: structural
+  authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Completed-WP parity and migration-arrangement assertions are not permanent coverage when live consumer boundaries already own the oracle.
+  causal_probe:
+    kind: equivalent-live-consumer
+    fault: Refactor the completed migration layout without changing current placement, consent, identity, or meta-reader behavior.
+    authority_violated: No current product contract is violated; the retired migration arrangement alone changes.
+    act_reached: true
+    intended_oracle: Live consumer tests remain green while historical parity and exact-layout assertions fail.
+    intended_oracle_failed: true
+    command: Delete historical migration scaffold and run the complete surviving WP10 cohort plus focused boundary tests.
+    environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+    raw_artifact_hash: 1de143279b8b949b8e98a6f9e8a70fa9a2bda0a8b603e000444c37c8ae4b6108
+
+_review: &review
+  implementer: architect-alphonso/WP10
+  independent_reviewer: pending-WP10-review
+  verdict: implementation-complete-awaiting-review
+  timestamp: '2026-08-10T15:24:52Z'
+
+dispositions:
+  - candidate:
+      id: WP10-all-declarations-positive-export-shape
+      members:
+        - tests/architectural/test_all_declarations_required.py::test_every_charter_module_declares_all
+        - tests/architectural/test_all_declarations_required.py::test_every_kernel_module_declares_all
+      granularity: function
+      source_paths: [tests/architectural/test_all_declarations_required.py]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007]
+      duplicate_group: null
+      route_memberships: [*architectural_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *architectural_observation
+          nodeid: tests/architectural/test_all_declarations_required.py::test_every_charter_module_declares_all[src/charter/__init__.py]
+    evidence: *shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: Delete blanket __all__ positive-shape requirement; public behavior and import boundaries own compatibility.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-batch-split-private-ast-shape
+      members:
+        - tests/architectural/test_batch_split_single_authority.py::test_ast_matcher_is_non_vacuous
+        - tests/architectural/test_batch_split_single_authority.py::test_no_reimplemented_len_half_split_outside_authority
+      granularity: function
+      source_paths: [tests/architectural/test_batch_split_single_authority.py]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007]
+      duplicate_group: null
+      route_memberships: [*architectural_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *architectural_observation
+          nodeid: tests/architectural/test_batch_split_single_authority.py::test_ast_matcher_is_non_vacuous
+    evidence: *shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: Delete a private-expression AST ban that rejects equivalent split implementations without a product oracle.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-empty-compat-adapter-scaffold
+      members:
+        - tests/architectural/test_compat_shims.py::test_adapter_marker_present
+        - tests/architectural/test_compat_shims.py::test_adapter_no_logic
+        - tests/architectural/test_compat_shims.py::test_bad_adapter_fixture_is_rejected
+      granularity: function
+      source_paths: [tests/architectural/test_compat_shims.py]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007]
+      duplicate_group: null
+      route_memberships: [*architectural_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *architectural_observation
+          nodeid: tests/architectural/test_compat_shims.py::test_adapter_marker_present[NOTSET]
+    evidence: *shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: Delete self-tests for an empty compatibility-adapter inventory.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-prompt-filtering-private-call-name-ban
+      members:
+        - tests/architectural/test_no_prompt_filtering_added.py::test_no_new_prompt_filter_call_sites
+      granularity: function
+      source_paths: [tests/architectural/test_no_prompt_filtering_added.py]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007]
+      duplicate_group: null
+      route_memberships: [*architectural_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *architectural_observation
+          nodeid: tests/architectural/test_no_prompt_filtering_added.py::test_no_new_prompt_filter_call_sites
+    evidence: *shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: Delete exact private-call-name filtering ban; prompt behavior owns the user contract.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-patch-seam-census-meta-scaffold
+      members:
+        - tests/architectural/test_patch_seam_census_control.py::test_arm_a_fixture_corruptible_assertions_match_ground_truth
+        - tests/architectural/test_patch_seam_census_control.py::test_arm_a_fixture_patch_sites_match_hand_derived_ground_truth
+        - tests/architectural/test_patch_seam_census_control.py::test_arm_a_sleep_nodes_exclude_the_monotonic_only_function
+        - tests/architectural/test_patch_seam_census_control.py::test_arm_b_decoys_contribute_nothing_and_grep_overcounts
+        - tests/architectural/test_patch_seam_census_control.py::test_arm_c_membership_assertion_reports_zero_cardinality
+        - tests/architectural/test_patch_seam_census_control.py::test_arm_d_bucket_counts_over_tests_sync
+        - tests/architectural/test_patch_seam_census_control.py::test_arm_e_narrowed_analyzer_misses_the_fixture_positives
+        - tests/architectural/test_patch_seam_census_control.py::test_arm_f_ast_superset_of_regex_after_removing_prose_spans
+        - tests/architectural/test_patch_seam_census_control.py::test_arm_g_own_module_sleep_seam_counts_but_is_not_corruptible
+      granularity: function
+      source_paths: [tests/architectural/test_patch_seam_census_control.py]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006]
+      duplicate_group: null
+      route_memberships: [*architectural_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *architectural_observation
+          nodeid: tests/architectural/test_patch_seam_census_control.py::test_arm_a_fixture_corruptible_assertions_match_ground_truth
+    evidence: *shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: Delete test-suite census/classifier self-validation with hand-derived counts and no product boundary.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-shared-module-patch-baseline-scaffold
+      members:
+        - tests/architectural/test_shared_module_object_patches.py::test_a_baseline_entry_does_not_survive_its_owner
+        - tests/architectural/test_shared_module_object_patches.py::test_every_baseline_row_carries_a_closed_vocabulary_disposition
+        - tests/architectural/test_shared_module_object_patches.py::test_every_baseline_row_carries_the_full_identity_triple
+        - tests/architectural/test_shared_module_object_patches.py::test_every_named_owner_resolves
+        - tests/architectural/test_shared_module_object_patches.py::test_the_allowlist_is_empty
+        - tests/architectural/test_shared_module_object_patches.py::test_the_baseline_equals_the_gate_flagged_set
+        - tests/architectural/test_shared_module_object_patches.py::test_the_baseline_size_is_registered_with_the_charter_ratchet
+        - tests/architectural/test_shared_module_object_patches.py::test_the_gate_flags_a_form_absent_from_the_tree
+        - tests/architectural/test_shared_module_object_patches.py::test_the_gate_names_the_files_it_opened
+        - tests/architectural/test_shared_module_object_patches.py::test_the_owner_completion_arm_fires_for_a_completed_owner
+      granularity: function
+      source_paths: [tests/architectural/test_shared_module_object_patches.py]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006]
+      duplicate_group: null
+      route_memberships: [*architectural_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *architectural_observation
+          nodeid: tests/architectural/test_shared_module_object_patches.py::test_a_baseline_entry_does_not_survive_its_owner
+    evidence: *shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: Delete frozen test-meta baseline, prose schema, exact count, and completed-owner scaffold.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-historical-wp-owned-files-acceptance
+      members:
+        - tests/architectural/test_wp_owned_files_no_kitty_specs.py::test_current_mission_wp_owned_files_do_not_target_kitty_specs
+      granularity: function
+      source_paths: [tests/architectural/test_wp_owned_files_no_kitty_specs.py]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006]
+      duplicate_group: null
+      route_memberships: [*architectural_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *architectural_observation
+          nodeid: tests/architectural/test_wp_owned_files_no_kitty_specs.py::test_current_mission_wp_owned_files_do_not_target_kitty_specs
+    evidence: *migration_evidence
+    verdict: DELETE
+    state: terminal
+    action: Delete acceptance check pinned to a completed historical mission's WP frontmatter.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-wp-prompt-wall-clock-threshold
+      members:
+        - tests/architectural/test_wp_prompt_build_latency.py::test_build_wp_prompt_implement_stays_under_latency_budget
+        - tests/architectural/test_wp_prompt_build_latency.py::test_build_wp_prompt_review_stays_under_latency_budget
+      granularity: function
+      source_paths: [tests/architectural/test_wp_prompt_build_latency.py]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007]
+      duplicate_group: null
+      route_memberships: [*architectural_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *architectural_observation
+          nodeid: tests/architectural/test_wp_prompt_build_latency.py::test_build_wp_prompt_implement_stays_under_latency_budget
+    evidence: *shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: Delete host-load-sensitive wall-clock thresholds without a benchmark environment or regression budget authority.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-cross-seam-completed-migration-parity
+      members:
+        - tests/integration/test_cross_seam_consumers.py::test_aggregate_branch_compose_uses_naming_authority
+        - tests/integration/test_cross_seam_consumers.py::test_aggregate_topology_predicate_uses_registry_authority
+        - tests/integration/test_cross_seam_consumers.py::test_backfilled_legacy_mission_resolves_from_mission_id
+        - tests/integration/test_cross_seam_consumers.py::test_implement_resolver_coord_bare_slug_fails_closed
+        - tests/integration/test_cross_seam_consumers.py::test_meta_less_modern_slug_degrades_without_fabrication
+        - tests/integration/test_cross_seam_consumers.py::test_mid8_slug_tail_resolves_without_fabrication
+        - tests/integration/test_cross_seam_consumers.py::test_no_fabrication_idiom_in_owned_files
+        - tests/integration/test_cross_seam_consumers.py::test_status_transition_coord_bare_slug_fails_closed
+        - tests/integration/test_cross_seam_consumers.py::test_unbackfilled_legacy_slug_resolves_to_bare_surface
+      granularity: function
+      source_paths: [tests/integration/test_cross_seam_consumers.py]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006]
+      duplicate_group: null
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *full_parallel_observation
+          nodeid: tests/integration/test_cross_seam_consumers.py::test_aggregate_branch_compose_uses_naming_authority
+    evidence: *migration_evidence
+    verdict: DELETE
+    state: terminal
+    action: Delete completed cross-seam migration parity and source-shape checks duplicated by live identity and placement consumers.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-wp03-bypass-writer-acceptance-scaffold
+      members:
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestFR008MessagesNameFeatureBranch.test_protected_branch_refused_message_remedy
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestFR008MessagesNameFeatureBranch.test_router_refusal_diagnostic_remedy
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile.test_known_paths_classify
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile.test_other_mission_path_is_none
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile.test_planning_kinds_are_primary_partition
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile.test_status_kind_is_not_primary_partition
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile.test_unknown_path_is_none
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestSafeCommitMissionAwareTargetIsKindAware.test_mission_file_kind_classifies_first_kitty_specs_arg
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestSafeCommitMissionAwareTargetIsKindAware.test_resolve_mission_aware_target_threads_kind
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical.test_map_requirements_protected_primary_message_byte_identical
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical.test_mark_status_event_only_bypasses_artifact_protection
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical.test_move_task_protected_primary_message_byte_identical
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical.test_move_task_self_review_guard_precedes_protected_branch
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsRouteThroughCommitForMission.test_tasks_module_has_no_direct_safe_commit_symbol
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsRouteThroughCommitForMission.test_tasks_py_has_no_direct_safe_commit_call
+      granularity: function
+      source_paths: [tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006]
+      duplicate_group: null
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *full_parallel_observation
+          nodeid: tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestFR008MessagesNameFeatureBranch::test_protected_branch_refused_message_remedy
+    evidence: *migration_evidence
+    verdict: DELETE
+    state: terminal
+    action: Delete WP03 acceptance, exact-message, exact-private-call, and partition-shape scaffolds; live write-placement and guard tests remain.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-egress-consolidation-exact-layout-parity
+      members:
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_fr012_rationale_and_tracker_precondition_live_in_the_consolidated_module
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_denied_branch_names_the_operator_action
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_import_failure_branch_carries_the_exception_text
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_no_resolver_branch_names_the_resolver
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_undetermined_and_unanswerable_stay_distinguishable
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_unrecognised_future_verdict_does_not_reuse_denied_remedy
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_sc004_clause1_the_non_fragment_portion_is_byte_identical
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_sc004_clause2_fragment_names_its_own_set_and_no_foreign_kind
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_sc004_clause3_both_deciding_modules_bind_the_one_definition_site
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_sc004_clause3_names_are_reachable_and_the_comparison_is_not_self_identity
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_sc015_template_and_verdict_branches_have_exactly_one_definition_site
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_sc025_the_shared_module_is_classified_as_integration
+      granularity: function
+      source_paths: [tests/specify_cli/test_egress_consolidation_3110.py]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006]
+      duplicate_group: null
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *full_parallel_observation
+          nodeid: tests/specify_cli/test_egress_consolidation_3110.py::test_fr012_rationale_and_tracker_precondition_live_in_the_consolidated_module
+    evidence: *migration_evidence
+    verdict: DELETE
+    state: terminal
+    action: Delete exact prose, byte-parity, definition-site, and completed consolidation layout assertions; live consent gates own the boundary.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-meta-reader-migration-sweep
+      members:
+        - tests/specify_cli/test_meta_reader_sweep.py::test_scanner_flags_synthetic_inline_meta_read
+        - tests/specify_cli/test_meta_reader_sweep.py::test_scanner_ignores_unrelated_json_loads
+        - tests/specify_cli/test_meta_reader_sweep.py::test_scanner_passes_canonical_load_meta
+        - tests/specify_cli/test_meta_reader_sweep.py::test_touched_module_has_no_inline_meta_read
+      granularity: function
+      source_paths: [tests/specify_cli/test_meta_reader_sweep.py]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006]
+      duplicate_group: null
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - <<: *full_parallel_observation
+          nodeid: tests/specify_cli/test_meta_reader_sweep.py::test_scanner_flags_synthetic_inline_meta_read
+    evidence: *migration_evidence
+    verdict: DELETE
+    state: terminal
+    action: Delete touched-module migration sweep duplicated by the full-census fail-closed meta authority.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+# Exact path-level terminal map. KEEP rows retain their own in-file behavioral
+# branches or planted-fault nodes; no cross-file equivalence is claimed here.
+terminal_screening:
+  tests/git/test_guard_capability_regression.py: {verdict: KEEP, proof: in-file refusal/authorized-flow behavior}
+  tests/integration/test_cross_seam_consumers.py: {verdict: DELETE, reason: completed migration parity}
+  tests/specify_cli/cli/commands/test_identity_audit.py: {verdict: KEEP, proof: identity ambiguity and fail-closed branch matrix}
+  tests/specify_cli/cli/commands/test_sparse_checkout_doctor.py: {verdict: KEEP, proof: dirty/CI/refusal and clean controls}
+  tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py: {verdict: DELETE, reason: historical WP/prose/private-shape scaffold}
+  tests/specify_cli/core/test_load_meta_fail_closed_authority.py: {verdict: KEEP, proof: corrupt/non-object/missing meta controls}
+  tests/specify_cli/decisions/test_ownership_3111.py: {verdict: KEEP, proof: untrusted ownership-path branch matrix}
+  tests/specify_cli/saas_client/test_client_consent_gate_3030.py: {verdict: KEEP, proof: consenting positive control and denied/unanswerable transport faults}
+  tests/specify_cli/test_egress_consolidation_3110.py: {verdict: DELETE, reason: exact consolidation layout/prose/parity scaffold}
+  tests/specify_cli/test_meta_fail_closed_full_census_contract.py: {verdict: KEEP, proof: nonempty full-census meta reader and synthetic call forms}
+  tests/specify_cli/test_meta_reader_sweep.py: {verdict: DELETE, reason: touched-module migration sweep}
+  tests/sync/test_consent_resolver_3030.py: {verdict: KEEP, proof: consenting/denied/unanswerable resolver controls}
+  tests/sync/test_project_identity_resolver_3030.py: {verdict: KEEP, proof: identity source and ambiguity controls}
+  tests/sync/test_sync_action_gate.py: {verdict: KEEP, proof: allowed/denied sync-action gate matrix}
+  tests/sync/tracker/test_saas_client_consent_gate_3030.py: {verdict: KEEP_REDUCED, proof: real transport positive/negative controls; runtime isolation repaired}
+  tests/architectural/test_2093_authority_invariant.py: {verdict: KEEP, proof: snapshot/frontmatter authority controls and planted readers}
+  tests/architectural/test_all_declarations_required.py: {verdict: DELETE, reason: blanket positive __all__ shape}
+  tests/architectural/test_auth_transport_singleton.py: {verdict: KEEP_REDUCED, proof: nonempty live subsystem scan and planted direct-httpx fault}
+  tests/architectural/test_batch_split_single_authority.py: {verdict: DELETE, reason: private-expression AST shape}
+  tests/architectural/test_compat_shims.py: {verdict: DELETE, reason: empty adapter inventory self-test}
+  tests/architectural/test_dossier_sync_boundary.py: {verdict: KEEP_REDUCED, proof: nonempty live import graph plus two-sided planted sync edge}
+  tests/architectural/test_drg_writer_discovery.py: {verdict: KEEP, proof: live producer scan and independent planted writer faults}
+  tests/architectural/test_egress_consent_boundary.py: {verdict: KEEP, proof: nonempty sink corpus and planted unlisted sender controls}
+  tests/architectural/test_git_matrix_paths_resolve.py: {verdict: KEEP, proof: live workflow path corpus and planted phantom path}
+  tests/architectural/test_guard_capability_call_sites.py: {verdict: KEEP_REDUCED, proof: nonempty src corpus plus two-sided capability classifier fault}
+  tests/architectural/test_innerstatechanged_invariants.py: {verdict: KEEP, proof: event behavior and naive transition-fold fault}
+  tests/architectural/test_integration_boundary.py: {verdict: KEEP_REDUCED, proof: nonempty core import corpus and planted forbidden import}
+  tests/architectural/test_layer_rules.py: {verdict: KEEP, proof: live import graph and out-of-ledger/wrong-wiring faults}
+  tests/architectural/test_merge_reconciliation_class_guard.py: {verdict: KEEP, proof: live reconciliation classes and invalid classification controls}
+  tests/architectural/test_no_authored_applies_edge.py: {verdict: KEEP_REDUCED, proof: nonempty fragment/graph corpus and two-sided applies faults}
+  tests/architectural/test_no_inert_schema_slots.py: {verdict: KEEP_REDUCED, proof: nonempty live slot corpus and two-sided missing-producer fault}
+  tests/architectural/test_no_invalid_windows_filenames.py: {verdict: KEEP, proof: live path corpus plus invalid/valid platform controls}
+  tests/architectural/test_no_op_stable_writes.py: {verdict: KEEP, proof: repeated real writer invocations with byte-stability oracle}
+  tests/architectural/test_no_prompt_filtering_added.py: {verdict: DELETE, reason: exact private call-name ban}
+  tests/architectural/test_no_read_side_bypass.py: {verdict: KEEP_REDUCED, proof: nonempty live read-boundary corpus and planted leaf/alias/indirection faults}
+  tests/architectural/test_no_runtime_pypi_dep.py: {verdict: KEEP, proof: live dependency/import/CI surfaces and absent-runtime import control}
+  tests/architectural/test_no_shipped_layer_label.py: {verdict: KEEP, proof: live public JSON surfaces and forbidden-label walker fault}
+  tests/architectural/test_no_tmp_paths_in_tests.py: {verdict: KEEP_REDUCED, proof: nonempty test corpus and two-sided shared/evasion-root faults}
+  tests/architectural/test_no_write_side_rederivation.py: {verdict: KEEP, proof: nonempty whole-tree placement corpus and checkout-derived target faults}
+  tests/architectural/test_patch_seam_census_control.py: {verdict: DELETE, reason: test-meta hand-count/census scaffold}
+  tests/architectural/test_read_surface_placement_guard.py: {verdict: KEEP_REDUCED, proof: stored-topology read behavior and deleted-coordination-branch faults}
+  tests/architectural/test_real_home_isolation_guard.py: {verdict: KEEP, proof: real worker-home corpus and sentinel mutation faults}
+  tests/architectural/test_safety_registry_completeness.py: {verdict: KEEP, proof: live command registry and hypothetical unsafe command fault}
+  tests/architectural/test_same_tier_uniqueness.py: {verdict: KEEP, proof: live route selection and synthetic double-run fault}
+  tests/architectural/test_serial_port_preservation.py: {verdict: KEEP, proof: live workflow/fixed-port corpus and parallel/serial mutation faults}
+  tests/architectural/test_shared_module_object_patches.py: {verdict: DELETE, reason: test-meta baseline/count/prose/completed-owner scaffold}
+  tests/architectural/test_tid251_enforcement.py: {verdict: KEEP, proof: live CI/config plus ruff prohibited/allowed probes}
+  tests/architectural/test_trio_seam_only.py: {verdict: KEEP_REDUCED, proof: nonempty trio/core corpus and planted import/I-O faults}
+  tests/architectural/test_unfiltered_journal_read_boundary.py: {verdict: KEEP, proof: nonempty journal-read corpus and planted unlisted consumer}
+  tests/architectural/test_unregistered_shim_scanner.py: {verdict: KEEP, proof: nonempty src corpus and simple/annotated/benign scanner controls}
+  tests/architectural/test_untrusted_path_containment.py: {verdict: KEEP, proof: nonempty live sink inventory and undocumented/ghost controlled faults}
+  tests/architectural/test_wp_owned_files_no_kitty_specs.py: {verdict: DELETE, reason: historical mission acceptance}
+  tests/architectural/test_wp_prompt_build_latency.py: {verdict: DELETE, reason: uncontrolled wall-clock thresholds}
+  tests/architectural/test_write_surface_placement_guard.py: {verdict: KEEP_REDUCED, proof: real two-ref partitions and pre-fix partition/placement faults}
+
+summary:
+  assigned_paths: 54
+  terminal_paths: 54
+  deleted_paths: 12
+  surviving_paths: 42
+  deep_deleted_source_units: 70
+  base_nodes: 841
+  head_nodes: 537
+  net_nodes_removed: 304
+  production_files_changed: 0
+  results: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp10-results.json
+  results_sha256: 1de143279b8b949b8e98a6f9e8a70fa9a2bda0a8b603e000444c37c8ae4b6108
+
+integration_handoff:
+  central_map_edited: false
+  expected_arch_shard_map_removals:
+    - tests/architectural/test_all_declarations_required.py
+    - tests/architectural/test_compat_shims.py
+    - tests/architectural/test_no_prompt_filtering_added.py
+    - tests/architectural/test_patch_seam_census_control.py
+    - tests/architectural/test_shared_module_object_patches.py
+    - tests/architectural/test_wp_owned_files_no_kitty_specs.py
+    - tests/architectural/test_wp_prompt_build_latency.py
+  deleted_architectural_path_not_in_map:
+    - tests/architectural/test_batch_split_single_authority.py
+  downstream_owner: WP07
