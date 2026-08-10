@@ -144,7 +144,6 @@
         "tests/architectural/test_dead_builtin_doc_paths.py",
         "tests/architectural/test_docs_cli_reference_parity.py",
         "tests/architectural/test_execution_context_parity.py",
-        "tests/architectural/test_exemption_registry_ratchet.py",
         "tests/architectural/test_glossary_pack_parity.py",
         "tests/architectural/test_golden_count_ban.py",
         "tests/architectural/test_issue_matrix_json_migration_completeness.py",
@@ -158,8 +157,6 @@
         "tests/architectural/test_no_legacy_status_emit_callers.py",
         "tests/architectural/test_no_legacy_terminology.py",
         "tests/architectural/test_no_parity_scaffold.py",
-        "tests/architectural/test_ratchet_baselines.py",
-        "tests/architectural/test_ratchet_positional_anchor_ban.py",
         "tests/architectural/test_reference_enum_ratchet.py",
         "tests/architectural/test_retired_contracts_absent.py",
         "tests/architectural/test_topology_inference_retired.py",
@@ -659,6 +656,7 @@
         "tests/_arch_shard_map.py",
         "tests/_next_shard_map.py",
         "tests/architectural/_baselines.yaml",
+        "tests/architectural/_gate_coverage.py",
         "tests/architectural/_golden_count_baseline.json",
         "tests/architectural/baselines/fast-tests-core-misc-nodeids.txt",
         "tests/architectural/baselines/integration-tests-next-nodeids.txt",
@@ -667,14 +665,18 @@
         "tests/architectural/marker_baseline.txt",
         "tests/architectural/mission_exit_baseline.txt",
         "tests/architectural/test_ci_quality_path_filters.py",
+        "tests/architectural/test_exemption_registry_ratchet.py",
         "tests/architectural/test_marker_job_completeness.py",
         "tests/architectural/test_quarantine_marker.py",
+        "tests/architectural/test_ratchet_baselines.py",
+        "tests/architectural/test_ratchet_positional_anchor_ban.py",
         "tests/architectural/test_suite_jobs_gate_blocking.py",
         "tests/architectural/verdict_seam_census.yaml"
       ],
       "predicted_surfaces": [
         "api",
-        "artifact-rendering"
+        "artifact-rendering",
+        "legacy-cleanup"
       ],
       "depends_on_lanes": [
         "lane-c",
@@ -732,8 +734,8 @@
       "parallel_group": 4
     }
   ],
-  "computed_at": "2026-08-10T18:31:18.076841+00:00",
+  "computed_at": "2026-08-10T20:57:44.553927+00:00",
   "computed_from": "dependency_graph+ownership",
   "planning_artifact_wps": [],
-  "planning_commit_sha": "15835c87aa6bf75d5cd59b810c51bc9441de5705"
+  "planning_commit_sha": "5794e4f2fbd19adb355a41c28181b9cdd4df00bb"
 }
