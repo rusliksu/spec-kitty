@@ -57,8 +57,11 @@ owned_files:
 - tests/architectural/census/verdict_seam_IC01.yaml
 - tests/architectural/census/verdict_seam_IC08.yaml
 - tests/architectural/test_ci_quality_path_filters.py
+- tests/architectural/test_exemption_registry_ratchet.py
 - tests/architectural/test_marker_job_completeness.py
 - tests/architectural/test_quarantine_marker.py
+- tests/architectural/test_ratchet_baselines.py
+- tests/architectural/test_ratchet_positional_anchor_ban.py
 - tests/architectural/test_suite_jobs_gate_blocking.py
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP07.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-route-manifest.yaml
@@ -98,6 +101,7 @@ Stop paying whole-tree collection for stable narrow classes. Each changed narrow
 
 - Consume deterministic deleted/renamed-path handoffs from every deleting WP (WP03/WP04/WP05/WP09–WP15) and update `_arch_shard_map.py` exactly once. Prove no deleted entry, missing assigned survivor, or duplicate explicit assignment remains before running the hard gate.
 - Reconcile `_next_shard_map.py` and every live node/marker/mission-exit baseline against the final integrated deletion set. Regenerate live baselines from the integrated tree; delete a sidecar only after proving no live reader remains. Preserve support-only scanner modules that are imported by live gates even when they collect zero nodes.
+- Remove only the exact stale ratchet/exemption reader rows that name approved-deleted files or retired allowlist symbols; preserve every still-live registry member and positional-anchor prohibition.
 - Update existing owned architecture tests; do not add redundant new test files.
 - `test_ci_quality_path_filters.py`: terminalize WP06's #3284 handoff and validate exact manifest/selector without recursively collecting the entire suite inside a 240-second test. Use static workflow parsing plus bounded owned-path collection.
 - `test_marker_job_completeness.py`: distinguish owner vs secondary routes.
