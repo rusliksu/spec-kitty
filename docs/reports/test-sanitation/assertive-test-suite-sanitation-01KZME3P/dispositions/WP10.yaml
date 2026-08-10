@@ -76,9 +76,9 @@ _migration_evidence: &migration_evidence
 
 _review: &review
   implementer: architect-alphonso/WP10
-  independent_reviewer: pending-WP10-cycle2-review
+  independent_reviewer: pending-WP10-cycle3-final-review
   verdict: implementation-complete-awaiting-review
-  timestamp: '2026-08-10T16:08:16Z'
+  timestamp: '2026-08-10T18:58:00Z'
 
 dispositions:
   - candidate:
@@ -319,35 +319,158 @@ dispositions:
     hic_approval: null
     review: *review
 
+  # Cycle 3: the three heterogeneous deleted files are terminalized below at
+  # causal-family granularity.  Each row has one production path + oracle/fault,
+  # or explicit no-authority evidence.  Executed successor details are mirrored
+  # in raw/wp10-probes-cycle2.json (final-cycle amendment).
   - candidate:
-      id: WP10-cross-seam-completed-migration-parity
+      id: WP10-cross-seam-status-identity-fail-closed
+      members: [tests/integration/test_cross_seam_consumers.py::test_status_transition_coord_bare_slug_fails_closed]
+      granularity: function
+      source_paths: [tests/integration/test_cross_seam_consumers.py]
+      production_paths: [src/specify_cli/coordination/status_transition.py::_identity_for_request]
+      oracle: malformed coordination identity refuses before a status write
+      contract_claim: coordination writes fail closed when branch identity cannot be resolved
+      authority: [docs/context/identity.md]
+      duplicate_group: WP10-current-write-identity-fail-closed
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/integration/test_cross_seam_consumers.py::test_status_transition_coord_bare_slug_fails_closed}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/runtime/test_runtime_identity_resolution.py::test_resolve_coordination_branch_malformed_modern_mission_fails_closed
+          result: The current identity authority rejects the same missing-identity fault; the current status-transition topology matrix executes _identity_for_request.
+      causal_probe:
+        kind: executed-successor-family
+        fault: coordination topology has no mission_id or resolvable mid8
+        authority_violated: unresolved coordination identity must not fabricate a write target
+        act_reached: true
+        intended_oracle: public identity authority raises and current status transition resolves only valid topologies
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/runtime/test_runtime_identity_resolution.py::test_resolve_coordination_branch_malformed_modern_mission_fails_closed' 'tests/specify_cli/coordination/test_status_transition_adoption.py::test_read_write_resolution_equivalence_across_topologies[coord]'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Remove the completed WP05 private-helper duplicate; retain the current identity authority and status-transition topology matrix.
+    survivor: tests/runtime/test_runtime_identity_resolution.py::test_resolve_coordination_branch_malformed_modern_mission_fails_closed
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-cross-seam-implement-identity-fail-closed
+      members: [tests/integration/test_cross_seam_consumers.py::test_implement_resolver_coord_bare_slug_fails_closed]
+      granularity: function
+      source_paths: [tests/integration/test_cross_seam_consumers.py]
+      production_paths: [src/specify_cli/cli/commands/implement.py::_resolve_bookkeeping_transaction_identifiers]
+      oracle: unresolved modern bookkeeping identity fails closed
+      contract_claim: bookkeeping never fabricates a coordination transaction identity
+      authority: [docs/context/identity.md]
+      duplicate_group: WP10-current-implement-identity-contract
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/integration/test_cross_seam_consumers.py::test_implement_resolver_coord_bare_slug_fails_closed}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py
+          result: The current resolver contract exercises the complete source cascade and the identity authority separately owns malformed-modern failure.
+      causal_probe:
+        kind: executed-successor-family
+        fault: modern coordination bookkeeping has neither mission_id nor mid8
+        authority_violated: no fabricated transaction directory may be selected
+        act_reached: true
+        intended_oracle: current identity authority rejects malformed modern identity
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/runtime/test_runtime_identity_resolution.py::test_resolve_coordination_branch_malformed_modern_mission_fails_closed' 'tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_mid8_is_none_when_no_meta_mid8_and_no_mission_id'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Remove the historical WP05 scenario duplicate; retain the current resolver source-cascade and identity-authority tests.
+    survivor: tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_mid8_is_none_when_no_meta_mid8_and_no_mission_id
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-cross-seam-implement-mission-id-derivation
+      members: [tests/integration/test_cross_seam_consumers.py::test_backfilled_legacy_mission_resolves_from_mission_id]
+      granularity: function
+      source_paths: [tests/integration/test_cross_seam_consumers.py]
+      production_paths: [src/specify_cli/cli/commands/implement.py::_resolve_bookkeeping_transaction_identifiers]
+      oracle: mission_id derives effective mission id and mid8 when explicit mid8 is absent
+      contract_claim: mission-id source derivation remains canonical
+      authority: [docs/context/identity.md]
+      duplicate_group: WP10-current-implement-mission-id-derivation
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/integration/test_cross_seam_consumers.py::test_backfilled_legacy_mission_resolves_from_mission_id}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_mid8_falls_back_to_resolve_mid8_when_meta_mid8_absent
+          result: Current node calls the exact resolver and asserts mission_id-derived mid8.
+      causal_probe:
+        kind: executed-successor-family
+        fault: mission_id no longer derives the transaction mid8
+        authority_violated: mission identity is the fallback source when explicit mid8 is absent
+        act_reached: true
+        intended_oracle: exact resolver successor rejects derivation drift
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_mid8_falls_back_to_resolve_mid8_when_meta_mid8_absent'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Remove historical backfill scenario duplicate; retain exact current mission-id derivation.
+    survivor: tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_mid8_falls_back_to_resolve_mid8_when_meta_mid8_absent
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-cross-seam-implement-bare-surface-fallback
       members:
-        - tests/integration/test_cross_seam_consumers.py::test_aggregate_branch_compose_uses_naming_authority
-        - tests/integration/test_cross_seam_consumers.py::test_aggregate_topology_predicate_uses_registry_authority
-        - tests/integration/test_cross_seam_consumers.py::test_backfilled_legacy_mission_resolves_from_mission_id
-        - tests/integration/test_cross_seam_consumers.py::test_implement_resolver_coord_bare_slug_fails_closed
         - tests/integration/test_cross_seam_consumers.py::test_meta_less_modern_slug_degrades_without_fabrication
-        - tests/integration/test_cross_seam_consumers.py::test_mid8_slug_tail_resolves_without_fabrication
-        - tests/integration/test_cross_seam_consumers.py::test_no_fabrication_idiom_in_owned_files
-        - tests/integration/test_cross_seam_consumers.py::test_status_transition_coord_bare_slug_fails_closed
         - tests/integration/test_cross_seam_consumers.py::test_unbackfilled_legacy_slug_resolves_to_bare_surface
       granularity: function
       source_paths: [tests/integration/test_cross_seam_consumers.py]
-      production_paths: []
-      oracle: null
-      contract_claim: null
-      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006]
-      duplicate_group: null
+      production_paths: [src/specify_cli/cli/commands/implement.py::_resolve_bookkeeping_transaction_identifiers]
+      oracle: identity-less non-coordination inputs retain empty-mid8 bare-surface fallback
+      contract_claim: legacy/no-meta fallback remains non-fabricating
+      authority: [docs/context/identity.md]
+      duplicate_group: WP10-current-implement-legacy-fallback
       route_memberships: [*full_parallel_route]
       platforms: [linux, macOS, windows]
-      observations:
-        - <<: *full_parallel_observation
-          nodeid: tests/integration/test_cross_seam_consumers.py::test_aggregate_branch_compose_uses_naming_authority
-    evidence: *migration_evidence
+      observations: [{<<: *full_parallel_observation, nodeid: tests/integration/test_cross_seam_consumers.py::test_unbackfilled_legacy_slug_resolves_to_bare_surface}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_legacy_slug_fallback_when_no_meta_at_all
+          result: Current exact-resolver nodes cover both absent mission_id and absent meta without fabrication.
+      causal_probe:
+        kind: executed-successor-family
+        fault: identity-less non-coordination input fabricates an effective identity or mid8
+        authority_violated: legacy/no-meta fallback must remain bare and non-fabricating
+        act_reached: true
+        intended_oracle: exact resolver successors reject fallback drift
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_legacy_slug_fallback_when_mission_id_absent' 'tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_legacy_slug_fallback_when_no_meta_at_all' 'tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_mid8_is_none_when_no_meta_mid8_and_no_mission_id'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
     verdict: DELETE
     state: terminal
-    action: Delete completed cross-seam migration parity and source-shape checks duplicated by live identity and placement consumers.
-    survivor: tests/sync/test_project_identity_resolver_3030.py
+    action: Remove historical bare-surface duplicates; retain exact current legacy/no-meta fallback nodes.
+    survivor: tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_legacy_slug_fallback_when_no_meta_at_all
     issue: null
     owner: null
     expires: null
@@ -355,40 +478,242 @@ dispositions:
     review: *review
 
   - candidate:
-      id: WP10-wp03-bypass-writer-acceptance-scaffold
+      id: WP10-cross-seam-implement-slug-tail-mid8
+      members: [tests/integration/test_cross_seam_consumers.py::test_mid8_slug_tail_resolves_without_fabrication]
+      granularity: function
+      source_paths: [tests/integration/test_cross_seam_consumers.py]
+      production_paths: [src/specify_cli/cli/commands/implement.py::_resolve_bookkeeping_transaction_identifiers]
+      oracle: a valid slug-tail mid8 resolves through the canonical identity parser
+      contract_claim: slug-tail source remains a valid non-fabricated identity source
+      authority: [docs/context/identity.md]
+      duplicate_group: WP10-current-transaction-mid8-cascade
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/integration/test_cross_seam_consumers.py::test_mid8_slug_tail_resolves_without_fabrication}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/specify_cli/lanes/test_branch_naming_ssot_entrypoint.py::test_resolve_transaction_mid8_cascade_preserved
+          result: Current identity-owner test directly asserts embedded slug-tail resolution in the canonical transaction-mid8 cascade.
+      causal_probe:
+        kind: executed-successor-family
+        fault: embedded valid mid8 tail is ignored or fabricated differently
+        authority_violated: canonical transaction identity cascade recognizes a valid slug tail
+        act_reached: true
+        intended_oracle: identity-owner successor rejects slug-tail resolution drift
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/specify_cli/lanes/test_branch_naming_ssot_entrypoint.py::test_resolve_transaction_mid8_cascade_preserved'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Remove historical integration duplicate; retain the canonical identity-cascade owner.
+    survivor: tests/specify_cli/lanes/test_branch_naming_ssot_entrypoint.py::test_resolve_transaction_mid8_cascade_preserved
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-cross-seam-no-fabrication-status-aggregate
+      members: ['tests/integration/test_cross_seam_consumers.py::test_no_fabrication_idiom_in_owned_files[specify_cli/status/aggregate.py]']
+      granularity: function
+      source_paths: [tests/integration/test_cross_seam_consumers.py]
+      production_paths: [src/specify_cli/status/aggregate.py]
+      oracle: checkout-derived or fabricated write identities are absent
+      contract_claim: aggregate routes through canonical identity and placement seams
+      authority: [tests/architectural/test_no_write_side_rederivation.py]
+      duplicate_group: WP10-whole-tree-write-rederivation
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: 'tests/integration/test_cross_seam_consumers.py::test_no_fabrication_idiom_in_owned_files[specify_cli/status/aggregate.py]'}]
+    evidence: &cross_seam_fabrication_evidence
+      profile: structural
+      authority_evidence:
+        - reference: tests/architectural/test_no_write_side_rederivation.py::test_adopted_modules_have_no_write_side_rederivation
+          result: The current whole-tree scanner covers this production path and plants controlled identity/target rederivations through the same detector.
+      causal_probe:
+        kind: executed-successor-family
+        fault: production path reintroduces checkout-derived or inline-fabricated identity
+        authority_violated: write identity must come from the canonical seam
+        act_reached: true
+        intended_oracle: whole-tree current-authority scanner rejects the planted bypass
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/architectural/test_no_write_side_rederivation.py::test_adopted_modules_have_no_write_side_rederivation'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Remove the three-literal historical substring duplicate; whole-tree canonical rederivation enforcement remains.
+    survivor: tests/architectural/test_no_write_side_rederivation.py::test_adopted_modules_have_no_write_side_rederivation
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-cross-seam-no-fabrication-status-transition
+      members: ['tests/integration/test_cross_seam_consumers.py::test_no_fabrication_idiom_in_owned_files[specify_cli/coordination/status_transition.py]']
+      granularity: function
+      source_paths: [tests/integration/test_cross_seam_consumers.py]
+      production_paths: [src/specify_cli/coordination/status_transition.py]
+      oracle: checkout-derived or fabricated write identities are absent
+      contract_claim: status transition routes through canonical identity and placement seams
+      authority: [tests/architectural/test_no_write_side_rederivation.py]
+      duplicate_group: WP10-whole-tree-write-rederivation
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: 'tests/integration/test_cross_seam_consumers.py::test_no_fabrication_idiom_in_owned_files[specify_cli/coordination/status_transition.py]'}]
+    evidence: *cross_seam_fabrication_evidence
+    verdict: DELETE
+    state: terminal
+    action: Remove the historical substring duplicate; whole-tree canonical rederivation enforcement remains.
+    survivor: tests/architectural/test_no_write_side_rederivation.py::test_adopted_modules_have_no_write_side_rederivation
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-cross-seam-no-fabrication-implement
+      members: ['tests/integration/test_cross_seam_consumers.py::test_no_fabrication_idiom_in_owned_files[specify_cli/cli/commands/implement.py]']
+      granularity: function
+      source_paths: [tests/integration/test_cross_seam_consumers.py]
+      production_paths: [src/specify_cli/cli/commands/implement.py]
+      oracle: checkout-derived or fabricated write identities are absent
+      contract_claim: implement bookkeeping routes through canonical identity and placement seams
+      authority: [tests/architectural/test_no_write_side_rederivation.py]
+      duplicate_group: WP10-whole-tree-write-rederivation
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: 'tests/integration/test_cross_seam_consumers.py::test_no_fabrication_idiom_in_owned_files[specify_cli/cli/commands/implement.py]'}]
+    evidence: *cross_seam_fabrication_evidence
+    verdict: DELETE
+    state: terminal
+    action: Remove the historical substring duplicate; whole-tree canonical rederivation enforcement remains.
+    survivor: tests/architectural/test_no_write_side_rederivation.py::test_adopted_modules_have_no_write_side_rederivation
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-cross-seam-aggregate-topology-private-shape
+      members: [tests/integration/test_cross_seam_consumers.py::test_aggregate_topology_predicate_uses_registry_authority]
+      granularity: function
+      source_paths: [tests/integration/test_cross_seam_consumers.py]
+      production_paths: [src/specify_cli/status/aggregate.py::_is_coord_dir]
+      oracle: coordination topology is derived behaviorally from a registered worktree
+      contract_claim: no current authority requires the private _is_coord_dir name or its exact callee
+      authority: [tests/unit/status/test_mission_status_aggregate.py]
+      duplicate_group: WP10-current-aggregate-topology-behavior
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/integration/test_cross_seam_consumers.py::test_aggregate_topology_predicate_uses_registry_authority}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/unit/status/test_mission_status_aggregate.py::TestLoadCoordMission::test_topology_is_coordination_when_coord_worktree_exists
+          result: Executed current aggregate behavior owns the outcome; repository authority/caller search found no contract naming private _is_coord_dir or mandating one callee.
+      causal_probe:
+        kind: executed-successor-plus-no-shape-authority
+        fault: registered coordination topology is misclassified
+        authority_violated: coordination topology must remain behaviorally correct
+        act_reached: true
+        intended_oracle: current aggregate behavior test fails on misclassification while permitting equivalent implementation
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/unit/status/test_mission_status_aggregate.py::TestLoadCoordMission::test_topology_is_coordination_when_coord_worktree_exists'; rg -n '_is_coord_dir' docs/context docs/adr/3.x src tests"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Delete the exact private-callee AST pin; retain current aggregate topology behavior.
+    survivor: tests/unit/status/test_mission_status_aggregate.py::TestLoadCoordMission::test_topology_is_coordination_when_coord_worktree_exists
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-cross-seam-aggregate-branch-private-shape
+      members: [tests/integration/test_cross_seam_consumers.py::test_aggregate_branch_compose_uses_naming_authority]
+      granularity: function
+      source_paths: [tests/integration/test_cross_seam_consumers.py]
+      production_paths: [src/specify_cli/status/aggregate.py]
+      oracle: transition validates against and persists to the declared coordination branch
+      contract_claim: no current authority requires an exact branch-naming helper token in aggregate.py
+      authority: [tests/unit/status/test_mission_status_aggregate.py]
+      duplicate_group: WP10-current-aggregate-branch-behavior
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/integration/test_cross_seam_consumers.py::test_aggregate_branch_compose_uses_naming_authority}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/unit/status/test_mission_status_aggregate.py::TestTransitionHappyPath::test_transition_validates_against_coord_branch_when_worktree_absent
+          result: Executed current aggregate behavior owns branch selection; caller search found no product contract prescribing the private helper spelling.
+      causal_probe:
+        kind: executed-successor-plus-no-shape-authority
+        fault: aggregate transition resolves a destination other than the declared coordination branch
+        authority_violated: status transition must use the authoritative destination
+        act_reached: true
+        intended_oracle: current transition test rejects branch-selection drift while allowing equivalent composition
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/unit/status/test_mission_status_aggregate.py::TestTransitionHappyPath::test_transition_validates_against_coord_branch_when_worktree_absent'; rg -n 'mission_branch_name_required' docs/context docs/adr/3.x src/specify_cli/status"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Delete the exact helper-token pin; retain current aggregate branch behavior.
+    survivor: tests/unit/status/test_mission_status_aggregate.py::TestTransitionHappyPath::test_transition_validates_against_coord_branch_when_worktree_absent
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-wp03-kind-classifier-matrix
       members:
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestFR008MessagesNameFeatureBranch.test_protected_branch_refused_message_remedy
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestFR008MessagesNameFeatureBranch.test_router_refusal_diagnostic_remedy
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile.test_known_paths_classify
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile.test_other_mission_path_is_none
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile.test_planning_kinds_are_primary_partition
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile.test_status_kind_is_not_primary_partition
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile.test_unknown_path_is_none
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestSafeCommitMissionAwareTargetIsKindAware.test_mission_file_kind_classifies_first_kitty_specs_arg
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestSafeCommitMissionAwareTargetIsKindAware.test_resolve_mission_aware_target_threads_kind
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical.test_map_requirements_protected_primary_message_byte_identical
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical.test_mark_status_event_only_bypasses_artifact_protection
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical.test_move_task_protected_primary_message_byte_identical
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical.test_move_task_self_review_guard_precedes_protected_branch
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsRouteThroughCommitForMission.test_tasks_module_has_no_direct_safe_commit_symbol
-        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsRouteThroughCommitForMission.test_tasks_py_has_no_direct_safe_commit_call
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile::test_known_paths_classify
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile::test_other_mission_path_is_none
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile::test_planning_kinds_are_primary_partition
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile::test_status_kind_is_not_primary_partition
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile::test_unknown_path_is_none
       granularity: function
       source_paths: [tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py]
-      production_paths: []
-      oracle: null
-      contract_claim: null
-      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006]
-      duplicate_group: null
+      production_paths: [src/mission_runtime/artifacts.py::kind_for_mission_file]
+      oracle: artifact kinds remain exhaustive, disjoint, and resolve to their declared home
+      contract_claim: current partition tests supersede a frozen WP03 example matrix
+      authority: [src/mission_runtime/artifacts.py]
+      duplicate_group: WP10-current-artifact-partition-contract
       route_memberships: [*full_parallel_route]
       platforms: [linux, macOS, windows]
-      observations:
-        - <<: *full_parallel_observation
-          nodeid: tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestFR008MessagesNameFeatureBranch::test_protected_branch_refused_message_remedy
-    evidence: *migration_evidence
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestKindForMissionFile::test_known_paths_classify}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/mission_runtime/test_artifact_partition.py
+          result: Current owner tests execute the classifier/home invariant without freezing one completed mission's filenames.
+      causal_probe:
+        kind: executed-successor-family
+        fault: SPEC or STATUS_STATE moves to the wrong partition, or partition membership overlaps
+        authority_violated: artifact partition must remain exhaustive and disjoint
+        act_reached: true
+        intended_oracle: current owner tests reject wrong home or overlapping membership
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/mission_runtime/test_artifact_partition.py::test_artifact_home_for_spec_is_primary' 'tests/mission_runtime/test_artifact_partition.py::test_artifact_home_for_status_state_stays_placement' 'tests/mission_runtime/test_artifact_partition_mapping.py::test_partition_invariant_stays_exhaustive_and_disjoint'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
     verdict: DELETE
     state: terminal
-    action: Delete WP03 acceptance, exact-message, exact-private-call, and partition-shape scaffolds; live write-placement and guard tests remain.
-    survivor: tests/architectural/test_write_surface_placement_guard.py
+    action: Remove the completed WP03 example matrix; current artifact-owner tests enforce the generalized contract.
+    survivor: tests/mission_runtime/test_artifact_partition.py
     issue: null
     owner: null
     expires: null
@@ -396,37 +721,544 @@ dispositions:
     review: *review
 
   - candidate:
-      id: WP10-egress-consolidation-exact-layout-parity
+      id: WP10-wp03-safe-commit-kind-threading
       members:
-        - tests/specify_cli/test_egress_consolidation_3110.py::test_fr012_rationale_and_tracker_precondition_live_in_the_consolidated_module
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestSafeCommitMissionAwareTargetIsKindAware::test_mission_file_kind_classifies_first_kitty_specs_arg
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestSafeCommitMissionAwareTargetIsKindAware::test_resolve_mission_aware_target_threads_kind
+      granularity: function
+      source_paths: [tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py]
+      production_paths: [src/specify_cli/cli/commands/safe_commit_cmd.py]
+      oracle: public safe-commit resolves and durably commits a PRIMARY-kind mission artifact
+      contract_claim: outcome supersedes private helper argument-spy shape
+      authority: [docs/adr/3.x/2026-07-30-1-post-merge-write-routing.md]
+      duplicate_group: WP10-current-safe-commit-placement
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestSafeCommitMissionAwareTargetIsKindAware::test_resolve_mission_aware_target_threads_kind}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/specify_cli/cli/commands/test_safe_commit_cmd.py::test_public_safe_commit_succeeds_after_merged_branch_deleted_3033
+          result: Public black-box successor executes kind classification, placement, commit, ref existence, and content readback.
+      causal_probe:
+        kind: executed-successor-family
+        fault: PRIMARY-kind artifact loses kind-aware placement
+        authority_violated: safe-commit must land the artifact on a resolvable authoritative ref
+        act_reached: true
+        intended_oracle: public outcome fails if kind threading or placement regresses
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/specify_cli/cli/commands/test_safe_commit_cmd.py::test_public_safe_commit_succeeds_after_merged_branch_deleted_3033'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Remove private helper spies; retain the public durable-write oracle.
+    survivor: tests/specify_cli/cli/commands/test_safe_commit_cmd.py::test_public_safe_commit_succeeds_after_merged_branch_deleted_3033
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-wp03-refusal-diagnostic-behavior
+      members:
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestFR008MessagesNameFeatureBranch::test_protected_branch_refused_message_remedy
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestFR008MessagesNameFeatureBranch::test_router_refusal_diagnostic_remedy
+      granularity: function
+      source_paths: [tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py]
+      production_paths: [src/specify_cli/core/commit_guard.py]
+      oracle: protected-primary paths refuse and land no commit
+      contract_claim: current behavioral refusal tests supersede exact completed-WP prose assertions
+      authority: [src/specify_cli/core/commit_guard.py]
+      duplicate_group: WP10-current-protected-refusal
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestFR008MessagesNameFeatureBranch::test_router_refusal_diagnostic_remedy}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/missions/test_write_surface_coherence.py
+          result: Two current behavioral nodes execute both router-result and raised-exception refusal paths; no current authority prescribes the retired feature-branch sentence.
+      causal_probe:
+        kind: executed-successor-family
+        fault: protected-primary router or direct safe-commit permits a write
+        authority_violated: protected refs refuse ordinary writes
+        act_reached: true
+        intended_oracle: both current refusal shapes reject the attempted write
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/missions/test_write_surface_coherence.py::test_fr008_router_returns_no_op_wrong_surface' 'tests/missions/test_write_surface_coherence.py::test_fr008_safe_commit_raises_protected_branch_refused'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Remove historical remedy-prose pins; retain both current behavioral refusal paths.
+    survivor: tests/missions/test_write_surface_coherence.py
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-wp03-tasks-direct-safe-commit-shape
+      members:
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsRouteThroughCommitForMission::test_tasks_module_has_no_direct_safe_commit_symbol
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsRouteThroughCommitForMission::test_tasks_py_has_no_direct_safe_commit_call
+      granularity: function
+      source_paths: [tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py]
+      production_paths: [src/specify_cli/cli/commands/agent/tasks.py]
+      oracle: map-requirements commits through the current artifact port
+      contract_claim: behavior supersedes exact import/callee absence
+      authority: [tests/specify_cli/cli/commands/agent/test_tasks_core_backed_orchestration.py]
+      duplicate_group: WP10-current-tasks-artifact-port
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsRouteThroughCommitForMission::test_tasks_py_has_no_direct_safe_commit_call}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/specify_cli/cli/commands/agent/test_tasks_core_backed_orchestration.py::test_map_requirements_auto_commit_routes_via_commit_artifact
+          result: Current behavior executes the port and verifies kind/files/message; no authority requires a particular imported symbol name.
+      causal_probe:
+        kind: executed-successor-plus-no-shape-authority
+        fault: map-requirements bypasses the artifact commit port
+        authority_violated: authored task mapping must use the routed artifact capability
+        act_reached: true
+        intended_oracle: current orchestration spy rejects a bypass while allowing equivalent internals
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/specify_cli/cli/commands/agent/test_tasks_core_backed_orchestration.py::test_map_requirements_auto_commit_routes_via_commit_artifact'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Delete exact import/callee absence checks; retain routed orchestration behavior.
+    survivor: tests/specify_cli/cli/commands/agent/test_tasks_core_backed_orchestration.py::test_map_requirements_auto_commit_routes_via_commit_artifact
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-wp03-tasks-protected-message-byte-pin
+      members:
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical::test_map_requirements_protected_primary_message_byte_identical
+        - tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical::test_move_task_protected_primary_message_byte_identical
+      granularity: function
+      source_paths: [tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py]
+      production_paths: [src/specify_cli/cli/commands/agent/tasks.py]
+      oracle: protected-primary task mutation refuses
+      contract_claim: no current product authority requires byte-identical historical refusal prose
+      authority: [src/specify_cli/core/commit_guard.py]
+      duplicate_group: WP10-current-protected-task-refusal
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical::test_move_task_protected_primary_message_byte_identical}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/architectural/test_execution_context_parity.py::test_full_sequence_direct_to_target
+          result: Current end-to-end task transition refuses on protected main; docs/context and ADR search contains no byte-level message contract.
+      causal_probe:
+        kind: executed-successor-plus-no-prose-authority
+        fault: task mutation proceeds on protected primary
+        authority_violated: protected-primary mutation must refuse
+        act_reached: true
+        intended_oracle: current end-to-end transition observes nonzero refusal
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/architectural/test_execution_context_parity.py::test_full_sequence_direct_to_target'; rg -n 'Refusing to run.*auto-commit' docs/context docs/adr/3.x"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Delete byte-identical prose pins; current protected-task refusal remains.
+    survivor: tests/architectural/test_execution_context_parity.py::test_full_sequence_direct_to_target
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-wp03-mark-status-event-only
+      members: [tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical::test_mark_status_event_only_bypasses_artifact_protection]
+      granularity: function
+      source_paths: [tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py]
+      production_paths: [src/specify_cli/cli/commands/agent/tasks.py]
+      oracle: event-only mark-status lands no protected-branch commit
+      contract_claim: current event-sourced successor supersedes obsolete pre-artifact-protection expectation
+      authority: [tests/git/test_guard_capability_regression.py]
+      duplicate_group: WP10-current-mark-status-event-only
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical::test_mark_status_event_only_bypasses_artifact_protection}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/git/test_guard_capability_regression.py::test_mark_status_test_mode_env_lands_no_commit_on_protected_target
+          result: Current node executes mark-status and proves HEAD byte identity; the deleted node expected an obsolete meta lookup error.
+      causal_probe:
+        kind: executed-successor-family
+        fault: event-only mark-status creates a protected-ref commit
+        authority_violated: event-only completion must not land an authored artifact commit
+        act_reached: true
+        intended_oracle: current command succeeds while HEAD remains unchanged
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/git/test_guard_capability_regression.py::test_mark_status_test_mode_env_lands_no_commit_on_protected_target'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Delete obsolete pre-event-sourcing error expectation; retain current commit-free command behavior.
+    survivor: tests/git/test_guard_capability_regression.py::test_mark_status_test_mode_env_lands_no_commit_on_protected_target
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-wp03-self-review-validation-order
+      members: [tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical::test_move_task_self_review_guard_precedes_protected_branch]
+      granularity: function
+      source_paths: [tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py]
+      production_paths: [src/specify_cli/cli/commands/agent/tasks.py]
+      oracle: self-review fallback is accepted only for approval/done transitions
+      contract_claim: full validation matrix supersedes one historical guard-order scenario
+      authority: [tests/specify_cli/cli/commands/agent/test_tasks_parsing_validation.py]
+      duplicate_group: WP10-current-self-review-validation
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py::TestTasksTailsProtectedPrimaryByteIdentical::test_move_task_self_review_guard_precedes_protected_branch}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/specify_cli/cli/commands/agent/test_tasks_parsing_validation.py::test_self_review_fallback_guard_full_matrix
+          result: Current matrix exhaustively asserts every target-lane/fallback combination without coupling validation to branch-protection order.
+      causal_probe:
+        kind: executed-successor-family
+        fault: invalid self-review fallback is accepted for a non-approval transition
+        authority_violated: self-review fallback has a closed target-lane domain
+        act_reached: true
+        intended_oracle: current full matrix rejects all invalid combinations
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/specify_cli/cli/commands/agent/test_tasks_parsing_validation.py::test_self_review_fallback_guard_full_matrix'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Delete one ordering-coupled scenario; retain the exhaustive validation matrix.
+    survivor: tests/specify_cli/cli/commands/agent/test_tasks_parsing_validation.py::test_self_review_fallback_guard_full_matrix
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-egress-denied-rendering-and-fragments
+      members:
         - tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_denied_branch_names_the_operator_action
-        - tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_import_failure_branch_carries_the_exception_text
-        - tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_no_resolver_branch_names_the_resolver
-        - tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_undetermined_and_unanswerable_stay_distinguishable
-        - tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_unrecognised_future_verdict_does_not_reuse_denied_remedy
         - tests/specify_cli/test_egress_consolidation_3110.py::test_sc004_clause1_the_non_fragment_portion_is_byte_identical
         - tests/specify_cli/test_egress_consolidation_3110.py::test_sc004_clause2_fragment_names_its_own_set_and_no_foreign_kind
-        - tests/specify_cli/test_egress_consolidation_3110.py::test_sc004_clause3_both_deciding_modules_bind_the_one_definition_site
-        - tests/specify_cli/test_egress_consolidation_3110.py::test_sc004_clause3_names_are_reachable_and_the_comparison_is_not_self_identity
-        - tests/specify_cli/test_egress_consolidation_3110.py::test_sc015_template_and_verdict_branches_have_exactly_one_definition_site
-        - tests/specify_cli/test_egress_consolidation_3110.py::test_sc025_the_shared_module_is_classified_as_integration
       granularity: function
       source_paths: [tests/specify_cli/test_egress_consolidation_3110.py]
-      production_paths: []
-      oracle: null
-      contract_claim: null
-      authority: [kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006]
+      production_paths: [src/specify_cli/egress.py::_render_denied_refusal]
+      oracle: denied SaaS and tracker requests send nothing and render transport-specific actionable refusal
+      contract_claim: end-to-end transport successors supersede direct shared-template pins
+      authority: [docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md]
+      duplicate_group: WP10-current-egress-denied-transport
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/test_egress_consolidation_3110.py::test_sc004_clause1_the_non_fragment_portion_is_byte_identical}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/specify_cli/saas_client/test_client_consent_gate_3030.py::test_sc016_denied_wording_is_pinned_for_this_transport
+          result: Both current transport successors execute real refusal paths, assert empty sinks, exact shared-template tails, own identifiers, foreign exclusion, and operator remedy.
+      causal_probe:
+        kind: executed-successor-family
+        fault: denied transport leaks identifiers or renders the wrong transport fragment/remedy
+        authority_violated: denied egress must transmit nothing and explain the refusal accurately
+        act_reached: true
+        intended_oracle: both current transport tests reject leakage or rendering drift
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/specify_cli/saas_client/test_client_consent_gate_3030.py::test_sc016_denied_wording_is_pinned_for_this_transport' 'tests/sync/tracker/test_saas_client_consent_gate_3030.py::test_sc016_denied_wording_is_pinned_for_this_transport'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Delete direct consolidation-template duplicates; retain both end-to-end transport oracles.
+    survivor: tests/specify_cli/saas_client/test_client_consent_gate_3030.py::test_sc016_denied_wording_is_pinned_for_this_transport
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-egress-import-failure-diagnostic
+      members: [tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_import_failure_branch_carries_the_exception_text]
+      granularity: function
+      source_paths: [tests/specify_cli/test_egress_consolidation_3110.py]
+      production_paths: [src/specify_cli/egress.py::project_egress_refusal]
+      oracle: consent-resolver import failure refuses egress
+      contract_claim: current authority requires refusal, not echoing exact ImportError text
+      authority: [docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md]
+      duplicate_group: WP10-current-egress-fail-closed
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_import_failure_branch_carries_the_exception_text}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md
+          result: ADR mandates default deny; search finds no contract requiring raw import-exception text in operator output.
+      causal_probe:
+        kind: no-prose-authority-plus-default-deny-successor
+        fault: hosted-sync consent resolver cannot be imported
+        authority_violated: inability to resolve consent must not permit egress
+        act_reached: true
+        intended_oracle: live no-attribution gates prove lack of an answer refuses
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/specify_cli/saas_client/test_client_consent_gate_3030.py::test_no_attribution_is_a_refusal_at_the_gate_itself' 'tests/sync/tracker/test_saas_client_consent_gate_3030.py::test_no_attribution_is_a_refusal_at_the_gate_itself'; rg -n 'exception text|ImportError' docs/context docs/adr/3.x"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Delete raw exception-text pin; retain current default-deny transport gates.
+    survivor: tests/specify_cli/saas_client/test_client_consent_gate_3030.py::test_no_attribution_is_a_refusal_at_the_gate_itself
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-egress-no-resolver-diagnostic
+      members: [tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_no_resolver_branch_names_the_resolver]
+      granularity: function
+      source_paths: [tests/specify_cli/test_egress_consolidation_3110.py]
+      production_paths: [src/specify_cli/egress.py::_refusal_for_verdict]
+      oracle: NO_RESOLVER refuses egress
+      contract_claim: current authority requires refusal, not the word resolver
+      authority: [docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md]
+      duplicate_group: WP10-current-egress-no-resolver
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_no_resolver_branch_names_the_resolver}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/invocation/test_adapters.py::test_resolve_egress_consent_refuses_when_unregistered
+          result: Current adapter authority returns NO_RESOLVER; live transport gate proves absent attribution refuses. Exact diagnostic word has no ADR/context authority.
+      causal_probe:
+        kind: executed-successor-plus-no-prose-authority
+        fault: no consent resolver is registered
+        authority_violated: NO_RESOLVER must remain non-permitting
+        act_reached: true
+        intended_oracle: current adapter and gate reject the missing-resolver case
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/invocation/test_adapters.py::test_resolve_egress_consent_refuses_when_unregistered' 'tests/specify_cli/saas_client/test_client_consent_gate_3030.py::test_no_attribution_is_a_refusal_at_the_gate_itself'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Delete exact diagnostic-word pin; retain NO_RESOLVER default-deny behavior.
+    survivor: tests/invocation/test_adapters.py
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-egress-undetermined-unanswerable-prose
+      members: [tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_undetermined_and_unanswerable_stay_distinguishable]
+      granularity: function
+      source_paths: [tests/specify_cli/test_egress_consolidation_3110.py]
+      production_paths: [src/specify_cli/egress.py::_refusal_for_verdict]
+      oracle: UNANSWERABLE and missing attribution both refuse
+      contract_claim: current authority requires fail-closed polarity, not distinct exact prose
+      authority: [docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md]
+      duplicate_group: WP10-current-egress-unanswerable
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_undetermined_and_unanswerable_stay_distinguishable}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: tests/invocation/test_adapters.py
+          result: Current adapter tests prove UNANSWERABLE is non-permitting and transport gates prove missing attribution refuses; no current authority requires two specific sentences.
+      causal_probe:
+        kind: executed-successor-plus-no-prose-authority
+        fault: resolver raises/returns non-bool or transport lacks project attribution
+        authority_violated: neither state may permit egress
+        act_reached: true
+        intended_oracle: adapter and transport successors reject both inputs
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider 'tests/invocation/test_adapters.py::test_resolve_egress_consent_refuses_a_none_answer' 'tests/invocation/test_adapters.py::test_resolve_egress_consent_refuses_on_resolver_exception' 'tests/specify_cli/saas_client/test_client_consent_gate_3030.py::test_no_attribution_is_a_refusal_at_the_gate_itself'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Delete distinct-sentence pin; retain non-permitting polarity for both cases.
+    survivor: tests/invocation/test_adapters.py
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-egress-future-verdict-remedy-prose
+      members: [tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_unrecognised_future_verdict_does_not_reuse_denied_remedy]
+      granularity: function
+      source_paths: [tests/specify_cli/test_egress_consolidation_3110.py]
+      production_paths: [src/specify_cli/egress.py::_refusal_for_verdict]
+      oracle: an unknown non-permitting verdict yields a refusal
+      contract_claim: no current enum member or authority prescribes hypothetical future-verdict remedy prose
+      authority: []
       duplicate_group: null
       route_memberships: [*full_parallel_route]
       platforms: [linux, macOS, windows]
-      observations:
-        - <<: *full_parallel_observation
-          nodeid: tests/specify_cli/test_egress_consolidation_3110.py::test_fr012_rationale_and_tracker_precondition_live_in_the_consolidated_module
-    evidence: *migration_evidence
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/test_egress_consolidation_3110.py::test_nfr004_unrecognised_future_verdict_does_not_reuse_denied_remedy}]
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "rg -n 'unrecognised future verdict|quarantined' docs/context docs/adr/3.x src"
+          result: Search finds no current enum member, caller, or product authority for the synthetic future-verdict remedy.
+      causal_probe:
+        kind: authority-and-caller-search
+        fault: synthetic object with value=quarantined is passed to a private renderer
+        authority_violated: none; current EgressConsent is closed and all real non-permitting members are covered by adapter/gate tests
+        act_reached: true
+        intended_oracle: current real verdict coverage remains green
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider tests/invocation/test_adapters.py; rg -n 'quarantined|unrecognised future verdict' docs/context docs/adr/3.x src"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
     verdict: DELETE
     state: terminal
-    action: Delete exact prose, byte-parity, definition-site, and completed consolidation layout assertions; live consent gates own the boundary.
-    survivor: tests/specify_cli/saas_client/test_client_consent_gate_3030.py
+    action: Delete speculative future-object remedy prose test with no current authority or caller.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-egress-binding-object-identity
+      members:
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_sc004_clause3_both_deciding_modules_bind_the_one_definition_site
+        - tests/specify_cli/test_egress_consolidation_3110.py::test_sc004_clause3_names_are_reachable_and_the_comparison_is_not_self_identity
+      granularity: function
+      source_paths: [tests/specify_cli/test_egress_consolidation_3110.py]
+      production_paths: [src/specify_cli/egress.py::project_egress_refusal]
+      oracle: null
+      contract_claim: no current product authority requires by-value object identity across module imports
+      authority: []
+      duplicate_group: null
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/test_egress_consolidation_3110.py::test_sc004_clause3_both_deciding_modules_bind_the_one_definition_site}]
+    evidence: &egress_no_layout_authority
+      profile: structural
+      authority_evidence:
+        - reference: "rg -n 'object identity|one definition site|specify_cli.egress' docs/context docs/adr/3.x"
+          result: No current ADR/context authority mandates an object-identity comparison or exact definition site; live transport behavior is independently gated.
+      causal_probe:
+        kind: authority-and-caller-search
+        fault: equivalent import style or delegating wrapper changes object identity without changing refusal behavior
+        authority_violated: none; only completed #3110 consolidation shape changes
+        act_reached: true
+        intended_oracle: both live transport consent suites remain green
+        intended_oracle_failed: true
+        command: "rg -n 'project_egress_refusal' src/specify_cli; .venv/bin/pytest -q -p no:cacheprovider 'tests/specify_cli/saas_client/test_client_consent_gate_3030.py::test_sc016_denied_wording_is_pinned_for_this_transport' 'tests/sync/tracker/test_saas_client_consent_gate_3030.py::test_sc016_denied_wording_is_pinned_for_this_transport'"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb
+    verdict: DELETE
+    state: terminal
+    action: Delete exact cross-module object-identity pins; behavior remains transport-owned.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-egress-definition-site-content-census
+      members: [tests/specify_cli/test_egress_consolidation_3110.py::test_sc015_template_and_verdict_branches_have_exactly_one_definition_site]
+      granularity: function
+      source_paths: [tests/specify_cli/test_egress_consolidation_3110.py]
+      production_paths: [src/specify_cli/egress.py]
+      oracle: null
+      contract_claim: no current product authority requires exact string-constant cardinality or location
+      authority: []
+      duplicate_group: null
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/test_egress_consolidation_3110.py::test_sc015_template_and_verdict_branches_have_exactly_one_definition_site}]
+    evidence: *egress_no_layout_authority
+    verdict: DELETE
+    state: terminal
+    action: Delete exact string-definition-site census; live refusal behavior owns operator-visible output.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-egress-integration-prefix-self-presence
+      members: [tests/specify_cli/test_egress_consolidation_3110.py::test_sc025_the_shared_module_is_classified_as_integration]
+      granularity: function
+      source_paths: [tests/specify_cli/test_egress_consolidation_3110.py]
+      production_paths: [tests/architectural/test_integration_boundary.py::INTEGRATION_PREFIXES]
+      oracle: null
+      contract_claim: no current ADR declares the plain shared egress module to be an integration-layer package
+      authority: []
+      duplicate_group: null
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/test_egress_consolidation_3110.py::test_sc025_the_shared_module_is_classified_as_integration}]
+    evidence:
+      <<: *egress_no_layout_authority
+      authority_evidence:
+        - reference: "rg -n 'specify_cli.egress|integration layer' docs/context docs/adr/3.x"
+          result: The only exact membership rationale is the test's own #3110 comment; current ADR governs default-deny behavior, not one test-list entry.
+    verdict: DELETE
+    state: terminal
+    action: Delete positive self-presence assertion over another test's implementation list.
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP10-egress-relocated-rationale-prose
+      members: [tests/specify_cli/test_egress_consolidation_3110.py::test_fr012_rationale_and_tracker_precondition_live_in_the_consolidated_module]
+      granularity: function
+      source_paths: [tests/specify_cli/test_egress_consolidation_3110.py]
+      production_paths: [src/specify_cli/egress.py::__doc__]
+      oracle: null
+      contract_claim: no current executable contract depends on historical FR tokens or exact explanatory prose
+      authority: []
+      duplicate_group: null
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations: [{<<: *full_parallel_observation, nodeid: tests/specify_cli/test_egress_consolidation_3110.py::test_fr012_rationale_and_tracker_precondition_live_in_the_consolidated_module}]
+    evidence: *egress_no_layout_authority
+    verdict: DELETE
+    state: terminal
+    action: Delete exact docstring-token acceptance scaffold; ADR and behavior remain authoritative.
+    survivor: null
     issue: null
     owner: null
     expires: null

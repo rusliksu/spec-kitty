@@ -174,7 +174,7 @@
   ],
   "cycle2_review_remediation": {
     "probe_artifact": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp10-probes-cycle2.json",
-    "probe_artifact_sha256": "b91073daa5e591c78ecc61f923db66e5808f5a9d9202795a23c6ced15ee08be6",
+    "probe_artifact_sha256": "de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb",
     "deep_keep_rows": 42,
     "deleted_family_mappings": 12,
     "selected_probe_execution": {
@@ -192,6 +192,30 @@
       "outcome": "535 passed, 2 xfailed in 261.21s",
       "exit_code": 0
     }
+  },
+  "cycle3_final_review_remediation": {
+    "scope": "evidence-only causal-family split; deletion patch unchanged",
+    "probe_artifact": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp10-probes-cycle2.json",
+    "probe_artifact_sha256": "de835432dd0832a19f156ae9eb5f5b0528bebe3e3cfe64fc22dd9425bfbce0bb",
+    "heterogeneous_files_split": 3,
+    "deleted_family_mappings": 35,
+    "cross_seam_families": 10,
+    "wp03_bypass_families": 7,
+    "egress_families": 9,
+    "exact_node_delta_preserved": -304,
+    "production_files_changed": 0,
+    "deletion_expansion": 0,
+    "bounded_successor_execution": {
+      "command": ".venv/bin/pytest -q -p no:cacheprovider <24 exact current successor nodes/files>",
+      "outcome": "41 passed in 61.35s",
+      "exit_code": 0
+    },
+    "supplemental_successor_execution": {
+      "command": ".venv/bin/pytest -q -p no:cacheprovider tests/specify_cli/lanes/test_branch_naming_ssot_entrypoint.py::test_resolve_transaction_mid8_cascade_preserved tests/architectural/test_execution_context_parity.py::test_full_sequence_direct_to_target",
+      "outcome": "2 passed in 61.94s",
+      "exit_code": 0
+    },
+    "proof_contract": "Each amended DELETE row is one causal family with a single production path/authority/corpus/oracle/fault tuple, or records concrete docs/caller-search evidence for no current authority."
   },
   "integration_handoff": {
     "central_map_edited": false,

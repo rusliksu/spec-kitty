@@ -2,10 +2,10 @@
   "schema_version": "test-sanitation-probes/v1",
   "mission": "assertive-test-suite-sanitation-01KZME3P",
   "work_package": "WP10",
-  "cycle": 2,
+  "cycle": 3,
   "planning_base": "28ae75ea998c898aba57364db7a06d2088bd2af2",
-  "prepared_from": "b7cf68425",
-  "execution_head": "2b1987e05",
+  "prepared_from": "95a4f6729",
+  "execution_head": "607267b6a",
   "environment": {
     "python": "3.11.15",
     "pytest": "9.0.3",
@@ -21,7 +21,13 @@
     "selected_probe_exit_code": 0,
     "live_oracle_command": ".venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_guard_capability_call_sites.py tests/architectural/test_dossier_sync_boundary.py",
     "live_oracle_outcome": "8 passed in 64.50s",
-    "live_oracle_exit_code": 0
+    "live_oracle_exit_code": 0,
+    "final_cycle3_deletion_proof_command": ".venv/bin/pytest -q -p no:cacheprovider <24 exact current successor nodes/files>",
+    "final_cycle3_deletion_proof_outcome": "41 passed in 61.35s",
+    "final_cycle3_deletion_proof_exit_code": 0,
+    "final_cycle3_supplemental_command": ".venv/bin/pytest -q -p no:cacheprovider tests/specify_cli/lanes/test_branch_naming_ssot_entrypoint.py::test_resolve_transaction_mid8_cascade_preserved tests/architectural/test_execution_context_parity.py::test_full_sequence_direct_to_target",
+    "final_cycle3_supplemental_outcome": "2 passed in 61.94s",
+    "final_cycle3_supplemental_exit_code": 0
   },
   "replay_contract": {
     "mutation_materialization": "Each survivor record names the exact pytest node that materializes its prohibited live-shaped input using tmp_path, monkeypatch, an isolated repository fixture, or an explicit API argument. The record's command executes those source bytes at execution_head.",
@@ -757,21 +763,368 @@
     },
     {
       "path": "tests/integration/test_cross_seam_consumers.py",
-      "survivor": "tests/sync/test_project_identity_resolver_3030.py",
-      "proof": "Canonical identity plus read/write placement survivors execute the current boundary without completed-migration parity.",
-      "command": ".venv/bin/pytest -q -p no:cacheprovider 'tests/sync/test_project_identity_resolver_3030.py'"
+      "family": "status-transition identity fail-closed",
+      "members": ["test_status_transition_coord_bare_slug_fails_closed"],
+      "production_paths": ["src/specify_cli/coordination/status_transition.py::_identity_for_request"],
+      "authority": "docs/context/identity.md",
+      "corpus": {"identity": "_identity_for_request coordination topology", "nonzero_count": 1},
+      "oracle": "unresolved coordination identity refuses before status write",
+      "fault": "coordination topology has neither mission_id nor resolvable mid8",
+      "survivor_nodes": [
+        "tests/runtime/test_runtime_identity_resolution.py::test_resolve_coordination_branch_malformed_modern_mission_fails_closed",
+        "tests/specify_cli/coordination/test_status_transition_adoption.py::test_read_write_resolution_equivalence_across_topologies[coord]"
+      ],
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/integration/test_cross_seam_consumers.py",
+      "family": "implement identity fail-closed",
+      "members": ["test_implement_resolver_coord_bare_slug_fails_closed"],
+      "production_paths": ["src/specify_cli/cli/commands/implement.py::_resolve_bookkeeping_transaction_identifiers"],
+      "authority": "docs/context/identity.md",
+      "corpus": {"identity": "modern coord bookkeeping without identity", "nonzero_count": 1},
+      "oracle": "unresolved modern bookkeeping identity is never fabricated",
+      "fault": "missing mission_id and mid8",
+      "survivor_nodes": [
+        "tests/runtime/test_runtime_identity_resolution.py::test_resolve_coordination_branch_malformed_modern_mission_fails_closed",
+        "tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_mid8_is_none_when_no_meta_mid8_and_no_mission_id"
+      ],
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/integration/test_cross_seam_consumers.py",
+      "family": "implement mission-id derivation",
+      "members": ["test_backfilled_legacy_mission_resolves_from_mission_id"],
+      "production_paths": ["src/specify_cli/cli/commands/implement.py::_resolve_bookkeeping_transaction_identifiers"],
+      "authority": "docs/context/identity.md",
+      "corpus": {"identity": "mission_id without explicit mid8", "nonzero_count": 1},
+      "oracle": "mission_id derives effective mid8",
+      "fault": "mission_id derivation is dropped or reordered",
+      "survivor_nodes": ["tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_mid8_falls_back_to_resolve_mid8_when_meta_mid8_absent"],
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/integration/test_cross_seam_consumers.py",
+      "family": "implement bare-surface fallback",
+      "members": [
+        "test_meta_less_modern_slug_degrades_without_fabrication",
+        "test_unbackfilled_legacy_slug_resolves_to_bare_surface"
+      ],
+      "production_paths": ["src/specify_cli/cli/commands/implement.py::_resolve_bookkeeping_transaction_identifiers"],
+      "authority": "docs/context/identity.md",
+      "corpus": {"identity": "identity-less non-coordination input", "nonzero_count": 2},
+      "oracle": "empty-mid8 bare-surface fallback remains non-fabricating",
+      "fault": "identity-less input fabricates an id or mid8",
+      "survivor_nodes": [
+        "tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_legacy_slug_fallback_when_mission_id_absent",
+        "tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_legacy_slug_fallback_when_no_meta_at_all",
+        "tests/specify_cli/cli/commands/test_implement_bookkeeping_identifiers.py::test_mid8_is_none_when_no_meta_mid8_and_no_mission_id"
+      ],
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/integration/test_cross_seam_consumers.py",
+      "family": "implement slug-tail mid8",
+      "members": ["test_mid8_slug_tail_resolves_without_fabrication"],
+      "production_paths": ["src/specify_cli/cli/commands/implement.py::_resolve_bookkeeping_transaction_identifiers"],
+      "authority": "docs/context/identity.md",
+      "corpus": {"identity": "valid embedded mid8 tail", "nonzero_count": 1},
+      "oracle": "canonical transaction-mid8 cascade recognizes the valid tail",
+      "fault": "valid embedded tail is ignored or changed",
+      "survivor_nodes": ["tests/specify_cli/lanes/test_branch_naming_ssot_entrypoint.py::test_resolve_transaction_mid8_cascade_preserved"],
+      "result": "passed in final-cycle supplemental execution"
+    },
+    {
+      "path": "tests/integration/test_cross_seam_consumers.py",
+      "family": "status aggregate fabrication substring",
+      "members": ["test_no_fabrication_idiom_in_owned_files[specify_cli/status/aggregate.py]"],
+      "production_paths": ["src/specify_cli/status/aggregate.py"],
+      "authority": "tests/architectural/test_no_write_side_rederivation.py",
+      "corpus": {"identity": "whole-tree write rederivation scan", "nonzero_count": 1},
+      "oracle": "canonical write-side identity has no inline rederivation",
+      "fault": "checkout-derived or fabricated write identity",
+      "survivor_nodes": ["tests/architectural/test_no_write_side_rederivation.py::test_adopted_modules_have_no_write_side_rederivation"],
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/integration/test_cross_seam_consumers.py",
+      "family": "status transition fabrication substring",
+      "members": ["test_no_fabrication_idiom_in_owned_files[specify_cli/coordination/status_transition.py]"],
+      "production_paths": ["src/specify_cli/coordination/status_transition.py"],
+      "authority": "tests/architectural/test_no_write_side_rederivation.py",
+      "corpus": {"identity": "whole-tree write rederivation scan", "nonzero_count": 1},
+      "oracle": "canonical write-side identity has no inline rederivation",
+      "fault": "checkout-derived or fabricated write identity",
+      "survivor_nodes": ["tests/architectural/test_no_write_side_rederivation.py::test_adopted_modules_have_no_write_side_rederivation"],
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/integration/test_cross_seam_consumers.py",
+      "family": "implement fabrication substring",
+      "members": ["test_no_fabrication_idiom_in_owned_files[specify_cli/cli/commands/implement.py]"],
+      "production_paths": ["src/specify_cli/cli/commands/implement.py"],
+      "authority": "tests/architectural/test_no_write_side_rederivation.py",
+      "corpus": {"identity": "whole-tree write rederivation scan", "nonzero_count": 1},
+      "oracle": "canonical write-side identity has no inline rederivation",
+      "fault": "checkout-derived or fabricated write identity",
+      "survivor_nodes": ["tests/architectural/test_no_write_side_rederivation.py::test_adopted_modules_have_no_write_side_rederivation"],
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/integration/test_cross_seam_consumers.py",
+      "family": "aggregate topology private shape",
+      "members": ["test_aggregate_topology_predicate_uses_registry_authority"],
+      "production_paths": ["src/specify_cli/status/aggregate.py::_is_coord_dir"],
+      "authority": "tests/unit/status/test_mission_status_aggregate.py",
+      "corpus": {"identity": "registered coordination mission", "nonzero_count": 1},
+      "oracle": "registered coordination topology is classified behaviorally",
+      "fault": "registered coordination mission is classified flat",
+      "survivor_nodes": ["tests/unit/status/test_mission_status_aggregate.py::TestLoadCoordMission::test_topology_is_coordination_when_coord_worktree_exists"],
+      "no_authority_evidence": "rg over docs/context and docs/adr/3.x found no contract naming private _is_coord_dir or mandating its exact callee",
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/integration/test_cross_seam_consumers.py",
+      "family": "aggregate branch private shape",
+      "members": ["test_aggregate_branch_compose_uses_naming_authority"],
+      "production_paths": ["src/specify_cli/status/aggregate.py"],
+      "authority": "tests/unit/status/test_mission_status_aggregate.py",
+      "corpus": {"identity": "coord branch transition with absent worktree", "nonzero_count": 1},
+      "oracle": "transition validates against authoritative coordination branch",
+      "fault": "aggregate chooses a non-authoritative destination ref",
+      "survivor_nodes": ["tests/unit/status/test_mission_status_aggregate.py::TestTransitionHappyPath::test_transition_validates_against_coord_branch_when_worktree_absent"],
+      "no_authority_evidence": "rg over docs/context and docs/adr/3.x found no contract requiring a mission_branch_name_required token in aggregate.py",
+      "result": "passed in final-cycle 41-node execution"
     },
     {
       "path": "tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py",
-      "survivor": "tests/architectural/test_write_surface_placement_guard.py",
-      "proof": "The live write-placement and commit-guard survivors execute the current partition and refusal behavior.",
-      "command": ".venv/bin/pytest -q -p no:cacheprovider 'tests/architectural/test_write_surface_placement_guard.py'"
+      "family": "artifact kind classifier matrix",
+      "members": ["TestKindForMissionFile::*"],
+      "production_paths": ["src/mission_runtime/artifacts.py::kind_for_mission_file"],
+      "authority": "src/mission_runtime/artifacts.py",
+      "corpus": {"identity": "MissionArtifactKind partition", "nonzero_count": 1},
+      "oracle": "artifact homes remain exhaustive, disjoint, and correctly partitioned",
+      "fault": "SPEC or STATUS_STATE moves homes or partition sets overlap",
+      "survivor_nodes": [
+        "tests/mission_runtime/test_artifact_partition.py::test_artifact_home_for_spec_is_primary",
+        "tests/mission_runtime/test_artifact_partition.py::test_artifact_home_for_status_state_stays_placement",
+        "tests/mission_runtime/test_artifact_partition_mapping.py::test_partition_invariant_stays_exhaustive_and_disjoint"
+      ],
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py",
+      "family": "safe-commit kind threading",
+      "members": ["TestSafeCommitMissionAwareTargetIsKindAware::*"],
+      "production_paths": ["src/specify_cli/cli/commands/safe_commit_cmd.py"],
+      "authority": "docs/adr/3.x/2026-07-30-1-post-merge-write-routing.md",
+      "corpus": {"identity": "PRIMARY-kind retrospective after publish", "nonzero_count": 1},
+      "oracle": "public safe-commit durably commits and reads back the routed artifact",
+      "fault": "kind-aware placement is dropped",
+      "survivor_nodes": ["tests/specify_cli/cli/commands/test_safe_commit_cmd.py::test_public_safe_commit_succeeds_after_merged_branch_deleted_3033"],
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py",
+      "family": "protected refusal behavior",
+      "members": ["TestFR008MessagesNameFeatureBranch::*"],
+      "production_paths": ["src/specify_cli/core/commit_guard.py"],
+      "authority": "src/specify_cli/core/commit_guard.py",
+      "corpus": {"identity": "router/direct protected primary paths", "nonzero_count": 2},
+      "oracle": "both paths refuse an ordinary protected-ref write",
+      "fault": "router or direct safe-commit permits protected write",
+      "survivor_nodes": [
+        "tests/missions/test_write_surface_coherence.py::test_fr008_router_returns_no_op_wrong_surface",
+        "tests/missions/test_write_surface_coherence.py::test_fr008_safe_commit_raises_protected_branch_refused"
+      ],
+      "no_authority_evidence": "current authority requires refusal but not the retired feature-branch remedy sentence",
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py",
+      "family": "tasks direct safe-commit source shape",
+      "members": ["TestTasksTailsRouteThroughCommitForMission::*"],
+      "production_paths": ["src/specify_cli/cli/commands/agent/tasks.py"],
+      "authority": "tests/specify_cli/cli/commands/agent/test_tasks_core_backed_orchestration.py",
+      "corpus": {"identity": "map-requirements auto-commit", "nonzero_count": 1},
+      "oracle": "authored mapping commits through artifact capability",
+      "fault": "mapping bypasses routed artifact capability",
+      "survivor_nodes": ["tests/specify_cli/cli/commands/agent/test_tasks_core_backed_orchestration.py::test_map_requirements_auto_commit_routes_via_commit_artifact"],
+      "no_authority_evidence": "no current authority mandates a specific imported symbol or AST call spelling",
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py",
+      "family": "tasks protected-message byte pins",
+      "members": [
+        "TestTasksTailsProtectedPrimaryByteIdentical::test_map_requirements_protected_primary_message_byte_identical",
+        "TestTasksTailsProtectedPrimaryByteIdentical::test_move_task_protected_primary_message_byte_identical"
+      ],
+      "production_paths": ["src/specify_cli/cli/commands/agent/tasks.py"],
+      "authority": "src/specify_cli/core/commit_guard.py",
+      "corpus": {"identity": "protected-primary task mutation", "nonzero_count": 2},
+      "oracle": "task mutation refuses on protected primary",
+      "fault": "task mutation lands on main",
+      "survivor_nodes": ["tests/architectural/test_execution_context_parity.py::test_full_sequence_direct_to_target"],
+      "no_authority_evidence": "rg over docs/context and docs/adr/3.x found no byte-identical task refusal message contract",
+      "result": "current successor is an existing independently green gate; not repeated in the bounded 41-node execution"
+    },
+    {
+      "path": "tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py",
+      "family": "mark-status event-only",
+      "members": ["TestTasksTailsProtectedPrimaryByteIdentical::test_mark_status_event_only_bypasses_artifact_protection"],
+      "production_paths": ["src/specify_cli/cli/commands/agent/tasks.py"],
+      "authority": "tests/git/test_guard_capability_regression.py",
+      "corpus": {"identity": "event-only mark-status on protected target", "nonzero_count": 1},
+      "oracle": "command lands no protected-ref commit",
+      "fault": "event-only completion creates authored commit",
+      "survivor_nodes": ["tests/git/test_guard_capability_regression.py::test_mark_status_test_mode_env_lands_no_commit_on_protected_target"],
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py",
+      "family": "self-review fallback validation",
+      "members": ["TestTasksTailsProtectedPrimaryByteIdentical::test_move_task_self_review_guard_precedes_protected_branch"],
+      "production_paths": ["src/specify_cli/cli/commands/agent/tasks.py"],
+      "authority": "tests/specify_cli/cli/commands/agent/test_tasks_parsing_validation.py",
+      "corpus": {"identity": "target-lane/fallback cross product", "nonzero_count": 1},
+      "oracle": "fallback is accepted only on approval/done transitions",
+      "fault": "invalid target lane accepts self-review fallback",
+      "survivor_nodes": ["tests/specify_cli/cli/commands/agent/test_tasks_parsing_validation.py::test_self_review_fallback_guard_full_matrix"],
+      "result": "passed in final-cycle 41-node execution"
     },
     {
       "path": "tests/specify_cli/test_egress_consolidation_3110.py",
-      "survivor": "tests/specify_cli/saas_client/test_client_consent_gate_3030.py",
-      "proof": "The live consent transport tests own egress refusal; exact consolidation layout/prose is not an oracle.",
-      "command": ".venv/bin/pytest -q -p no:cacheprovider 'tests/specify_cli/saas_client/test_client_consent_gate_3030.py'"
+      "family": "denied rendering and transport fragments",
+      "members": [
+        "test_nfr004_denied_branch_names_the_operator_action",
+        "test_sc004_clause1_the_non_fragment_portion_is_byte_identical",
+        "test_sc004_clause2_fragment_names_its_own_set_and_no_foreign_kind"
+      ],
+      "production_paths": ["src/specify_cli/egress.py::_render_denied_refusal"],
+      "authority": "docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md",
+      "corpus": {"identity": "SaaS + tracker denied transports", "nonzero_count": 2},
+      "oracle": "both denied transports send nothing and render own accurate actionable fragment",
+      "fault": "denied identifier leaks or wrong fragment/remedy is rendered",
+      "survivor_nodes": [
+        "tests/specify_cli/saas_client/test_client_consent_gate_3030.py::test_sc016_denied_wording_is_pinned_for_this_transport",
+        "tests/sync/tracker/test_saas_client_consent_gate_3030.py::test_sc016_denied_wording_is_pinned_for_this_transport"
+      ],
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/specify_cli/test_egress_consolidation_3110.py",
+      "family": "import-failure diagnostic",
+      "members": ["test_nfr004_import_failure_branch_carries_the_exception_text"],
+      "production_paths": ["src/specify_cli/egress.py::project_egress_refusal"],
+      "authority": "docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md",
+      "corpus": {"identity": "consent resolver import failure", "nonzero_count": 1},
+      "oracle": "inability to resolve consent refuses",
+      "fault": "hosted-sync consent resolver cannot be imported",
+      "survivor_nodes": [
+        "tests/specify_cli/saas_client/test_client_consent_gate_3030.py::test_no_attribution_is_a_refusal_at_the_gate_itself",
+        "tests/sync/tracker/test_saas_client_consent_gate_3030.py::test_no_attribution_is_a_refusal_at_the_gate_itself"
+      ],
+      "no_authority_evidence": "ADR requires default deny but not raw ImportError echoing",
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/specify_cli/test_egress_consolidation_3110.py",
+      "family": "NO_RESOLVER diagnostic",
+      "members": ["test_nfr004_no_resolver_branch_names_the_resolver"],
+      "production_paths": ["src/specify_cli/egress.py::_refusal_for_verdict"],
+      "authority": "docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md",
+      "corpus": {"identity": "no registered consent resolver", "nonzero_count": 1},
+      "oracle": "NO_RESOLVER remains non-permitting",
+      "fault": "unregistered consent seam permits egress",
+      "survivor_nodes": ["tests/invocation/test_adapters.py::test_resolve_egress_consent_refuses_when_unregistered"],
+      "no_authority_evidence": "no current authority requires the exact diagnostic word resolver",
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/specify_cli/test_egress_consolidation_3110.py",
+      "family": "UNANSWERABLE versus undetermined prose",
+      "members": ["test_nfr004_undetermined_and_unanswerable_stay_distinguishable"],
+      "production_paths": ["src/specify_cli/egress.py::_refusal_for_verdict"],
+      "authority": "docs/adr/3.x/2026-08-04-1-egress-consent-boundary.md",
+      "corpus": {"identity": "resolver none/exception plus missing project attribution", "nonzero_count": 2},
+      "oracle": "both states remain non-permitting",
+      "fault": "unanswerable or unattributed state permits egress",
+      "survivor_nodes": [
+        "tests/invocation/test_adapters.py::test_resolve_egress_consent_refuses_a_none_answer",
+        "tests/invocation/test_adapters.py::test_resolve_egress_consent_refuses_on_resolver_exception",
+        "tests/specify_cli/saas_client/test_client_consent_gate_3030.py::test_no_attribution_is_a_refusal_at_the_gate_itself"
+      ],
+      "no_authority_evidence": "current authority requires fail-closed polarity but not two exact distinct sentences",
+      "result": "passed in final-cycle 41-node execution"
+    },
+    {
+      "path": "tests/specify_cli/test_egress_consolidation_3110.py",
+      "family": "hypothetical future-verdict remedy",
+      "members": ["test_nfr004_unrecognised_future_verdict_does_not_reuse_denied_remedy"],
+      "production_paths": ["src/specify_cli/egress.py::_refusal_for_verdict"],
+      "authority": null,
+      "corpus": {"identity": "synthetic value=quarantined object", "nonzero_count": 1},
+      "oracle": null,
+      "fault": "hypothetical object uses a remedy sentence",
+      "survivor_nodes": [],
+      "no_authority_evidence": "rg found no current enum member, production caller, ADR, or context contract for quarantined/future-verdict prose",
+      "result": "no-authority disposition"
+    },
+    {
+      "path": "tests/specify_cli/test_egress_consolidation_3110.py",
+      "family": "cross-module object identity",
+      "members": [
+        "test_sc004_clause3_both_deciding_modules_bind_the_one_definition_site",
+        "test_sc004_clause3_names_are_reachable_and_the_comparison_is_not_self_identity"
+      ],
+      "production_paths": ["src/specify_cli/egress.py::project_egress_refusal"],
+      "authority": null,
+      "corpus": {"identity": "completed #3110 module layout", "nonzero_count": 1},
+      "oracle": null,
+      "fault": "equivalent wrapper/import style changes Python object identity",
+      "survivor_nodes": [],
+      "no_authority_evidence": "docs/context + docs/adr/3.x search found no object-identity or exact definition-site contract; live transport behavior is independently executed",
+      "result": "no-authority disposition"
+    },
+    {
+      "path": "tests/specify_cli/test_egress_consolidation_3110.py",
+      "family": "string definition-site census",
+      "members": ["test_sc015_template_and_verdict_branches_have_exactly_one_definition_site"],
+      "production_paths": ["src/specify_cli/egress.py"],
+      "authority": null,
+      "corpus": {"identity": "src string constants", "nonzero_count": 1},
+      "oracle": null,
+      "fault": "equivalent presentation is relocated or factored",
+      "survivor_nodes": [],
+      "no_authority_evidence": "no current ADR/context authority requires exact string-constant cardinality or file location",
+      "result": "no-authority disposition"
+    },
+    {
+      "path": "tests/specify_cli/test_egress_consolidation_3110.py",
+      "family": "integration-prefix self-presence",
+      "members": ["test_sc025_the_shared_module_is_classified_as_integration"],
+      "production_paths": ["tests/architectural/test_integration_boundary.py::INTEGRATION_PREFIXES"],
+      "authority": null,
+      "corpus": {"identity": "test-owned prefix list", "nonzero_count": 1},
+      "oracle": null,
+      "fault": "another test's positive list member changes",
+      "survivor_nodes": [],
+      "no_authority_evidence": "only the test's own #3110 comment mandates exact membership; current ADR governs refusal behavior rather than layer-list syntax",
+      "result": "no-authority disposition"
+    },
+    {
+      "path": "tests/specify_cli/test_egress_consolidation_3110.py",
+      "family": "relocated rationale prose",
+      "members": ["test_fr012_rationale_and_tracker_precondition_live_in_the_consolidated_module"],
+      "production_paths": ["src/specify_cli/egress.py::__doc__"],
+      "authority": null,
+      "corpus": {"identity": "egress module docstring", "nonzero_count": 1},
+      "oracle": null,
+      "fault": "historical requirement tokens or explanatory sentences are edited",
+      "survivor_nodes": [],
+      "no_authority_evidence": "no executable caller consumes these docstring tokens; ADR is the durable rationale authority",
+      "result": "no-authority disposition"
     },
     {
       "path": "tests/specify_cli/test_meta_reader_sweep.py",
