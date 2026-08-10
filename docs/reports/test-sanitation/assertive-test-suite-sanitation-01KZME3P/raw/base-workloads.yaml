@@ -1,0 +1,67 @@
+schema_version: test-sanitation/v1
+inventory:
+  commit: 28ae75ea998c898aba57364db7a06d2088bd2af2
+  content_equivalence_command: git diff --quiet 28ae75ea998c898aba57364db7a06d2088bd2af2 -- tests pyproject.toml pytest.ini tox.ini setup.cfg uv.lock
+run_environments:
+  - id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+    os: macOS-15.7.7-arm64-arm-64bit
+    runner_image: local-macos-15.7.7
+    cpu_class: Apple-Silicon-10-logical-cpu
+    python: CPython 3.11.15
+    event: local
+    env:
+      PYTHONHASHSEED: "0"
+      PWHEADLESS: "1"
+      SPEC_KITTY_ENABLE_SAAS_SYNC: "1"
+    lock_hash: 5dbf66689f0048244c6d47082992e750fa3d047385f8e113d3f25f47382bcd5c
+    install_command: [uv, sync, --frozen, --all-extras]
+    install_state: prewarmed-frozen-venv
+    workers: auto
+    cache_policy: pytest-cache-disabled-for-measured-core-routes; prewarmed-frozen-venv
+    harness_patch_hash: null
+  - id: 8d4b0ec6f34bf221c05bf5d67d4498ab7fdaf83798f25ec6791e836d6e4d0e09
+    os: Linux Ubuntu 24.04
+    runner_image: blacksmith-4vcpu-ubuntu-2404
+    cpu_class: 4-vCPU
+    python: CPython 3.12 workflow selector; patch version resolved in run artifact
+    event: PR
+    env: {PWHEADLESS: "1"}
+    lock_hash: 5dbf66689f0048244c6d47082992e750fa3d047385f8e113d3f25f47382bcd5c
+    install_command: ["python -m pip install --upgrade pip", "pip install -e .[test]"]
+    install_state: clean-runner-editable-test-extra
+    workers: serial
+    cache_policy: actions/setup-python pip cache; pytest cacheprovider disabled
+    harness_patch_hash: null
+  - id: d9351dc38c139f8d2c79a6716b633a068e1fa64fb58083de2779d2ff1bde7004
+    os: Linux Ubuntu 24.04
+    runner_image: blacksmith-4vcpu-ubuntu-2404
+    cpu_class: 4-vCPU
+    python: CPython 3.12 workflow selector; patch version resolved in run artifact
+    event: PR
+    env: {PWHEADLESS: "1", SPEC_KITTY_RUN_QUARANTINE: "1"}
+    lock_hash: 5dbf66689f0048244c6d47082992e750fa3d047385f8e113d3f25f47382bcd5c
+    install_command: ["python -m pip install --upgrade pip", "pip install -e .[test]"]
+    install_state: clean-runner-editable-test-extra
+    workers: serial
+    cache_policy: actions/setup-python pip cache; pytest cacheprovider disabled
+    harness_patch_hash: null
+frozen_workload_dag:
+  repetitions: 3
+  routes:
+    - {id: full-collection, cwd: ., env: {PWHEADLESS: "1"}, argv: [.venv/bin/pytest, tests/, --collect-only, -q, -p, no:cacheprovider, --ignore=tests/sync/test_orphan_sweep.py], environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c, base_mapping: tests/, head_mapping: tests/}
+    - {id: full-parallel, cwd: ., env: {PWHEADLESS: "1"}, argv: [.venv/bin/pytest, tests/, -n, auto, --dist, loadfile, -p, no:cacheprovider, --ignore=tests/sync/test_orphan_sweep.py], environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c, base_mapping: tests/, head_mapping: tests/}
+    - {id: orphan-sweep, cwd: ., env: {PWHEADLESS: "1"}, argv: [.venv/bin/pytest, tests/sync/test_orphan_sweep.py, -q, -p, no:cacheprovider], environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c, base_mapping: tests/sync/test_orphan_sweep.py, head_mapping: tests/sync/test_orphan_sweep.py}
+    - {id: regression, cwd: ., env: {PWHEADLESS: "1"}, argv: [python, -m, pytest, tests/, -m, regression, -p, no:cacheprovider, -q, --tb=short], wrapper: "exit 5 => green; exit 3 => diagnostic collect and original failure; otherwise preserve exit", environment_id: 8d4b0ec6f34bf221c05bf5d67d4498ab7fdaf83798f25ec6791e836d6e4d0e09, base_mapping: "whole tests/ marker discovery", head_mapping: "marker:regression route pending WP07"}
+    - {id: quarantine, cwd: ., env: {PWHEADLESS: "1", SPEC_KITTY_RUN_QUARANTINE: "1"}, argv: [python, -m, pytest, tests/, -m, quarantine, -p, no:cacheprovider, -q, --tb=short], wrapper: "exit 5 => green; otherwise preserve exit; non-blocking job", environment_id: d9351dc38c139f8d2c79a6716b633a068e1fa64fb58083de2779d2ff1bde7004, base_mapping: "whole tests/ marker discovery", head_mapping: "marker:quarantine route pending WP07"}
+    - {id: contract, cwd: ., env: {SPEC_KITTY_ENABLE_SAAS_SYNC: "1"}, argv: [.venv/bin/pytest, tests/contract/, -v], environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c, base_mapping: tests/contract/, head_mapping: tests/contract/}
+    - {id: architectural, cwd: ., env: {}, argv: [.venv/bin/pytest, tests/architectural/, -v], environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c, base_mapping: tests/architectural/, head_mapping: tests/architectural/}
+    - {id: sibling-e2e, cwd: ../spec-kitty-end-to-end-testing, env: {SPEC_KITTY_ENABLE_SAAS_SYNC: "1"}, argv: [uv, run, pytest, scenarios/, -v], environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c, base_mapping: scenarios/, head_mapping: scenarios/}
+  edges:
+    - {from: full-collection, to: full-parallel}
+    - {from: full-collection, to: orphan-sweep}
+    - {from: full-collection, to: regression}
+    - {from: full-collection, to: quarantine}
+    - {from: full-collection, to: contract}
+    - {from: full-collection, to: architectural}
+    - {from: full-collection, to: sibling-e2e}
+  measurements: []

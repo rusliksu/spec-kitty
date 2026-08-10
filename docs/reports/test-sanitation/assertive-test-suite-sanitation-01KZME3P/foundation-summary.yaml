@@ -1,0 +1,53 @@
+schema_version: test-sanitation/v1
+inventory:
+  commit: 28ae75ea998c898aba57364db7a06d2088bd2af2
+  test_config_content_matches_checkout: true
+  proof_command: git diff --quiet 28ae75ea998c898aba57364db7a06d2088bd2af2 -- tests pyproject.toml pytest.ini tox.ini setup.cfg uv.lock
+  proof_exit: 0
+census:
+  source_units: 29755
+  collected_nodes: 37444
+  collection_exit: 0
+  collection_states: {collected: 29753, deselected: 0, error: 0, ignored: 0, zero_node: 2}
+  reconciliation_complete: true
+  unreconciled_or_duplicate_nodes: 0
+  compact_bytes: 23308745
+  compact_tables: [paths, parent_source_functions, marker_sets, reasons]
+manifests:
+  docstring_normalized_strict_groups: 171
+  strict_group_members: 357
+  inert_candidates: 15
+  structural_source_ast_text_scanner_files: 234
+  promoted_semantic_groups: 0
+  candidate_owner_reconciliation_complete: true
+  unowned_candidates: 0
+environment_ids:
+  local_base: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+  ci_regression: 8d4b0ec6f34bf221c05bf5d67d4498ab7fdaf83798f25ec6791e836d6e4d0e09
+  ci_quarantine: d9351dc38c139f8d2c79a6716b633a068e1fa64fb58083de2779d2ff1bde7004
+commands:
+  snapshot: .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py snapshot --root . --inventory-sha 28ae75ea998c898aba57364db7a06d2088bd2af2 --output docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json
+  validate: .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py validate docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-workloads.yaml
+  selftest: .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py selftest
+selftest:
+  valid: true
+  checks:
+    - aggregate_empty_shard
+    - byte_identical
+    - collection_error
+    - divergent_family_fails
+    - duplicate_deep_membership_fails
+    - dynamic_ignore
+    - exact_duplicate
+    - explicit_empty_census
+    - inherited_marker
+    - malformed_shard_fails_without_crash
+    - same_name_membership
+    - static_ignore
+    - unowned_fails
+    - zero_node
+raw_artifacts:
+  base-census.json: c206ec46a37c0a19bcbd052e8054c02f078a9f80dca0b353d1d2ee11de0acdce
+  base-workloads.yaml: 7a165bef16dcffe4e0c7ece4d45dfb642d41f8d89a30b13a53613c64e9f51515
+  bootstrap-failure.txt: 0f288e5ea1009eeaf7f4f5b37a71b881b3aa73572adb838836277ff6cccb1955
+  base-full-suite-summary.txt: 8e227eba0fd10d69223f7add93ec904f44971eeb2be131edceaeac12a73163f6
