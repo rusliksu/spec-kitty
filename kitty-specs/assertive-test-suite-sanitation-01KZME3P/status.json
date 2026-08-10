@@ -18,7 +18,7 @@
   },
   "work_packages": {
     "WP01": {
-      "actor": "user",
+  "actor": "reviewer-renata",
       "agent": "",
       "agent_profile": "python-pedro",
       "agent_profile_version": "1.0",
@@ -175,11 +175,11 @@
       ],
       "provider": "__resolved_provider_absent__",
       "review": null,
-      "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP05-structural-scaffold-retirement/review-cycle-1.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP05-structural-scaffold-retirement/review-cycle-1.md",
-        "reviewer": "user",
-        "verdict": "changes_requested"
+    "review_result": {
+      "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP05-structural-scaffold-retirement/review-cycle-2.md",
+      "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP05-structural-scaffold-retirement/review-cycle-2.md",
+      "reviewer": "reviewer-renata",
+      "verdict": "changes_requested"
       },
       "role": "reviewer",
       "shell_pid": 0,
