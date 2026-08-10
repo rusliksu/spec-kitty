@@ -145,26 +145,27 @@
       "notes": [
         "Ready for review: consolidated 82 exact duplicate groups; removed 104 collected nodes; retained unique import, platform, and causal seams. Gate override rationale: workflow scoped run times out without JUnit exactly as WP04 baseline records; independent 727-node affected cohort is green (725 passed, 2 skipped), validator/ruff/5 fault sentinels green.",
         "Cycle 2 evidence reconciled: 110/110 gross removed definitions ledgered (82 exact + 9 semantic families), 706->602 selected cohort with base 704p/2s and HEAD 600p/2s, 43 intended causal oracle failures across 3 campaigns, validator green, ruff green, focused smoke 6 passed. Canonical scoped gate truthfully timed out at 300.011s/17%; raw receipt persisted. Its early F is explicitly base-red/head-red under identical exact-node selector/environment; both receipts persisted.",
-        "Final cycle 3: source-derived member input/callable/oracle/fault contracts persisted for all 25 KEEP rows; 18 honestly resolve source-equivalent and are flagged for final arbiter because cycle scope forbids new deletions. Replayable hashed live-authority injection is persisted: 4 campaigns, 64 selected executions, 64 intended call-phase failures, 0 passes; 65 deleting rows name replayed survivors and one cache delete-all has explicit non-causal counterexample proof. Historical 109 result rows (actual 61/23/25) deduplicated to 91 unique (57/9/25); executable verifier rejects duplicate/count drift. Validator, Ruff, replay verification, and evidence consistency are green. No cycle 4 permitted."
+        "Final cycle 3: source-derived member input/callable/oracle/fault contracts persisted for all 25 KEEP rows; 18 honestly resolve source-equivalent and are flagged for final arbiter because cycle scope forbids new deletions. Replayable hashed live-authority injection is persisted: 4 campaigns, 64 selected executions, 64 intended call-phase failures, 0 passes; 65 deleting rows name replayed survivors and one cache delete-all has explicit non-causal counterexample proof. Historical 109 result rows (actual 61/23/25) deduplicated to 91 unique (57/9/25); executable verifier rejects duplicate/count drift. Validator, Ruff, replay verification, and evidence consistency are green. No cycle 4 permitted.",
+        "Arbiter APPROVE after three-review cap; no cycle4. Verified exact reduction 706→602 (-104 collected nodes), HEAD 600 passed/2 platform skips, 91 unique dispositions, 64/64 intended call-phase fault failures, Ruff/diff/ownership clean, no production diff. Accept 18 source-equivalent KEEP groups as explicit residual debt: 38 members contain 20 further dominated nodes not deleted in this bounded package. This residual is not represented as causal diversity and must remain visible in mission closure/follow-up; it does not invalidate the proven -104 reduction."
       ],
       "provider": "__resolved_provider_absent__",
       "review": null,
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP04-duplicate-consolidation/review-cycle-4.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP04-duplicate-consolidation/review-cycle-4.md",
-        "reviewer": "user",
-        "verdict": "changes_requested"
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP04-duplicate-consolidation/arbiter-decision.md",
+        "reference": "arbiter-decision://assertive-test-suite-sanitation-01KZME3P/WP04-duplicate-consolidation",
+        "reviewer": "root-arbiter",
+        "verdict": "approved"
       },
       "role": "reviewer",
       "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T020": "planned",
-        "T021": "planned",
-        "T022": "planned",
-        "T023": "planned",
-        "T024": "planned",
-        "T025": "planned"
+        "T020": "done",
+        "T021": "done",
+        "T022": "done",
+        "T023": "done",
+        "T024": "done",
+        "T025": "done"
       },
       "tracker_refs": [
         "#1931"
