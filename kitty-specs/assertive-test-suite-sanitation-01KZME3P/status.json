@@ -1,7 +1,7 @@
 {
-  "event_count": 8,
-  "last_event_id": "01KZMGGGKYQ4TJ67JKP1Z8F1PJ",
-  "materialized_at": "2026-08-10T00:17:40.478549+00:00",
+  "event_count": 9,
+  "last_event_id": "01KZMHHX2YBWDB03REKQRWDRA1",
+  "materialized_at": "2026-08-10T00:35:54.590501+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -14,7 +14,7 @@
     "for_review": 0,
     "in_progress": 0,
     "in_review": 0,
-    "planned": 8
+    "planned": 9
   },
   "work_packages": {
     "WP01": {
@@ -72,6 +72,13 @@
       "lane": "planned",
       "last_event_id": "01KZMGGGKYQ4TJ67JKP1Z8F1PJ",
       "last_transition_at": "2026-08-10T00:17:40.478549+00:00"
+    },
+    "WP09": {
+      "actor": "finalize-tasks",
+      "force_count": 0,
+      "lane": "planned",
+      "last_event_id": "01KZMHHX2YBWDB03REKQRWDRA1",
+      "last_transition_at": "2026-08-10T00:35:54.590501+00:00"
     }
   }
 }
