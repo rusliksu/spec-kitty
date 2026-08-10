@@ -25,7 +25,7 @@ environment_ids:
   local_base: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
   ci_regression: 8d4b0ec6f34bf221c05bf5d67d4498ab7fdaf83798f25ec6791e836d6e4d0e09
   ci_quarantine: d9351dc38c139f8d2c79a6716b633a068e1fa64fb58083de2779d2ff1bde7004
-  sibling_e2e_unobserved: 46ae15b53685042012156bed25ec658b059350860946d28032b7e0cee2eca1f0
+  sibling_e2e_prepared_local: d2e994e2d7465d82a398fbd8ee7c93fb4efb789b0724c312099488742869fb52
 commands:
   snapshot: .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py snapshot --root . --inventory-sha 28ae75ea998c898aba57364db7a06d2088bd2af2 --output docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json
   validate: .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py validate docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-workloads.yaml
@@ -33,30 +33,70 @@ commands:
 selftest:
   valid: true
   checks:
+    - action_type_rejected
     - aggregate_empty_shard
+    - aggregate_malformed_candidate_controlled_error
     - aggregate_malformed_controlled_error
     - byte_identical
-    - collection_error
     - collection_crash_fails_closed
+    - collection_error
     - deselected_class_parameter_family
+    - divergent_dimension_coverage_rejected
+    - divergent_dimension_must_vary
+    - divergent_empty_node_row_rejected
+    - divergent_empty_node_rows_rejected
     - divergent_family_fails
+    - divergent_member_coverage_rejected
+    - divergent_unknown_identity_rejected
+    - duplicate_candidate_id_rejected
+    - duplicate_dag_edge_rejected
     - duplicate_deep_membership_fails
+    - duplicate_environment_id_rejected
     - dynamic_ignore
+    - equivalence_dimension_type_rejected
+    - evidence_scalar_member_rejected
+    - evidence_type_authority_evidence_rejected
+    - evidence_type_base_evidence_rejected
+    - evidence_type_caller_evidence_rejected
+    - evidence_type_causal_probe_rejected
+    - evidence_type_cost_evidence_rejected
+    - evidence_type_overlap_evidence_rejected
+    - evidence_type_routing_evidence_rejected
     - exact_duplicate
     - explicit_empty_census
     - inherited_marker
     - ledger_types_refs_keep_family_rejected
     - malformed_shard_fails_without_crash
+    - measurement_artifact_hash_rejected
+    - measurement_call_rejected
+    - measurement_collection_rejected
+    - measurement_compute_rejected
+    - measurement_environment_id_rejected
+    - measurement_outcome_rejected
+    - measurement_route_id_rejected
+    - measurement_setup_rejected
+    - measurement_wall_rejected
     - modifyitems_crash_fails_closed
     - recursive_nested_once
     - same_name_membership
     - static_ignore
+    - survivor_type_rejected
+    - temporary_expires_type_rejected
+    - temporary_hic_approval_type_rejected
+    - temporary_issue_type_rejected
+    - temporary_owner_type_rejected
+    - temporary_renewal_type_rejected
     - unowned_fails
+    - valid_divergent_family_expansion
+    - valid_empty_environment
+    - valid_empty_markers
+    - valid_temporary
+    - valid_typed_measurement
     - workload_duplicate_argv_env_edge_rejected
     - zero_function_file_not_empty_root
     - zero_node
 raw_artifacts:
   base-census.json: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
-  base-workloads.yaml: 583ae4f5c9d68945270a0d62b10b9f4cc52393442a1eb2e0456cde959fed4ea8
+  base-workloads.yaml: d345f3ee45aeac14ba87327078bce57e1c28a1fa4ed1c1f25702435437d8742b
   bootstrap-failure.txt: 0f288e5ea1009eeaf7f4f5b37a71b881b3aa73572adb838836277ff6cccb1955
   base-full-suite-summary.txt: 2abc44fabfc32cd4cd76eb0dc819934025cf690aa6e75ad5430899023bc6c318

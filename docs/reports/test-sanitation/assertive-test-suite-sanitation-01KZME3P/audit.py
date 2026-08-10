@@ -12,6 +12,7 @@ import argparse
 import ast
 from collections.abc import Callable, Iterable, Mapping, Sequence
 import contextlib
+import copy
 import dataclasses
 import datetime as dt
 import fnmatch
@@ -19,6 +20,7 @@ import hashlib
 import importlib.metadata
 import io
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -39,8 +41,12 @@ PROFILES = {
 }
 COLLECTION_STATES = {"collected", "ignored", "deselected", "error", "zero_node"}
 OUTCOMES = {"passed", "failed", "error", "skipped", "xfailed", "xpassed", "not_run", None}
+MEASUREMENT_OUTCOMES = {"passed", "failed", "error", "skipped", "xfailed", "xpassed", "not_run"}
 GRANULARITIES = {"function", "family", "duplicate_cluster", "node"}
 ROUTE_ROLES = {"owner", "coverage", "platform", "hard_gate"}
+EQUIVALENCE_DIMENSIONS = {
+    "production_path", "oracle", "outcome", "route_role", "cost_class", "platform", "disposition",
+}
 TEST_NAME = re.compile(r"^test(?:_|$)")
 VOLATILE_TEMP = re.compile(
     r"(?:/private)?/var/folders/[^/]+/[^/]+/T/[^/\s'\"\]\),]+"
@@ -578,12 +584,6 @@ def snapshot(root: Path, tests_path: str, extra_args: Sequence[str], inventory_s
     return cast(dict[str, Any], _stable(evidence))
 
 
-def _required(row: Mapping[str, Any], fields: Iterable[str], where: str, errors: list[str]) -> None:
-    for field in fields:
-        if row.get(field) in (None, "", [], {}):
-            errors.append(f"{where}: missing {field}")
-
-
 def _keys(row: Mapping[str, Any], fields: Iterable[str], where: str, errors: list[str]) -> None:
     for field in fields:
         if field not in row:
@@ -598,23 +598,44 @@ def _hash_value(value: Any) -> bool:
     return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
 
 
+def _nonempty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value)
+
+
+def _enum_string(value: Any, allowed: set[str]) -> bool:
+    return isinstance(value, str) and value in allowed
+
+
+def _nonnegative_number(value: Any) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(value)
+        and value >= 0
+    )
+
+
 def validate_environment(env: Mapping[str, Any], where: str, errors: list[str]) -> None:
     required = (
         "id", "os", "runner_image", "cpu_class", "python", "event", "env", "lock_hash",
         "install_command", "install_state", "workers", "cache_policy", "harness_patch_hash",
     )
     _keys(env, required, where, errors)
-    _required(env, required[:-1], where, errors)
     scalar_fields = ("id", "os", "runner_image", "cpu_class", "python", "event", "lock_hash", "install_state", "workers", "cache_policy")
-    if any(not isinstance(env.get(field), str) for field in scalar_fields):
-        errors.append(f"{where}: scalar environment fields must be strings")
+    if any(not _nonempty_string(env.get(field)) for field in scalar_fields):
+        errors.append(f"{where}: scalar environment fields must be nonempty strings")
     env_map = env.get("env")
     if not isinstance(env_map, dict) or not all(isinstance(key, str) and isinstance(value, str) for key, value in env_map.items()):
         errors.append(f"{where}: env must be string mapping")
     if not _str_list(env.get("install_command"), nonempty=True):
-        errors.append(f"{where}: env must be mapping and install_command must be list")
-    if env.get("event") not in {"local", "PR", "push", "schedule", "manual"}:
+        errors.append(f"{where}: install_command must be nonempty string list")
+    if not _enum_string(env.get("event"), {"local", "PR", "push", "schedule", "manual"}):
         errors.append(f"{where}: invalid event")
+    if not _hash_value(env.get("lock_hash")):
+        errors.append(f"{where}: lock_hash must be SHA-256")
+    harness_hash = env.get("harness_patch_hash")
+    if harness_hash is not None and not _hash_value(harness_hash):
+        errors.append(f"{where}: harness_patch_hash must be SHA-256 or null")
     body = {key: env.get(key) for key in required if key != "id"}
     if env.get("id") != _sha(_json_bytes(body)):
         errors.append(f"{where}: id is not SHA-256 of normalized environment fields")
@@ -622,13 +643,12 @@ def validate_environment(env: Mapping[str, Any], where: str, errors: list[str]) 
 
 def validate_route(route: Mapping[str, Any], where: str, errors: list[str]) -> None:
     _keys(route, ("route_id", "role", "required", "events", "selector"), where, errors)
-    _required(route, ("route_id", "role", "events", "selector"), where, errors)
-    if route.get("role") not in ROUTE_ROLES:
+    if not _enum_string(route.get("role"), ROUTE_ROLES):
         errors.append(f"{where}: invalid route role")
     if not isinstance(route.get("required"), bool):
         errors.append(f"{where}: required must be boolean")
-    if not isinstance(route.get("route_id"), str) or not _str_list(route.get("events"), nonempty=True) or not isinstance(route.get("selector"), dict):
-        errors.append(f"{where}: events must be list and selector must be mapping")
+    if not _nonempty_string(route.get("route_id")) or not _str_list(route.get("events")) or not isinstance(route.get("selector"), dict):
+        errors.append(f"{where}: route_id must be nonempty string, events string list, and selector mapping")
 
 
 def validate_causal_probe(probe: Any, where: str, errors: list[str]) -> None:
@@ -639,9 +659,9 @@ def validate_causal_probe(probe: Any, where: str, errors: list[str]) -> None:
         "kind", "fault", "authority_violated", "act_reached", "intended_oracle",
         "intended_oracle_failed", "command", "environment", "raw_artifact_hash",
     )
-    _required(probe, fields, where, errors)
-    if any(not isinstance(probe.get(field), str) for field in ("kind", "fault", "authority_violated", "intended_oracle", "command", "environment")):
-        errors.append(f"{where}: causal text fields must be strings")
+    _keys(probe, fields, where, errors)
+    if any(not _nonempty_string(probe.get(field)) for field in ("kind", "fault", "authority_violated", "intended_oracle", "command", "environment")):
+        errors.append(f"{where}: causal text fields must be nonempty strings")
     if not _hash_value(probe.get("raw_artifact_hash")):
         errors.append(f"{where}: raw_artifact_hash must be SHA-256")
     if probe.get("act_reached") is not True or probe.get("intended_oracle_failed") is not True:
@@ -658,34 +678,39 @@ def validate_workload(dag: Mapping[str, Any], where: str, errors: list[str], env
     if not isinstance(dag.get("repetitions"), int) or dag.get("repetitions", 0) < 3:
         errors.append(f"{where}: repetitions must be >= 3")
     route_ids: set[str] = set()
+    route_environments: dict[str, str] = {}
     for index, route in enumerate(routes):
         if not isinstance(route, dict):
             errors.append(f"{where}.routes[{index}]: mapping required")
             continue
         route_where = f"{where}.routes[{index}]"
         _keys(route, ("id", "argv", "environment_id", "base_mapping", "head_mapping", "cwd", "env"), route_where, errors)
-        _required(route, ("id", "argv", "environment_id", "base_mapping", "head_mapping", "cwd"), route_where, errors)
         route_id = route.get("id")
-        if not isinstance(route_id, str):
-            errors.append(f"{route_where}: id must be string")
+        if not _nonempty_string(route_id):
+            errors.append(f"{route_where}: id must be nonempty string")
             continue
-        if route_id in route_ids:
-            errors.append(f"{route_where}: duplicate route id {route_id}")
-        route_ids.add(route_id)
+        route_id_string = cast(str, route_id)
+        if route_id_string in route_ids:
+            errors.append(f"{route_where}: duplicate route id {route_id_string}")
+        route_ids.add(route_id_string)
         if not _str_list(route.get("argv"), nonempty=True):
             errors.append(f"{route_where}: argv must be nonempty string list")
         route_env = route.get("env")
         if (
-            not isinstance(route.get("cwd"), str)
+            not _nonempty_string(route.get("cwd"))
             or not isinstance(route_env, dict)
             or not all(isinstance(k, str) and isinstance(v, str) for k, v in route_env.items())
         ):
-            errors.append(f"{route_where}: cwd/string env mapping required")
-        if route.get("environment_id") not in environment_ids:
+            errors.append(f"{route_where}: nonempty cwd/string env mapping required")
+        route_environment = route.get("environment_id")
+        if not isinstance(route_environment, str) or route_environment not in environment_ids:
             errors.append(f"{route_where}: unknown environment_id")
-        if not isinstance(route.get("base_mapping"), str) or not isinstance(route.get("head_mapping"), str):
-            errors.append(f"{route_where}: base/head mappings must be strings")
+        elif isinstance(route_environment, str):
+            route_environments[route_id_string] = route_environment
+        if not _nonempty_string(route.get("base_mapping")) or not _nonempty_string(route.get("head_mapping")):
+            errors.append(f"{route_where}: base/head mappings must be nonempty strings")
     graph: dict[Any, set[Any]] = {route_id: set() for route_id in route_ids}
+    edge_ids: set[tuple[str, str]] = set()
     for index, edge in enumerate(edges):
         if not isinstance(edge, dict) or set(edge) < {"from", "to"}:
             errors.append(f"{where}.edges[{index}]: from/to required")
@@ -696,6 +721,10 @@ def validate_workload(dag: Mapping[str, Any], where: str, errors: list[str], env
             continue
         if edge_from not in route_ids or edge_to not in route_ids:
             errors.append(f"{where}.edges[{index}]: unknown route")
+        edge_id = (edge_from, edge_to)
+        if edge_id in edge_ids:
+            errors.append(f"{where}.edges[{index}]: duplicate dependency edge {edge_from}->{edge_to}")
+        edge_ids.add(edge_id)
         graph.setdefault(edge_from, set()).add(edge_to)
     visiting: set[Any] = set()
     visited: set[Any] = set()
@@ -716,9 +745,27 @@ def validate_workload(dag: Mapping[str, Any], where: str, errors: list[str], env
         if not isinstance(measurement, dict):
             errors.append(f"{where}.measurements[{index}]: mapping required")
             continue
-        _required(measurement, ("route_id", "collection", "setup", "call", "wall", "compute", "outcome", "artifact_hash"), f"{where}.measurements[{index}]", errors)
-        if measurement.get("route_id") not in route_ids:
-            errors.append(f"{where}.measurements[{index}]: unknown route")
+        measurement_where = f"{where}.measurements[{index}]"
+        fields = ("route_id", "environment_id", "collection", "setup", "call", "wall", "compute", "outcome", "artifact_hash")
+        _keys(measurement, fields, measurement_where, errors)
+        measurement_route = measurement.get("route_id")
+        measurement_environment = measurement.get("environment_id")
+        if not _nonempty_string(measurement_route) or measurement_route not in route_ids:
+            errors.append(f"{measurement_where}: unknown route_id")
+        if not _nonempty_string(measurement_environment) or measurement_environment not in environment_ids:
+            errors.append(f"{measurement_where}: unknown environment_id")
+        if (
+            isinstance(measurement_route, str)
+            and isinstance(measurement_environment, str)
+            and route_environments.get(measurement_route) != measurement_environment
+        ):
+            errors.append(f"{measurement_where}: environment_id does not match route")
+        if any(not _nonnegative_number(measurement.get(field)) for field in ("collection", "setup", "call", "wall", "compute")):
+            errors.append(f"{measurement_where}: timing fields must be finite nonnegative numbers")
+        if not _enum_string(measurement.get("outcome"), MEASUREMENT_OUTCOMES):
+            errors.append(f"{measurement_where}: invalid outcome")
+        if not _hash_value(measurement.get("artifact_hash")):
+            errors.append(f"{measurement_where}: artifact_hash must be SHA-256")
 
 
 def validate_census(data: Mapping[str, Any], errors: list[str]) -> None:  # noqa: C901 - fail-closed compact schema matrix
@@ -754,8 +801,8 @@ def validate_census(data: Mapping[str, Any], errors: list[str]) -> None:  # noqa
         errors.append("census: empty_tests_root inconsistent with discovered files")
     if collection.get("exit_code") not in {0, 5} or collection.get("internal_errors") or collection.get("collection_errors"):
         errors.append("census: collection exited nonzero or recorded collection/internal errors")
-    states = {row.get("collection_state") for row in units if isinstance(row, dict)}
-    if not states <= COLLECTION_STATES:
+    states = [row.get("collection_state") for row in units if isinstance(row, dict)]
+    if not all(_enum_string(state, COLLECTION_STATES) for state in states):
         errors.append("census: invalid collection_state")
     if len(units) != reconciliation.get("source_units"):
         errors.append("census: source unit count mismatch")
@@ -842,17 +889,153 @@ def validate_census(data: Mapping[str, Any], errors: list[str]) -> None:  # noqa
 
 
 def _validate_temporary(row: Mapping[str, Any], where: str, profile: Any, today: dt.date, errors: list[str]) -> None:
-    _required(row, ("hic_approval", "issue", "owner", "expires"), where, errors)
+    _keys(row, ("hic_approval", "issue", "owner", "expires"), where, errors)
     if profile != "environmental_platform":
         errors.append(f"{where}: TEMPORARY only permits environmental_platform")
-    if row.get("renewal"):
+    for field in ("hic_approval", "issue", "owner", "expires"):
+        if not _nonempty_string(row.get(field)):
+            errors.append(f"{where}: TEMPORARY {field} must be nonempty string")
+    renewal = row.get("renewal", False)
+    if not isinstance(renewal, bool):
+        errors.append(f"{where}: TEMPORARY renewal must be boolean")
+    elif renewal:
         errors.append(f"{where}: TEMPORARY cannot renew")
+    expires = row.get("expires")
+    if not isinstance(expires, str):
+        return
     try:
-        expiry = dt.date.fromisoformat(str(row.get("expires")))
+        expiry = dt.date.fromisoformat(expires)
         if expiry < today or expiry > today + dt.timedelta(days=30):
             errors.append(f"{where}: TEMPORARY expiry must be today..today+30d")
     except ValueError:
         errors.append(f"{where}: invalid TEMPORARY expiry")
+
+
+def _validate_evidence(evidence: Mapping[str, Any], where: str, errors: list[str]) -> Any:
+    _keys(evidence, ("profile",), where, errors)
+    profile = evidence.get("profile")
+    if not _enum_string(profile, PROFILES):
+        errors.append(f"{where}: invalid evidence profile {profile!r}")
+    list_fields = ("caller_evidence", "authority_evidence", "routing_evidence", "overlap_evidence")
+    mapping_fields = ("base_evidence", "causal_probe", "cost_evidence")
+    for field in list_fields:
+        value = evidence.get(field)
+        if field in evidence and (
+            not isinstance(value, list) or not all(isinstance(item, dict) for item in value)
+        ):
+            errors.append(f"{where}.{field}: list of mapping evidence rows required")
+    for field in mapping_fields:
+        if field in evidence and not isinstance(evidence.get(field), dict):
+            errors.append(f"{where}.{field}: mapping required")
+    requirements = {
+        "inert": ("routing_evidence", "authority_evidence"),
+        "duplicate": ("overlap_evidence", "causal_probe"),
+        "structural": ("authority_evidence", "causal_probe"),
+        "contract": ("caller_evidence", "authority_evidence", "causal_probe"),
+        "slow": ("cost_evidence", "causal_probe"),
+        "flake": ("base_evidence",),
+        "dead_symbol": ("caller_evidence", "authority_evidence"),
+        "route": ("routing_evidence", "cost_evidence"),
+        "environmental_platform": ("base_evidence", "routing_evidence"),
+    }
+    required_fields = requirements.get(profile, ()) if isinstance(profile, str) else ()
+    for field in required_fields:
+        value = evidence.get(field)
+        if field not in evidence or value in (None, [], {}):
+            errors.append(f"{where}[{profile}]: nonempty {field} required")
+    if "causal_probe" in evidence:
+        validate_causal_probe(evidence.get("causal_probe"), f"{where}.causal_probe", errors)
+    return profile
+
+
+def _validate_family(  # noqa: C901 - family anti-vacuity matrix is intentionally explicit
+    candidate: Mapping[str, Any], members: list[str], observations: list[Any], where: str,
+    census_members: set[str], errors: list[str],
+) -> None:
+    dimensions_value = candidate.get("equivalence")
+    if not isinstance(dimensions_value, dict):
+        errors.append(f"{where}: family equivalence dimensions mapping required")
+        dimensions: Mapping[str, Any] = {}
+    else:
+        dimensions = dimensions_value
+    missing_dimensions = EQUIVALENCE_DIMENSIONS - set(dimensions)
+    if missing_dimensions:
+        errors.append(f"{where}: family equivalence dimensions missing {sorted(missing_dimensions)}")
+    for dimension in EQUIVALENCE_DIMENSIONS:
+        if dimension in dimensions and not _nonempty_string(dimensions.get(dimension)):
+            errors.append(f"{where}: equivalence.{dimension} must be nonempty string")
+
+    divergent_value = candidate.get("divergent_dimensions", [])
+    if not _str_list(divergent_value):
+        errors.append(f"{where}: divergent_dimensions must be string list")
+        divergent: list[str] = []
+    else:
+        divergent = cast(list[str], divergent_value)
+        if len(divergent) != len(set(divergent)):
+            errors.append(f"{where}: divergent_dimensions must be unique")
+        unknown = set(divergent) - EQUIVALENCE_DIMENSIONS
+        if unknown:
+            errors.append(f"{where}: unknown divergent dimensions {sorted(unknown)}")
+
+    observation_rows = [obs for obs in observations if isinstance(obs, dict)]
+    observed_dimensions: set[str] = set()
+    if len({repr(obs.get("outcome")) for obs in observation_rows}) > 1:
+        observed_dimensions.add("outcome")
+    if len({
+        repr(obs.get("duration", {}).get("cost_class"))
+        for obs in observation_rows if isinstance(obs.get("duration"), dict)
+    }) > 1:
+        observed_dimensions.add("cost_class")
+    if not observed_dimensions <= set(divergent):
+        errors.append(f"{where}: observed divergent dimensions must be declared")
+
+    node_rows_value = candidate.get("node_rows")
+    has_divergence = bool(divergent or observed_dimensions)
+    if node_rows_value is None:
+        if has_divergence:
+            errors.append(f"{where}: divergent family dimensions require nonempty node_rows")
+        return
+    if not isinstance(node_rows_value, list):
+        errors.append(f"{where}: node_rows must be list")
+        return
+    if has_divergence and not node_rows_value:
+        errors.append(f"{where}: divergent family dimensions require nonempty node_rows")
+        return
+
+    row_members: list[str] = []
+    row_dimensions: dict[str, list[str]] = {dimension: [] for dimension in EQUIVALENCE_DIMENSIONS}
+    for row_index, node_row in enumerate(node_rows_value):
+        row_where = f"{where}.node_rows[{row_index}]"
+        if not isinstance(node_row, dict):
+            errors.append(f"{row_where}: mapping required")
+            continue
+        _keys(node_row, ("member", *sorted(EQUIVALENCE_DIMENSIONS)), row_where, errors)
+        member = node_row.get("member")
+        if not _nonempty_string(member):
+            errors.append(f"{row_where}: member must be nonempty string")
+        else:
+            member_string = cast(str, member)
+            row_members.append(member_string)
+            if member_string not in members or member_string not in census_members:
+                errors.append(f"{row_where}: member must reference candidate and census identity")
+        for dimension in EQUIVALENCE_DIMENSIONS:
+            value = node_row.get(dimension)
+            if not _nonempty_string(value):
+                errors.append(f"{row_where}: {dimension} must be nonempty string")
+            else:
+                row_dimensions[dimension].append(cast(str, value))
+    if len(row_members) != len(set(row_members)):
+        errors.append(f"{where}: node_rows contain duplicate member identities")
+    if set(row_members) != set(members) or len(row_members) != len(members):
+        errors.append(f"{where}: node_rows must cover every candidate member exactly once")
+    for dimension, values in row_dimensions.items():
+        if len(values) != len(members):
+            continue
+        if dimension in divergent:
+            if len(set(values)) < 2:
+                errors.append(f"{where}: divergent dimension {dimension} must vary across node_rows")
+        elif dimension in dimensions and any(value != dimensions[dimension] for value in values):
+            errors.append(f"{where}: node_rows disagree with equivalence.{dimension}")
 
 
 def validate_disposition(  # noqa: C901 - fail-closed schema matrix
@@ -860,14 +1043,21 @@ def validate_disposition(  # noqa: C901 - fail-closed schema matrix
     census_members: set[str], environment_ids: set[str],
 ) -> None:
     where = f"dispositions[{index}]"
-    _required(row, ("candidate", "evidence", "verdict", "state", "action", "review"), where, errors)
+    _keys(row, ("candidate", "evidence", "verdict", "state", "action", "survivor", "issue", "owner", "expires", "hic_approval", "review"), where, errors)
     verdict, state = row.get("verdict"), row.get("state")
-    if verdict not in VERDICTS:
+    if not _enum_string(verdict, VERDICTS):
         errors.append(f"{where}: unknown verdict {verdict!r}")
-    if state == "terminal" and verdict in {"FIX_TEST", "FIX_PRODUCT"}:
+    if state == "terminal" and isinstance(verdict, str) and verdict in {"FIX_TEST", "FIX_PRODUCT"}:
         errors.append(f"{where}: FIX_* cannot be terminal")
-    if state not in {"pending", "terminal"}:
+    if not _enum_string(state, {"pending", "terminal"}):
         errors.append(f"{where}: state must be pending or terminal")
+    if not _nonempty_string(row.get("action")):
+        errors.append(f"{where}: action must be nonempty string")
+    if row.get("survivor") is not None and not isinstance(row.get("survivor"), str):
+        errors.append(f"{where}: survivor must be string or null")
+    for field in ("issue", "owner", "expires", "hic_approval"):
+        if row.get(field) is not None and not isinstance(row.get(field), str):
+            errors.append(f"{where}: {field} must be string or null")
     candidate_value = row.get("candidate", {})
     evidence_value = row.get("evidence", {})
     if not isinstance(candidate_value, dict):
@@ -880,14 +1070,20 @@ def validate_disposition(  # noqa: C901 - fail-closed schema matrix
         evidence: Mapping[str, Any] = {}
     else:
         evidence = evidence_value
-    _required(candidate, ("id", "members", "granularity", "source_paths", "route_memberships", "platforms", "observations"), f"{where}.candidate", errors)
-    if not isinstance(candidate.get("id"), str):
-        errors.append(f"{where}: candidate id must be string")
+    candidate_fields = (
+        "id", "members", "granularity", "source_paths", "production_paths", "oracle", "contract_claim",
+        "authority", "duplicate_group", "route_memberships", "platforms", "observations",
+    )
+    _keys(candidate, candidate_fields, f"{where}.candidate", errors)
+    if not _nonempty_string(candidate.get("id")):
+        errors.append(f"{where}: candidate id must be nonempty string")
     members_value = candidate.get("members")
     if not _str_list(members_value, nonempty=True):
         errors.append(f"{where}: members must be nonempty string list")
-        members_value = []
-    for member in cast(list[str], members_value):
+        candidate_members: list[str] = []
+    else:
+        candidate_members = cast(list[str], members_value)
+    for member in candidate_members:
         if member not in census_members:
             errors.append(f"{where}: stale/unknown census member {member}")
     for field in ("source_paths", "production_paths", "authority", "platforms"):
@@ -897,47 +1093,35 @@ def validate_disposition(  # noqa: C901 - fail-closed schema matrix
     for field in ("oracle", "contract_claim", "duplicate_group"):
         if candidate.get(field) is not None and not isinstance(candidate.get(field), str):
             errors.append(f"{where}: {field} must be string or null")
-    if candidate.get("granularity") not in GRANULARITIES:
+    if not _enum_string(candidate.get("granularity"), GRANULARITIES):
         errors.append(f"{where}: invalid granularity")
-    profile = evidence.get("profile")
-    if profile not in PROFILES:
-        errors.append(f"{where}: invalid evidence profile {profile!r}")
-    requirements = {
-        "inert": ("routing_evidence", "authority_evidence"),
-        "duplicate": ("overlap_evidence", "causal_probe"),
-        "structural": ("authority_evidence", "causal_probe"),
-        "contract": ("caller_evidence", "authority_evidence", "causal_probe"),
-        "slow": ("cost_evidence", "causal_probe"),
-        "flake": ("base_evidence",),
-        "dead_symbol": ("caller_evidence", "authority_evidence"),
-        "route": ("routing_evidence", "cost_evidence"),
-        "environmental_platform": ("base_evidence", "routing_evidence"),
-    }
-    if profile in requirements:
-        _required(evidence, requirements[profile], f"{where}.evidence[{profile}]", errors)
-    if isinstance(profile, str) and "causal_probe" in requirements.get(profile, ()):
-        validate_causal_probe(evidence.get("causal_probe"), f"{where}.evidence.causal_probe", errors)
+    profile = _validate_evidence(evidence, f"{where}.evidence", errors)
     observations = candidate.get("observations", [])
     if not isinstance(observations, list):
         errors.append(f"{where}.observations: list required")
         observations = []
+    elif not observations:
+        errors.append(f"{where}.observations: at least one observation required")
     for obs_index, obs in enumerate(observations):
         if not isinstance(obs, dict):
             errors.append(f"{where}.observations[{obs_index}]: mapping required")
             continue
-        if obs.get("collection_state") not in COLLECTION_STATES or obs.get("outcome") not in OUTCOMES:
+        collection_state = obs.get("collection_state")
+        outcome = obs.get("outcome")
+        if not _enum_string(collection_state, COLLECTION_STATES) or not (
+            outcome is None or _enum_string(outcome, cast(set[str], OUTCOMES - {None}))
+        ):
             errors.append(f"{where}.observations[{obs_index}]: invalid state/outcome")
         observation_fields = (
             "environment_id", "nodeid", "collection_state", "outcome", "skip_reason",
             "markers", "duration", "artifact_hash",
         )
         _keys(obs, observation_fields, f"{where}.observations[{obs_index}]", errors)
-        _required(obs, ("environment_id", "collection_state", "markers", "duration", "artifact_hash"), f"{where}.observations[{obs_index}]", errors)
-        if obs.get("environment_id") not in environment_ids:
+        if not isinstance(obs.get("environment_id"), str) or obs.get("environment_id") not in environment_ids:
             errors.append(f"{where}.observations[{obs_index}]: unknown environment_id")
         if obs.get("nodeid") is not None and not isinstance(obs.get("nodeid"), str):
             errors.append(f"{where}.observations[{obs_index}]: nodeid must be string/null")
-        if obs.get("collection_state") not in {"zero_node", "ignored", "error"} and obs.get("nodeid") is None:
+        if not _enum_string(collection_state, {"zero_node", "ignored", "error"}) and obs.get("nodeid") is None:
             errors.append(f"{where}.observations[{obs_index}]: nodeid null only for non-collected source states")
         if obs.get("skip_reason") is not None and not isinstance(obs.get("skip_reason"), str):
             errors.append(f"{where}.observations[{obs_index}]: skip_reason must be string/null")
@@ -946,14 +1130,12 @@ def validate_disposition(  # noqa: C901 - fail-closed schema matrix
         duration = obs.get("duration")
         if not isinstance(duration, dict) or not {"collection", "setup", "call", "cost_class"} <= set(duration):
             errors.append(f"{where}.observations[{obs_index}]: typed duration fields required")
-        elif any(
-            not isinstance(duration.get(phase), (int, float))
-            or isinstance(duration.get(phase), bool)
-            or cast(float, duration.get(phase)) < 0
-            for phase in ("collection", "setup", "call")
-        ) or not isinstance(duration.get("cost_class"), str):
+        elif any(not _nonnegative_number(duration.get(phase)) for phase in ("collection", "setup", "call")) or not _nonempty_string(duration.get("cost_class")):
             errors.append(f"{where}.observations[{obs_index}]: invalid duration values")
-        if obs.get("outcome") in {"skipped", "xfailed"} and not obs.get("skip_reason"):
+        markers = obs.get("markers")
+        skip_like = isinstance(outcome, str) and outcome in {"skipped", "xfailed"}
+        quarantined = isinstance(markers, list) and "quarantine" in markers
+        if (skip_like or quarantined) and not obs.get("skip_reason"):
             errors.append(f"{where}.observations[{obs_index}]: skip_reason required")
     memberships = candidate.get("route_memberships", [])
     if not isinstance(memberships, list):
@@ -967,47 +1149,43 @@ def validate_disposition(  # noqa: C901 - fail-closed schema matrix
     if sum(isinstance(item, dict) and item.get("role") == "owner" for item in memberships) != 1:
         errors.append(f"{where}: exactly one owner route required")
     if verdict == "KEEP":
-        _required(candidate, ("production_paths", "oracle", "contract_claim", "authority"), f"{where}.KEEP", errors)
+        if not _str_list(candidate.get("production_paths"), nonempty=True):
+            errors.append(f"{where}.KEEP: nonempty production_paths required")
+        if not _str_list(candidate.get("authority"), nonempty=True):
+            errors.append(f"{where}.KEEP: nonempty authority required")
+        if not _nonempty_string(candidate.get("oracle")) or not _nonempty_string(candidate.get("contract_claim")):
+            errors.append(f"{where}.KEEP: nonempty oracle and contract_claim required")
         validate_causal_probe(evidence.get("causal_probe"), f"{where}.KEEP.causal_probe", errors)
     if verdict == "CONSOLIDATE" and state == "terminal":
-        _required(row, ("survivor",), where, errors)
-        members = candidate.get("members", [])
-        if not isinstance(members, list) or len(members) < 2:
+        survivor = row.get("survivor")
+        if not _nonempty_string(survivor):
+            errors.append(f"{where}: terminal consolidation requires nonempty survivor")
+        elif cast(str, survivor) not in candidate_members:
+            errors.append(f"{where}: survivor must reference candidate member")
+        if len(candidate_members) < 2:
             errors.append(f"{where}: terminal consolidation needs deleted and surviving members")
     if verdict == "TEMPORARY":
         _validate_temporary(row, where, profile, today, errors)
     review = row.get("review", {})
     if isinstance(review, dict):
-        _required(review, ("implementer", "independent_reviewer", "verdict", "timestamp"), f"{where}.review", errors)
-        if any(not isinstance(review.get(field), str) for field in ("implementer", "independent_reviewer", "verdict", "timestamp")):
-            errors.append(f"{where}.review: fields must be strings")
+        review_fields = ("implementer", "independent_reviewer", "verdict", "timestamp")
+        _keys(review, review_fields, f"{where}.review", errors)
+        if any(not _nonempty_string(review.get(field)) for field in review_fields):
+            errors.append(f"{where}.review: fields must be nonempty strings")
         try:
             dt.datetime.fromisoformat(str(review.get("timestamp")).replace("Z", "+00:00"))
         except ValueError:
             errors.append(f"{where}.review: invalid timestamp")
     else:
         errors.append(f"{where}.review: mapping required")
-    if candidate.get("granularity") in {"family", "duplicate_cluster"}:
-        dimensions = candidate.get("equivalence")
-        required_dimensions = {"production_path", "oracle", "outcome", "route_role", "cost_class", "platform", "disposition"}
-        if not isinstance(dimensions, dict) or not required_dimensions <= set(dimensions):
-            errors.append(f"{where}: family equivalence dimensions required")
-        observations_list = [obs for obs in observations if isinstance(obs, dict)]
-        observed_divergence = (
-            len({obs.get("collection_state") for obs in observations_list}) > 1
-            or len({obs.get("outcome") for obs in observations_list}) > 1
-            or len({obs.get("duration", {}).get("cost_class") for obs in observations_list if isinstance(obs.get("duration"), dict)}) > 1
-        )
-        node_rows = candidate.get("node_rows")
-        if (candidate.get("divergent_dimensions") or observed_divergence) and not isinstance(node_rows, list):
-            errors.append(f"{where}: divergent family dimensions require node_rows")
-        if node_rows is not None and (not isinstance(node_rows, list) or not all(isinstance(item, dict) for item in node_rows)):
-            errors.append(f"{where}: node_rows must be mapping list")
+    if isinstance(candidate.get("granularity"), str) and candidate.get("granularity") in {"family", "duplicate_cluster"}:
+        _validate_family(candidate, candidate_members, observations, where, census_members, errors)
 
 
 def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str], dict[str, Any]]:  # noqa: C901 - heterogeneous document fail-closed dispatch
     errors: list[str] = []
     members: dict[str, str] = {}
+    candidate_ids: dict[str, str] = {}
     loaded: list[str] = []
     documents: list[tuple[Path, dict[str, Any]]] = []
     disposition_count = 0
@@ -1024,7 +1202,8 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
         documents.append((path, data))
     census_members: set[str] = set()
     environment_ids: set[str] = set()
-    for _, data in documents:
+    environment_locations: dict[str, str] = {}
+    for path, data in documents:
         if "source_units" in data and "reconciliation" in data:
             validate_census(data, errors)
             for unit in data.get("source_units", []):
@@ -1041,9 +1220,15 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
         if not isinstance(environments, list):
             errors.append("environments must be list or mapping")
             environments = []
-        for env in environments:
+        for env_index, env in enumerate(environments):
             if isinstance(env, dict) and isinstance(env.get("id"), str):
-                environment_ids.add(env["id"])
+                env_id = env["id"]
+                location = f"{path}.environments[{env_index}]"
+                if env_id in environment_locations:
+                    errors.append(f"{location}: duplicate environment id {env_id}; first at {environment_locations[env_id]}")
+                else:
+                    environment_locations[env_id] = location
+                environment_ids.add(env_id)
     for path, data in documents:
         environments = data.get("run_environments", data.get("environments", []))
         if isinstance(environments, dict):
@@ -1074,6 +1259,13 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
             validate_disposition(row, index, today, errors, census_members, environment_ids)
             disposition_count += 1
             candidate = row.get("candidate", {})
+            candidate_id = candidate.get("id") if isinstance(candidate, dict) else None
+            if isinstance(candidate_id, str):
+                location = f"{path}: dispositions[{index}]"
+                if candidate_id in candidate_ids:
+                    errors.append(f"duplicate candidate id {candidate_id}: {candidate_ids[candidate_id]} and {location}")
+                else:
+                    candidate_ids[candidate_id] = location
             candidate_members = candidate.get("members", []) if isinstance(candidate, dict) else []
             if not isinstance(candidate_members, list):
                 candidate_members = []
@@ -1101,8 +1293,11 @@ def aggregate(paths: Sequence[Path]) -> dict[str, Any]:
         dispositions = data.get("dispositions", [])
         if not isinstance(dispositions, list) or not all(isinstance(row, dict) for row in dispositions):
             raise AuditError(f"{path}: dispositions must be a list of mappings")
-        rows.extend(cast(list[dict[str, Any]], dispositions))
-    rows.sort(key=lambda row: str(row.get("candidate", {}).get("id", "")))
+        for index, row in enumerate(cast(list[dict[str, Any]], dispositions)):
+            if not isinstance(row.get("candidate"), dict):
+                raise AuditError(f"{path}: dispositions[{index}].candidate must be mapping")
+            rows.append(row)
+    rows.sort(key=lambda row: str(cast(dict[str, Any], row["candidate"]).get("id", "")))
     result = {"schema_version": SCHEMA, "generated_from": source_files, "dispositions": rows}
     result["content_sha256"] = _sha(_json_bytes(result))
     return cast(dict[str, Any], _stable(result))
@@ -1218,7 +1413,7 @@ def selftest() -> dict[str, Any]:
         shard_b.write_text(yaml.safe_dump(shard), encoding="utf-8")
         duplicate_errors, _ = validate_documents([shard_a, shard_b], dt.date.today())
         checks["duplicate_deep_membership_fails"] = any("duplicate deep membership" in error for error in duplicate_errors)
-        checks["divergent_family_fails"] = any("divergent family dimensions require node_rows" in error for error in duplicate_errors)
+        checks["divergent_family_fails"] = any("divergent family dimensions require nonempty node_rows" in error for error in duplicate_errors)
         empty_shard = root / "empty-shard.yaml"
         empty_shard.write_text(yaml.safe_dump({"schema_version": SCHEMA, "dispositions": []}), encoding="utf-8")
         checks["aggregate_empty_shard"] = aggregate([empty_shard])["dispositions"] == []
@@ -1236,6 +1431,13 @@ def selftest() -> dict[str, Any]:
             checks["aggregate_malformed_controlled_error"] = False
         except AuditError:
             checks["aggregate_malformed_controlled_error"] = True
+        aggregate_bad_candidate = root / "aggregate-bad-candidate.yaml"
+        aggregate_bad_candidate.write_text(yaml.safe_dump({"dispositions": [{"candidate": "bad"}]}), encoding="utf-8")
+        try:
+            aggregate([aggregate_bad_candidate])
+            checks["aggregate_malformed_candidate_controlled_error"] = False
+        except AuditError:
+            checks["aggregate_malformed_candidate_controlled_error"] = True
         workload_bad = root / "workload-bad.yaml"
         workload_bad.write_text(yaml.safe_dump({
             "frozen_workload_dag": {
@@ -1286,6 +1488,212 @@ def selftest() -> dict[str, Any]:
             any(fragment in error for error in ledger_errors)
             for fragment in ("source_paths must", "platforms must", "stale/unknown", "causal_probe", "divergent family")
         )
+
+        valid_environment_body: dict[str, Any] = {
+            "os": "selftest-os", "runner_image": "selftest-runner", "cpu_class": "selftest-cpu",
+            "python": "CPython 3.13.1", "event": "local", "env": {}, "lock_hash": "1" * 64,
+            "install_command": ["uv", "sync", "--frozen"], "install_state": "clean",
+            "workers": "serial", "cache_policy": "disabled", "harness_patch_hash": None,
+        }
+        valid_environment = {"id": _sha(_json_bytes(valid_environment_body)), **valid_environment_body}
+        environment_errors: list[str] = []
+        validate_environment(valid_environment, "environment", environment_errors)
+        checks["valid_empty_environment"] = environment_errors == []
+        environment_id = cast(str, valid_environment["id"])
+
+        member_a = "tests/test_schema.py::test_a"
+        member_b = "tests/test_schema.py::test_b"
+        census_identities = {member_a, member_b}
+        valid_observation: dict[str, Any] = {
+            "environment_id": environment_id, "nodeid": member_a, "collection_state": "collected",
+            "outcome": "passed", "skip_reason": None, "markers": [],
+            "duration": {"collection": 0.0, "setup": 0.0, "call": 0.01, "cost_class": "fast"},
+            "artifact_hash": "2" * 64,
+        }
+        valid_disposition: dict[str, Any] = {
+            "candidate": {
+                "id": "schema-candidate", "members": [member_a], "granularity": "function",
+                "source_paths": ["tests/test_schema.py"], "production_paths": [], "oracle": None,
+                "contract_claim": None, "authority": ["selftest-authority"], "duplicate_group": None,
+                "route_memberships": [{
+                    "route_id": "selftest", "role": "owner", "required": True, "events": [], "selector": {},
+                }],
+                "platforms": ["selftest-os"], "observations": [valid_observation],
+            },
+            "evidence": {
+                "profile": "inert", "routing_evidence": [{"route_id": "selftest"}],
+                "authority_evidence": [{"reference": "selftest-authority"}],
+            },
+            "verdict": "DELETE", "state": "terminal", "action": "delete", "survivor": None,
+            "issue": None, "owner": None, "expires": None, "hic_approval": None,
+            "review": {
+                "implementer": "selftest", "independent_reviewer": "reviewer", "verdict": "approved",
+                "timestamp": "2026-08-10T00:00:00Z",
+            },
+        }
+
+        def disposition_errors(row: dict[str, Any]) -> list[str]:
+            found: list[str] = []
+            validate_disposition(row, 0, dt.date(2026, 8, 10), found, census_identities, {environment_id})
+            return found
+
+        checks["valid_empty_markers"] = disposition_errors(copy.deepcopy(valid_disposition)) == []
+        invalid_action = copy.deepcopy(valid_disposition)
+        invalid_action["action"] = ["delete"]
+        checks["action_type_rejected"] = any("action must" in error for error in disposition_errors(invalid_action))
+        invalid_survivor = copy.deepcopy(valid_disposition)
+        invalid_survivor["survivor"] = [member_a]
+        checks["survivor_type_rejected"] = any("survivor must" in error for error in disposition_errors(invalid_survivor))
+
+        evidence_bad_values: dict[str, Any] = {
+            "caller_evidence": {}, "authority_evidence": {}, "routing_evidence": {},
+            "overlap_evidence": {}, "base_evidence": [], "causal_probe": [], "cost_evidence": [],
+        }
+        for field, bad_value in evidence_bad_values.items():
+            invalid_evidence = copy.deepcopy(valid_disposition)
+            invalid_evidence["evidence"][field] = bad_value
+            checks[f"evidence_type_{field}_rejected"] = any(
+                field in error for error in disposition_errors(invalid_evidence)
+            )
+        scalar_evidence_member = copy.deepcopy(valid_disposition)
+        scalar_evidence_member["evidence"]["authority_evidence"] = ["bare-reference"]
+        checks["evidence_scalar_member_rejected"] = any(
+            "list of mapping evidence rows" in error for error in disposition_errors(scalar_evidence_member)
+        )
+
+        valid_temporary = copy.deepcopy(valid_disposition)
+        valid_temporary.update({
+            "verdict": "TEMPORARY", "action": "temporary exception", "issue": "ISSUE-1", "owner": "owner",
+            "expires": "2026-08-20", "hic_approval": "one-time approval", "renewal": False,
+        })
+        valid_temporary["evidence"] = {
+            "profile": "environmental_platform", "base_evidence": {"failure": "environmental"},
+            "routing_evidence": [{"route_id": "selftest"}],
+        }
+        checks["valid_temporary"] = disposition_errors(valid_temporary) == []
+        for field, bad_value in {
+            "hic_approval": ["approval"], "issue": {"id": "ISSUE-1"}, "owner": ["owner"],
+            "expires": ["2026-08-20"], "renewal": "false",
+        }.items():
+            invalid_temporary = copy.deepcopy(valid_temporary)
+            invalid_temporary[field] = bad_value
+            checks[f"temporary_{field}_type_rejected"] = any(
+                field in error for error in disposition_errors(invalid_temporary)
+            )
+
+        family = copy.deepcopy(valid_disposition)
+        family["candidate"].update({
+            "members": [member_a, member_b], "granularity": "family",
+            "observations": [
+                valid_observation,
+                {**valid_observation, "nodeid": member_b, "outcome": "failed"},
+            ],
+            "equivalence": {
+                "production_path": "src/schema.py", "oracle": "result", "outcome": "mixed",
+                "route_role": "owner", "cost_class": "fast", "platform": "selftest-os",
+                "disposition": "DELETE",
+            },
+            "divergent_dimensions": ["outcome"],
+        })
+        node_row_base = {
+            "production_path": "src/schema.py", "oracle": "result", "route_role": "owner",
+            "cost_class": "fast", "platform": "selftest-os", "disposition": "DELETE",
+        }
+        family["candidate"]["node_rows"] = [
+            {"member": member_a, **node_row_base, "outcome": "passed"},
+            {"member": member_b, **node_row_base, "outcome": "failed"},
+        ]
+        checks["valid_divergent_family_expansion"] = disposition_errors(family) == []
+        invalid_dimension = copy.deepcopy(family)
+        invalid_dimension["candidate"]["equivalence"]["oracle"] = ["result"]
+        checks["equivalence_dimension_type_rejected"] = any(
+            "equivalence.oracle" in error for error in disposition_errors(invalid_dimension)
+        )
+        empty_rows = copy.deepcopy(family)
+        empty_rows["candidate"]["node_rows"] = []
+        checks["divergent_empty_node_rows_rejected"] = any(
+            "nonempty node_rows" in error for error in disposition_errors(empty_rows)
+        )
+        empty_row = copy.deepcopy(family)
+        empty_row["candidate"]["node_rows"] = [{}]
+        checks["divergent_empty_node_row_rejected"] = any(
+            "member must" in error for error in disposition_errors(empty_row)
+        )
+        missing_member_row = copy.deepcopy(family)
+        missing_member_row["candidate"]["node_rows"] = missing_member_row["candidate"]["node_rows"][:1]
+        checks["divergent_member_coverage_rejected"] = any(
+            "cover every candidate member" in error for error in disposition_errors(missing_member_row)
+        )
+        missing_dimension_row = copy.deepcopy(family)
+        del missing_dimension_row["candidate"]["node_rows"][0]["platform"]
+        checks["divergent_dimension_coverage_rejected"] = any(
+            "missing field platform" in error for error in disposition_errors(missing_dimension_row)
+        )
+        unknown_member_row = copy.deepcopy(family)
+        unknown_member_row["candidate"]["node_rows"][0]["member"] = "tests/test_schema.py::test_unknown"
+        checks["divergent_unknown_identity_rejected"] = any(
+            "candidate and census identity" in error for error in disposition_errors(unknown_member_row)
+        )
+        nonvarying_rows = copy.deepcopy(family)
+        nonvarying_rows["candidate"]["node_rows"][1]["outcome"] = "passed"
+        checks["divergent_dimension_must_vary"] = any(
+            "must vary" in error for error in disposition_errors(nonvarying_rows)
+        )
+
+        duplicate_environments = root / "duplicate-environments.yaml"
+        duplicate_environments.write_text(yaml.safe_dump({"environments": [valid_environment, valid_environment]}), encoding="utf-8")
+        duplicate_environment_errors, _ = validate_documents([duplicate_environments], dt.date.today())
+        checks["duplicate_environment_id_rejected"] = any(
+            "duplicate environment id" in error for error in duplicate_environment_errors
+        )
+        duplicate_candidates = root / "duplicate-candidates.yaml"
+        duplicate_candidates.write_text(yaml.safe_dump({
+            "schema_version": SCHEMA, "environments": [valid_environment],
+            "dispositions": [valid_disposition, valid_disposition],
+        }), encoding="utf-8")
+        duplicate_candidate_errors, _ = validate_documents([duplicate_candidates], dt.date.today())
+        checks["duplicate_candidate_id_rejected"] = any(
+            "duplicate candidate id" in error for error in duplicate_candidate_errors
+        )
+
+        valid_route = {
+            "id": "route", "argv": ["pytest"], "environment_id": environment_id,
+            "base_mapping": "tests/", "head_mapping": "tests/", "cwd": ".", "env": {},
+        }
+        valid_measurement = {
+            "route_id": "route", "environment_id": environment_id, "collection": 1.0, "setup": 2.0,
+            "call": 3.0, "wall": 4.0, "compute": 6.0, "outcome": "passed", "artifact_hash": "3" * 64,
+        }
+
+        def find_workload_errors(dag: dict[str, Any]) -> list[str]:
+            found: list[str] = []
+            validate_workload(dag, "workload", found, {environment_id})
+            return found
+
+        valid_workload: dict[str, Any] = {
+            "routes": [valid_route], "edges": [], "repetitions": 3, "measurements": [valid_measurement],
+        }
+        checks["valid_typed_measurement"] = find_workload_errors(valid_workload) == []
+        duplicate_edges = copy.deepcopy(valid_workload)
+        duplicate_edges["edges"] = [{"from": "route", "to": "route"}, {"from": "route", "to": "route"}]
+        checks["duplicate_dag_edge_rejected"] = any("duplicate dependency edge" in error for error in find_workload_errors(duplicate_edges))
+        for field in ("collection", "setup", "call", "wall", "compute"):
+            invalid_measurement = copy.deepcopy(valid_workload)
+            invalid_measurement["measurements"][0][field] = "1"
+            checks[f"measurement_{field}_rejected"] = any(
+                "timing fields" in error for error in find_workload_errors(invalid_measurement)
+            )
+        for field, bad_value, fragment in (
+            ("outcome", ["passed"], "invalid outcome"),
+            ("artifact_hash", {"sha": "3" * 64}, "artifact_hash must"),
+            ("environment_id", "missing", "unknown environment_id"),
+            ("route_id", "missing", "unknown route_id"),
+        ):
+            invalid_measurement = copy.deepcopy(valid_workload)
+            invalid_measurement["measurements"][0][field] = bad_value
+            checks[f"measurement_{field}_rejected"] = any(
+                fragment in error for error in find_workload_errors(invalid_measurement)
+            )
         if not all(checks.values()):
             raise AuditError("selftest failures: " + ", ".join(key for key, value in checks.items() if not value))
         return {"valid": True, "checks": checks}

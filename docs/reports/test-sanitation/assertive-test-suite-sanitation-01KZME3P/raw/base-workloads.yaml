@@ -45,18 +45,18 @@ run_environments:
     workers: serial
     cache_policy: actions/setup-python pip cache; pytest cacheprovider disabled
     harness_patch_hash: null
-  - id: 46ae15b53685042012156bed25ec658b059350860946d28032b7e0cee2eca1f0
-    os: not-observed
-    runner_image: external-sibling-workspace-not-present
-    cpu_class: not-observed
-    python: uv-managed sibling version not observed
+  - id: d2e994e2d7465d82a398fbd8ee7c93fb4efb789b0724c312099488742869fb52
+    os: macOS-15.7.7-arm64-arm-64bit
+    runner_image: local-macos-15.7.7
+    cpu_class: Apple-M1-Pro-10-logical-cpu
+    python: CPython 3.13.1
     event: manual
     env: {SPEC_KITTY_ENABLE_SAAS_SYNC: "1"}
-    lock_hash: not-observed-sibling-lock
-    install_command: ["uv run pytest scenarios/ -v"]
-    install_state: not-observed; command frozen for later sibling execution
+    lock_hash: 20ba811570bf446830dcf474e38f8c0686c786e043252b8ecd5f74fe1d14e8a7
+    install_command: [uv, sync, --frozen]
+    install_state: uv sync --frozen completed; 16 locked distributions audited; prewarmed project venv
     workers: serial
-    cache_policy: sibling-managed; not observed
+    cache_policy: uv package cache warm; sibling project venv prewarmed; pytest cache default
     harness_patch_hash: null
 frozen_workload_dag:
   repetitions: 3
@@ -68,7 +68,7 @@ frozen_workload_dag:
     - {id: quarantine, cwd: ., env: {PWHEADLESS: "1", SPEC_KITTY_RUN_QUARANTINE: "1"}, argv: [python, -m, pytest, tests/, -m, quarantine, -p, no:cacheprovider, -q, --tb=short], wrapper: "exit 5 => green; otherwise preserve exit; non-blocking job", environment_id: d9351dc38c139f8d2c79a6716b633a068e1fa64fb58083de2779d2ff1bde7004, base_mapping: "whole tests/ marker discovery", head_mapping: "marker:quarantine route pending WP07"}
     - {id: contract, cwd: ., env: {SPEC_KITTY_ENABLE_SAAS_SYNC: "1"}, argv: [.venv/bin/pytest, tests/contract/, -v], environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c, base_mapping: tests/contract/, head_mapping: tests/contract/}
     - {id: architectural, cwd: ., env: {}, argv: [.venv/bin/pytest, tests/architectural/, -v], environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c, base_mapping: tests/architectural/, head_mapping: tests/architectural/}
-    - {id: sibling-e2e, cwd: ../spec-kitty-end-to-end-testing, env: {SPEC_KITTY_ENABLE_SAAS_SYNC: "1"}, argv: [uv, run, pytest, scenarios/, -v], environment_id: 46ae15b53685042012156bed25ec658b059350860946d28032b7e0cee2eca1f0, base_mapping: scenarios/, head_mapping: scenarios/}
+    - {id: sibling-e2e, cwd: ../spec-kitty-end-to-end-testing, env: {SPEC_KITTY_ENABLE_SAAS_SYNC: "1"}, argv: [uv, run, pytest, scenarios/, -v], environment_id: d2e994e2d7465d82a398fbd8ee7c93fb4efb789b0724c312099488742869fb52, base_mapping: scenarios/, head_mapping: scenarios/}
   edges:
     - {from: full-collection, to: full-parallel}
     - {from: full-collection, to: orphan-sweep}
