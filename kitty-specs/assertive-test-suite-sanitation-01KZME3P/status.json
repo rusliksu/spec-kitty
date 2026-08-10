@@ -18,7 +18,7 @@
   },
   "work_packages": {
     "WP01": {
-      "actor": "reviewer-renata",
+      "actor": "user",
       "agent": "root-arbiter",
       "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
