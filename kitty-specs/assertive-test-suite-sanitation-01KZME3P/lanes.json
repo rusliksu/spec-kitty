@@ -1,0 +1,236 @@
+{
+  "version": 1,
+  "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
+  "mission_id": "01KZME3PVS904M4RA3V5RH7CQ6",
+  "mission_branch": "kitty/mission-assertive-test-suite-sanitation-01KZME3P",
+  "target_branch": "pr/assertive-test-suite-sanitation",
+  "lanes": [
+    {
+      "lane_id": "lane-a",
+      "wp_ids": [
+        "WP01"
+      ],
+      "write_scope": [
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/foundation-summary.yaml",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-full-suite-summary.txt",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-workloads.yaml",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/bootstrap-failure.txt"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "artifact-rendering"
+      ],
+      "depends_on_lanes": [],
+      "parallel_group": 0
+    },
+    {
+      "lane_id": "lane-b",
+      "wp_ids": [
+        "WP02"
+      ],
+      "write_scope": [
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP02.yaml",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-replay.patch",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-results.json",
+        "tests/conftest.py",
+        "tests/test_test_venv_bootstrap.py"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "app-shell",
+        "artifact-rendering",
+        "legacy-cleanup"
+      ],
+      "depends_on_lanes": [
+        "lane-a"
+      ],
+      "parallel_group": 1
+    },
+    {
+      "lane_id": "lane-d",
+      "wp_ids": [
+        "WP04"
+      ],
+      "write_scope": [
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP04.yaml",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp04-results.json",
+        "tests/git_ops/test_git_ops.py",
+        "tests/git_ops/test_git_ops_unit.py",
+        "tests/kernel/test_paths.py",
+        "tests/kernel/test_paths_unified_windows_root.py",
+        "tests/runtime/test_home_unit.py",
+        "tests/specify_cli/dashboard/test_glossary_handler.py",
+        "tests/specify_cli/dashboard/test_lint_tile_handler.py",
+        "tests/specify_cli/test_template_lane_guard.py",
+        "tests/test_dashboard/test_glossary_handler.py",
+        "tests/test_dashboard/test_lint_tile_handler.py"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "artifact-rendering",
+        "dashboard",
+        "legacy-cleanup"
+      ],
+      "depends_on_lanes": [
+        "lane-a"
+      ],
+      "parallel_group": 1
+    },
+    {
+      "lane_id": "lane-e",
+      "wp_ids": [
+        "WP05"
+      ],
+      "write_scope": [
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP05.yaml",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-results.json",
+        "src/specify_cli/coordination/status_transition.py",
+        "tests/_arch_shard_map.py",
+        "tests/architectural/test_auth_transport_singleton.py",
+        "tests/architectural/test_batch_drain_retired_3167.py",
+        "tests/architectural/test_contract_registry_parity.py",
+        "tests/architectural/test_layer_rules.py",
+        "tests/architectural/test_no_parity_scaffold.py",
+        "tests/architectural/test_ratchet_baselines.py",
+        "tests/architectural/test_retired_contracts_absent.py",
+        "tests/architectural/test_wp05_write_target_drain.py",
+        "tests/specify_cli/coordination/test_simple_case_flat_topology.py",
+        "tests/specify_cli/write_side/test_characterization_write_target.py",
+        "tests/sync/test_no_queue_drain_constructed_3030.py"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "artifact-rendering",
+        "legacy-cleanup"
+      ],
+      "depends_on_lanes": [
+        "lane-a"
+      ],
+      "parallel_group": 1
+    },
+    {
+      "lane_id": "lane-c",
+      "wp_ids": [
+        "WP03"
+      ],
+      "write_scope": [
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP03.yaml",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp03-results.json",
+        "tests/agent/test_create_feature_branch.py",
+        "tests/architectural/test_verdict_name_truthfulness.py",
+        "tests/readiness/test_upgrade_ux.py",
+        "tests/regression/test_issue_2782_sync_strict_json_ingress_skip.py",
+        "tests/release/test_diff_coverage_policy.py",
+        "tests/retrospective/test_summary_tolerance.py",
+        "tests/sync/test_client_integration.py",
+        "tests/sync/test_daemon_singleton_reaper_consolidation.py"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "legacy-cleanup",
+        "tracker-integration"
+      ],
+      "depends_on_lanes": [
+        "lane-a",
+        "lane-b"
+      ],
+      "parallel_group": 2
+    },
+    {
+      "lane_id": "lane-f",
+      "wp_ids": [
+        "WP06"
+      ],
+      "write_scope": [
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP06.yaml",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp06-results.json",
+        "tests/charter/test_config_stem_parity.py",
+        "tests/cli/commands/test_agent_mission_commit_to_branch.py",
+        "tests/cli/test_cli_console.py",
+        "tests/contract/test_charter_compact_includes_section_anchors.py",
+        "tests/doctrine/drg/migration/test_extractor_projection.py",
+        "tests/doctrine/drg/test_reachability.py",
+        "tests/e2e/test_charter_epic_golden_path.py",
+        "tests/e2e/test_upgrade_post_state.py",
+        "tests/integration/test_mission_type_resolution_integration.py",
+        "tests/specify_cli/cli/commands/test_completion_fast_path.py",
+        "tests/sync/test_dual_write_integration.py",
+        "tests/sync/test_sync_e2e_integration.py"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "artifact-rendering",
+        "legacy-cleanup",
+        "tests",
+        "tracker-integration"
+      ],
+      "depends_on_lanes": [
+        "lane-a",
+        "lane-b"
+      ],
+      "parallel_group": 2
+    },
+    {
+      "lane_id": "lane-g",
+      "wp_ids": [
+        "WP07"
+      ],
+      "write_scope": [
+        ".github/workflows/ci-quality.yml",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP07.yaml",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-results.json",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-route-manifest.yaml",
+        "tests/architectural/test_ci_quality_path_filters.py",
+        "tests/architectural/test_marker_job_completeness.py",
+        "tests/architectural/test_quarantine_marker.py",
+        "tests/architectural/test_suite_jobs_gate_blocking.py"
+      ],
+      "predicted_surfaces": [
+        "api"
+      ],
+      "depends_on_lanes": [
+        "lane-c",
+        "lane-d",
+        "lane-e",
+        "lane-f"
+      ],
+      "parallel_group": 3
+    },
+    {
+      "lane_id": "lane-h",
+      "wp_ids": [
+        "WP08"
+      ],
+      "write_scope": [
+        "CHANGELOG.md",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions.yaml",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/final-report.md",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/head-census.json",
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/head-workloads.yaml",
+        "tests/README.md"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "artifact-rendering",
+        "legacy-cleanup",
+        "tracker-integration"
+      ],
+      "depends_on_lanes": [
+        "lane-b",
+        "lane-c",
+        "lane-d",
+        "lane-e",
+        "lane-f",
+        "lane-g"
+      ],
+      "parallel_group": 4
+    }
+  ],
+  "computed_at": "2026-08-10T00:17:40.772233+00:00",
+  "computed_from": "dependency_graph+ownership",
+  "planning_artifact_wps": [],
+  "planning_commit_sha": "b467178cf0fa853a066e3e53dd977daed8eaa439"
+}
