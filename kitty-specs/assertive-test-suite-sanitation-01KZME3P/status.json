@@ -366,9 +366,9 @@
       "provider": "__resolved_provider_absent__",
       "review": null,
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP10-structural-cohort-c/review-cycle-1.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP10-structural-cohort-c/review-cycle-1.md",
-        "reviewer": "user",
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP10-structural-cohort-c/review-cycle-3.md",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP10-structural-cohort-c/review-cycle-3.md",
+        "reviewer": "reviewer-renata",
         "verdict": "changes_requested"
       },
       "role": "reviewer",
@@ -468,13 +468,14 @@
       "model": "__resolved_model_absent__",
       "notes": [
         "Ready for review: exact 24-file survivor gate passed 131 tests in 69.77s with 0 skips; built-in sequential scoped gate exceeded its fixed 300s timeout; evidence in wp13-results.json",
-        "Ready for review cycle 2: runtime broad gate timed out at its fixed 300s ceiling with no failure output; exact WP13 cohort passed 133/133 in 68.38s, collection 133, ruff/mypy clean, layer 17/17, artifact validator exact; restored two authority gates as one node each and retained 393-node reduction"
+        "Ready for review cycle 2: runtime broad gate timed out at its fixed 300s ceiling with no failure output; exact WP13 cohort passed 133/133 in 68.38s, collection 133, ruff/mypy clean, layer 17/17, artifact validator exact; restored two authority gates as one node each and retained 393-node reduction",
+        "Review cycle 2 passed: restored minimal accepted-ADR protection authority gate and resolver-first profile-guidance gate; 42/42 paths terminal, 526→133 (-393), 133 passed/0 skipped, WP07 handoff exact, ruff/mypy/layer/ownership clean"
       ],
       "provider": "__resolved_provider_absent__",
       "review": null,
       "review_result": {
-        "reference": "Review cycle 2 passed: restored minimal accepted-ADR protection authority gate and resolver-first profile-guidance gate; 42/42 paths terminal, 526→133 (-393), 133 passed/0 skipped, WP07 handoff exact, ruff/mypy/layer/ownership clean",
-        "reviewer": "Robert Douglass",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP13-doctrine-structural/review-cycle-2.md",
+        "reviewer": "reviewer-renata",
         "verdict": "approved"
       },
       "role": "reviewer",
