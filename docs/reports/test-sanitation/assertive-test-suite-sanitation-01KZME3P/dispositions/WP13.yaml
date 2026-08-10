@@ -1,0 +1,1897 @@
+schema_version: test-sanitation/v1
+mission: assertive-test-suite-sanitation-01KZME3P
+work_package: WP13
+profile: architect-alphonso
+generated_at: '2026-08-10T16:20:55Z'
+planning_base: 28ae75ea998c898aba57364db7a06d2088bd2af2
+census_sha256: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+
+_architectural_route: &architectural_route
+  route_id: architectural
+  role: owner
+  required: true
+  events: [local]
+  selector:
+    paths: [tests/architectural/]
+    environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+
+_full_parallel_route: &full_parallel_route
+  route_id: full-parallel
+  role: owner
+  required: true
+  events: [local]
+  selector:
+    paths: [tests/]
+    ignores: [tests/sync/test_orphan_sweep.py]
+    environment_id: 99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849
+
+_retired_shape_evidence: &retired_shape_evidence
+  profile: structural
+  authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Exact names, layouts, prose, counts, completed migration parity, and current-to-current shape have no distinct current product oracle.
+  causal_probe:
+    kind: behavior-preserving-structural-change
+    fault: Rename, relocate, or simplify the pinned implementation while preserving every live consumer boundary.
+    authority_violated: No current authority; only retired structural prestige changes.
+    act_reached: true
+    intended_oracle: Live consumers remain green while the deleted scaffold would reject the harmless structural change.
+    intended_oracle_failed: true
+    command: Classify against current authorities and consumers, delete the scaffold, then run every WP13 survivor.
+    environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+    raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+
+_review: &review
+  implementer: architect-alphonso/WP13
+  independent_reviewer: pending-WP13-review
+  verdict: implementation-complete-awaiting-review
+  timestamp: '2026-08-10T16:20:55Z'
+
+dispositions:
+  - candidate:
+      id: WP13-charter-test-charter-ownership-invariant
+      members: ["tests/charter/test_charter_ownership_invariant.py"]
+      granularity: file
+      source_paths: ["tests/charter/test_charter_ownership_invariant.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["ast", "source"]
+      base_source_units: 1
+      base_nodes: 1
+      head_nodes: 0
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete self-ownership/import-list invariant; it pins the test scaffold, not a current consumer boundary."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-charter-test-chokepoint-coverage
+      members: ["tests/charter/test_chokepoint_coverage.py"]
+      granularity: file
+      source_paths: ["tests/charter/test_chokepoint_coverage.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["ast", "source", "text"]
+      base_source_units: 3
+      base_nodes: 3
+      head_nodes: 0
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete historical chokepoint module/count coverage and prose coupling; retained sole-door guards exercise live prohibited constructions."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-charter-test-context-decomposition-completion
+      members: ["tests/charter/test_context_decomposition_completion.py"]
+      granularity: file
+      source_paths: ["tests/charter/test_context_decomposition_completion.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["ast", "source"]
+      base_source_units: 4
+      base_nodes: 36
+      head_nodes: 0
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete completed-decomposition parity and exact surface-presence matrix."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-charter-test-surface-calibration
+      members: ["tests/charter/test_surface_calibration.py"]
+      granularity: file
+      source_paths: ["tests/charter/test_surface_calibration.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["ast", "source"]
+      base_source_units: 9
+      base_nodes: 9
+      head_nodes: 0
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete calibration counts, historical facade inventory, and advisory surface report."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-activation-registry-schema
+      members: ["tests/architectural/test_activation_registry_schema.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_activation_registry_schema.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["structural"]
+      base_source_units: 4
+      base_nodes: 4
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete positive activation-registry schema/field shape; live charter-to-DRG parity owns activation coherence."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-charter-facades-reexport-doctrine
+      members: ["tests/architectural/test_charter_facades_reexport_doctrine.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_charter_facades_reexport_doctrine.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["structural"]
+      base_source_units: 2
+      base_nodes: 34
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete exact re-export identity matrix; current runtime-to-charter and sole-door boundaries own layer access."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-charter-references-resolve
+      members: ["tests/architectural/test_charter_references_resolve.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_charter_references_resolve.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["source", "structural", "text"]
+      base_source_units: 4
+      base_nodes: 4
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete prose-token reference extraction and shrink-only historical dangling baseline."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-charter-runtime-canonical-paths
+      members: ["tests/architectural/test_charter_runtime_canonical_paths.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_charter_runtime_canonical_paths.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["structural"]
+      base_source_units: 2
+      base_nodes: 2
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete exact constant names/locations for runtime charter paths."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-doctrine-artefact-layout
+      members: ["tests/architectural/test_doctrine_artefact_layout.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_doctrine_artefact_layout.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["source", "structural"]
+      base_source_units: 17
+      base_nodes: 17
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete exact folder taxonomy, tier inventory, promoted filename, and phantom-directory checks."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-glossary-canonical-terms
+      members: ["tests/architectural/test_glossary_canonical_terms.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_glossary_canonical_terms.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["source", "structural"]
+      base_source_units: 9
+      base_nodes: 9
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete static glossary term/count/prose inventory; glossary package dependency boundary remains."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-glossary-pack-no-regression
+      members: ["tests/architectural/test_glossary_pack_no_regression.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_glossary_pack_no_regression.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["source", "structural"]
+      base_source_units: 5
+      base_nodes: 5
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete frozen glossary pack positive-shape/no-regression scaffold."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-glossary-pack-urn
+      members: ["tests/architectural/test_glossary_pack_urn.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_glossary_pack_urn.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["structural"]
+      base_source_units: 5
+      base_nodes: 5
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete exact enum spelling and URN prefix layout checks already consumed by DRG validation/mapping."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-profile-load-resolver-guidance
+      members: ["tests/architectural/test_profile_load_resolver_guidance.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_profile_load_resolver_guidance.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["source", "structural"]
+      base_source_units: 6
+      base_nodes: 6
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete skill-guidance wording scanner and exact fallback prose checks; no runtime consumer oracle."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-protection-resolver-call-sites
+      members: ["tests/architectural/test_protection_resolver_call_sites.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_protection_resolver_call_sites.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 1
+      base_nodes: 1
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete exact protection resolver call-site inventory/count."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-resolution-activation-foundation
+      members: ["tests/architectural/test_resolution_activation_foundation.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_resolution_activation_foundation.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["ast", "source", "structural", "text"]
+      base_source_units: 18
+      base_nodes: 20
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete completed migration foundation, exact symbol/layout, and positive parity scaffold."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-surface-resolution-audit
+      members: ["tests/architectural/test_surface_resolution_audit.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_surface_resolution_audit.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["source", "structural", "text"]
+      base_source_units: 17
+      base_nodes: 17
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete generated topology/report/prose audit and exact route inventory."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-topology-resolution-boundary
+      members: ["tests/architectural/test_topology_resolution_boundary.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_topology_resolution_boundary.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 3
+      base_nodes: 3
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete exact resolver module topology and current-to-current implementation parity."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-urn-resolver-scalar-fence
+      members: ["tests/architectural/test_urn_resolver_scalar_fence.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_urn_resolver_scalar_fence.py"]
+      production_paths: []
+      oracle: null
+      contract_claim: null
+      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 4
+      base_nodes: 4
+      head_nodes: 0
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: absent
+          outcome: deleted
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence: *retired_shape_evidence
+    verdict: DELETE
+    state: terminal
+    action: "Delete scalar return-annotation/implementation-shape fence; resolver behavior tests own the contract."
+    survivor: null
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-charter-test-append-promotion-primitive
+      members: ["tests/charter/test_append_promotion_primitive.py"]
+      granularity: file
+      source_paths: ["tests/charter/test_append_promotion_primitive.py"]
+      production_paths: ["src/charter/primitives.py", "src/doctrine/resolution/activation_engine.py"]
+      oracle: "Promotion appends only requested IDs, remains idempotent, preserves built-ins for an absent key, and ignores defaults for an explicit key."
+      contract_claim: "Promotion appends only requested IDs, remains idempotent, preserves built-ins for an absent key, and ignores defaults for an explicit key."
+      authority: ["docs/context/governance.md#Activated-vs-Available", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003"]
+      scanner_kinds: ["ast", "source"]
+      base_source_units: 8
+      base_nodes: 8
+      head_nodes: 4
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: functional
+      authority_evidence:
+        - reference: "docs/context/governance.md#Activated-vs-Available"
+          result: "Promotion appends only requested IDs, remains idempotent, preserves built-ins for an absent key, and ignores defaults for an explicit key."
+      corpus:
+        description: "Temporary charter YAML plus real promotion primitive."
+        nonzero: true
+        collected_nodes: 4
+      consumers: ["src/charter/primitives.py", "src/doctrine/resolution/activation_engine.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Repeat promotion, omit an activation key, or pass default IDs beside an explicit activation list."
+        compliant_control: "Distinct requested IDs remain ordered and existing configuration survives."
+        act_reached: true
+        intended_oracle: "Promotion appends only requested IDs, remains idempotent, preserves built-ins for an absent key, and ignores defaults for an explicit key."
+        intended_oracle_failed: true
+        command: "tests/charter/test_append_promotion_primitive.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/charter/test_append_promotion_primitive.py"
+      collected_nodes: 4
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-charter-test-mission-type-key
+      members: ["tests/charter/test_mission_type_key.py"]
+      granularity: file
+      source_paths: ["tests/charter/test_mission_type_key.py"]
+      production_paths: ["src/charter/mission_types.py"]
+      oracle: "Mission-type keys normalize explicit values and typeless input never silently defaults to software-dev."
+      contract_claim: "Mission-type keys normalize explicit values and typeless input never silently defaults to software-dev."
+      authority: ["docs/adr/3.x/2026-08-05-1-mission-type-availability-before-kind-promotion.md", "docs/context/mission-types.md"]
+      scanner_kinds: ["ast", "source"]
+      base_source_units: 4
+      base_nodes: 11
+      head_nodes: 9
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: functional
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-08-05-1-mission-type-availability-before-kind-promotion.md"
+          result: "Mission-type keys normalize explicit values and typeless input never silently defaults to software-dev."
+      corpus:
+        description: "Recognized, arbitrary, blank, and absent mission-type inputs."
+        nonzero: true
+        collected_nodes: 9
+      consumers: ["src/charter/mission_types.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Restore a software-dev default or stop trimming explicit keys."
+        compliant_control: "Recognized and arbitrary explicit keys normalize unchanged."
+        act_reached: true
+        intended_oracle: "Mission-type keys normalize explicit values and typeless input never silently defaults to software-dev."
+        intended_oracle_failed: true
+        command: "tests/charter/test_mission_type_key.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/charter/test_mission_type_key.py"
+      collected_nodes: 9
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-charter-test-operational-context
+      members: ["tests/charter/test_operational_context.py"]
+      granularity: file
+      source_paths: ["tests/charter/test_operational_context.py"]
+      production_paths: ["src/charter/operational_context.py"]
+      oracle: "Explicit operational context round-trips and missing required identity fails actionably."
+      contract_claim: "Explicit operational context round-trips and missing required identity fails actionably."
+      authority: ["docs/context/charter-overview.md", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003"]
+      scanner_kinds: ["ast", "source"]
+      base_source_units: 14
+      base_nodes: 14
+      head_nodes: 2
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: functional
+      authority_evidence:
+        - reference: "docs/context/charter-overview.md"
+          result: "Explicit operational context round-trips and missing required identity fails actionably."
+      corpus:
+        description: "Real OperationalContext model with explicit and missing identity."
+        nonzero: true
+        collected_nodes: 2
+      consumers: ["src/charter/operational_context.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Accept missing mission/action/profile identity or rewrite a supplied value."
+        compliant_control: "Complete explicit context serializes and restores exactly."
+        act_reached: true
+        intended_oracle: "Explicit operational context round-trips and missing required identity fails actionably."
+        intended_oracle_failed: true
+        command: "tests/charter/test_operational_context.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/charter/test_operational_context.py"
+      collected_nodes: 2
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-cli-test-charter-mission-type-commands
+      members: ["tests/cli/test_charter_mission_type_commands.py"]
+      granularity: file
+      source_paths: ["tests/cli/test_charter_mission_type_commands.py"]
+      production_paths: ["src/specify_cli/cli/commands/charter.py", "src/charter/mission_types.py"]
+      oracle: "Public list/show commands emit the consumed JSON catalog, alias reaches it, and unknown IDs fail."
+      contract_claim: "Public list/show commands emit the consumed JSON catalog, alias reaches it, and unknown IDs fail."
+      authority: ["docs/adr/3.x/2026-08-05-1-mission-type-availability-before-kind-promotion.md", "docs/context/mission-types.md"]
+      scanner_kinds: ["ast", "source"]
+      base_source_units: 25
+      base_nodes: 25
+      head_nodes: 4
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: functional
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-08-05-1-mission-type-availability-before-kind-promotion.md"
+          result: "Public list/show commands emit the consumed JSON catalog, alias reaches it, and unknown IDs fail."
+      corpus:
+        description: "Typer CLI runner against live built-in mission-type catalog."
+        nonzero: true
+        collected_nodes: 4
+      consumers: ["src/specify_cli/cli/commands/charter.py", "src/charter/mission_types.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Accept an unknown ID, drop required JSON identity, or diverge alias routing."
+        compliant_control: "Known mission type lists and shows through the public CLI."
+        act_reached: true
+        intended_oracle: "Public list/show commands emit the consumed JSON catalog, alias reaches it, and unknown IDs fail."
+        intended_oracle_failed: true
+        command: "tests/cli/test_charter_mission_type_commands.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/cli/test_charter_mission_type_commands.py"
+      collected_nodes: 4
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-doctrine-drg-test-kind-mapping-totality
+      members: ["tests/doctrine/drg/test_kind_mapping_totality.py"]
+      granularity: file
+      source_paths: ["tests/doctrine/drg/test_kind_mapping_totality.py"]
+      production_paths: ["src/doctrine/drg/models.py", "src/doctrine/drg/kinds.py"]
+      oracle: "Live kind-keyed mappings are total or explicitly exempt; mixed key domains fail closed."
+      contract_claim: "Live kind-keyed mappings are total or explicitly exempt; mixed key domains fail closed."
+      authority: ["docs/context/doctrine.md", "docs/adr/3.x/2026-07-21-1-glossary-first-order-doctrine-artefact.md"]
+      scanner_kinds: ["ast", "source", "text"]
+      base_source_units: 10
+      base_nodes: 10
+      head_nodes: 3
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: functional
+      authority_evidence:
+        - reference: "docs/context/doctrine.md"
+          result: "Live kind-keyed mappings are total or explicitly exempt; mixed key domains fail closed."
+      corpus:
+        description: "All Python modules under the live doctrine DRG package plus injected mapping snippets."
+        nonzero: true
+        collected_nodes: 3
+      consumers: ["src/doctrine/drg/models.py", "src/doctrine/drg/kinds.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Remove one NodeKind member from an authority mapping or mix enum/plain keys."
+        compliant_control: "Complete live mappings and intentionally non-kind mappings remain green."
+        act_reached: true
+        intended_oracle: "Live kind-keyed mappings are total or explicitly exempt; mixed key domains fail closed."
+        intended_oracle_failed: true
+        command: "tests/doctrine/drg/test_kind_mapping_totality.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/doctrine/drg/test_kind_mapping_totality.py"
+      collected_nodes: 3
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-doctrine-test-activation-parity-guard
+      members: ["tests/doctrine/test_activation_parity_guard.py"]
+      granularity: file
+      source_paths: ["tests/doctrine/test_activation_parity_guard.py"]
+      production_paths: ["src/doctrine/resolution/activation_engine.py", "src/doctrine/drg/loader.py"]
+      oracle: "Charter selections resolve through references and the merged DRG; missing/corrupt inputs fail closed where activation is required."
+      contract_claim: "Charter selections resolve through references and the merged DRG; missing/corrupt inputs fail closed where activation is required."
+      authority: ["docs/context/governance.md#Activated-vs-Available", "docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"]
+      scanner_kinds: ["ast", "source"]
+      base_source_units: 15
+      base_nodes: 15
+      head_nodes: 11
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: functional
+      authority_evidence:
+        - reference: "docs/context/governance.md#Activated-vs-Available"
+          result: "Charter selections resolve through references and the merged DRG; missing/corrupt inputs fail closed where activation is required."
+      corpus:
+        description: "Repository charter plus temporary built-in/org/project references and DRG graphs."
+        nonzero: true
+        collected_nodes: 11
+      consumers: ["src/doctrine/resolution/activation_engine.py", "src/doctrine/drg/loader.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant absent directives/kinds, orphan references, dangling charter pointers, corrupt YAML, or DRG load failure."
+        compliant_control: "Referenced built-in and org-overlay artefacts resolve coherently."
+        act_reached: true
+        intended_oracle: "Charter selections resolve through references and the merged DRG; missing/corrupt inputs fail closed where activation is required."
+        intended_oracle_failed: true
+        command: "tests/doctrine/test_activation_parity_guard.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/doctrine/test_activation_parity_guard.py"
+      collected_nodes: 11
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-doctrine-test-pack-root-resolver
+      members: ["tests/doctrine/test_pack_root_resolver.py"]
+      granularity: file
+      source_paths: ["tests/doctrine/test_pack_root_resolver.py"]
+      production_paths: ["src/doctrine/pack_paths.py"]
+      oracle: "Pack roots resolve across editable, installed, symlinked, override, org/project, and unavailable layouts with fail-closed errors."
+      contract_claim: "Pack roots resolve across editable, installed, symlinked, override, org/project, and unavailable layouts with fail-closed errors."
+      authority: ["docs/adr/3.x/2026-07-26-2-doctrine-artefact-pack-layout-convention.md", "docs/adr/3.x/2026-08-02-1-charter-wheel-assessment.md"]
+      scanner_kinds: ["ast", "source"]
+      base_source_units: 11
+      base_nodes: 13
+      head_nodes: 11
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: functional
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-07-26-2-doctrine-artefact-pack-layout-convention.md"
+          result: "Pack roots resolve across editable, installed, symlinked, override, org/project, and unavailable layouts with fail-closed errors."
+      corpus:
+        description: "Temporary POSIX-style filesystem trees, symlinked checkout, environment override, and tier roots."
+        nonzero: true
+        collected_nodes: 11
+      consumers: ["src/doctrine/pack_paths.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Point override at a missing root, remove every candidate root, or omit required org/project root."
+        compliant_control: "Valid editable, installed, symlinked, override, org, and project roots resolve."
+        act_reached: true
+        intended_oracle: "Pack roots resolve across editable, installed, symlinked, override, org/project, and unavailable layouts with fail-closed errors."
+        intended_oracle_failed: true
+        command: "tests/doctrine/test_pack_root_resolver.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/doctrine/test_pack_root_resolver.py"
+      collected_nodes: 11
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-specify-cli-cli-commands-test-doctrine-collect
+      members: ["tests/specify_cli/cli/commands/test_doctrine_collect.py"]
+      granularity: file
+      source_paths: ["tests/specify_cli/cli/commands/test_doctrine_collect.py"]
+      production_paths: ["src/specify_cli/cli/commands/doctrine.py"]
+      oracle: "Doctrine collection emits stable pack/version/health/selection data and records malformed or crashing inputs honestly."
+      contract_claim: "Doctrine collection emits stable pack/version/health/selection data and records malformed or crashing inputs honestly."
+      authority: ["docs/context/doctrine.md", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003"]
+      scanner_kinds: ["ast", "source"]
+      base_source_units: 27
+      base_nodes: 29
+      head_nodes: 15
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: functional
+      authority_evidence:
+        - reference: "docs/context/doctrine.md"
+          result: "Doctrine collection emits stable pack/version/health/selection data and records malformed or crashing inputs honestly."
+      corpus:
+        description: "Temporary manifests, pack trees, provenance, selection files, fake services, and live collector helpers."
+        nonzero: true
+        collected_nodes: 15
+      consumers: ["src/specify_cli/cli/commands/doctrine.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Malformed manifest/selections, unavailable charter module, failed git describe, or health collector crash."
+        compliant_control: "Valid pack manifest, provenance, selections, and health attach to the result."
+        act_reached: true
+        intended_oracle: "Doctrine collection emits stable pack/version/health/selection data and records malformed or crashing inputs honestly."
+        intended_oracle_failed: true
+        command: "tests/specify_cli/cli/commands/test_doctrine_collect.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/specify_cli/cli/commands/test_doctrine_collect.py"
+      collected_nodes: 15
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-specify-cli-test-doctrine-service-factory
+      members: ["tests/specify_cli/test_doctrine_service_factory.py"]
+      granularity: file
+      source_paths: ["tests/specify_cli/test_doctrine_service_factory.py"]
+      production_paths: ["src/specify_cli/doctrine_service.py", "src/charter/activation.py"]
+      oracle: "Runtime factory returns the charter activation wrapper, not a raw doctrine service."
+      contract_claim: "Runtime factory returns the charter activation wrapper, not a raw doctrine service."
+      authority: ["docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"]
+      scanner_kinds: ["ast", "source"]
+      base_source_units: 5
+      base_nodes: 5
+      head_nodes: 1
+      route_memberships: [*full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: functional
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"
+          result: "Runtime factory returns the charter activation wrapper, not a raw doctrine service."
+      corpus:
+        description: "Live factory with temporary repository root."
+        nonzero: true
+        collected_nodes: 1
+      consumers: ["src/specify_cli/doctrine_service.py", "src/charter/activation.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Return the raw DoctrineService and bypass CharterActivationService."
+        compliant_control: "Factory result is a functioning CharterActivationService."
+        act_reached: true
+        intended_oracle: "Runtime factory returns the charter activation wrapper, not a raw doctrine service."
+        intended_oracle_failed: true
+        command: "tests/specify_cli/test_doctrine_service_factory.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/specify_cli/test_doctrine_service_factory.py"
+      collected_nodes: 1
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-built-in-location-authority
+      members: ["tests/architectural/test_built_in_location_authority.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_built_in_location_authority.py"]
+      production_paths: ["src/doctrine/pack_paths.py", "src/charter"]
+      oracle: "Only pack_paths reconstructs the built-in pack root."
+      contract_claim: "Only pack_paths reconstructs the built-in pack root."
+      authority: ["docs/adr/3.x/2026-07-26-2-doctrine-artefact-pack-layout-convention.md"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 7
+      base_nodes: 17
+      head_nodes: 3
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-07-26-2-doctrine-artefact-pack-layout-convention.md"
+          result: "Only pack_paths reconstructs the built-in pack root."
+      corpus:
+        description: "Nonzero live src Python tree plus synthetic direct, indirect, and resolver-call joins."
+        nonzero: true
+        collected_nodes: 3
+      consumers: ["src/doctrine/pack_paths.py", "src/charter"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant direct/variable-indirected built-in path joins outside pack_paths."
+        compliant_control: "Existing pack_paths authority calls and unrelated joins remain allowed."
+        act_reached: true
+        intended_oracle: "Only pack_paths reconstructs the built-in pack root."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_built_in_location_authority.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_built_in_location_authority.py"
+      collected_nodes: 3
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-builtin-override-policy
+      members: ["tests/architectural/test_builtin_override_policy.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_builtin_override_policy.py"]
+      production_paths: ["src/doctrine/drg/override_policy.py", "src/doctrine/drg/merge.py"]
+      oracle: "Org/project overrides of built-in URNs require an explicit replaceable-builtins policy entry."
+      contract_claim: "Org/project overrides of built-in URNs require an explicit replaceable-builtins policy entry."
+      authority: ["docs/adr/3.x/2026-05-16-1-doctrine-layer-merge-semantics.md"]
+      scanner_kinds: ["structural"]
+      base_source_units: 6
+      base_nodes: 6
+      head_nodes: 2
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-05-16-1-doctrine-layer-merge-semantics.md"
+          result: "Org/project overrides of built-in URNs require an explicit replaceable-builtins policy entry."
+      corpus:
+        description: "Live built-in/org/project graph plus a synthetic merged override."
+        nonzero: true
+        collected_nodes: 2
+      consumers: ["src/doctrine/drg/override_policy.py", "src/doctrine/drg/merge.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Override a built-in tactic without a sanctioned policy entry."
+        compliant_control: "Same override passes only when explicitly sanctioned with rationale."
+        act_reached: true
+        intended_oracle: "Org/project overrides of built-in URNs require an explicit replaceable-builtins policy entry."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_builtin_override_policy.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_builtin_override_policy.py"
+      collected_nodes: 2
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-charter-no-specify-cli-import
+      members: ["tests/architectural/test_charter_no_specify_cli_import.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_charter_no_specify_cli_import.py"]
+      production_paths: ["src/charter"]
+      oracle: "Charter never imports the higher runtime package."
+      contract_claim: "Charter never imports the higher runtime package."
+      authority: ["docs/adr/3.x/2026-08-02-1-charter-wheel-assessment.md"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 4
+      base_nodes: 4
+      head_nodes: 3
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-08-02-1-charter-wheel-assessment.md"
+          result: "Charter never imports the higher runtime package."
+      corpus:
+        description: "Nonzero live src/charter Python tree plus injected module/function imports."
+        nonzero: true
+        collected_nodes: 3
+      consumers: ["src/charter"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant an in-function specify_cli import in charter."
+        compliant_control: "Kernel/doctrine imports and other compliant imports remain green."
+        act_reached: true
+        intended_oracle: "Charter never imports the higher runtime package."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_charter_no_specify_cli_import.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_charter_no_specify_cli_import.py"
+      collected_nodes: 3
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-charter-path-literal-authority
+      members: ["tests/architectural/test_charter_path_literal_authority.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_charter_path_literal_authority.py"]
+      production_paths: ["src/charter", "src/specify_cli"]
+      oracle: "Charter bundle path literals remain centralized and exact allowlist sites cannot hide new literals."
+      contract_claim: "Charter bundle path literals remain centralized and exact allowlist sites cannot hide new literals."
+      authority: ["docs/adr/3.x/2026-07-18-1-charter-yaml-authoring-authority-and-extractor-retirement.md"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 26
+      base_nodes: 41
+      head_nodes: 4
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-07-18-1-charter-yaml-authoring-authority-and-extractor-retirement.md"
+          result: "Charter bundle path literals remain centralized and exact allowlist sites cannot hide new literals."
+      corpus:
+        description: "Nonzero live src tree, seeded allowlist, and injected literal constructions."
+        nonzero: true
+        collected_nodes: 4
+      consumers: ["src/charter", "src/specify_cli"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant charter.md/charter.yaml construction or swap an allowlisted YAML site to MD."
+        compliant_control: "Seeded sanctioned sites and unrelated path literals remain green."
+        act_reached: true
+        intended_oracle: "Charter bundle path literals remain centralized and exact allowlist sites cannot hide new literals."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_charter_path_literal_authority.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_charter_path_literal_authority.py"
+      collected_nodes: 4
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-charter-sole-door-agent-profile-repository
+      members: ["tests/architectural/test_charter_sole_door_agent_profile_repository.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_charter_sole_door_agent_profile_repository.py"]
+      production_paths: ["src/charter/profiles.py", "src/doctrine/agent_profiles"]
+      oracle: "Raw agent-profile repositories are constructed only at the charter-owned door."
+      contract_claim: "Raw agent-profile repositories are constructed only at the charter-owned door."
+      authority: ["docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"]
+      scanner_kinds: ["source", "structural"]
+      base_source_units: 18
+      base_nodes: 18
+      head_nodes: 6
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"
+          result: "Raw agent-profile repositories are constructed only at the charter-owned door."
+      corpus:
+        description: "Nonzero live source census plus injected local construction."
+        nonzero: true
+        collected_nodes: 6
+      consumers: ["src/charter/profiles.py", "src/doctrine/agent_profiles"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant function-local AgentProfileRepository construction outside charter."
+        compliant_control: "Unrelated same-named class and sanctioned door remain green."
+        act_reached: true
+        intended_oracle: "Raw agent-profile repositories are constructed only at the charter-owned door."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_charter_sole_door_agent_profile_repository.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_charter_sole_door_agent_profile_repository.py"
+      collected_nodes: 6
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-charter-sole-door-doctrine-service
+      members: ["tests/architectural/test_charter_sole_door_doctrine_service.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_charter_sole_door_doctrine_service.py"]
+      production_paths: ["src/charter/activation.py", "src/specify_cli/doctrine_service.py"]
+      oracle: "Raw DoctrineService instances do not escape and construction stays behind the charter wrapper."
+      contract_claim: "Raw DoctrineService instances do not escape and construction stays behind the charter wrapper."
+      authority: ["docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"]
+      scanner_kinds: ["ast", "source", "structural", "text"]
+      base_source_units: 23
+      base_nodes: 23
+      head_nodes: 8
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"
+          result: "Raw DoctrineService instances do not escape and construction stays behind the charter wrapper."
+      corpus:
+        description: "Nonzero live source census plus injected raw services, wrapper calls, and dropped wraps."
+        nonzero: true
+        collected_nodes: 8
+      consumers: ["src/charter/activation.py", "src/specify_cli/doctrine_service.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant an unwrapped raw service/builder outside charter or drop wrapping at an excluded site."
+        compliant_control: "Wrapper-only construction and sanctioned builders remain green."
+        act_reached: true
+        intended_oracle: "Raw DoctrineService instances do not escape and construction stays behind the charter wrapper."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_charter_sole_door_doctrine_service.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_charter_sole_door_doctrine_service.py"
+      collected_nodes: 8
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-charter-sole-door-hardcoded-paths
+      members: ["tests/architectural/test_charter_sole_door_hardcoded_paths.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_charter_sole_door_hardcoded_paths.py"]
+      production_paths: ["src/doctrine/missions/repository.py", "src/charter"]
+      oracle: "Mission roots come from MissionTemplateRepository rather than reconstructed paths."
+      contract_claim: "Mission roots come from MissionTemplateRepository rather than reconstructed paths."
+      authority: ["docs/adr/3.x/2026-07-14-2-doctrine-to-core-mission-type-resolution-unification.md"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 11
+      base_nodes: 16
+      head_nodes: 3
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-07-14-2-doctrine-to-core-mission-type-resolution-unification.md"
+          result: "Mission roots come from MissionTemplateRepository rather than reconstructed paths."
+      corpus:
+        description: "Nonzero live source tree plus injected tainted and untainted roots."
+        nonzero: true
+        collected_nodes: 3
+      consumers: ["src/doctrine/missions/repository.py", "src/charter"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant a repo-root/missions hardcode outside the repository authority."
+        compliant_control: "Untainted roots and repository-owned resolution remain green."
+        act_reached: true
+        intended_oracle: "Mission roots come from MissionTemplateRepository rather than reconstructed paths."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_charter_sole_door_hardcoded_paths.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_charter_sole_door_hardcoded_paths.py"
+      collected_nodes: 3
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-charter-sole-door-inner-reacharound
+      members: ["tests/architectural/test_charter_sole_door_inner_reacharound.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_charter_sole_door_inner_reacharound.py"]
+      production_paths: ["src/charter", "src/specify_cli"]
+      oracle: "Runtime cannot reach through charter wrappers via _inner attributes."
+      contract_claim: "Runtime cannot reach through charter wrappers via _inner attributes."
+      authority: ["docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 15
+      base_nodes: 15
+      head_nodes: 4
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"
+          result: "Runtime cannot reach through charter wrappers via _inner attributes."
+      corpus:
+        description: "Nonzero live source census plus injected direct/getattr reacharounds."
+        nonzero: true
+        collected_nodes: 4
+      consumers: ["src/charter", "src/specify_cli"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant a function-local _inner or getattr('_inner') access on a tainted wrapper."
+        compliant_control: "Unrelated _inner attributes remain green."
+        act_reached: true
+        intended_oracle: "Runtime cannot reach through charter wrappers via _inner attributes."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_charter_sole_door_inner_reacharound.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_charter_sole_door_inner_reacharound.py"
+      collected_nodes: 4
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-charter-sole-door-resolver-imports
+      members: ["tests/architectural/test_charter_sole_door_resolver_imports.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_charter_sole_door_resolver_imports.py"]
+      production_paths: ["src/charter", "src/doctrine/resolver.py", "src/specify_cli"]
+      oracle: "Direct doctrine resolver imports remain inside owning layers; runtime uses charter facade."
+      contract_claim: "Direct doctrine resolver imports remain inside owning layers; runtime uses charter facade."
+      authority: ["docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 17
+      base_nodes: 17
+      head_nodes: 4
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"
+          result: "Direct doctrine resolver imports remain inside owning layers; runtime uses charter facade."
+      corpus:
+        description: "Nonzero live source census plus injected function import."
+        nonzero: true
+        collected_nodes: 4
+      consumers: ["src/charter", "src/doctrine/resolver.py", "src/specify_cli"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant a direct doctrine.resolver import outside charter/doctrine."
+        compliant_control: "Charter facade import and sanctioned owner imports remain green."
+        act_reached: true
+        intended_oracle: "Direct doctrine resolver imports remain inside owning layers; runtime uses charter facade."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_charter_sole_door_resolver_imports.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_charter_sole_door_resolver_imports.py"
+      collected_nodes: 4
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-doctrine-wheel-closure
+      members: ["tests/architectural/test_doctrine_wheel_closure.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_doctrine_wheel_closure.py"]
+      production_paths: ["src/kernel/pyproject.toml", "src/doctrine/pyproject.toml", "src/doctrine/hatch_build.py"]
+      oracle: "Kernel has zero first-party dependencies; doctrine declares kernel and carries packs via its build hook."
+      contract_claim: "Kernel has zero first-party dependencies; doctrine declares kernel and carries packs via its build hook."
+      authority: ["docs/adr/3.x/2026-08-02-1-charter-wheel-assessment.md"]
+      scanner_kinds: ["source", "structural"]
+      base_source_units: 6
+      base_nodes: 6
+      head_nodes: 3
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-08-02-1-charter-wheel-assessment.md"
+          result: "Kernel has zero first-party dependencies; doctrine declares kernel and carries packs via its build hook."
+      corpus:
+        description: "Live pyproject TOML and doctrine build-hook source."
+        nonzero: true
+        collected_nodes: 3
+      consumers: ["src/kernel/pyproject.toml", "src/doctrine/pyproject.toml", "src/doctrine/hatch_build.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Add an upward kernel dependency, remove doctrine's kernel dependency, or remove the packs build hook."
+        compliant_control: "Current wheel closure and build hook parse and remain green."
+        act_reached: true
+        intended_oracle: "Kernel has zero first-party dependencies; doctrine declares kernel and carries packs via its build hook."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_doctrine_wheel_closure.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_doctrine_wheel_closure.py"
+      collected_nodes: 3
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-glossary-pack-boundary
+      members: ["tests/architectural/test_glossary_pack_boundary.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_glossary_pack_boundary.py"]
+      production_paths: ["src/doctrine/glossary_packs"]
+      oracle: "Doctrine glossary-pack model never imports runtime glossary implementation."
+      contract_claim: "Doctrine glossary-pack model never imports runtime glossary implementation."
+      authority: ["docs/adr/3.x/2026-07-21-1-glossary-first-order-doctrine-artefact.md"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 4
+      base_nodes: 10
+      head_nodes: 9
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-07-21-1-glossary-first-order-doctrine-artefact.md"
+          result: "Doctrine glossary-pack model never imports runtime glossary implementation."
+      corpus:
+        description: "Nonzero live glossary_packs package plus injected import forms."
+        nonzero: true
+        collected_nodes: 9
+      consumers: ["src/doctrine/glossary_packs"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant absolute/relative runtime glossary imports."
+        compliant_control: "Sibling glossary_packs imports and clean modules remain green."
+        act_reached: true
+        intended_oracle: "Doctrine glossary-pack model never imports runtime glossary implementation."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_glossary_pack_boundary.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_glossary_pack_boundary.py"
+      collected_nodes: 9
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-kernel-no-doctrine-import
+      members: ["tests/architectural/test_kernel_no_doctrine_import.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_kernel_no_doctrine_import.py"]
+      production_paths: ["src/kernel"]
+      oracle: "Kernel contains no doctrine/specify_cli code references outside prose."
+      contract_claim: "Kernel contains no doctrine/specify_cli code references outside prose."
+      authority: ["docs/adr/3.x/2026-08-02-1-charter-wheel-assessment.md", "docs/adr/3.x/2026-04-25-1-shared-package-boundary.md"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 6
+      base_nodes: 6
+      head_nodes: 4
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-08-02-1-charter-wheel-assessment.md"
+          result: "Kernel contains no doctrine/specify_cli code references outside prose."
+      corpus:
+        description: "Nonzero live kernel tree plus injected calls, strings, and docstrings."
+        nonzero: true
+        collected_nodes: 4
+      consumers: ["src/kernel"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant a doctrine/specify_cli reference in executable code."
+        compliant_control: "Docstrings/prose and clean code do not trigger."
+        act_reached: true
+        intended_oracle: "Kernel contains no doctrine/specify_cli code references outside prose."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_kernel_no_doctrine_import.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_kernel_no_doctrine_import.py"
+      collected_nodes: 4
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-org-activation-seam
+      members: ["tests/architectural/test_org_activation_seam.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_org_activation_seam.py"]
+      production_paths: ["src/specify_cli/doctrine_service.py", "src/specify_cli/cli/commands/doctrine.py", "src/specify_cli/cli/commands/charter.py"]
+      oracle: "Org-aware runtime surfaces route through activation instead of splicing raw org directories."
+      contract_claim: "Org-aware runtime surfaces route through activation instead of splicing raw org directories."
+      authority: ["docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 8
+      base_nodes: 12
+      head_nodes: 8
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"
+          result: "Org-aware runtime surfaces route through activation instead of splicing raw org directories."
+      corpus:
+        description: "Three live org-honouring surfaces plus injected raw/compliant snippets."
+        nonzero: true
+        collected_nodes: 8
+      consumers: ["src/specify_cli/doctrine_service.py", "src/specify_cli/cli/commands/doctrine.py", "src/specify_cli/cli/commands/charter.py"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant raw org-directory construction in an org-aware surface."
+        compliant_control: "Equivalent activation-seam routing remains green."
+        act_reached: true
+        intended_oracle: "Org-aware runtime surfaces route through activation instead of splicing raw org directories."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_org_activation_seam.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_org_activation_seam.py"
+      collected_nodes: 8
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-runtime-charter-doctrine-boundary
+      members: ["tests/architectural/test_runtime_charter_doctrine_boundary.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_runtime_charter_doctrine_boundary.py"]
+      production_paths: ["src/specify_cli", "src/charter"]
+      oracle: "Runtime imports doctrine only through charter, excluding the intentional pack-management package."
+      contract_claim: "Runtime imports doctrine only through charter, excluding the intentional pack-management package."
+      authority: ["docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"]
+      scanner_kinds: ["ast", "source", "structural"]
+      base_source_units: 1
+      base_nodes: 1
+      head_nodes: 2
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-07-15-1-doctrine-offers-charter-activates-runtime-consumes.md"
+          result: "Runtime imports doctrine only through charter, excluding the intentional pack-management package."
+      corpus:
+        description: "Nonzero live src/specify_cli tree plus injected direct/charter imports."
+        nonzero: true
+        collected_nodes: 2
+      consumers: ["src/specify_cli", "src/charter"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant a module-level doctrine resolver import in runtime."
+        compliant_control: "Equivalent charter facade import remains green."
+        act_reached: true
+        intended_oracle: "Runtime imports doctrine only through charter, excluding the intentional pack-management package."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_runtime_charter_doctrine_boundary.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_runtime_charter_doctrine_boundary.py"
+      collected_nodes: 2
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
+
+  - candidate:
+      id: WP13-architectural-test-single-mission-surface-resolver
+      members: ["tests/architectural/test_single_mission_surface_resolver.py"]
+      granularity: file
+      source_paths: ["tests/architectural/test_single_mission_surface_resolver.py"]
+      production_paths: ["src/specify_cli/core/mission_resolver.py", "src/specify_cli"]
+      oracle: "Mission reads resolve through one seam; raw joins/direct selections are zero and resolver fails closed."
+      contract_claim: "Mission reads resolve through one seam; raw joins/direct selections are zero and resolver fails closed."
+      authority: ["docs/adr/3.x/2026-06-22-1-mission-topology-ssot.md", "docs/adr/3.x/2026-07-08-1-mission-resolver-port.md"]
+      scanner_kinds: ["source", "structural"]
+      base_source_units: 24
+      base_nodes: 24
+      head_nodes: 8
+      route_memberships: [*architectural_route, *full_parallel_route]
+      platforms: [linux, macOS, windows]
+      observations:
+        - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+          collection_state: collected
+          outcome: passed
+          skip_reason: null
+          artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-06-22-1-mission-topology-ssot.md"
+          result: "Mission reads resolve through one seam; raw joins/direct selections are zero and resolver fails closed."
+      corpus:
+        description: "Nonzero live runtime source audit plus injected raw joins/direct calls and empty resolver result."
+        nonzero: true
+        collected_nodes: 8
+      consumers: ["src/specify_cli/core/mission_resolver.py", "src/specify_cli"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Plant unsanctioned KITTY_SPECS_DIR/raw_handle join, direct selection, or empty non-fail-closed resolution."
+        compliant_control: "Current seam-routed source and post-mutation restoration remain green."
+        act_reached: true
+        intended_oracle: "Mission reads resolve through one seam; raw joins/direct selections are zero and resolver fails closed."
+        intended_oracle_failed: true
+        command: "tests/architectural/test_single_mission_surface_resolver.py retained family; focused WP13 run and embedded fault/control probe"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
+    state: terminal
+    action: "Keep only the live boundary/behavior and its prohibited-change plus compliant-control proof; delete positive shape, history, prose, and advisory assertions."
+    survivor:
+      path: "tests/architectural/test_single_mission_surface_resolver.py"
+      collected_nodes: 8
+    issue: null
+    owner: null
+    expires: null
+    hic_approval: null
+    review: *review
