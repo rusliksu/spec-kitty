@@ -1,7 +1,7 @@
 {
-  "event_count": 56,
-  "last_event_id": "01KZNKWV8T7G88VYPHGJ6B2M8W",
-  "materialized_at": "2026-08-10T10:36:04.731440+00:00",
+  "event_count": 66,
+  "last_event_id": "01KZNQ0RKYNF0EGBQZB6TERAP5",
+  "materialized_at": "2026-08-10T11:30:38.846838+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -62,26 +62,36 @@
     },
     "WP02": {
       "actor": "codex",
-      "agent": "codex",
+      "agent": "",
       "agent_profile": "python-pedro",
       "agent_profile_version": "1.0",
       "force_count": 0,
       "lane": "in_progress",
-      "last_event_id": "01KZNGZ7ZFZCM5S7WJWMSW92YQ",
-      "last_transition_at": "2026-08-10T09:44:57.557105+00:00",
+      "last_event_id": "01KZNMKQRWRFQH0SAKBRPCSDGP",
+      "last_transition_at": "2026-08-10T10:48:34.815784+00:00",
       "model": "__resolved_model_absent__",
+      "notes": [
+        "Ready for review: recoverable cross-platform lease, bounded cached scanner, exact replay and matched evidence"
+      ],
       "provider": "__resolved_provider_absent__",
+      "review": null,
+      "review_result": {
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP02-test-venv-bootstrap/review-cycle-1.md",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP02-test-venv-bootstrap/review-cycle-1.md",
+        "reviewer": "user",
+        "verdict": "changes_requested"
+      },
       "role": "implementer",
-      "shell_pid": 28365,
+      "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T007": "done",
-        "T008": "done",
-        "T009": "done",
-        "T010": "done",
-        "T011": "done",
-        "T012": "done",
-        "T050": "done"
+        "T007": "planned",
+        "T008": "planned",
+        "T009": "planned",
+        "T010": "planned",
+        "T011": "planned",
+        "T012": "planned",
+        "T050": "planned"
       },
       "tracker_refs": [
         "#3283",
@@ -113,28 +123,35 @@
     },
     "WP04": {
       "actor": "codex",
-      "agent": "codex",
-      "agent_profile": "reviewer-renata",
+      "agent": "",
+      "agent_profile": "implementer-ivan",
       "agent_profile_version": "1.0",
-      "force_count": 0,
-      "lane": "in_review",
-      "last_event_id": "01KZNKBPGBR64KCJT4RAMC3FD2",
-      "last_transition_at": "2026-08-10T10:26:42.827366+00:00",
+      "force_count": 1,
+      "lane": "in_progress",
+      "last_event_id": "01KZNMAFXK0HQVP794B2BCJNKX",
+      "last_transition_at": "2026-08-10T10:43:31.862368+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "Ready for review: consolidated 82 exact duplicate groups; removed 104 collected nodes; retained unique import, platform, and causal seams. Gate override rationale: workflow scoped run times out without JUnit exactly as WP04 baseline records; independent 727-node affected cohort is green (725 passed, 2 skipped), validator/ruff/5 fault sentinels green."
       ],
       "provider": "__resolved_provider_absent__",
-      "role": "reviewer",
-      "shell_pid": 28365,
+      "review": null,
+      "review_result": {
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP04-duplicate-consolidation/review-cycle-1.md",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP04-duplicate-consolidation/review-cycle-1.md",
+        "reviewer": "user",
+        "verdict": "changes_requested"
+      },
+      "role": "implementer",
+      "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T020": "done",
-        "T021": "done",
-        "T022": "done",
-        "T023": "done",
-        "T024": "done",
-        "T025": "done"
+        "T020": "planned",
+        "T021": "planned",
+        "T022": "planned",
+        "T023": "planned",
+        "T024": "planned",
+        "T025": "planned"
       },
       "tracker_refs": [
         "#1931"
@@ -142,16 +159,17 @@
     },
     "WP05": {
       "actor": "codex",
-      "agent": "",
-      "agent_profile": "architect-alphonso",
+      "agent": "codex",
+      "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "in_progress",
-      "last_event_id": "01KZNKWV8T7G88VYPHGJ6B2M8W",
-      "last_transition_at": "2026-08-10T10:36:04.731440+00:00",
+      "lane": "in_review",
+      "last_event_id": "01KZNQ0RKYNF0EGBQZB6TERAP5",
+      "last_transition_at": "2026-08-10T11:30:38.846838+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
-        "Retired 54 spent structural nodes; all 28 retained scanner files green; disposition audit valid."
+        "Retired 54 spent structural nodes; all 28 retained scanner files green; disposition audit valid.",
+        "Cycle-2 review ready. Pre-review wrapper timed out at its fixed 300s; identical retained cohort passed 307/307 in 297.93s (raw sha256 fb0077aaf7ea80ed34d3e824dc802e523dbca694900939de5ca2b4803bb649dc). Exact-name scaffold retired; 27 node-level survivor proofs; 8 executed two-sided probes."
       ],
       "provider": "__resolved_provider_absent__",
       "review": null,
@@ -161,16 +179,16 @@
         "reviewer": "reviewer-renata",
         "verdict": "changes_requested"
       },
-      "role": "implementer",
-      "shell_pid": 0,
+      "role": "reviewer",
+      "shell_pid": 28365,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T026": "planned",
-        "T027": "planned",
-        "T028": "planned",
-        "T029": "planned",
-        "T030": "planned",
-        "T031": "planned"
+        "T026": "done",
+        "T027": "done",
+        "T028": "done",
+        "T029": "done",
+        "T030": "done",
+        "T031": "done"
       },
       "tracker_refs": [
         "#1931"
