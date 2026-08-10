@@ -12,6 +12,8 @@ wp_id: WP13
 
 # WP13 integration review — final cycle 3
 
-Functional implementation and cycle-2 approval remain accepted. Integrated WP08 preflight found a finite evidence-schema blocker: `dispositions/WP13.yaml` uses path-level `KEEP_REDUCED` rows and `granularity: file`, so the canonical WP01 `test-sanitation/v1` auditor rejects the shard and cannot prove exact candidate membership.
+APPROVED. No fourth review cycle is permitted.
 
-Cycle 3 is evidence-only: normalize all WP13 terminal identities to the canonical schema, preserve the exact 526→133 test result and restored authority gates, rerun the auditor/focused gates, and make no production or test changes. No fourth review cycle is permitted; root will arbitrate after this cycle.
+Commit `ca0a747c9` changes only WP13's YAML/JSON evidence. The canonical auditor reports zero errors across 42 terminal function-granularity rows, 409 exact source identities, all 526 base nodes, and 133 HEAD nodes. The shard contains only `KEEP`/`DELETE`, with no `KEEP_REDUCED`, file granularity, or path-only membership. Combined WP13+WP15 validation has 510 unique identities and zero overlap.
+
+Independent collection found 133 nodes; the fresh focused run passed 133/133 with zero skips in 74.06 seconds. The accepted cycle-2 functional result and exact 526→133 reduction are unchanged.
