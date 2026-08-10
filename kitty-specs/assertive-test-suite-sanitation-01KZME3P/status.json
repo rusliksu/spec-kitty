@@ -46,12 +46,12 @@
       "shell_pid": 28365,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T001": "planned",
-        "T002": "planned",
-        "T003": "planned",
-        "T004": "planned",
-        "T005": "planned",
-        "T006": "planned"
+        "T001": "done",
+        "T002": "done",
+        "T003": "done",
+        "T004": "done",
+        "T005": "done",
+        "T006": "done"
       },
       "tracker_refs": [
         "#1931",
