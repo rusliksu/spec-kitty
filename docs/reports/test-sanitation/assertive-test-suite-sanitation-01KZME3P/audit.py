@@ -25,8 +25,12 @@ import os
 from pathlib import Path
 import platform
 import re
+import shlex
+import subprocess
 import sys
 import tempfile
+import time
+from types import SimpleNamespace
 from typing import Any, TypeVar, cast
 
 import pytest
@@ -34,6 +38,17 @@ import yaml
 
 SCHEMA = "test-sanitation/v1"
 TARGET_INVENTORY_SHA = "28ae75ea998c898aba57364db7a06d2088bd2af2"
+SIBLING_E2E_SHA = "e278ad76552b954f9c7f4ea1e7a364978678b3ca"
+FROZEN_ROUTE_AUTHORITY_HASHES = {
+    "full-collection": "312a09b4b9a5ff1522fe89505480e8685ef1bbe48b8cc1b890b93b547d495d76",
+    "full-parallel": "ede8cca1c22d153a1fbc0d0b89d765fda8bf3eef457dcd250ab63eda457f4bc0",
+    "orphan-sweep": "51bc3f1de75f7a703cf2ba1191a87f489b262179c3dee88b3e3fa7de145a3022",
+    "regression": "f0cd6b5a22bb6a19d583f2bdb02cc0d5adb82f0ec6a267b58b7eb0ea8e3f6eaf",
+    "quarantine": "5e2f1c413848f5a65723ae6e2cb72e0e9412a7d536613e0425406330c2e5dcf2",
+    "contract": "bd7d2a3bc9b4586c4f36cbfb72a95c1775f37b953b2955ac9bcf6371d25bdf5b",
+    "architectural": "8f4bf7d0f12e095ded2a8c044f5f4d8abcde84e18661c25816f5aa5c73a62de0",
+    "sibling-e2e": "d0185c8ffc5775bd68db1611de83d513ce45fcf8f537103ca4d570f41a3e41c6",
+}
 VERDICTS = {"KEEP", "CONSOLIDATE", "FIX_TEST", "FIX_PRODUCT", "DELETE", "TEMPORARY"}
 PROFILES = {
     "inert", "duplicate", "structural", "contract", "slow", "flake",
@@ -314,6 +329,238 @@ class CollectionPlugin:
         self.internal_errors.append(str(_stable(str(excrepr))))
 
 
+def _normalize_nodeid(nodeid: str) -> str:
+    return cast(str, _stable(nodeid.replace("\\", "/")))
+
+
+def _atomic_write_bytes(path: Path, value: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.", delete=False) as handle:
+            temporary_path = Path(handle.name)
+            handle.write(value)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, path)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+
+
+class OutcomePlugin:
+    """Controller-side exact node/phase capture for a measured pytest run."""
+
+    def __init__(self) -> None:
+        self.worker_collections: dict[str, list[str]] = {}
+        self.reports: list[dict[str, Any]] = []
+        self.internal_errors: list[str] = []
+
+    def pytest_xdist_node_collection_finished(self, node: Any, ids: list[str]) -> None:
+        self.worker_collections[str(node.gateway.id)] = [
+            _normalize_nodeid(item) for item in ids
+        ]
+
+    def pytest_runtest_logreport(self, report: pytest.TestReport) -> None:
+        worker_id = getattr(report, "worker_id", "controller")
+        longrepr = "" if report.longrepr is None else str(report.longrepr)
+        self.reports.append({
+            "nodeid": _normalize_nodeid(report.nodeid),
+            "phase": report.when,
+            "outcome": report.outcome,
+            "duration": report.duration,
+            "wasxfail": getattr(report, "wasxfail", None),
+            "worker_id": str(worker_id),
+            "longrepr": longrepr,
+        })
+
+    def pytest_internalerror(self, excrepr: object, excinfo: object) -> None:
+        del excinfo
+        self.internal_errors.append(str(excrepr))
+
+
+def _census_nodeids(census: Mapping[str, Any]) -> tuple[list[str], dict[str, str]]:
+    collection = cast(Mapping[str, Any], census["collection"])
+    tables = cast(Mapping[str, Any], collection["tables"])
+    paths = cast(list[str], tables["paths"])
+    nodes = cast(list[list[Any]], collection["nodes"])
+    nodeids = [cast(str, row[0]) for row in nodes]
+    node_paths = {cast(str, row[0]): paths[cast(int, row[1])] for row in nodes}
+    return nodeids, node_paths
+
+
+def capture_outcomes(  # noqa: C901 - capture fails closed at each phase boundary
+    root: Path, census_path: Path, workload_path: Path, route_id: str, raw_output: Path,
+) -> dict[str, Any]:
+    """Execute one frozen route and reconcile exact phase reports to the census."""
+    census = cast(dict[str, Any], json.loads(census_path.read_text(encoding="utf-8")))
+    workload = cast(dict[str, Any], yaml.safe_load(workload_path.read_text(encoding="utf-8")))
+    routes = cast(list[dict[str, Any]], workload["frozen_workload_dag"]["routes"])
+    route = next((item for item in routes if item.get("id") == route_id), None)
+    if route is None:
+        raise AuditError(f"capture: unknown frozen route {route_id}")
+    nodeids, node_paths = _census_nodeids(census)
+    memberships = route.get("memberships", [])
+    selector = cast(
+        dict[str, Any],
+        memberships[0].get("selector", {})
+        if isinstance(memberships, list) and memberships and isinstance(memberships[0], dict)
+        else {},
+    )
+    ignores = set(cast(list[str], selector.get("ignores", [])))
+    if not ignores:
+        ignores = {
+            arg.split("=", 1)[1] for arg in cast(list[str], route["argv"])
+            if arg.startswith("--ignore=")
+        }
+    excluded = sorted(nodeid for nodeid in nodeids if node_paths[nodeid] in ignores)
+    expected = sorted(set(nodeids) - set(excluded))
+    if len(nodeids) != len(set(nodeids)):
+        raise AuditError("capture: census contains duplicate nodeids")
+
+    plugin = OutcomePlugin()
+    pytest_argv = cast(list[str], route["argv"])[1:]
+    started = dt.datetime.now(dt.UTC)
+    started_monotonic = time.monotonic()
+    old_cwd = Path.cwd()
+    old_env = {key: os.environ.get(key) for key in cast(dict[str, str], route["env"])}
+    try:
+        os.chdir(root / cast(str, route["cwd"]))
+        os.environ.update(cast(dict[str, str], route["env"]))
+        exit_code = int(pytest.main(pytest_argv, plugins=[plugin]))
+    finally:
+        os.chdir(old_cwd)
+        for key, prior in old_env.items():
+            if prior is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = prior
+    ended = dt.datetime.now(dt.UTC)
+    wall_seconds = time.monotonic() - started_monotonic
+
+    if plugin.internal_errors:
+        raise AuditError(f"capture: pytest internal errors: {plugin.internal_errors[:3]}")
+    if not plugin.worker_collections:
+        raise AuditError("capture: xdist produced no worker collection inventories")
+    expected_set = set(expected)
+    first_worker_collection = next(iter(plugin.worker_collections.values()))
+    for worker_id, collected in sorted(plugin.worker_collections.items()):
+        if (
+            len(collected) != len(set(collected))
+            or set(collected) != expected_set
+            or collected != first_worker_collection
+        ):
+            raise AuditError(
+                f"capture: worker {worker_id} collection mismatch "
+                f"count={len(collected)} expected={len(expected)}"
+            )
+
+    report_rows = sorted(
+        plugin.reports,
+        key=lambda row: (str(row["nodeid"]), str(row["phase"]), str(row["worker_id"])),
+    )
+    unknown_reports = sorted({str(row["nodeid"]) for row in report_rows} - expected_set)
+    if unknown_reports:
+        raise AuditError(f"capture: reports contain unknown nodeids: {unknown_reports[:5]}")
+    raw = {
+        "schema_version": SCHEMA,
+        "route_id": route_id,
+        "started_at": started.isoformat().replace("+00:00", "Z"),
+        "ended_at": ended.isoformat().replace("+00:00", "Z"),
+        "exit_code": exit_code,
+        "worker_collections": {
+            worker: {"count": len(items), "ordered_nodeids_sha256": _sha(_json_bytes(items))}
+            for worker, items in sorted(plugin.worker_collections.items())
+        },
+        "reports": report_rows,
+        "internal_errors": plugin.internal_errors,
+    }
+    raw_bytes = _json_bytes(raw)
+
+    reports_by_node: dict[str, list[dict[str, Any]]] = {}
+    for row in report_rows:
+        reports_by_node.setdefault(cast(str, row["nodeid"]), []).append(row)
+    outcomes: dict[str, list[str]] = {
+        name: [] for name in ("failed", "error", "skipped", "xfailed", "xpassed", "not_run")
+    }
+    details: list[dict[str, Any]] = []
+    phase_errors: list[dict[str, Any]] = []
+    for nodeid in expected:
+        reports = reports_by_node.get(nodeid, [])
+        if not reports:
+            raise AuditError(f"capture: eligible node has no phase report: {nodeid}")
+        by_phase = {cast(str, row["phase"]): row for row in reports}
+        if len(by_phase) != len(reports):
+            raise AuditError(f"capture: duplicate phase report for {nodeid}")
+        call = by_phase.get("call")
+        setup = by_phase.get("setup")
+        primary = call or setup
+        if primary is None:
+            raise AuditError(f"capture: node has no setup/call attribution: {nodeid}")
+        wasxfail = primary.get("wasxfail")
+        if call is not None:
+            if call["outcome"] == "failed":
+                outcome = "failed"
+            elif call["outcome"] == "skipped":
+                outcome = "xfailed" if wasxfail else "skipped"
+            elif call["outcome"] == "passed":
+                outcome = "xpassed" if wasxfail else "passed"
+            else:
+                raise AuditError(f"capture: unknown call outcome for {nodeid}")
+        elif setup is not None and setup["outcome"] == "failed":
+            outcome = "error"
+        elif setup is not None and setup["outcome"] == "skipped":
+            outcome = "xfailed" if wasxfail else "skipped"
+        else:
+            raise AuditError(f"capture: no terminal outcome for {nodeid}")
+        if outcome != "passed":
+            outcomes[outcome].append(nodeid)
+            details.append({
+                "nodeid": nodeid, "outcome": outcome, "phase": cast(str, primary["phase"]),
+                "longrepr_sha256": _sha(cast(str, primary["longrepr"])),
+            })
+        for report in reports:
+            if report["phase"] in {"setup", "teardown"} and report["outcome"] == "failed":
+                phase_errors.append({
+                    "nodeid": nodeid, "phase": report["phase"],
+                    "longrepr_sha256": _sha(cast(str, report["longrepr"])),
+                })
+    outcomes["not_run"] = excluded
+    details.extend({
+        "nodeid": nodeid, "outcome": "not_run", "phase": "route_excluded",
+        "reason": f"frozen selector ignore: {node_paths[nodeid]}",
+    } for nodeid in excluded)
+    non_pass = sum(len(items) for items in outcomes.values())
+    counts = {name: len(items) for name, items in outcomes.items()}
+    counts["passed"] = len(nodeids) - non_pass
+    result: dict[str, Any] = {
+        "schema_version": SCHEMA,
+        "base_execution": {
+            "inventory_commit": census["inventory"]["commit"],
+            "census_sha256": _sha(census_path.read_bytes()),
+            "ordered_nodeids_sha256": _sha(_json_bytes(nodeids)),
+            "collected_node_count": len(nodeids),
+            "route_id": route_id,
+            "workload_argv": route["argv"],
+            "cwd": route["cwd"],
+            "env": route["env"],
+            "environment_id": route["environment_id"],
+            "harness_patch_hash": None,
+            "started_at": raw["started_at"], "ended_at": raw["ended_at"],
+            "wall_seconds": wall_seconds, "exit_code": exit_code,
+            "raw_result_path": raw_output.as_posix(),
+            "raw_result_sha256": _sha(raw_bytes),
+            "default_outcome": "passed", "outcome_overrides": outcomes,
+            "outcome_details": sorted(details, key=lambda row: str(row["nodeid"])),
+            "phase_errors": sorted(phase_errors, key=lambda row: (str(row["nodeid"]), str(row["phase"]))),
+            "counts": counts,
+        },
+    }
+    result["content_sha256"] = _sha(_json_bytes(result))
+    _atomic_write_bytes(raw_output, raw_bytes)
+    return cast(dict[str, Any], _stable(result))
+
+
 def collect_pytest(root: Path, tests_root: Path, extra_args: Sequence[str]) -> dict[str, Any]:
     plugin = CollectionPlugin(root, tests_root)
     argv = [str(tests_root), "--collect-only", "-q", "-p", "no:cacheprovider", *extra_args]
@@ -335,16 +582,6 @@ def collect_pytest(root: Path, tests_root: Path, extra_args: Sequence[str]) -> d
         "internal_errors": sorted(set(plugin.internal_errors)),
         "ignored_paths": sorted(plugin.ignored),
     }))
-
-
-def _source_matches(unit: SourceUnit, node: Mapping[str, Any]) -> bool:
-    if unit.path != node["path"]:
-        return False
-    node_parts = str(node["nodeid"]).split("::")[1:]
-    if node_parts:
-        node_parts[-1] = node_parts[-1].split("[")[0]
-    unit_parts = unit.qualname.split(".")
-    return node_parts[-len(unit_parts):] == unit_parts
 
 
 def load_owners(root: Path) -> dict[str, str]:
@@ -641,6 +878,159 @@ def validate_environment(env: Mapping[str, Any], where: str, errors: list[str]) 
         errors.append(f"{where}: id is not SHA-256 of normalized environment fields")
 
 
+def _canonical_set_list(value: Any) -> bool:
+    return _str_list(value) and value == sorted(set(value))
+
+
+def _route_projection(route: Mapping[str, Any]) -> dict[str, Any]:
+    fields = (
+        "id", "memberships", "argv", "cwd", "env", "environment_id",
+        "base_mapping", "head_mapping", "wrapper",
+    )
+    return {field: route[field] for field in fields if field in route}
+
+
+def _selector_from_argv(argv: Sequence[str], environment_id: str) -> dict[str, Any]:
+    try:
+        pytest_index = argv.index("pytest")
+    except ValueError:
+        pytest_index = 0
+    args = list(argv[pytest_index + 1:])
+    paths: list[str] = []
+    markers: list[str] = []
+    ignores: list[str] = []
+    consumes_value = {"-m", "-p", "-k", "--tb", "--dist", "-n", "--durations"}
+    index = 0
+    while index < len(args):
+        arg = args[index]
+        if arg == "-m" and index + 1 < len(args):
+            markers.append(args[index + 1])
+            index += 2
+            continue
+        if arg == "--ignore" and index + 1 < len(args):
+            ignores.append(args[index + 1])
+            index += 2
+            continue
+        if arg.startswith("--ignore="):
+            ignores.append(arg.split("=", 1)[1])
+            index += 1
+            continue
+        if arg in consumes_value:
+            index += 2
+            continue
+        if arg.startswith("-"):
+            index += 1
+            continue
+        paths.append(arg)
+        index += 1
+    return {
+        "paths": sorted(set(paths)), "markers": sorted(set(markers)),
+        "ignores": sorted(set(ignores)), "environment_id": environment_id,
+    }
+
+
+def _git_blob(commit: str, path: str) -> bytes:
+    completed = subprocess.run(
+        ["git", "show", f"{commit}:{path}"], check=False, capture_output=True,
+    )
+    if completed.returncode != 0:
+        raise AuditError(f"cannot read tracked authority {commit}:{path}")
+    return completed.stdout
+
+
+def _tracked_ci_step(
+    provenance: Mapping[str, Any], where: str, errors: list[str],
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]] | None:
+    fields = (
+        "kind", "source_commit", "source_path", "source_sha256", "job_id",
+        "step_name", "step_sha256", "authority_sha256",
+    )
+    _keys(provenance, fields, where, errors)
+    if provenance.get("source_commit") != TARGET_INVENTORY_SHA:
+        errors.append(f"{where}: CI source_commit must equal immutable inventory SHA")
+    source_path = provenance.get("source_path")
+    if source_path != ".github/workflows/ci-quality.yml":
+        errors.append(f"{where}: unexpected tracked workflow source_path")
+        return None
+    try:
+        source = _git_blob(TARGET_INVENTORY_SHA, cast(str, source_path))
+    except AuditError as exc:
+        errors.append(f"{where}: {exc}")
+        return None
+    if provenance.get("source_sha256") != _sha(source):
+        errors.append(f"{where}: tracked workflow source_sha256 mismatch")
+    try:
+        document = yaml.safe_load(source)
+        job = cast(dict[str, Any], document["jobs"][provenance["job_id"]])
+        steps = [step for step in job["steps"] if step.get("name") == provenance["step_name"]]
+    except (KeyError, TypeError):
+        errors.append(f"{where}: tracked job/step locator not found")
+        return None
+    if len(steps) != 1:
+        errors.append(f"{where}: tracked step locator must be unique")
+        return None
+    step = cast(dict[str, Any], steps[0])
+    if provenance.get("step_sha256") != _sha(_json_bytes(step)):
+        errors.append(f"{where}: tracked step_sha256 mismatch")
+    return cast(dict[str, Any], document), job, step
+
+
+def _validate_ci_provenance(
+    route: Mapping[str, Any], provenance: Mapping[str, Any], where: str, errors: list[str],
+) -> None:
+    authority = _tracked_ci_step(provenance, where, errors)
+    if authority is None:
+        return
+    document, job, step = authority
+    argv = cast(list[str], route.get("argv", []))
+    run_lines = [
+        shlex.split(line.strip()) for line in str(step.get("run", "")).splitlines()
+        if line.strip() and not line.strip().startswith(("#", "if ", "echo ", "set ", "fi", "exit "))
+    ]
+    if sum(tokens == argv for tokens in run_lines) != 1:
+        errors.append(f"{where}: route argv is not the unique tracked pytest command")
+    workflow_env = document.get("env", {}) if isinstance(document, dict) else {}
+    job_env = job.get("env", {})
+    step_env = step.get("env", {})
+    expected_env = {
+        str(key): str(value) for mapping in (workflow_env, job_env, step_env)
+        if isinstance(mapping, dict) for key, value in mapping.items()
+    }
+    if route.get("env") != expected_env:
+        errors.append(f"{where}: route env does not match tracked workflow/job/step env")
+    workflow_defaults = document.get("defaults", {}) if isinstance(document, dict) else {}
+    job_defaults = job.get("defaults", {})
+    expected_cwd = step.get("working-directory")
+    for defaults in (job_defaults, workflow_defaults):
+        if expected_cwd is None and isinstance(defaults, dict):
+            run_defaults = defaults.get("run", {})
+            if isinstance(run_defaults, dict):
+                expected_cwd = run_defaults.get("working-directory")
+    if route.get("cwd") != (expected_cwd or "."):
+        errors.append(f"{where}: route cwd does not match tracked workflow step")
+    job_if = str(job.get("if", ""))
+    event_map = {
+        "pull_request": "PR", "workflow_dispatch": "manual",
+        "push": "push", "schedule": "schedule",
+    }
+    expected_events = sorted(value for key, value in event_map.items() if f"'{key}'" in job_if)
+    quality_needs = cast(list[str], document["jobs"]["quality-gate"]["needs"])
+    expected_required = provenance.get("job_id") in quality_needs
+    memberships = route.get("memberships", [])
+    if isinstance(memberships, list):
+        for index, membership in enumerate(memberships):
+            if not isinstance(membership, dict):
+                continue
+            if membership.get("events") != expected_events:
+                errors.append(f"{where}: memberships[{index}] events do not match tracked job triggers")
+            if membership.get("required") is not expected_required:
+                errors.append(f"{where}: memberships[{index}] required does not match quality-gate.needs")
+            if membership.get("selector") != _selector_from_argv(argv, cast(str, route.get("environment_id", ""))):
+                errors.append(f"{where}: memberships[{index}] selector does not match tracked argv")
+    if expected_required and step.get("continue-on-error") is True:
+        errors.append(f"{where}: required tracked step cannot continue-on-error")
+
+
 def validate_route(
     route: Mapping[str, Any], where: str, errors: list[str],
     route_authority: Mapping[str, Mapping[str, Any]],
@@ -668,6 +1058,11 @@ def validate_route(
         errors.append(f"{where}.selector: environment_id must be nonempty string")
     elif authority is not None and selector_environment != authority.get("environment_id"):
         errors.append(f"{where}.selector: environment_id does not match frozen route")
+    if authority is not None:
+        frozen_memberships = authority.get("memberships")
+        visible = {field: route.get(field) for field in ("role", "required", "events", "selector")}
+        if not isinstance(frozen_memberships, list) or visible not in frozen_memberships:
+            errors.append(f"{where}: membership fields do not match frozen route authority")
 
 
 def _validate_result_field(row: Mapping[str, Any], where: str, errors: list[str]) -> None:
@@ -741,7 +1136,14 @@ def validate_workload(dag: Mapping[str, Any], where: str, errors: list[str], env
             errors.append(f"{where}.routes[{index}]: mapping required")
             continue
         route_where = f"{where}.routes[{index}]"
-        _keys(route, ("id", "argv", "environment_id", "base_mapping", "head_mapping", "cwd", "env"), route_where, errors)
+        _keys(
+            route,
+            (
+                "id", "memberships", "argv", "environment_id", "base_mapping",
+                "head_mapping", "cwd", "env", "provenance",
+            ),
+            route_where, errors,
+        )
         route_id = route.get("id")
         if not _nonempty_string(route_id):
             errors.append(f"{route_where}: id must be nonempty string")
@@ -766,6 +1168,69 @@ def validate_workload(dag: Mapping[str, Any], where: str, errors: list[str], env
             route_environments[route_id_string] = route_environment
         if not _nonempty_string(route.get("base_mapping")) or not _nonempty_string(route.get("head_mapping")):
             errors.append(f"{route_where}: base/head mappings must be nonempty strings")
+        memberships = route.get("memberships")
+        if not isinstance(memberships, list) or not memberships:
+            errors.append(f"{route_where}: nonempty memberships list required")
+        else:
+            seen_memberships: set[str] = set()
+            for membership_index, membership in enumerate(memberships):
+                membership_where = f"{route_where}.memberships[{membership_index}]"
+                if not isinstance(membership, dict):
+                    errors.append(f"{membership_where}: mapping required")
+                    continue
+                _keys(membership, ("role", "required", "events", "selector"), membership_where, errors)
+                if not _enum_string(membership.get("role"), ROUTE_ROLES):
+                    errors.append(f"{membership_where}: invalid route role")
+                if not isinstance(membership.get("required"), bool):
+                    errors.append(f"{membership_where}: required must be boolean")
+                if not _canonical_set_list(membership.get("events")):
+                    errors.append(f"{membership_where}: events must be canonical unique sorted strings")
+                member_selector = membership.get("selector")
+                if not isinstance(member_selector, dict):
+                    errors.append(f"{membership_where}: selector mapping required")
+                else:
+                    _keys(member_selector, ("paths", "markers", "ignores", "environment_id"), membership_where, errors)
+                    if any(not _canonical_set_list(member_selector.get(field)) for field in ("paths", "markers", "ignores")):
+                        errors.append(f"{membership_where}: selector lists must be canonical unique sorted strings")
+                    if member_selector.get("environment_id") != route_environment:
+                        errors.append(f"{membership_where}: selector environment_id does not match route")
+                fingerprint = repr(_stable(membership))
+                if fingerprint in seen_memberships:
+                    errors.append(f"{membership_where}: duplicate frozen membership")
+                seen_memberships.add(fingerprint)
+        provenance = route.get("provenance")
+        if not isinstance(provenance, dict):
+            errors.append(f"{route_where}: provenance mapping required")
+        else:
+            _keys(provenance, ("kind", "source_commit", "authority_sha256"), f"{route_where}.provenance", errors)
+            expected_authority = _sha(_json_bytes(_route_projection(route)))
+            if provenance.get("authority_sha256") != expected_authority:
+                errors.append(f"{route_where}.provenance: authority_sha256 does not bind complete route")
+            pinned_authority = FROZEN_ROUTE_AUTHORITY_HASHES.get(route_id_string)
+            if pinned_authority is not None and provenance.get("authority_sha256") != pinned_authority:
+                errors.append(f"{route_where}.provenance: authority_sha256 does not match pinned frozen route")
+            if provenance.get("kind") == "tracked_ci":
+                _validate_ci_provenance(route, provenance, f"{route_where}.provenance", errors)
+            elif provenance.get("kind") == "frozen_command":
+                repository = provenance.get("repository")
+                expected_commit = TARGET_INVENTORY_SHA if repository == "primary" else SIBLING_E2E_SHA
+                if repository not in {"primary", "sibling-e2e"} or provenance.get("source_commit") != expected_commit:
+                    errors.append(f"{route_where}.provenance: invalid frozen command repository/commit")
+                if route.get("id") == "sibling-e2e" and repository != "sibling-e2e":
+                    errors.append(f"{route_where}.provenance: sibling route requires sibling authority")
+                if route.get("id") != "sibling-e2e" and repository != "primary":
+                    errors.append(f"{route_where}.provenance: local route requires primary authority")
+                if isinstance(memberships, list):
+                    expected_selector = _selector_from_argv(
+                        cast(list[str], route.get("argv", [])), cast(str, route.get("environment_id", "")),
+                    )
+                    for membership_index, membership in enumerate(memberships):
+                        if isinstance(membership, dict) and membership.get("selector") != expected_selector:
+                            errors.append(
+                                f"{route_where}.memberships[{membership_index}]: selector does not match frozen argv"
+                            )
+            else:
+                errors.append(f"{route_where}.provenance: unknown provenance kind")
     graph: dict[Any, set[Any]] = {route_id: set() for route_id in route_ids}
     edge_ids: set[tuple[str, str]] = set()
     for index, edge in enumerate(edges):
@@ -943,6 +1408,129 @@ def validate_census(data: Mapping[str, Any], errors: list[str]) -> None:  # noqa
     body.pop("content_sha256", None)
     if expected != _sha(_json_bytes(body)):
         errors.append("census: content_sha256 mismatch")
+
+
+def validate_base_execution(  # noqa: C901 - compact exact-outcome matrix is intentionally explicit
+    data: Mapping[str, Any], where: str, errors: list[str], census_nodeids: Sequence[str],
+    census_hashes: set[str], route_authority: Mapping[str, Mapping[str, Any]],
+    environment_ids: set[str],
+) -> None:
+    execution = data.get("base_execution")
+    if not isinstance(execution, dict):
+        errors.append(f"{where}: base_execution mapping required")
+        return
+    fields = (
+        "inventory_commit", "census_sha256", "ordered_nodeids_sha256", "collected_node_count",
+        "route_id", "workload_argv", "cwd", "env", "environment_id", "harness_patch_hash",
+        "started_at", "ended_at", "wall_seconds", "exit_code", "raw_result_path",
+        "raw_result_sha256", "default_outcome", "outcome_overrides", "outcome_details",
+        "phase_errors", "counts",
+    )
+    _keys(execution, fields, where, errors)
+    if execution.get("inventory_commit") != TARGET_INVENTORY_SHA:
+        errors.append(f"{where}: inventory_commit mismatch")
+    if execution.get("census_sha256") not in census_hashes:
+        errors.append(f"{where}: census_sha256 does not identify a validated census")
+    if execution.get("ordered_nodeids_sha256") != _sha(_json_bytes(list(census_nodeids))):
+        errors.append(f"{where}: ordered nodeid identity hash mismatch")
+    if execution.get("collected_node_count") != len(census_nodeids):
+        errors.append(f"{where}: collected node count mismatch")
+    route_id = execution.get("route_id")
+    route = route_authority.get(route_id) if isinstance(route_id, str) else None
+    if route is None:
+        errors.append(f"{where}: unknown frozen route_id")
+    else:
+        for evidence_field, route_field in (
+            ("workload_argv", "argv"), ("cwd", "cwd"), ("env", "env"),
+            ("environment_id", "environment_id"),
+        ):
+            if execution.get(evidence_field) != route.get(route_field):
+                errors.append(f"{where}: {evidence_field} does not match frozen route")
+    if execution.get("environment_id") not in environment_ids:
+        errors.append(f"{where}: unknown environment_id")
+    if execution.get("harness_patch_hash") is not None and not _hash_value(execution.get("harness_patch_hash")):
+        errors.append(f"{where}: harness_patch_hash must be SHA-256 or null")
+    parsed_timestamps: list[dt.datetime] = []
+    for timestamp in ("started_at", "ended_at"):
+        try:
+            parsed_timestamps.append(dt.datetime.fromisoformat(str(execution.get(timestamp)).replace("Z", "+00:00")))
+        except ValueError:
+            errors.append(f"{where}: {timestamp} must be ISO-8601")
+    if len(parsed_timestamps) == 2 and parsed_timestamps[1] < parsed_timestamps[0]:
+        errors.append(f"{where}: ended_at precedes started_at")
+    if not _nonnegative_number(execution.get("wall_seconds")) or not isinstance(execution.get("exit_code"), int):
+        errors.append(f"{where}: wall_seconds/exit_code invalid")
+    if not _nonempty_string(execution.get("raw_result_path")) or not _hash_value(execution.get("raw_result_sha256")):
+        errors.append(f"{where}: raw result path and SHA-256 required")
+    if execution.get("default_outcome") != "passed":
+        errors.append(f"{where}: default_outcome must be passed")
+    overrides = execution.get("outcome_overrides")
+    outcome_names = {"failed", "error", "skipped", "xfailed", "xpassed", "not_run"}
+    census_set = set(census_nodeids)
+    override_nodes: dict[str, str] = {}
+    if not isinstance(overrides, dict) or set(overrides) != outcome_names:
+        errors.append(f"{where}: exact outcome_overrides classes required")
+        overrides = {}
+    for outcome in sorted(outcome_names):
+        nodes = overrides.get(outcome, []) if isinstance(overrides, dict) else []
+        if not _canonical_set_list(nodes):
+            errors.append(f"{where}: {outcome} nodeids must be canonical unique sorted strings")
+            continue
+        for nodeid in cast(list[str], nodes):
+            if nodeid not in census_set:
+                errors.append(f"{where}: unknown outcome nodeid {nodeid}")
+            if nodeid in override_nodes:
+                errors.append(f"{where}: duplicate outcome nodeid {nodeid}")
+            override_nodes[nodeid] = outcome
+    counts = execution.get("counts")
+    expected_counts = {
+        outcome: len(overrides.get(outcome, [])) if isinstance(overrides, dict) else 0
+        for outcome in outcome_names
+    }
+    expected_counts["passed"] = len(census_nodeids) - len(override_nodes)
+    if counts != expected_counts or sum(expected_counts.values()) != len(census_nodeids):
+        errors.append(f"{where}: outcome counts do not reconcile every census node")
+    details = execution.get("outcome_details")
+    detail_nodes: dict[str, str] = {}
+    if not isinstance(details, list):
+        errors.append(f"{where}: outcome_details list required")
+        details = []
+    for index, detail in enumerate(details):
+        if not isinstance(detail, dict):
+            errors.append(f"{where}.outcome_details[{index}]: mapping required")
+            continue
+        detail_nodeid, detail_outcome = detail.get("nodeid"), detail.get("outcome")
+        if not isinstance(detail_nodeid, str) or not isinstance(detail_outcome, str) or override_nodes.get(detail_nodeid) != detail_outcome:
+            errors.append(f"{where}.outcome_details[{index}]: identity/outcome not in exact overrides")
+            continue
+        if detail_nodeid in detail_nodes:
+            errors.append(f"{where}.outcome_details[{index}]: duplicate detail nodeid")
+        detail_nodes[detail_nodeid] = detail_outcome
+        if detail_outcome == "not_run":
+            if detail.get("phase") != "route_excluded" or not _nonempty_string(detail.get("reason")):
+                errors.append(f"{where}.outcome_details[{index}]: not_run attribution required")
+        elif not _enum_string(detail.get("phase"), {"setup", "call"}) or not _hash_value(detail.get("longrepr_sha256")):
+            errors.append(f"{where}.outcome_details[{index}]: phase and longrepr SHA required")
+    if set(detail_nodes) != set(override_nodes):
+        errors.append(f"{where}: every non-pass node requires exactly one attribution detail")
+    phase_errors = execution.get("phase_errors")
+    if not isinstance(phase_errors, list):
+        errors.append(f"{where}: phase_errors list required")
+        phase_errors = []
+    for index, phase_error in enumerate(phase_errors):
+        if not isinstance(phase_error, dict):
+            errors.append(f"{where}.phase_errors[{index}]: mapping required")
+            continue
+        if (
+            phase_error.get("nodeid") not in census_set
+            or not _enum_string(phase_error.get("phase"), {"setup", "teardown"})
+            or not _hash_value(phase_error.get("longrepr_sha256"))
+        ):
+            errors.append(f"{where}.phase_errors[{index}]: exact node/phase/hash attribution required")
+    body = dict(data)
+    expected_hash = body.pop("content_sha256", None)
+    if not _hash_value(expected_hash) or expected_hash != _sha(_json_bytes(body)):
+        errors.append(f"{where}: content_sha256 mismatch")
 
 
 def _validate_temporary(row: Mapping[str, Any], where: str, profile: Any, today: dt.date, errors: list[str]) -> None:
@@ -1391,6 +1979,8 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
         documents.append((path, data))
     census_members: set[str] = set()
     census_nodes: set[str] = set()
+    census_nodeids: list[str] = []
+    census_hashes: set[str] = set()
     census_member_nodes: dict[str, set[str]] = {}
     census_member_states: dict[str, str] = {}
     environment_ids: set[str] = set()
@@ -1400,6 +1990,11 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
     for path, data in documents:
         if "source_units" in data and "reconciliation" in data:
             validate_census(data, errors)
+            document_nodeids, _ = _census_nodeids(data)
+            if census_nodeids and census_nodeids != document_nodeids:
+                errors.append(f"{path}: multiple census node universes disagree")
+            census_nodeids = document_nodeids
+            census_hashes.add(_sha(path.read_bytes()))
             _collect_census_authority(
                 data, census_members, census_nodes, census_member_nodes, census_member_states,
             )
@@ -1436,6 +2031,11 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
                 validate_workload(workload, f"{path}.frozen_workload_dag", errors, environment_ids)
             else:
                 errors.append(f"{path}.frozen_workload_dag: mapping required")
+        if "base_execution" in data:
+            validate_base_execution(
+                data, f"{path}.base_execution", errors, census_nodeids, census_hashes,
+                route_authority, environment_ids,
+            )
         rows = data.get("dispositions", [])
         if not isinstance(rows, list):
             errors.append(f"{path}: dispositions must be list")
@@ -1496,7 +2096,7 @@ def aggregate(paths: Sequence[Path]) -> dict[str, Any]:
     return cast(dict[str, Any], _stable(result))
 
 
-def selftest() -> dict[str, Any]:
+def selftest() -> dict[str, Any]:  # noqa: C901 - independent adversarial probes stay visible
     """Exercise anti-vacuity cases in disposable runtime fixture trees."""
     with tempfile.TemporaryDirectory(prefix="sanitation-audit-") as temporary:
         root = Path(temporary)
@@ -1556,6 +2156,39 @@ def selftest() -> dict[str, Any]:
             "unowned_fails": first["ownership"]["complete"] is False,
             "recursive_nested_once": list(units).count("tests/test_cases.py::factory.test_nested") == 1,
         }
+        atomic_probe = root / "atomic-raw.json"
+        _atomic_write_bytes(atomic_probe, b"raw-evidence\n")
+        checks["outcome_raw_atomic_write"] = (
+            atomic_probe.read_bytes() == b"raw-evidence\n"
+            and not list(root.glob(".atomic-raw.json.*"))
+        )
+        invalid_capture_census = copy.deepcopy(first)
+        fabricated_capture_node = copy.deepcopy(invalid_capture_census["collection"]["nodes"][0])
+        fabricated_capture_node[0] = "tests/test_cases.py::test_fabricated_capture_identity"
+        invalid_capture_census["collection"]["nodes"].append(fabricated_capture_node)
+        invalid_capture_census_path = root / "invalid-capture-census.json"
+        invalid_capture_census_path.write_bytes(_json_bytes(invalid_capture_census))
+        invalid_capture_workload_path = root / "invalid-capture-workload.yaml"
+        invalid_capture_workload_path.write_text(yaml.safe_dump({
+            "frozen_workload_dag": {"routes": [{
+                "id": "invalid-capture", "cwd": ".", "env": {},
+                "argv": ["pytest", "tests/test_cases.py", "-n", "2", "-p", "no:cacheprovider"],
+                "environment_id": "selftest", "memberships": [{"selector": {"ignores": []}}],
+            }]},
+        }), encoding="utf-8")
+        invalid_capture_raw_path = root / "invalid-capture-raw.json"
+        try:
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                capture_outcomes(
+                    root, invalid_capture_census_path, invalid_capture_workload_path,
+                    "invalid-capture", invalid_capture_raw_path,
+                )
+            invalid_capture_failed_closed = False
+        except AuditError as error:
+            invalid_capture_failed_closed = "collection mismatch" in str(error)
+        checks["outcome_validation_failure_leaves_raw_absent"] = (
+            invalid_capture_failed_closed and not invalid_capture_raw_path.exists()
+        )
         selected = snapshot(root, "tests", ["-m", "selected", "--ignore=tests/test_error.py"], "SELFTEST-SELECT")
         selected_units = {row["id"]: row for row in selected["source_units"]}
         checks["deselected_class_parameter_family"] = (
@@ -1733,8 +2366,13 @@ def selftest() -> dict[str, Any]:
         synthetic_nodes = {member_a, member_b}
         synthetic_member_nodes = {member_a: {member_a}, member_b: {member_b}}
         synthetic_member_states = {member_a: "collected", member_b: "collected"}
+        synthetic_membership = copy.deepcopy(valid_disposition["candidate"]["route_memberships"][0])
+        synthetic_membership.pop("route_id")
         synthetic_route_authority: dict[str, Mapping[str, Any]] = {
-            "selftest": {"environment_id": environment_id, "env": {}},
+            "selftest": {
+                "environment_id": environment_id, "env": {},
+                "memberships": [synthetic_membership],
+            },
         }
 
         def disposition_errors(row: dict[str, Any]) -> list[str]:
@@ -1818,6 +2456,21 @@ def selftest() -> dict[str, Any]:
             "environment_id does not match frozen route" in error
             for error in disposition_errors(mismatched_route_environment)
         )
+        route_field_mutations: dict[str, Callable[[dict[str, Any]], None]] = {
+            "role": lambda membership: membership.update(role="coverage"),
+            "required": lambda membership: membership.update(required=False),
+            "events": lambda membership: membership.update(events=["schedule"]),
+            "selector_paths": lambda membership: membership["selector"].update(paths=["tests/fabricated/"]),
+            "selector_markers": lambda membership: membership["selector"].update(markers=["fabricated"]),
+            "selector_ignores": lambda membership: membership["selector"].update(ignores=["tests/fabricated.py"]),
+        }
+        for field, mutate in route_field_mutations.items():
+            invalid_membership = copy.deepcopy(valid_disposition)
+            mutate(invalid_membership["candidate"]["route_memberships"][0])
+            checks[f"candidate_route_{field}_authority_rejected"] = any(
+                "membership fields do not match frozen route authority" in error
+                for error in disposition_errors(invalid_membership)
+            )
         mismatched_evidence_role = copy.deepcopy(valid_disposition)
         mismatched_evidence_role["evidence"]["routing_evidence"][0]["role"] = "coverage"
         checks["evidence_route_role_rejected"] = any(
@@ -1946,8 +2599,33 @@ def selftest() -> dict[str, Any]:
         report_root = Path(__file__).resolve().parent
         committed_census_path = report_root / "raw" / "base-census.json"
         committed_workload_path = report_root / "raw" / "base-workloads.yaml"
+        committed_summary_path = report_root / "raw" / "base-full-suite-summary.txt"
         committed_census = cast(dict[str, Any], json.loads(committed_census_path.read_text(encoding="utf-8")))
         committed_workload = cast(dict[str, Any], yaml.safe_load(committed_workload_path.read_text(encoding="utf-8")))
+        temp_root_nodeids = [
+            cast(str, row[0]) for row in committed_census["collection"]["nodes"]
+            if "<TEMP_ROOT>" in row[0]
+        ]
+        raw_temp_nodeids = [
+            nodeid.replace("<TEMP_ROOT>", root.as_posix())
+            for nodeid in temp_root_nodeids
+        ]
+        normalization_plugin = OutcomePlugin()
+        normalization_plugin.pytest_xdist_node_collection_finished(
+            SimpleNamespace(gateway=SimpleNamespace(id="gw-normalization")), raw_temp_nodeids,
+        )
+        for nodeid in raw_temp_nodeids:
+            normalization_plugin.pytest_runtest_logreport(cast(Any, SimpleNamespace(
+                nodeid=nodeid, worker_id="gw-normalization", longrepr=None,
+                when="call", outcome="passed", duration=0.0,
+            )))
+        checks["outcome_collection_temp_root_normalization"] = (
+            len(temp_root_nodeids) == 6
+            and normalization_plugin.worker_collections["gw-normalization"] == temp_root_nodeids
+        )
+        checks["outcome_report_temp_root_normalization"] = (
+            [row["nodeid"] for row in normalization_plugin.reports] == temp_root_nodeids
+        )
         inert_manifest = committed_census["manifests"]["inert_candidates"][0]
         committed_member = cast(str, inert_manifest["member"])
         source_row = next(row for row in committed_census["source_units"] if row["id"] == committed_member)
@@ -2012,6 +2690,70 @@ def selftest() -> dict[str, Any]:
         )
         checks["committed_positive_delete_valid"] = committed_positive_errors == []
 
+        committed_summary = cast(dict[str, Any], json.loads(committed_summary_path.read_text(encoding="utf-8")))
+        committed_nodeids, _ = _census_nodeids(committed_census)
+        committed_route_authority = {
+            cast(str, route["id"]): route
+            for route in committed_workload["frozen_workload_dag"]["routes"]
+        }
+        committed_environment_ids = {
+            cast(str, environment["id"]) for environment in committed_workload["run_environments"]
+        }
+
+        def base_execution_errors(document: dict[str, Any]) -> list[str]:
+            found: list[str] = []
+            validate_base_execution(
+                document, "base-execution", found, committed_nodeids,
+                {_sha(committed_census_path.read_bytes())}, committed_route_authority,
+                committed_environment_ids,
+            )
+            return found
+
+        def rehash_execution(document: dict[str, Any]) -> None:
+            document.pop("content_sha256", None)
+            document["content_sha256"] = _sha(_json_bytes(document))
+
+        checks["valid_exact_base_execution"] = base_execution_errors(copy.deepcopy(committed_summary)) == []
+        aggregate_only = {"schema_version": SCHEMA, "base_execution": {"counts": {"passed": 37444}}}
+        rehash_execution(aggregate_only)
+        checks["base_execution_aggregate_only_rejected"] = any(
+            "exact outcome_overrides" in error for error in base_execution_errors(aggregate_only)
+        )
+        count_mismatch = copy.deepcopy(committed_summary)
+        count_mismatch["base_execution"]["counts"]["passed"] += 1
+        rehash_execution(count_mismatch)
+        checks["base_execution_count_mismatch_rejected"] = any(
+            "counts do not reconcile" in error for error in base_execution_errors(count_mismatch)
+        )
+        unknown_outcome = copy.deepcopy(committed_summary)
+        unknown_node = "tests/fabricated.py::test_unknown"
+        unknown_outcome["base_execution"]["outcome_overrides"]["failed"].append(unknown_node)
+        unknown_outcome["base_execution"]["outcome_overrides"]["failed"].sort()
+        unknown_outcome["base_execution"]["outcome_details"].append({
+            "nodeid": unknown_node, "outcome": "failed", "phase": "call", "longrepr_sha256": "0" * 64,
+        })
+        unknown_outcome["base_execution"]["outcome_details"].sort(key=lambda row: row["nodeid"])
+        unknown_outcome["base_execution"]["counts"]["failed"] += 1
+        unknown_outcome["base_execution"]["counts"]["passed"] -= 1
+        rehash_execution(unknown_outcome)
+        checks["base_execution_unknown_node_rejected"] = any(
+            "unknown outcome nodeid" in error for error in base_execution_errors(unknown_outcome)
+        )
+        duplicate_outcome = copy.deepcopy(committed_summary)
+        duplicate_node = duplicate_outcome["base_execution"]["outcome_overrides"]["failed"][0]
+        duplicate_outcome["base_execution"]["outcome_overrides"]["skipped"].append(duplicate_node)
+        duplicate_outcome["base_execution"]["outcome_overrides"]["skipped"].sort()
+        rehash_execution(duplicate_outcome)
+        checks["base_execution_duplicate_node_rejected"] = any(
+            "duplicate outcome nodeid" in error for error in base_execution_errors(duplicate_outcome)
+        )
+        unaccounted = copy.deepcopy(committed_summary)
+        unaccounted["base_execution"]["default_outcome"] = "not_run"
+        rehash_execution(unaccounted)
+        checks["base_execution_unaccounted_default_rejected"] = any(
+            "default_outcome must be passed" in error for error in base_execution_errors(unaccounted)
+        )
+
         combined_bypass = copy.deepcopy(committed_positive)
         combined_bypass["candidate"]["observations"][0]["nodeid"] = "tests/not-in-census.py::test_fabricated"
         combined_bypass["candidate"]["route_memberships"][0]["route_id"] = "does-not-exist"
@@ -2035,6 +2777,14 @@ def selftest() -> dict[str, Any]:
         valid_route = {
             "id": "route", "argv": ["pytest"], "environment_id": environment_id,
             "base_mapping": "tests/", "head_mapping": "tests/", "cwd": ".", "env": {},
+            "memberships": [{
+                "role": "owner", "required": True, "events": ["local"],
+                "selector": {"paths": [], "markers": [], "ignores": [], "environment_id": environment_id},
+            }],
+        }
+        valid_route["provenance"] = {
+            "kind": "frozen_command", "repository": "primary", "source_commit": TARGET_INVENTORY_SHA,
+            "authority_sha256": _sha(_json_bytes(_route_projection(valid_route))),
         }
         valid_measurement = {
             "route_id": "route", "environment_id": environment_id, "collection": 1.0, "setup": 2.0,
@@ -2050,6 +2800,165 @@ def selftest() -> dict[str, Any]:
             "routes": [valid_route], "edges": [], "repetitions": 3, "measurements": [valid_measurement],
         }
         checks["valid_typed_measurement"] = find_workload_errors(valid_workload) == []
+        local_provenance_mutations = {
+            "kind": "fabricated",
+            "repository": "sibling-e2e",
+            "source_commit": "0" * 40,
+            "authority_sha256": "0" * 64,
+        }
+        for field, bad_value in local_provenance_mutations.items():
+            invalid_local_provenance = copy.deepcopy(valid_workload)
+            invalid_local_provenance["routes"][0]["provenance"][field] = bad_value
+            checks[f"local_provenance_{field}_rejected"] = bool(
+                find_workload_errors(invalid_local_provenance)
+            )
+        workload_field_mutations: dict[str, Callable[[dict[str, Any]], None]] = {
+            "argv": lambda route: route.update(argv=["false"]),
+            "cwd": lambda route: route.update(cwd="fabricated-cwd"),
+            "env": lambda route: route.update(env={"FAKE": "1"}),
+            "base_mapping": lambda route: route.update(base_mapping="fabricated-base"),
+            "head_mapping": lambda route: route.update(head_mapping="fabricated-head"),
+            "role": lambda route: route["memberships"][0].update(role="coverage"),
+            "required": lambda route: route["memberships"][0].update(required=False),
+            "events": lambda route: route["memberships"][0].update(events=["schedule"]),
+            "selector_paths": lambda route: route["memberships"][0]["selector"].update(paths=["tests/fake/"]),
+            "selector_markers": lambda route: route["memberships"][0]["selector"].update(markers=["fake"]),
+            "selector_ignores": lambda route: route["memberships"][0]["selector"].update(ignores=["tests/fake.py"]),
+            "selector_environment": lambda route: route["memberships"][0]["selector"].update(environment_id="missing"),
+        }
+        for field, mutate in workload_field_mutations.items():
+            invalid_workload = copy.deepcopy(valid_workload)
+            mutate(invalid_workload["routes"][0])
+            checks[f"workload_{field}_authority_rejected"] = any(
+                "authority_sha256 does not bind complete route" in error
+                for error in find_workload_errors(invalid_workload)
+            )
+
+        committed_environment_ids = {
+            cast(str, environment["id"]) for environment in committed_workload["run_environments"]
+        }
+        regression_route = next(
+            route for route in committed_workload["frozen_workload_dag"]["routes"]
+            if route["id"] == "regression"
+        )
+
+        def ci_route_errors(route: dict[str, Any]) -> list[str]:
+            found: list[str] = []
+            validate_workload(
+                {"routes": [route], "edges": [], "repetitions": 3, "measurements": []},
+                "ci-workload", found, committed_environment_ids,
+            )
+            return found
+
+        checks["valid_tracked_ci_provenance"] = ci_route_errors(copy.deepcopy(regression_route)) == []
+        provenance_mutations = {
+            "kind": "frozen_command",
+            "source_commit": "0" * 40,
+            "source_path": ".github/workflows/fabricated.yml",
+            "source_sha256": "0" * 64,
+            "job_id": "fabricated-job",
+            "step_name": "fabricated step",
+            "step_sha256": "0" * 64,
+            "authority_sha256": "0" * 64,
+        }
+        for field, bad_value in provenance_mutations.items():
+            invalid_ci = copy.deepcopy(regression_route)
+            invalid_ci["provenance"][field] = bad_value
+            checks[f"ci_provenance_{field}_rejected"] = bool(ci_route_errors(invalid_ci))
+        fabricated_ci_command = copy.deepcopy(regression_route)
+        fabricated_ci_command["argv"] = ["python", "-m", "pytest", "tests/fabricated.py", "-q"]
+        fabricated_ci_command["memberships"][0]["selector"] = _selector_from_argv(
+            fabricated_ci_command["argv"], fabricated_ci_command["environment_id"],
+        )
+        fabricated_ci_command["provenance"]["authority_sha256"] = _sha(
+            _json_bytes(_route_projection(fabricated_ci_command))
+        )
+        checks["ci_recomputed_hash_fabricated_command_rejected"] = any(
+            "unique tracked pytest command" in error for error in ci_route_errors(fabricated_ci_command)
+        )
+        fabricated_ci_required = copy.deepcopy(regression_route)
+        fabricated_ci_required["memberships"][0]["required"] = False
+        fabricated_ci_required["provenance"]["authority_sha256"] = _sha(
+            _json_bytes(_route_projection(fabricated_ci_required))
+        )
+        checks["ci_recomputed_hash_required_rejected"] = any(
+            "required does not match quality-gate.needs" in error for error in ci_route_errors(fabricated_ci_required)
+        )
+        fabricated_ci_events = copy.deepcopy(regression_route)
+        fabricated_ci_events["memberships"][0]["events"] = ["schedule"]
+        fabricated_ci_events["provenance"]["authority_sha256"] = _sha(
+            _json_bytes(_route_projection(fabricated_ci_events))
+        )
+        checks["ci_recomputed_hash_events_rejected"] = any(
+            "events do not match tracked job triggers" in error for error in ci_route_errors(fabricated_ci_events)
+        )
+        quarantine_environment_id = next(
+            cast(str, route["environment_id"])
+            for route in committed_workload["frozen_workload_dag"]["routes"]
+            if route["id"] == "quarantine"
+        )
+
+        def mutate_ci_environment(route: dict[str, Any]) -> None:
+            route.update(environment_id=quarantine_environment_id)
+            route["memberships"][0]["selector"].update(environment_id=quarantine_environment_id)
+
+        recomputed_ci_mutations: dict[str, tuple[Callable[[dict[str, Any]], None], tuple[str, ...]]] = {
+            "role": (
+                lambda route: route["memberships"][0].update(role="coverage"),
+                ("pinned frozen route",),
+            ),
+            "selector_paths": (
+                lambda route: route["memberships"][0]["selector"].update(paths=["tests/fabricated/"]),
+                ("pinned frozen route", "selector does not match tracked argv"),
+            ),
+            "selector_markers": (
+                lambda route: route["memberships"][0]["selector"].update(markers=["fabricated"]),
+                ("pinned frozen route", "selector does not match tracked argv"),
+            ),
+            "selector_ignores": (
+                lambda route: route["memberships"][0]["selector"].update(ignores=["tests/fabricated.py"]),
+                ("pinned frozen route", "selector does not match tracked argv"),
+            ),
+            "selector_environment": (
+                lambda route: route["memberships"][0]["selector"].update(environment_id=quarantine_environment_id),
+                ("pinned frozen route", "selector does not match tracked argv"),
+            ),
+            "cwd": (
+                lambda route: route.update(cwd="fabricated-cwd"),
+                ("pinned frozen route", "cwd does not match tracked workflow step"),
+            ),
+            "env": (
+                lambda route: route.update(env={"PWHEADLESS": "1", "FABRICATED": "1"}),
+                ("pinned frozen route", "env does not match tracked workflow/job/step env"),
+            ),
+            "base_mapping": (
+                lambda route: route.update(base_mapping="fabricated-base"),
+                ("pinned frozen route",),
+            ),
+            "head_mapping": (
+                lambda route: route.update(head_mapping="fabricated-head"),
+                ("pinned frozen route",),
+            ),
+            "environment_id": (
+                mutate_ci_environment,
+                ("pinned frozen route",),
+            ),
+            "wrapper": (
+                lambda route: route.update(wrapper="fabricated wrapper"),
+                ("pinned frozen route",),
+            ),
+        }
+        for field, (mutate, fragments) in recomputed_ci_mutations.items():
+            invalid_ci_route = copy.deepcopy(regression_route)
+            mutate(invalid_ci_route)
+            invalid_ci_route["provenance"]["authority_sha256"] = _sha(
+                _json_bytes(_route_projection(invalid_ci_route))
+            )
+            invalid_ci_errors = ci_route_errors(invalid_ci_route)
+            checks[f"ci_recomputed_hash_{field}_rejected"] = all(
+                any(fragment in error for error in invalid_ci_errors)
+                for fragment in fragments
+            )
         duplicate_edges = copy.deepcopy(valid_workload)
         duplicate_edges["edges"] = [{"from": "route", "to": "route"}, {"from": "route", "to": "route"}]
         checks["duplicate_dag_edge_rejected"] = any("duplicate dependency edge" in error for error in find_workload_errors(duplicate_edges))
@@ -2100,6 +3009,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     agg = commands.add_parser("aggregate")
     agg.add_argument("paths", nargs="+", type=Path)
     agg.add_argument("--output", type=Path)
+    capture = commands.add_parser("capture-outcomes")
+    capture.add_argument("census", type=Path)
+    capture.add_argument("workload", type=Path)
+    capture.add_argument("--root", type=Path, default=Path.cwd())
+    capture.add_argument("--route", default="full-parallel")
+    capture.add_argument("--raw-output", type=Path, required=True)
+    capture.add_argument("--output", type=Path, required=True)
     commands.add_parser("selftest")
     args = parser.parse_args(argv)
     try:
@@ -2127,6 +3043,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             if errors:
                 raise AuditError("aggregate inputs invalid: " + "; ".join(errors))
             _write(args.output, result, yaml_output=True)
+        elif args.command == "capture-outcomes":
+            result = capture_outcomes(
+                args.root, args.census, args.workload, args.route, args.raw_output,
+            )
+            _write(args.output, result)
         else:
             _write(None, selftest())
     except AuditError as exc:
