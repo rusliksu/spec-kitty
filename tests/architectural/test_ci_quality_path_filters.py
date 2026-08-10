@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import os
 import re
 import subprocess
 import sys
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +17,65 @@ pytestmark = pytest.mark.architectural
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _WORKFLOW = _REPO_ROOT / ".github" / "workflows" / "ci-quality.yml"
-_COLLECT_TIMEOUT_SECONDS = 240
+_COLLECT_TIMEOUT_SECONDS = 60
+
+_REGRESSION_OWNER_PATHS = (
+    "tests/regression/test_issue_2782_sync_strict_json_ingress_skip.py",
+)
+_QUARANTINE_OWNER_PATHS: tuple[str, ...] = ()
+_REGRESSION_NODE = (
+    "tests/regression/test_issue_2782_sync_strict_json_ingress_skip.py::"
+    "test_mission_create_json_strict_when_sync_skips_ingress"
+)
+
+# Exact pre-split catch-all selector from #3284. Its replacement is evaluated
+# from the live parsed workflow below, over one shared collected universe.
+_LEGACY_CORE_MISC = gc.Gate(
+    workflow="legacy-ci-quality.yml",
+    job="integration-tests-core-misc",
+    shard=None,
+    paths=["tests"],
+    ignores=[
+        "tests/doctrine",
+        "tests/kernel",
+        "tests/status",
+        "tests/specify_cli/status",
+        "tests/sync",
+        "tests/merge",
+        "tests/missions",
+        "tests/post_merge",
+        "tests/release",
+        "tests/review",
+        "tests/next",
+        "tests/specify_cli/next",
+        "tests/lanes",
+        "tests/test_dashboard",
+        "tests/upgrade",
+        "tests/cli",
+        "tests/runtime",
+        "tests/charter",
+        "tests/agent",
+        "tests/docs",
+    ],
+    marker_expr="not windows_ci and (git_repo or integration or architectural)",
+)
+_CORE_MISC_REPLACEMENT_JOBS = frozenset(
+    {
+        "integration-tests-core-misc",
+        "arch-adversarial",
+        "timing-nfr-serial",
+        "regression-tests",
+        "quarantine-visibility",
+        "e2e-cross-cutting",
+        # Subtrees split out of the former catch-all after #3284.
+        "fast-tests-cli",
+        "integration-tests-charter",
+        "integration-tests-cli",
+        "integration-tests-lanes",
+        "integration-tests-missions",
+        "slow-tests",
+    }
+)
 
 
 def _load_workflow() -> dict[str, Any]:
@@ -93,109 +149,15 @@ def _find_result_gated_jobs(jobs: dict[str, Any]) -> dict[str, str]:
     return offending
 
 
-# Marker selector shared by the legacy catch-all universe and every shard
-# collection in test_core_misc_shards_plus_e2e_owner_cover_legacy_selection.
-_MARKER_EXPR = "not windows_ci and (git_repo or integration or architectural)"
-
-# The legacy catch-all core-misc selection (the pre-shard universe): every
-# ``--ignore`` it carried plus its marker selector. Hoisted to a module
-# constant so the ~117-line test body reads as intent, not literal data.
-#
-# ``--ignore=tests/docs`` added 2026-08-05 (PR #3204, operator decision): the
-# #2359 docs over-coverage fail-safe was retired, so the `misc` shard no
-# longer runs tests/docs and this "intended selection" baseline must not
-# expect it either -- tests/docs runs ONLY in the dedicated `fast-tests-docs`
-# job now (see the ci-quality.yml fast-tests-docs job header for the
-# accepted tradeoff).
-_LEGACY_CORE_MISC_ARGS: list[str] = [
-    "--ignore=tests/doctrine",
-    "--ignore=tests/kernel",
-    "--ignore=tests/status",
-    "--ignore=tests/specify_cli/status",
-    "--ignore=tests/sync",
-    "--ignore=tests/merge",
-    "--ignore=tests/missions",
-    "--ignore=tests/post_merge",
-    "--ignore=tests/release",
-    "--ignore=tests/review",
-    "--ignore=tests/next",
-    "--ignore=tests/specify_cli/next",
-    "--ignore=tests/lanes",
-    "--ignore=tests/test_dashboard",
-    "--ignore=tests/upgrade",
-    "--ignore=tests/cli",
-    "--ignore=tests/runtime",
-    "--ignore=tests/charter",
-    "--ignore=tests/agent",
-    "--ignore=tests/docs",
-    "-m",
-    _MARKER_EXPR,
-]
-
-# The per-shard path/ignore universes whose union must cover the legacy
-# selection. Each entry is collected with the same marker selector appended.
-_SHARD_COMMANDS: list[list[str]] = [
-    ["tests/adversarial", "tests/architectural", "tests/architecture", "tests/lint"],
-    ["tests/integration"],
-    [
-        "tests/specify_cli/migration",
-        "tests/specify_cli/invocation",
-        "tests/specify_cli/test_charter_activate_cli.py",
-    ],
-    [
-        "tests/specify_cli",
-        "--ignore=tests/specify_cli/migration",
-        "--ignore=tests/specify_cli/invocation",
-        "--ignore=tests/specify_cli/test_charter_activate_cli.py",
-        "--ignore=tests/specify_cli/status",
-        "--ignore=tests/specify_cli/next",
-    ],
-    ["tests/auth", "tests/audit", "tests/git_ops", "tests/git", "tests/cli_gate"],
-    [
-        "tests/calibration",
-        "tests/ci",
-        "tests/concurrency",
-        "tests/contract",
-        "tests/core",
-        "tests/cross_branch",
-        # tests/docs REMOVED 2026-08-05 (PR #3204, operator decision): the
-        # #2359 docs over-coverage fail-safe was retired from the `misc`
-        # shard, so it must not appear in the "new" (post-shard) universe
-        # either -- see the matching --ignore=tests/docs added to
-        # _LEGACY_CORE_MISC_ARGS above, which keeps this comparison coherent
-        # (shards ∪ e2e == the intended selection, and the intended selection
-        # no longer includes docs in core-misc).
-        "tests/doctor",
-        "tests/init",
-        "tests/migration",
-        "tests/mission_runtime",
-        "tests/packaging",
-        "tests/policy",
-        "tests/readiness",
-        "tests/regression",
-        "tests/regressions",
-        "tests/research",
-        "tests/retrospective",
-        "tests/saas",
-        "tests/stress",
-        "tests/tasks",
-        "tests/unit",
-    ],
-]
-
-
 def _collect_nodes(args: list[str]) -> set[str]:
     result = subprocess.run(
-        [sys.executable, "-m", "pytest", "--collect-only", "-qq", *args],
+        [sys.executable, "-m", "pytest", "--collect-only", "-q", *args],
         cwd=_REPO_ROOT,
         check=True,
         capture_output=True,
         text=True,
-        # Generous wall-clock (_COLLECT_TIMEOUT_SECONDS): these `--collect-only`
-        # subprocesses run several at a time (see the worker-capped
-        # ThreadPoolExecutor below), so on a CPU-constrained CI runner a single
-        # collection's wall-clock can stretch well past a tight cap even though
-        # it is fast in isolation.
+        # Bounded to the explicit narrow owner path; never recursively collects
+        # the suite (WP07/#3284 sanitation handoff).
         timeout=_COLLECT_TIMEOUT_SECONDS,
     )
     return {
@@ -203,6 +165,55 @@ def _collect_nodes(args: list[str]) -> set[str]:
         for line in result.stdout.splitlines()
         if line.startswith("tests/") and "::" in line
     }
+
+
+def _shell_array(run_script: str, name: str) -> tuple[str, ...]:
+    """Parse one literal multiline Bash array from a workflow run step."""
+    match = re.search(rf"(?m)^\s*{re.escape(name)}=\((.*?)^\s*\)", run_script, re.S)
+    if match is None:
+        # The empty-manifest spelling is intentionally a single-line array.
+        assert re.search(rf"(?m)^\s*{re.escape(name)}=\(\)\s*$", run_script)
+        return ()
+    return tuple(line.strip() for line in match.group(1).splitlines() if line.strip())
+
+
+def test_live_core_misc_replacement_union_covers_legacy_selection() -> None:
+    """#3284: live route union must dominate the exact legacy catch-all.
+
+    One bounded whole-suite collection feeds both sides. Selector evaluation is
+    in-process against the statically parsed workflow, replacing the former
+    eight recursive ``pytest --collect-only`` subprocesses without weakening
+    the legacy-node -> replacement-union boundary.
+    """
+    universe = gc.collect_universe()
+    replacement_gates = [
+        gate
+        for gate in gc.load_gates()
+        if gate.workflow == "ci-quality.yml"
+        and gate.job in _CORE_MISC_REPLACEMENT_JOBS
+    ]
+    legacy_nodes = gc._selected_nodeids([_LEGACY_CORE_MISC], universe)
+    replacement_nodes = gc._selected_nodeids(replacement_gates, universe)
+    missing = legacy_nodes - replacement_nodes
+
+    assert legacy_nodes, "legacy core-misc selector unexpectedly selects no live nodes"
+    assert replacement_gates, "no live replacement gates parsed from ci-quality.yml"
+    assert not missing, (
+        "live route split dropped legacy core-misc nodes: "
+        f"{sorted(missing)[:20]}"
+    )
+
+    # Causal fault: removing the real blocking regression owner must expose the
+    # accepted #2782 reproduction, proving the union assertion can red on an
+    # actual route loss rather than only comparing two vacuous/model-only sets.
+    without_regression = [
+        gate for gate in replacement_gates if gate.job != "regression-tests"
+    ]
+    fault_missing = legacy_nodes - gc._selected_nodeids(without_regression, universe)
+    assert _REGRESSION_NODE in fault_missing, (
+        "removing the live regression route did not expose its #2782 owner; "
+        "the core-misc replacement oracle is no longer causal"
+    )
 
 
 def test_missions_filter_includes_missions_package_and_tests() -> None:
@@ -432,58 +443,39 @@ def test_ci_quality_guards_trigger_core_misc_validation() -> None:
     assert "tests/architectural/**" in core_misc_filter
 
 
-def test_core_misc_shards_plus_e2e_owner_cover_legacy_selection() -> None:
-    """The shard split must not drop tests covered by the legacy catch-all job.
-
-    This compares the legacy catch-all node universe against the union of the
-    new shard universes; the invariant is ``legacy_nodes - new_nodes == {}``
-    over IDENTICAL path/marker universes. The 8 distinct ``--collect-only``
-    subprocesses are launched concurrently (each is I/O-bound, waiting on a
-    child pytest process) instead of serially. De-duplicating/parallelizing the
-    distinct collections this way leaves node→selector attribution unchanged:
-    every collection runs with the exact same args it ran with serially, and is
-    bucketed back to ``legacy`` vs ``new`` by an explicit key — concurrency only
-    overlaps the waits, it never merges or reattributes node sets.
-    """
-    marker_args = ["-m", _MARKER_EXPR]
-    e2e_args = [
-        "tests/e2e",
-        "tests/cross_cutting",
-        "-m",
-        "not distribution and not windows_ci",
-    ]
-
-    # (bucket, args) for each distinct collection. "legacy" feeds the catch-all
-    # universe; "new" feeds the union of shard universes. Attribution is fixed
-    # here, before any concurrency, so parallel execution cannot change it.
-    collections: list[tuple[str, list[str]]] = [("legacy", _LEGACY_CORE_MISC_ARGS)]
-    collections.extend(
-        ("new", [*command, *marker_args]) for command in _SHARD_COMMANDS
+def test_narrow_route_manifests_are_literal_and_proportional() -> None:
+    """Narrow routes use literal owners, never recursive whole-tree discovery."""
+    data = _load_workflow()
+    regression = _job_run_script(
+        data,
+        "regression-tests",
+        "Run regression red-first reproductions (blocking — gates releases)",
     )
-    collections.append(("new", e2e_args))
-
-    # Each _collect_nodes call spawns a child pytest process and blocks on it;
-    # run them concurrently so the wall-clock is bounded by the slowest single
-    # collection instead of their serial sum. Cap concurrency at the CPU count
-    # (min 2): launching all of them at once oversubscribes a 2-core CI runner,
-    # which inflates each child's wall-clock and made a single collection blow
-    # its per-subprocess timeout. Pacing to the available cores keeps each
-    # collection fast without serialising the whole set.
-    max_workers = min(len(collections), max(2, os.cpu_count() or 2))
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        results = list(
-            executor.map(lambda item: (item[0], _collect_nodes(item[1])), collections),
-        )
-
-    legacy_nodes: set[str] = set()
-    new_nodes: set[str] = set()
-    for bucket, nodes in results:
-        (legacy_nodes if bucket == "legacy" else new_nodes).update(nodes)
-
-    missing = sorted(legacy_nodes - new_nodes)
-    assert not missing, "Shard split dropped legacy core-misc tests:\n" + "\n".join(
-        missing[:20],
+    quarantine = _job_run_script(
+        data,
+        "quarantine-visibility",
+        "Run quarantined tests (visible, never blocks merge)",
     )
+
+    assert _shell_array(regression, "REGRESSION_PATHS") == _REGRESSION_OWNER_PATHS
+    assert _shell_array(quarantine, "QUARANTINE_PATHS") == _QUARANTINE_OWNER_PATHS
+    assert '"${REGRESSION_PATHS[@]}" -m regression' in regression
+    assert '"${QUARANTINE_PATHS[@]}" -m quarantine' in quarantine
+    assert "python -m pytest tests/ -m regression" not in regression
+    assert "python -m pytest tests/ -m quarantine" not in quarantine
+    assert '${#QUARANTINE_PATHS[@]}" -eq 0' in quarantine
+
+
+def test_regression_owner_manifest_collects_exactly_the_2782_node() -> None:
+    """Bounded live proof: the one literal owner selects exactly the P0 node."""
+    nodes = _collect_nodes([*_REGRESSION_OWNER_PATHS, "-m", "regression"])
+    assert nodes == {_REGRESSION_NODE}
+
+
+def test_narrow_route_owner_paths_exist() -> None:
+    """Static complement to bounded collection; no stale owner can fake green."""
+    missing = [path for path in _REGRESSION_OWNER_PATHS if not (_REPO_ROOT / path).is_file()]
+    assert not missing, f"narrow-route owner path(s) missing: {missing}"
 
 
 def test_core_misc_excludes_e2e_and_cross_cutting_suites() -> None:

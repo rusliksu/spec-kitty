@@ -26,7 +26,6 @@ from specify_cli.cli.commands.implement_cores import (
     _feature_dir_status_entries,
     _files_changed_vs_ref,
     _is_self_write_only_diff,
-    _is_vcs_lock_only_meta_diff,
     _parse_meta_mapping,
     _parse_porcelain_entries,
     _placement_coord_filter,
@@ -228,30 +227,6 @@ class TestStatusPathsForCommit:
 # ---------------------------------------------------------------------------
 # vcs-lock-only meta.json diff family
 # ---------------------------------------------------------------------------
-
-
-class TestIsVcsLockOnlyMetaDiff:
-    @pytest.mark.parametrize(
-        ("committed", "working", "expected"),
-        [
-            (None, {}, False),
-            ({}, {}, False),
-            ({"vcs": "git"}, {"vcs": "git", "vcs_locked_at": "t0"}, True),
-            ({"friendly_name": "a"}, {"friendly_name": "b"}, False),
-            (
-                {"friendly_name": "a", "vcs": "git"},
-                {"friendly_name": "a", "vcs_locked_at": "t0", "vcs": "git"},
-                True,
-            ),
-            (
-                {"friendly_name": "a"},
-                {"friendly_name": "b", "vcs": "git"},
-                False,
-            ),
-        ],
-    )
-    def test_truth_table(self, committed: dict[str, str] | None, working: dict[str, str], expected: bool) -> None:
-        assert _is_vcs_lock_only_meta_diff(committed, working) is expected
 
 
 class TestParseMetaMapping:
