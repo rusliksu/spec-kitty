@@ -198,7 +198,7 @@
     "full_frozen_dag_acceptance": {
       "status": "MISS_NOT_ESTABLISHED",
       "criterion": "At least 15% critical-path reduction",
-      "reason": "The required full-parallel route was retained but lacks four-stage x3 comparable measurements. Its only frozen observation is the single WP01 base execution, so a full-DAG percentage cannot be claimed. Adding unchanged retained-route costs can only reduce the 1.3815% known-cut saving; it cannot turn this evidence into a 15% pass.",
+      "reason": "The required full-parallel route was retained but lacks four-stage x3 comparable measurements. Its only frozen observation is the single WP01 base execution, so the full-DAG percentage cannot be determined from current evidence.",
       "full_parallel_base_single_observation_seconds": 1538.7777970419265,
       "full_parallel_head_comparable_observations": 0
     }
@@ -247,7 +247,7 @@
         "result": "748 passed, 2 expected xfailed in 587.86s; exit 0 (cycle 2 final)"
       },
       {
-        "command": ".venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_ci_quality_path_filters.py tests/architectural/test_marker_job_completeness.py tests/architectural/test_quarantine_marker.py tests/architectural/test_suite_jobs_gate_blocking.py",
+        "command": ".venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_ci_quality_path_filters.py tests/architectural/test_marker_job_completeness.py tests/architectural/test_quarantine_marker.py tests/architectural/test_suite_jobs_gate_blocking.py tests/architectural/test_ratchet_baselines.py",
         "result": "47 passed in 54.07s; exit 0 (includes ratchet repair and #3284 one-universe oracle)"
       },
       {
