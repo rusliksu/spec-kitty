@@ -1,7 +1,7 @@
 {
-  "event_count": 66,
-  "last_event_id": "01KZNQ0RKYNF0EGBQZB6TERAP5",
-  "materialized_at": "2026-08-10T11:30:38.846838+00:00",
+  "event_count": 73,
+  "last_event_id": "01KZNQXPG655C1XG41QBNA2AF2",
+  "materialized_at": "2026-08-10T11:46:26.921663+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -12,8 +12,8 @@
     "claimed": 0,
     "done": 0,
     "for_review": 0,
-    "in_progress": 2,
-    "in_review": 1,
+    "in_progress": 1,
+    "in_review": 2,
     "planned": 11
   },
   "work_packages": {
@@ -62,16 +62,17 @@
     },
     "WP02": {
       "actor": "codex",
-      "agent": "",
-      "agent_profile": "python-pedro",
+      "agent": "codex",
+      "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "in_progress",
-      "last_event_id": "01KZNMKQRWRFQH0SAKBRPCSDGP",
-      "last_transition_at": "2026-08-10T10:48:34.815784+00:00",
+      "lane": "in_review",
+      "last_event_id": "01KZNQMJJZKTBWZ7WRC4S14CJA",
+      "last_transition_at": "2026-08-10T11:41:28.031535+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
-        "Ready for review: recoverable cross-platform lease, bounded cached scanner, exact replay and matched evidence"
+        "Ready for review: recoverable cross-platform lease, bounded cached scanner, exact replay and matched evidence",
+        "Cycle 2 ready: invalid final entries recover safely; scanner rows authenticated across processes; causal pre-fix raw evidence and three documented clean starts recorded"
       ],
       "provider": "__resolved_provider_absent__",
       "review": null,
@@ -81,17 +82,17 @@
         "reviewer": "user",
         "verdict": "changes_requested"
       },
-      "role": "implementer",
-      "shell_pid": 0,
+      "role": "reviewer",
+      "shell_pid": 28365,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T007": "planned",
-        "T008": "planned",
-        "T009": "planned",
-        "T010": "planned",
-        "T011": "planned",
-        "T012": "planned",
-        "T050": "planned"
+        "T007": "done",
+        "T008": "done",
+        "T009": "done",
+        "T010": "done",
+        "T011": "done",
+        "T012": "done",
+        "T050": "done"
       },
       "tracker_refs": [
         "#3283",
@@ -123,16 +124,17 @@
     },
     "WP04": {
       "actor": "codex",
-      "agent": "",
-      "agent_profile": "implementer-ivan",
+      "agent": "codex",
+      "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
       "force_count": 1,
-      "lane": "in_progress",
-      "last_event_id": "01KZNMAFXK0HQVP794B2BCJNKX",
-      "last_transition_at": "2026-08-10T10:43:31.862368+00:00",
+      "lane": "in_review",
+      "last_event_id": "01KZNQTEWGTBWWYFWYZC9PMBVX",
+      "last_transition_at": "2026-08-10T11:44:40.849014+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
-        "Ready for review: consolidated 82 exact duplicate groups; removed 104 collected nodes; retained unique import, platform, and causal seams. Gate override rationale: workflow scoped run times out without JUnit exactly as WP04 baseline records; independent 727-node affected cohort is green (725 passed, 2 skipped), validator/ruff/5 fault sentinels green."
+        "Ready for review: consolidated 82 exact duplicate groups; removed 104 collected nodes; retained unique import, platform, and causal seams. Gate override rationale: workflow scoped run times out without JUnit exactly as WP04 baseline records; independent 727-node affected cohort is green (725 passed, 2 skipped), validator/ruff/5 fault sentinels green.",
+        "Cycle 2 evidence reconciled: 110/110 gross removed definitions ledgered (82 exact + 9 semantic families), 706->602 selected cohort with base 704p/2s and HEAD 600p/2s, 43 intended causal oracle failures across 3 campaigns, validator green, ruff green, focused smoke 6 passed. Canonical scoped gate truthfully timed out at 300.011s/17%; raw receipt persisted. Its early F is explicitly base-red/head-red under identical exact-node selector/environment; both receipts persisted."
       ],
       "provider": "__resolved_provider_absent__",
       "review": null,
@@ -142,16 +144,16 @@
         "reviewer": "user",
         "verdict": "changes_requested"
       },
-      "role": "implementer",
-      "shell_pid": 0,
+      "role": "reviewer",
+      "shell_pid": 28365,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T020": "planned",
-        "T021": "planned",
-        "T022": "planned",
-        "T023": "planned",
-        "T024": "planned",
-        "T025": "planned"
+        "T020": "done",
+        "T021": "done",
+        "T022": "done",
+        "T023": "done",
+        "T024": "done",
+        "T025": "done"
       },
       "tracker_refs": [
         "#1931"
@@ -159,13 +161,13 @@
     },
     "WP05": {
       "actor": "codex",
-      "agent": "codex",
-      "agent_profile": "reviewer-renata",
+      "agent": "",
+      "agent_profile": "architect-alphonso",
       "agent_profile_version": "1.0",
-      "force_count": 0,
-      "lane": "in_review",
-      "last_event_id": "01KZNQ0RKYNF0EGBQZB6TERAP5",
-      "last_transition_at": "2026-08-10T11:30:38.846838+00:00",
+      "force_count": 1,
+      "lane": "in_progress",
+      "last_event_id": "01KZNQXPG655C1XG41QBNA2AF2",
+      "last_transition_at": "2026-08-10T11:46:26.921663+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "Retired 54 spent structural nodes; all 28 retained scanner files green; disposition audit valid.",
@@ -174,21 +176,21 @@
       "provider": "__resolved_provider_absent__",
       "review": null,
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP05-structural-scaffold-retirement/review-cycle-1.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP05-structural-scaffold-retirement/review-cycle-1.md",
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP05-structural-scaffold-retirement/review-cycle-2.md",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP05-structural-scaffold-retirement/review-cycle-2.md",
         "reviewer": "reviewer-renata",
         "verdict": "changes_requested"
       },
-      "role": "reviewer",
-      "shell_pid": 28365,
+      "role": "implementer",
+      "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T026": "done",
-        "T027": "done",
-        "T028": "done",
-        "T029": "done",
-        "T030": "done",
-        "T031": "done"
+        "T026": "planned",
+        "T027": "planned",
+        "T028": "planned",
+        "T029": "planned",
+        "T030": "planned",
+        "T031": "planned"
       },
       "tracker_refs": [
         "#1931"
