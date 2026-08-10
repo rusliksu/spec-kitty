@@ -3,10 +3,11 @@
   "mission": "assertive-test-suite-sanitation-01KZME3P",
   "work_package": "WP13",
   "profile": "architect-alphonso",
-  "generated_at": "2026-08-10T16:20:55Z",
+  "generated_at": "2026-08-10T16:53:32Z",
+  "implementation_cycle": 2,
   "review_cycle_limit": 3,
   "planning_base": "28ae75ea998c898aba57364db7a06d2088bd2af2",
-  "implementation_head_before_commit": "13a8f095d6f5ec760d926ce25d6279685c63414b",
+  "implementation_head_before_commit": "166616671c4cee9d06863e43ec1a4b29c8de9638",
   "tracker": {
     "reference": "#1931",
     "state": "OPEN",
@@ -44,32 +45,32 @@
     "execution_note": "No redundant pre-reduction execution; WP01 census is the immutable base authority."
   },
   "head": {
-    "command": ".venv/bin/pytest -q -n 4 --dist loadfile -p no:cacheprovider <24 surviving owned test paths>",
-    "collection_command": ".venv/bin/pytest --collect-only -q -p no:cacheprovider <24 surviving owned test paths>",
-    "collected_nodes": 131,
-    "collection_seconds": 44.15,
-    "wall_seconds": 69.78,
+    "command": ".venv/bin/pytest -q -n 4 --dist loadfile -p no:cacheprovider <26 surviving owned test paths>",
+    "collection_command": ".venv/bin/pytest --collect-only -q -p no:cacheprovider <26 surviving owned test paths>",
+    "collected_nodes": 133,
+    "collection_seconds": 43.66,
+    "wall_seconds": 68.38,
     "pytest_summary": {
-      "passed": 131,
+      "passed": 133,
       "skipped": 0,
       "xfailed": 0,
       "warnings": 1,
       "exit_code": 0
     },
-    "live_test_files": 24,
-    "live_source_lines": 7018
+    "live_test_files": 26,
+    "live_source_lines": 7144
   },
   "delta": {
-    "whole_files_deleted": 18,
-    "reduced_files": 24,
-    "deleted_base_source_units": 114,
-    "deleted_base_nodes": 180,
-    "net_nodes_removed": 395,
-    "node_reduction_percent": 75.1,
-    "source_lines_removed": 8572,
-    "source_line_reduction_percent": 54.98,
-    "tracked_diff_insertions": 250,
-    "tracked_diff_deletions": 8822
+    "whole_files_deleted": 16,
+    "reduced_files": 26,
+    "deleted_base_source_units": 107,
+    "deleted_base_nodes": 173,
+    "net_nodes_removed": 393,
+    "node_reduction_percent": 74.71,
+    "source_lines_removed": 8446,
+    "source_line_reduction_percent": 54.18,
+    "tracked_diff_insertions": 329,
+    "tracked_diff_deletions": 8775
   },
   "deleted_paths": [
     "tests/architectural/test_activation_registry_schema.py",
@@ -80,8 +81,6 @@
     "tests/architectural/test_glossary_canonical_terms.py",
     "tests/architectural/test_glossary_pack_no_regression.py",
     "tests/architectural/test_glossary_pack_urn.py",
-    "tests/architectural/test_profile_load_resolver_guidance.py",
-    "tests/architectural/test_protection_resolver_call_sites.py",
     "tests/architectural/test_resolution_activation_foundation.py",
     "tests/architectural/test_surface_resolution_audit.py",
     "tests/architectural/test_topology_resolution_boundary.py",
@@ -234,6 +233,18 @@
       "path": "tests/architectural/test_single_mission_surface_resolver.py",
       "base_nodes": 24,
       "head_nodes": 8,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/architectural/test_profile_load_resolver_guidance.py",
+      "base_nodes": 6,
+      "head_nodes": 1,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/architectural/test_protection_resolver_call_sites.py",
+      "base_nodes": 1,
+      "head_nodes": 1,
       "verdict": "KEEP_REDUCED"
     }
   ],
@@ -501,20 +512,42 @@
       "act_reached": true,
       "intended_oracle_failed": true,
       "head_nodes": 8
+    },
+    {
+      "family": "resolver-first profile guidance",
+      "path": "tests/architectural/test_profile_load_resolver_guidance.py",
+      "corpus": "nonzero shipped doctrine/built-in guidance plus planted primary-read and bounded fallback",
+      "nonzero": true,
+      "fault": "promote a raw .agent.yaml read to primary profile-loading guidance",
+      "control": "CLI-less read-only fallback includes every divergence caveat",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 1
+    },
+    {
+      "family": "protected-branch resolver authority",
+      "path": "tests/architectural/test_protection_resolver_call_sites.py",
+      "corpus": "all live src Python modules plus planted bypass and sanctioned controls",
+      "nonzero": true,
+      "fault": "add a bare protected_branches call outside the resolver/delegate",
+      "control": "policy attribute access and sanctioned delegate remain accepted",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 1
     }
   ],
   "validation": [
     {
-      "command": ".venv/bin/pytest -q -n 4 --dist loadfile -p no:cacheprovider <24 surviving owned test paths>",
-      "outcome": "131 passed, 0 skipped, 1 expected warning",
+      "command": ".venv/bin/pytest -q -n 4 --dist loadfile -p no:cacheprovider <26 surviving owned test paths>",
+      "outcome": "133 passed, 0 skipped, 1 expected warning",
       "exit_code": 0,
-      "wall_seconds": 69.78
+      "wall_seconds": 68.38
     },
     {
-      "command": ".venv/bin/pytest --collect-only -q -p no:cacheprovider <24 surviving owned test paths>",
-      "outcome": "131 tests collected",
+      "command": ".venv/bin/pytest --collect-only -q -p no:cacheprovider <26 surviving owned test paths>",
+      "outcome": "133 tests collected",
       "exit_code": 0,
-      "wall_seconds": 44.15
+      "wall_seconds": 43.66
     },
     {
       "command": ".venv/bin/ruff check $(git diff --name-only --diff-filter=AM -- '*.py')",
@@ -523,23 +556,23 @@
     },
     {
       "command": ".venv/bin/mypy --disable-error-code no-untyped-def $(git diff --name-only --diff-filter=AM -- '*.py')",
-      "outcome": "Success: no issues found in 24 source files",
+      "outcome": "Success: no issues found in 26 source files",
       "exit_code": 0
     },
     {
-      "command": "git diff --check",
-      "outcome": "clean",
+      "command": "git diff --check HEAD -- <WP13 cycle-2 files>",
+      "outcome": "clean (planning-artifact whitespace outside WP13 implementation scope remains pre-existing)",
       "exit_code": 0
     },
     {
       "command": ".venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_layer_rules.py",
       "outcome": "17 passed",
       "exit_code": 0,
-      "wall_seconds": 46.14
+      "wall_seconds": 45.04
     },
     {
       "command": "PyYAML load plus terminal/count/proof assertions for WP13.yaml",
-      "outcome": "42 terminal paths; 18 DELETE; 24 KEEP_REDUCED; 526 -> 131",
+      "outcome": "42 terminal paths; 16 DELETE; 26 KEEP_REDUCED; 526 -> 133",
       "exit_code": 0
     }
   ],
@@ -551,7 +584,6 @@
       "tests/architectural/test_charter_facades_reexport_doctrine.py",
       "tests/architectural/test_charter_references_resolve.py",
       "tests/architectural/test_charter_runtime_canonical_paths.py",
-      "tests/architectural/test_protection_resolver_call_sites.py",
       "tests/architectural/test_surface_resolution_audit.py",
       "tests/architectural/test_topology_resolution_boundary.py"
     ],
@@ -560,15 +592,13 @@
       "tests/architectural/test_glossary_canonical_terms.py",
       "tests/architectural/test_glossary_pack_no_regression.py",
       "tests/architectural/test_glossary_pack_urn.py",
-      "tests/architectural/test_profile_load_resolver_guidance.py",
       "tests/architectural/test_resolution_activation_foundation.py",
       "tests/architectural/test_urn_resolver_scalar_fence.py"
     ],
     "frozen_nodeid_baseline_stale_paths": [
       "tests/architectural/test_charter_references_resolve.py",
       "tests/architectural/test_doctrine_artefact_layout.py",
-      "tests/architectural/test_glossary_pack_urn.py",
-      "tests/architectural/test_profile_load_resolver_guidance.py"
+      "tests/architectural/test_glossary_pack_urn.py"
     ],
     "downstream_owner": "WP07",
     "complete_architecture_gate_owner": "WP07"
@@ -576,8 +606,8 @@
   "production_files_changed": [],
   "disposition_ledger": {
     "path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP13.yaml",
-    "sha256": "a81c75072aa04ad1eec333f65d82538b2d09864e416de7c8e10b2fa3fb5d28f2",
+    "sha256": "96d49ed9215fec66c860ed560591cc64cb6bc54e43781dc9d2dd7b2df3b9faee",
     "terminal_rows": 42
   },
-  "tracked_test_diff_sha256_before_artifacts": "e4397fa39fde9645b9e8a04bacb42f648d41ae5c54ed4e3426bd61c2feb19af9"
+  "tracked_test_diff_sha256_before_artifacts": "430b6bfabf1b12595f3fc22f0dbf01635755e644d45644bb172b60776dddb4e4"
 }

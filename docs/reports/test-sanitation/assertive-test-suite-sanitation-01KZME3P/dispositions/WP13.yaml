@@ -2,7 +2,7 @@ schema_version: test-sanitation/v1
 mission: assertive-test-suite-sanitation-01KZME3P
 work_package: WP13
 profile: architect-alphonso
-generated_at: '2026-08-10T16:20:55Z'
+generated_at: '2026-08-10T16:53:32Z'
 planning_base: 28ae75ea998c898aba57364db7a06d2088bd2af2
 census_sha256: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
 
@@ -437,27 +437,50 @@ dispositions:
       members: ["tests/architectural/test_profile_load_resolver_guidance.py"]
       granularity: file
       source_paths: ["tests/architectural/test_profile_load_resolver_guidance.py"]
-      production_paths: []
-      oracle: null
-      contract_claim: null
-      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      production_paths: ["src/doctrine/skills/spk-doctrine-profile-load/SKILL.md", "src/doctrine/skills/spk-doctrine-profile-load/references/profile-load-mechanics.md"]
+      oracle: "Shipped profile-loading guidance uses the resolver; only a fully caveated CLI-less read-only fallback may name raw profile files."
+      contract_claim: "Agent guidance cannot bypass profile precedence, lineage, overlays, or override resolution."
+      authority: ["src/doctrine/skills/spk-doctrine-profile-load/SKILL.md", "src/doctrine/skills/spk-doctrine-profile-load/references/profile-load-mechanics.md"]
       scanner_kinds: ["source", "structural"]
       base_source_units: 6
       base_nodes: 6
-      head_nodes: 0
+      head_nodes: 1
       route_memberships: [*architectural_route, *full_parallel_route]
       platforms: [linux, macOS, windows]
       observations:
         - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
-          collection_state: absent
-          outcome: deleted
+          collection_state: collected
+          outcome: passed
           skip_reason: null
           artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
-    evidence: *retired_shape_evidence
-    verdict: DELETE
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "src/doctrine/skills/spk-doctrine-profile-load/SKILL.md"
+          result: "Raw .agent.yaml reads cannot substitute for resolver-backed profile loading."
+        - reference: "src/doctrine/skills/spk-doctrine-profile-load/references/profile-load-mechanics.md#4-read-only-harness-fallback"
+          result: "The only raw-file fallback is CLI-less, read-only, divergence-caveated, and non-mutating."
+      corpus:
+        description: "Nonzero shipped doctrine and built-in pack guidance plus planted primary-read and bounded-fallback controls."
+        nonzero: true
+        collected_nodes: 1
+      consumers: ["agents loading project governance"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Tell an agent to read a raw .agent.yaml file as its primary profile source."
+        compliant_control: "A CLI-less read-only fallback names divergence from overlays, lineage, and overrides."
+        act_reached: true
+        intended_oracle: "Primary raw-profile guidance is rejected while the bounded fallback remains accepted."
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_profile_load_resolver_guidance.py"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
     state: terminal
-    action: "Delete skill-guidance wording scanner and exact fallback prose checks; no runtime consumer oracle."
-    survivor: null
+    action: "Keep one semantic resolver-first gate; remove numeric floors and exact prose coupling."
+    survivor:
+      path: "tests/architectural/test_profile_load_resolver_guidance.py"
+      collected_nodes: 1
     issue: null
     owner: null
     expires: null
@@ -469,27 +492,48 @@ dispositions:
       members: ["tests/architectural/test_protection_resolver_call_sites.py"]
       granularity: file
       source_paths: ["tests/architectural/test_protection_resolver_call_sites.py"]
-      production_paths: []
-      oracle: null
-      contract_claim: null
-      authority: ["kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006", "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007"]
+      production_paths: ["src/specify_cli/git/protection_policy.py", "src/specify_cli/git/commit_helpers.py"]
+      oracle: "Bare protected_branches calls stay confined to the resolver/delegate authority seam."
+      contract_claim: "Protected-branch decisions cannot bypass ProtectionPolicy.resolve."
+      authority: ["docs/adr/3.x/2026-06-26-1-single-authority-seam-and-call-site-gate.md"]
       scanner_kinds: ["ast", "source", "structural"]
       base_source_units: 1
       base_nodes: 1
-      head_nodes: 0
+      head_nodes: 1
       route_memberships: [*architectural_route, *full_parallel_route]
       platforms: [linux, macOS, windows]
       observations:
         - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
-          collection_state: absent
-          outcome: deleted
+          collection_state: collected
+          outcome: passed
           skip_reason: null
           artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
-    evidence: *retired_shape_evidence
-    verdict: DELETE
+    evidence:
+      profile: structural
+      authority_evidence:
+        - reference: "docs/adr/3.x/2026-06-26-1-single-authority-seam-and-call-site-gate.md"
+          result: "Accepted decision names this AST gate as the trusted precedent for the single-authority seam."
+      corpus:
+        description: "Every live src Python module plus planted bypass, attribute-control, and sanctioned-delegate files."
+        nonzero: true
+        collected_nodes: 1
+      consumers: ["src/specify_cli/git/protection_policy.py", "src/specify_cli/git/commit_helpers.py", "all protected-branch callers"]
+      causal_probe:
+        kind: realistic-prohibited-change
+        fault: "Add a bare protected_branches(repo) call outside the resolver/delegate allowlist."
+        compliant_control: "Resolved policy attribute access and the sanctioned delegate remain accepted."
+        act_reached: true
+        intended_oracle: "Only the planted bypass is reported with its exact line."
+        intended_oracle_failed: true
+        command: ".venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_protection_resolver_call_sites.py"
+        environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+        raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+    verdict: KEEP_REDUCED
     state: terminal
-    action: "Delete exact protection resolver call-site inventory/count."
-    survivor: null
+    action: "Keep one accepted-ADR authority gate with live scan and explicit prohibited/compliant bite."
+    survivor:
+      path: "tests/architectural/test_protection_resolver_call_sites.py"
+      collected_nodes: 1
     issue: null
     owner: null
     expires: null
