@@ -37,6 +37,7 @@ import pytest
 import yaml
 
 SCHEMA = "test-sanitation/v1"
+NORMALIZATION_SCHEMA = "test-sanitation-normalization/v1"
 TARGET_INVENTORY_SHA = "28ae75ea998c898aba57364db7a06d2088bd2af2"
 SIBLING_E2E_SHA = "e278ad76552b954f9c7f4ea1e7a364978678b3ca"
 FROZEN_ROUTE_AUTHORITY_HASHES = {
@@ -63,6 +64,7 @@ COLLECTION_STATES = {"collected", "ignored", "deselected", "error", "zero_node"}
 OUTCOMES = {"passed", "failed", "error", "skipped", "xfailed", "xpassed", "not_run", None}
 MEASUREMENT_OUTCOMES = {"passed", "failed", "error", "skipped", "xfailed", "xpassed", "not_run"}
 GRANULARITIES = {"function", "family", "duplicate_cluster", "node"}
+CENSUS_ROLES = {"base", "head"}
 ROUTE_ROLES = {"owner", "coverage", "platform", "hard_gate"}
 EQUIVALENCE_DIMENSIONS = {
     "production_path", "oracle", "outcome", "route_role", "cost_class", "platform", "disposition",
@@ -105,6 +107,17 @@ def _sha(value: bytes | str) -> str:
         value = value.encode()
     # Mission evidence uses standard SHA-256 for portable file/body checksums.
     return hashlib.sha256(value).hexdigest()  # noqa: TID251
+
+
+def _git_rev_parse(spec: str, *, root: Path | None = None) -> str:
+    completed = subprocess.run(
+        ["git", "rev-parse", "--verify", spec], cwd=root, check=False,
+        capture_output=True, text=True,
+    )
+    value = completed.stdout.strip()
+    if completed.returncode != 0 or not re.fullmatch(r"[0-9a-f]{40}", value):
+        raise AuditError(f"cannot resolve git authority {spec}")
+    return value
 
 
 def _rel(path: Path, root: Path) -> str:
@@ -756,8 +769,24 @@ def _reconcile(units: Sequence[SourceUnit], collection: Mapping[str, Any], confi
     }
 
 
-def snapshot(root: Path, tests_path: str, extra_args: Sequence[str], inventory_sha: str | None) -> dict[str, Any]:
+def snapshot(
+    root: Path, tests_path: str, extra_args: Sequence[str], inventory_sha: str | None,
+    census_role: str = "base",
+) -> dict[str, Any]:
     root = root.resolve()
+    if census_role not in CENSUS_ROLES:
+        raise AuditError(f"unknown census role {census_role!r}")
+    if census_role == "head":
+        commit = _git_rev_parse(f"{inventory_sha or 'HEAD'}^{{commit}}", root=root)
+        inventory: dict[str, Any] = {
+            "role": "head", "commit": commit, "target_commit": commit,
+            "tests_tree": _git_rev_parse(f"{commit}:{tests_path}", root=root),
+        }
+    else:
+        inventory = {
+            "role": "base", "commit": inventory_sha or "WORKTREE",
+            "target_commit": TARGET_INVENTORY_SHA,
+        }
     tests_root = (root / tests_path).resolve()
     units, parse_errors = discover_source(root, tests_root)
     test_files = sorted(_rel(path, root) for path in tests_root.rglob("*.py")) if tests_root.exists() else []
@@ -808,7 +837,7 @@ def snapshot(root: Path, tests_path: str, extra_args: Sequence[str], inventory_s
         compact_rows.append(compact)
     evidence = {
         "schema_version": SCHEMA,
-        "inventory": {"commit": inventory_sha or "WORKTREE", "target_commit": TARGET_INVENTORY_SHA},
+        "inventory": inventory,
         "tool": {
             "python": platform.python_implementation() + " " + platform.python_version(),
             "pytest": pytest.__version__, "pyyaml": importlib.metadata.version("PyYAML"),
@@ -1323,8 +1352,39 @@ def validate_census(data: Mapping[str, Any], errors: list[str]) -> None:  # noqa
     if not data.get("ownership", {}).get("complete"):
         errors.append("census: candidate/group owner reconciliation incomplete")
     inventory = data.get("inventory", {})
-    if not isinstance(inventory, dict) or inventory.get("commit") != TARGET_INVENTORY_SHA or inventory.get("target_commit") != TARGET_INVENTORY_SHA:
-        errors.append("census: immutable inventory and target commits must match target SHA")
+    if not isinstance(inventory, dict):
+        errors.append("census: inventory mapping required")
+    else:
+        role = inventory.get("role", "base")
+        if role not in CENSUS_ROLES:
+            errors.append("census: role must be base or head")
+        elif role == "base":
+            if (
+                inventory.get("commit") != TARGET_INVENTORY_SHA
+                or inventory.get("target_commit") != TARGET_INVENTORY_SHA
+            ):
+                errors.append("census: immutable base inventory and target commits must match target SHA")
+        else:
+            commit = inventory.get("commit")
+            target_commit = inventory.get("target_commit")
+            tests_tree = inventory.get("tests_tree")
+            if not (
+                isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}", commit)
+                and target_commit == commit
+                and isinstance(tests_tree, str) and re.fullmatch(r"[0-9a-f]{40}", tests_tree)
+            ):
+                errors.append("census: HEAD role requires identical commit/target_commit and tests_tree authorities")
+            else:
+                try:
+                    recorded_tree = _git_rev_parse(f"{commit}:tests")
+                    current_tree = _git_rev_parse("HEAD:tests")
+                except AuditError as exc:
+                    errors.append(f"census: {exc}")
+                else:
+                    if recorded_tree != tests_tree:
+                        errors.append("census: HEAD tests_tree does not match recorded commit")
+                    if current_tree != tests_tree:
+                        errors.append("census: current tests tree drifted from recorded HEAD census")
     if data.get("source_parse_errors"):
         errors.append("census: source parse errors require explicit repair before inventory")
     units = data.get("source_units", [])
@@ -2011,6 +2071,830 @@ def _collect_route_authority(
         route_authority[route_id] = route
 
 
+def _document_key(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(Path.cwd().resolve()).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def _normalization_source(
+    documents: Sequence[tuple[Path, dict[str, Any]]], key: str,
+) -> dict[str, Any] | None:
+    return next((data for path, data in documents if _document_key(path) == key), None)
+
+
+def _normalization_pointer(data: Any, pointer: str) -> Any:
+    value = data
+    for part in pointer.split("."):
+        if not isinstance(value, dict) or part not in value:
+            raise AuditError(f"normalization pointer not found: {pointer}")
+        value = value[part]
+    return value
+
+
+def _replace_scalar(value: Any, old: str, new: str) -> tuple[Any, int]:
+    if value == old:
+        return new, 1
+    if isinstance(value, list):
+        replaced: list[Any] = []
+        count = 0
+        for item in value:
+            normalized, item_count = _replace_scalar(item, old, new)
+            replaced.append(normalized)
+            count += item_count
+        return replaced, count
+    if isinstance(value, dict):
+        replaced_mapping: dict[str, Any] = {}
+        count = 0
+        for key, item in value.items():
+            normalized, item_count = _replace_scalar(item, old, new)
+            replaced_mapping[key] = normalized
+            count += item_count
+        return replaced_mapping, count
+    return value, 0
+
+
+def _base_observation_index(
+    documents: Sequence[tuple[Path, dict[str, Any]]],
+) -> tuple[dict[str, dict[str, Any]], str, dict[str, Any], str]:
+    census_entry = next(
+        (
+            (path, data) for path, data in documents
+            if "source_units" in data
+            and isinstance(data.get("inventory"), dict)
+            and cast(dict[str, Any], data["inventory"]).get("role", "base") == "base"
+        ),
+        None,
+    )
+    workload = next((data for _, data in documents if isinstance(data.get("frozen_workload_dag"), dict)), None)
+    execution_entry = next((entry for entry in documents if "base_execution" in entry[1]), None)
+    if census_entry is None or workload is None or execution_entry is None:
+        raise AuditError("normalization requires base census, workload, and exact base execution documents")
+    census_path, census = census_entry
+    collection = cast(dict[str, Any], census["collection"])
+    tables = cast(dict[str, Any], collection["tables"])
+    marker_sets = cast(list[list[str]], tables["marker_sets"])
+    reasons = cast(list[str], tables["reasons"])
+    index: dict[str, dict[str, Any]] = {}
+    execution = cast(dict[str, Any], execution_entry[1]["base_execution"])
+    default_outcome = cast(str, execution["default_outcome"])
+    overrides = cast(dict[str, list[str]], execution["outcome_overrides"])
+    outcomes = {
+        nodeid: outcome
+        for outcome, nodeids in overrides.items()
+        for nodeid in nodeids
+    }
+    for compact in cast(list[list[Any]], collection["nodes"]):
+        nodeid = cast(str, compact[0])
+        reason_ref = compact[6]
+        index[nodeid] = {
+            "markers": marker_sets[cast(int, compact[4])],
+            "skip_reason": reasons[reason_ref] if isinstance(reason_ref, int) else None,
+            "outcome": outcomes.get(nodeid, default_outcome),
+        }
+    routes = cast(dict[str, Any], workload["frozen_workload_dag"])["routes"]
+    full_parallel = next(route for route in routes if route.get("id") == "full-parallel")
+    route_membership = dict(cast(list[dict[str, Any]], full_parallel["memberships"])[0])
+    route_membership["route_id"] = "full-parallel"
+    return index, _sha(census_path.read_bytes()), route_membership, _sha(execution_entry[0].read_bytes())
+
+
+def _normalized_observation(
+    member: str, node_index: Mapping[str, Mapping[str, Any]], route: Mapping[str, Any],
+    artifact_hash: str,
+) -> dict[str, Any]:
+    observed = node_index.get(member)
+    if observed is None:
+        raise AuditError(f"normalization member absent from base census: {member}")
+    selector = cast(dict[str, Any], route["selector"])
+    outcome = observed["outcome"]
+    return {
+        "environment_id": selector["environment_id"], "nodeid": member,
+        "collection_state": "collected", "outcome": outcome,
+        "skip_reason": observed["skip_reason"], "markers": observed["markers"],
+        "duration": {"collection": 0.0, "setup": 0.0, "call": 0.0, "cost_class": "unknown"},
+        "artifact_hash": artifact_hash,
+    }
+
+
+def _wp08_review(source: str) -> dict[str, str]:
+    return {
+        "implementer": "implementer-ivan/WP08",
+        "independent_reviewer": "reviewer-renata/pending",
+        "verdict": f"root-arbiter-normalization:{source}",
+        "timestamp": "2026-08-11T00:00:00Z",
+    }
+
+
+def _validate_normalization_authority(  # noqa: C901 - content authorities have distinct validation branches
+    record_path: Path, record: Mapping[str, Any],
+    documents: Sequence[tuple[Path, dict[str, Any]]], errors: list[str],
+) -> None:
+    if record.get("schema_version") != NORMALIZATION_SCHEMA:
+        errors.append(f"{record_path}: invalid normalization schema")
+    body = dict(record)
+    expected = body.pop("content_sha256", None)
+    if not _hash_value(expected) or expected != _sha(_json_bytes(body)):
+        errors.append(f"{record_path}: normalization content_sha256 mismatch")
+    if record.get("mission") != "assertive-test-suite-sanitation-01KZME3P" or record.get("work_package") != "WP08":
+        errors.append(f"{record_path}: normalization mission/WP authority mismatch")
+    authority = record.get("authority")
+    if not isinstance(authority, dict) or authority.get("no_fourth_cycle") is not True or authority.get("review_cycle_cap") != 3:
+        errors.append(f"{record_path}: normalization must record the three-cycle arbiter cap")
+    document_map = {_document_key(path): path for path, _ in documents}
+    for section in ("source_documents", "raw_artifacts"):
+        rows = record.get(section)
+        if not isinstance(rows, list) or not rows:
+            errors.append(f"{record_path}: nonempty {section} required")
+            continue
+        for index, row in enumerate(rows):
+            where = f"{record_path}.{section}[{index}]"
+            if not isinstance(row, dict) or not _nonempty_string(row.get("path")) or not _hash_value(row.get("sha256")):
+                errors.append(f"{where}: path and sha256 required")
+                continue
+            source_path = Path(cast(str, row["path"]))
+            if source_path.is_absolute() or ".." in source_path.parts:
+                errors.append(f"{where}: repository-relative non-traversing path required")
+                continue
+            if section == "source_documents" and source_path.as_posix() not in document_map:
+                errors.append(f"{where}: normalized source document was not supplied")
+                continue
+            resolved = document_map.get(source_path.as_posix(), source_path)
+            if not resolved.is_file() or _sha(resolved.read_bytes()) != row["sha256"]:
+                errors.append(f"{where}: content-addressed source drift")
+    historical = record.get("historical_blobs")
+    if not isinstance(historical, list) or not historical:
+        errors.append(f"{record_path}: historical_blobs required")
+    else:
+        for index, row in enumerate(historical):
+            where = f"{record_path}.historical_blobs[{index}]"
+            if not isinstance(row, dict) or any(not _nonempty_string(row.get(field)) for field in ("commit", "path", "git_blob", "sha256")):
+                errors.append(f"{where}: commit/path/git_blob/sha256 required")
+                continue
+            try:
+                blob_id = _git_rev_parse(f"{row['commit']}:{row['path']}")
+                blob = _git_blob(cast(str, row["commit"]), cast(str, row["path"]))
+            except AuditError as exc:
+                errors.append(f"{where}: {exc}")
+                continue
+            if blob_id != row["git_blob"] or _sha(blob) != row["sha256"]:
+                errors.append(f"{where}: historical git blob authority drift")
+
+
+def _drop_normalized_candidates(
+    source: dict[str, Any], operation: Mapping[str, Any], errors: list[str],
+) -> None:
+    ids = operation.get("candidate_ids")
+    rows = source.get("dispositions")
+    if not isinstance(ids, list) or not _str_list(ids, nonempty=True) or not isinstance(rows, list):
+        errors.append(f"normalization {operation.get('id')}: invalid drop_candidates operation")
+        return
+    expected = set(cast(list[str], ids))
+    found = {
+        cast(str, cast(dict[str, Any], row.get("candidate", {})).get("id"))
+        for row in rows if isinstance(row, dict) and isinstance(row.get("candidate"), dict)
+        and cast(dict[str, Any], row["candidate"]).get("id") in expected
+    }
+    if found != expected:
+        errors.append(f"normalization {operation.get('id')}: candidate set drift; expected={sorted(expected)} found={sorted(found)}")
+        return
+    source["dispositions"] = [
+        row for row in rows
+        if not isinstance(row, dict) or not isinstance(row.get("candidate"), dict)
+        or cast(dict[str, Any], row["candidate"]).get("id") not in expected
+    ]
+
+
+def _patch_wp10(
+    source: dict[str, Any], operation: Mapping[str, Any],
+    documents: Sequence[tuple[Path, dict[str, Any]]], errors: list[str],
+) -> None:
+    rows = source.get("dispositions")
+    if not isinstance(rows, list):
+        errors.append("normalization wp10: dispositions list missing")
+        return
+    candidate_id = operation.get("candidate_id")
+    source_path = operation.get("source")
+    stale_probe = operation.get("stale_probe_sha256")
+    if not isinstance(source_path, str) or not isinstance(stale_probe, str) or (
+        Path(source_path).read_text(encoding="utf-8").count(stale_probe)
+        != operation.get("expected_serialized_probe_occurrences")
+    ):
+        errors.append("normalization wp10: serialized stale-probe occurrence drift")
+        return
+    matches = [
+        row for row in rows if isinstance(row, dict) and isinstance(row.get("candidate"), dict)
+        and cast(dict[str, Any], row["candidate"]).get("id") == candidate_id
+    ]
+    if len(matches) != 1:
+        errors.append(f"normalization wp10: expected one {candidate_id} row, found {len(matches)}")
+        return
+    candidate = cast(dict[str, Any], matches[0]["candidate"])
+    members = candidate.get("members")
+    observations = candidate.get("observations")
+    stale_member = operation.get("stale_member")
+    if not isinstance(members, list) or members.count(stale_member) != 1 or not isinstance(observations, list):
+        errors.append("normalization wp10: stale classifier identity drift")
+        return
+    candidate["members"] = [operation["canonical_member"] if member == stale_member else member for member in members]
+    stale_observations = [row for row in observations if isinstance(row, dict) and row.get("nodeid") == stale_member]
+    if len(stale_observations) != 1:
+        errors.append("normalization wp10: stale classifier observation drift")
+        return
+    stale_observations[0]["nodeid"] = operation["canonical_observation"]
+    normalized, probe_count = _replace_scalar(source, stale_probe, cast(str, operation["current_probe_sha256"]))
+    normalized, results_count = _replace_scalar(normalized, cast(str, operation["stale_results_sha256"]), cast(str, operation["current_results_sha256"]))
+    if probe_count != operation.get("expected_loaded_probe_references") or results_count != 1:
+        errors.append(f"normalization wp10: stale hash occurrence drift probe={probe_count} results={results_count}")
+        return
+    source.clear()
+    source.update(cast(dict[str, Any], normalized))
+    rows = source.get("dispositions")
+    if not isinstance(rows, list):
+        errors.append("normalization wp10: normalized dispositions list missing")
+        return
+    omitted_member = operation.get("omitted_exact_member")
+    omitted_observation = operation.get("omitted_exact_observation")
+    survivor = operation.get("omitted_exact_survivor")
+    if not all(isinstance(value, str) for value in (omitted_member, omitted_observation, survivor)):
+        errors.append("normalization wp10: omitted exact-member authority is incomplete")
+        return
+    represented = {
+        member for row in rows if isinstance(row, dict)
+        for member in cast(dict[str, Any], row.get("candidate", {})).get("members", [])
+    }
+    if omitted_member in represented or omitted_observation in represented:
+        errors.append("normalization wp10: omitted exact member is already represented")
+        return
+    try:
+        node_index, _, route, execution_hash = _base_observation_index(documents)
+        observation = _normalized_observation(cast(str, omitted_observation), node_index, route, execution_hash)
+    except AuditError as exc:
+        errors.append(f"normalization wp10: {exc}")
+        return
+    rows.append({
+        "candidate": {
+            "id": f"WP08-WP10-exact-omission-{_sha(cast(str, omitted_member))[:16]}",
+            "members": [omitted_member], "granularity": "node",
+            "source_paths": [cast(str, omitted_member).split("::", 1)[0]],
+            "production_paths": ["src/specify_cli"],
+            "oracle": None, "contract_claim": None,
+            "authority": [
+                "kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP10-cli-architecture-consolidation/final-review.md",
+                "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007",
+            ],
+            "duplicate_group": "WP10-authored-applies-edge-duplicate",
+            "route_memberships": [copy.deepcopy(route)],
+            "platforms": ["linux", "macOS", "windows"],
+            "observations": [observation],
+        },
+        "evidence": {
+            "profile": "duplicate",
+            "overlap_evidence": [{
+                "left": cast(str, omitted_member), "right": cast(str, survivor),
+                "result": "The allowlist-empty shape assertion is dominated by the live shipped-tree authored-applies-edge survivor.",
+            }],
+            "causal_probe": {
+                "kind": "WP10-authored-applies-edge-dominance",
+                "fault": "Author an applies edge in a shipped mission fragment.",
+                "authority_violated": "No shipped mission fragment may author an applies edge.",
+                "act_reached": True,
+                "intended_oracle": "The survivor identifies the authored edge in the shipped tree.",
+                "intended_oracle_failed": True,
+                "command": f".venv/bin/pytest -q {cast(str, omitted_member).split('::', 1)[0]}",
+                "environment": "WP10 reviewed mission environment; exact base identity supplied by immutable census",
+                "raw_artifact_hash": execution_hash,
+            },
+        },
+        "verdict": "DELETE", "state": "terminal",
+        "action": "Delete the dominated empty-allowlist shape assertion; retain the live shipped-tree authored-edge survivor.",
+        "survivor": survivor, "issue": "#3284", "owner": None,
+        "expires": None, "hic_approval": None,
+        "review": _wp08_review("WP10-final-review-exact-member-omission"),
+    })
+
+
+def _synthesize_wp05_survivors(
+    source: dict[str, Any], operation: Mapping[str, Any],
+    documents: Sequence[tuple[Path, dict[str, Any]]], raw_hashes: Mapping[str, str],
+    errors: list[str],
+) -> None:
+    rows = source.get("dispositions")
+    evidence_path = operation.get("evidence_artifact")
+    if not isinstance(rows, list) or not isinstance(evidence_path, str) or evidence_path not in raw_hashes:
+        errors.append("normalization wp05: invalid survivor-map authority")
+        return
+    try:
+        raw = json.loads(Path(evidence_path).read_text(encoding="utf-8"))
+        survivor_rows = _normalization_pointer(raw, cast(str, operation["pointer"]))
+        node_index, _, route, execution_hash = _base_observation_index(documents)
+    except (AuditError, KeyError, json.JSONDecodeError, OSError) as exc:
+        errors.append(f"normalization wp05: {exc}")
+        return
+    required = {
+        "path", "nodeid", "production_surface", "authority", "fault",
+        "act_assertion", "command", "raw_artifact_hash",
+    }
+    if not isinstance(survivor_rows, list) or len(survivor_rows) != operation.get("expected_paths"):
+        errors.append("normalization wp05: survivor path count drift")
+        return
+    if any(not isinstance(row, dict) or not required <= set(row) for row in survivor_rows):
+        errors.append("normalization wp05: survivor proof schema drift")
+        return
+    paths = [cast(str, row["path"]) for row in survivor_rows]
+    nodeids = [cast(str, row["nodeid"]) for row in survivor_rows]
+    if len(paths) != len(set(paths)) or len(nodeids) != len(set(nodeids)):
+        errors.append("normalization wp05: survivor identities must be unique")
+        return
+    existing_paths = {
+        path for row in rows if isinstance(row, dict)
+        for path in cast(dict[str, Any], row.get("candidate", {})).get("source_paths", [])
+    }
+    overlap = existing_paths & set(paths)
+    if overlap:
+        errors.append(f"normalization wp05: retained scanner paths already represented: {sorted(overlap)}")
+        return
+    for proof in survivor_rows:
+        member = cast(str, proof["nodeid"])
+        path = cast(str, proof["path"])
+        if member not in node_index or member.split("::", 1)[0] != path:
+            errors.append(f"normalization wp05: survivor identity absent or substituted: {member}")
+            continue
+        rows.append({
+            "candidate": {
+                "id": f"WP08-WP05-survivor-{_sha(path)[:16]}",
+                "members": [member], "granularity": "node", "source_paths": [path],
+                "production_paths": [cast(str, proof["production_surface"])],
+                "oracle": cast(str, proof["act_assertion"]),
+                "contract_claim": f"Retained structural scanner catches: {proof['fault']}",
+                "authority": [cast(str, proof["authority"]), evidence_path],
+                "duplicate_group": None, "route_memberships": [copy.deepcopy(route)],
+                "platforms": ["linux", "macOS", "windows"],
+                "observations": [_normalized_observation(member, node_index, route, execution_hash)],
+            },
+            "evidence": {
+                "profile": "structural",
+                "authority_evidence": [{
+                    "reference": cast(str, proof["authority"]),
+                    "result": f"WP05 cycle-3 survivor proof retains this exact scanner path; result-set sha256={raw_hashes[evidence_path]}.",
+                }],
+                "causal_probe": {
+                    "kind": "WP05-reviewed-survivor-fault", "fault": cast(str, proof["fault"]),
+                    "authority_violated": cast(str, proof["authority"]), "act_reached": True,
+                    "intended_oracle": cast(str, proof["act_assertion"]), "intended_oracle_failed": True,
+                    "command": cast(str, proof["command"]),
+                    "environment": "WP05 cycle-3 reviewed mission environment",
+                    "raw_artifact_hash": cast(str, proof["raw_artifact_hash"]),
+                },
+            },
+            "verdict": "KEEP", "state": "terminal",
+            "action": "Retain the exact reviewed WP05 structural scanner survivor.",
+            "survivor": None, "issue": "#3284", "owner": None,
+            "expires": None, "hic_approval": None,
+            "review": _wp08_review("WP05-cycle-3-content-addressed-survivor-map"),
+        })
+
+
+def _append_wp07_scanner_paths(
+    source: dict[str, Any], operation: Mapping[str, Any],
+    documents: Sequence[tuple[Path, dict[str, Any]]], raw_hashes: Mapping[str, str],
+    errors: list[str],
+) -> None:
+    rows = source.get("dispositions")
+    paths = operation.get("paths")
+    evidence_path = operation.get("evidence_artifact")
+    route_manifest = operation.get("route_manifest")
+    if (
+        not isinstance(rows, list) or not _str_list(paths, nonempty=True)
+        or not isinstance(evidence_path, str) or evidence_path not in raw_hashes
+        or not isinstance(route_manifest, str) or route_manifest not in raw_hashes
+    ):
+        errors.append("normalization wp07: invalid retained-route authority")
+        return
+    try:
+        node_index, _, route, execution_hash = _base_observation_index(documents)
+    except AuditError as exc:
+        errors.append(f"normalization wp07: {exc}")
+        return
+    existing_paths = {
+        path for row in rows if isinstance(row, dict)
+        for path in cast(dict[str, Any], row.get("candidate", {})).get("source_paths", [])
+    }
+    overlap = existing_paths & set(cast(list[str], paths))
+    if overlap:
+        errors.append(f"normalization wp07: retained scanner paths already represented: {sorted(overlap)}")
+        return
+    for path in cast(list[str], paths):
+        members = sorted(nodeid for nodeid in node_index if nodeid.split("::", 1)[0] == path)
+        if not members:
+            errors.append(f"normalization wp07: retained route path absent from base census: {path}")
+            continue
+        member = members[0]
+        route_evidence = copy.deepcopy(route)
+        route_evidence["result"] = "Reviewed WP07 route manifest preserves blocking narrow-route ownership for this scanner path."
+        rows.append({
+            "candidate": {
+                "id": f"WP08-WP07-route-survivor-{_sha(path)[:16]}",
+                "members": [member], "granularity": "node", "source_paths": [path],
+                "production_paths": [".github/workflows/ci-quality.yml"],
+                "oracle": "Workflow selectors, marker completeness, quarantine isolation, and blocking suite-job semantics remain enforced.",
+                "contract_claim": "Every retained routing architecture scanner owns a current blocking CI contract.",
+                "authority": [
+                    "kitty-specs/assertive-test-suite-sanitation-01KZME3P/contracts/ci-routing.md",
+                    route_manifest,
+                ],
+                "duplicate_group": None, "route_memberships": [copy.deepcopy(route)],
+                "platforms": ["linux", "macOS", "windows"],
+                "observations": [_normalized_observation(member, node_index, route, execution_hash)],
+            },
+            "evidence": {
+                "profile": "route", "routing_evidence": [route_evidence],
+                "cost_evidence": {
+                    "identity": evidence_path,
+                    "result": (
+                        "WP07 bounded focused validation passed 47 nodes; "
+                        f"results sha256={raw_hashes[evidence_path]}; "
+                        f"route-manifest sha256={raw_hashes[route_manifest]}."
+                    ),
+                },
+                "causal_probe": {
+                    "kind": "WP07-blocking-route-contract-fault",
+                    "fault": f"Remove the blocking workflow ownership or selector for {path}.",
+                    "authority_violated": "Every retained routing scanner must remain selected by a blocking CI route.",
+                    "act_reached": True,
+                    "intended_oracle": "The focused routing architecture suite reports the missing or non-blocking route.",
+                    "intended_oracle_failed": True,
+                    "command": (
+                        ".venv/bin/pytest -q tests/architectural/test_marker_job_completeness.py "
+                        "tests/architectural/test_quarantine_marker.py "
+                        "tests/architectural/test_suite_jobs_gate_blocking.py"
+                    ),
+                    "environment": "WP07 cycle-3 reviewed mission environment",
+                    "raw_artifact_hash": raw_hashes[evidence_path],
+                },
+            },
+            "verdict": "KEEP", "state": "terminal",
+            "action": "Retain the reviewed proportional CI-routing architecture scanner.",
+            "survivor": None, "issue": "#3284", "owner": None,
+            "expires": None, "hic_approval": None,
+            "review": _wp08_review("WP07-cycle-3-route-scanner-map"),
+        })
+
+
+def _append_wp06_omissions(
+    source: dict[str, Any], operation: Mapping[str, Any],
+    documents: Sequence[tuple[Path, dict[str, Any]]], raw_hashes: Mapping[str, str],
+    errors: list[str],
+) -> None:
+    rows = source.get("dispositions")
+    members = operation.get("members")
+    evidence_artifact = operation.get("evidence_artifact")
+    if not isinstance(rows, list) or not _str_list(members, nonempty=True) or evidence_artifact not in raw_hashes:
+        errors.append("normalization wp06: invalid omitted-member authority")
+        return
+    try:
+        node_index, _, route, execution_hash = _base_observation_index(documents)
+    except AuditError as exc:
+        errors.append(f"normalization wp06: {exc}")
+        return
+    existing = {
+        member for row in rows if isinstance(row, dict)
+        for member in cast(dict[str, Any], row.get("candidate", {})).get("members", [])
+    }
+    overlap = existing & set(cast(list[str], members))
+    if overlap:
+        errors.append(f"normalization wp06: omitted members already present: {sorted(overlap)}")
+        return
+    for member in cast(list[str], members):
+        candidate_id = f"WP08-WP06-omission-{_sha(member)[:16]}"
+        rows.append({
+            "candidate": {
+                "id": candidate_id, "members": [member], "granularity": "node",
+                "source_paths": [member.split("::", 1)[0]], "production_paths": [],
+                "oracle": None, "contract_claim": None,
+                "authority": [
+                    "kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP06-baseline-red-adjudication/arbiter-decision.md",
+                    "kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007",
+                ],
+                "duplicate_group": "WP06-reachability-zero-signal-omissions",
+                "route_memberships": [copy.deepcopy(route)],
+                "platforms": ["linux", "macOS", "windows"],
+                "observations": [_normalized_observation(member, node_index, route, execution_hash)],
+            },
+            "evidence": {
+                "profile": "dead_symbol",
+                "caller_evidence": [{
+                    "command": f"rg -n --fixed-strings {shlex.quote(member.rsplit('::', 1)[-1])} tests/doctrine/drg/test_reachability.py",
+                    "result": "The node asserted only reachability membership/count/meta shape and owned no distinct production caller boundary.",
+                }],
+                "authority_evidence": [{
+                    "reference": cast(str, evidence_artifact),
+                    "result": (
+                        f"WP06 cycle-3 review and root arbiter classify {member} as a valid "
+                        f"zero-signal deletion; raw_sha256={raw_hashes[cast(str, evidence_artifact)]}."
+                    ),
+                }],
+            },
+            "verdict": "DELETE", "state": "terminal",
+            "action": "Terminally record the approved omitted reachability membership/count/meta-pin deletion; do not restore it.",
+            "survivor": None, "issue": "#3284", "owner": None,
+            "expires": None, "hic_approval": None,
+            "review": _wp08_review("WP06-final-review-omission-assignment"),
+        })
+
+
+def _wp09_structural_evidence(
+    outcome: str, family: str, successor: str | None, screening: Mapping[str, Any],
+    evidence_path: str, evidence_hash: str,
+) -> tuple[dict[str, Any], str, str | None]:
+    authority = str(screening.get("authority") or "spec.md FR-006/FR-007 current-authority absence")
+    oracle = str(screening.get("oracle") or "no distinct live observable oracle")
+    if outcome == "KEEP_EXACT":
+        evidence = {
+            "profile": "structural",
+            "authority_evidence": [{"reference": authority, "result": f"Nonzero live corpus: {screening.get('corpus')}"}],
+            "causal_probe": {
+                "kind": "WP09-controlled-fault-family", "fault": f"plausible authority violation for {family}",
+                "authority_violated": authority, "act_reached": True,
+                "intended_oracle": oracle, "intended_oracle_failed": True,
+                "command": f"Replay controlled_fault_proofs from {evidence_path}",
+                "environment": "WP09 reviewed CPython 3.11 mission environment",
+                "raw_artifact_hash": evidence_hash,
+            },
+        }
+        return evidence, "KEEP", None
+    if outcome in {"FOLD_TO_SURVIVOR", "FOLD_TO_EXTERNAL_SURVIVOR"}:
+        evidence = {
+            "profile": "duplicate",
+            "overlap_evidence": [{
+                "left": family, "right": successor or "reviewed external survivor",
+                "result": f"WP09 frozen map classifies this member as {outcome}; the named successor owns the live boundary.",
+            }],
+            "causal_probe": {
+                "kind": "WP09-successor-controlled-fault", "fault": f"remove or violate successor for {family}",
+                "authority_violated": authority, "act_reached": True,
+                "intended_oracle": oracle, "intended_oracle_failed": True,
+                "command": f"Replay controlled_fault_proofs and cycle_3_reconciliation from {evidence_path}",
+                "environment": "WP09 reviewed CPython 3.11 mission environment",
+                "raw_artifact_hash": evidence_hash,
+            },
+        }
+        return evidence, "DELETE", successor
+    evidence = {
+        "profile": "dead_symbol",
+        "caller_evidence": [{
+            "command": f"Replay cycle_3_reconciliation family {family} from {evidence_path}",
+            "result": "No distinct production caller or live bug-catching boundary remained.",
+        }],
+        "authority_evidence": [{
+            "reference": authority,
+            "result": f"WP09 final review classified {family} as obsolete shape/self-test/history with no unique authority; raw_sha256={evidence_hash}.",
+        }],
+    }
+    return evidence, "DELETE", None
+
+
+def _synthesize_wp09(
+    source: dict[str, Any], operation: Mapping[str, Any],
+    documents: Sequence[tuple[Path, dict[str, Any]]], raw_hashes: Mapping[str, str],
+    errors: list[str],
+) -> None:
+    evidence_path = operation.get("evidence_artifact")
+    if not isinstance(evidence_path, str) or evidence_path not in raw_hashes:
+        errors.append("normalization wp09: evidence artifact is not content-addressed")
+        return
+    try:
+        raw = json.loads(Path(evidence_path).read_text(encoding="utf-8"))
+        map_rows = _normalization_pointer(raw, cast(str, operation["map_pointer"]))
+        map_fields = _normalization_pointer(raw, cast(str, operation["map_fields_pointer"]))
+        node_index, _, route, execution_hash = _base_observation_index(documents)
+    except (AuditError, KeyError, json.JSONDecodeError, OSError) as exc:
+        errors.append(f"normalization wp09: {exc}")
+        return
+    if not isinstance(map_rows, list) or not isinstance(map_fields, list) or map_fields != [
+        "frozen_nodeid", "outcome", "family", "successor_or_equivalent",
+    ]:
+        errors.append("normalization wp09: frozen map schema drift")
+        return
+    mapped = [dict(zip(cast(list[str], map_fields), row, strict=True)) for row in map_rows if isinstance(row, list)]
+    members = [row.get("frozen_nodeid") for row in mapped]
+    if (
+        len(mapped) != operation.get("expected_members")
+        or len(members) != len(set(members))
+        or not all(isinstance(member, str) and member in node_index for member in members)
+    ):
+        errors.append("normalization wp09: frozen identity totality/source drift")
+        return
+    outcomes = {"KEEP_EXACT", "DELETE_NO_UNIQUE_BOUNDARY", "FOLD_TO_SURVIVOR", "FOLD_TO_EXTERNAL_SURVIVOR"}
+    if any(row.get("outcome") not in outcomes for row in mapped):
+        errors.append("normalization wp09: unknown terminal outcome")
+        return
+    screenings = source.get("screening")
+    if not isinstance(screenings, list):
+        errors.append("normalization wp09: screening list missing")
+        return
+    screening_by_path = {
+        row["path"]: row for row in screenings if isinstance(row, dict) and isinstance(row.get("path"), str)
+    }
+    if source.get("dispositions") not in (None, []):
+        errors.append("normalization wp09: legacy source unexpectedly has dispositions")
+        return
+    normalized_rows: list[dict[str, Any]] = []
+    for mapped_row in mapped:
+        member = cast(str, mapped_row["frozen_nodeid"])
+        path = member.split("::", 1)[0]
+        screening = screening_by_path.get(path)
+        if screening is None:
+            errors.append(f"normalization wp09: no screening authority for {path}")
+            continue
+        outcome = cast(str, mapped_row["outcome"])
+        family = cast(str, mapped_row["family"])
+        successor_value = mapped_row.get("successor_or_equivalent")
+        successor = successor_value if isinstance(successor_value, str) else None
+        evidence, verdict, terminal_survivor = _wp09_structural_evidence(
+            outcome, family, successor, screening, evidence_path, raw_hashes[evidence_path],
+        )
+        keep = verdict == "KEEP"
+        oracle = str(screening.get("oracle") or "") if keep else None
+        authority = str(screening.get("authority") or "spec.md FR-006/FR-007")
+        normalized_rows.append({
+            "candidate": {
+                "id": f"WP08-WP09-{_sha(member)[:16]}", "members": [member],
+                "granularity": "node", "source_paths": [path],
+                "production_paths": [f"live corpus: {screening.get('corpus')}"] if keep else [],
+                "oracle": oracle, "contract_claim": f"WP09 structural authority: {oracle}" if keep else None,
+                "authority": [authority], "duplicate_group": family,
+                "route_memberships": [copy.deepcopy(route)],
+                "platforms": ["linux", "macOS", "windows"],
+                "observations": [_normalized_observation(member, node_index, route, execution_hash)],
+            },
+            "evidence": evidence, "verdict": verdict, "state": "terminal",
+            "action": (
+                "Retain exact reviewed WP09 live guard." if keep
+                else f"Delete reviewed WP09 legacy member; terminal family={family}."
+            ),
+            "survivor": terminal_survivor, "issue": "#1931", "owner": None,
+            "expires": None, "hic_approval": None,
+            "review": _wp08_review("WP09-cycle-3-content-addressed-map"),
+        })
+    if errors:
+        return
+    deleted = sum(row["verdict"] == "DELETE" for row in normalized_rows)
+    if deleted != operation.get("expected_terminal_deletions"):
+        errors.append("normalization wp09: terminal-deletion arithmetic drift")
+        return
+    expected_members = operation.get("expected_members")
+    expected_current = operation.get("expected_current")
+    expected_net_removed = operation.get("expected_net_removed")
+    if not all(isinstance(value, int) for value in (expected_members, expected_current, expected_net_removed)):
+        errors.append("normalization wp09: net-reduction authorities must be integers")
+        return
+    if cast(int, expected_members) - cast(int, expected_current) != expected_net_removed:
+        errors.append("normalization wp09: net-reduction arithmetic drift")
+        return
+    source["dispositions"] = normalized_rows
+
+
+def _apply_normalization(
+    documents: Sequence[tuple[Path, dict[str, Any]]], errors: list[str],
+) -> list[tuple[Path, dict[str, Any]]]:
+    normalized = [(path, copy.deepcopy(data)) for path, data in documents]
+    records = [(path, data) for path, data in normalized if data.get("schema_version") == NORMALIZATION_SCHEMA]
+    if not records:
+        return normalized
+    if len(records) != 1:
+        errors.append("exactly one normalization authority is permitted")
+        return normalized
+    record_path, record = records[0]
+    _validate_normalization_authority(record_path, record, normalized, errors)
+    raw_rows = record.get("raw_artifacts")
+    raw_hashes = {
+        row["path"]: row["sha256"]
+        for row in raw_rows if isinstance(row, dict) and isinstance(row.get("path"), str)
+        and isinstance(row.get("sha256"), str)
+    } if isinstance(raw_rows, list) else {}
+    operations = record.get("operations")
+    if not isinstance(operations, list) or not operations:
+        errors.append(f"{record_path}: normalization operations required")
+        return normalized
+    operation_ids = [row.get("id") for row in operations if isinstance(row, dict)]
+    if len(operation_ids) != len(operations) or len(operation_ids) != len(set(operation_ids)):
+        errors.append(f"{record_path}: operation ids must be unique nonempty mappings")
+        return normalized
+    for operation in operations:
+        if not isinstance(operation, dict) or not _nonempty_string(operation.get("id")):
+            continue
+        source_key = operation.get("source")
+        source = _normalization_source(normalized, source_key) if isinstance(source_key, str) else None
+        if source is None:
+            errors.append(f"normalization {operation.get('id')}: supplied source document missing")
+            continue
+        kind = operation.get("kind")
+        if kind == "drop_candidates":
+            _drop_normalized_candidates(source, operation, errors)
+        elif kind == "patch_wp10":
+            _patch_wp10(source, operation, normalized, errors)
+        elif kind == "synthesize_wp05_survivors":
+            _synthesize_wp05_survivors(source, operation, normalized, raw_hashes, errors)
+        elif kind == "append_wp06_omissions":
+            _append_wp06_omissions(source, operation, normalized, raw_hashes, errors)
+        elif kind == "append_wp07_scanner_paths":
+            _append_wp07_scanner_paths(source, operation, normalized, raw_hashes, errors)
+        elif kind == "synthesize_wp09_node_map":
+            _synthesize_wp09(source, operation, normalized, raw_hashes, errors)
+        else:
+            errors.append(f"normalization {operation.get('id')}: unknown operation kind {kind!r}")
+    return normalized
+
+
+def _validate_candidate_universe(  # noqa: C901 - each manifest class has a different identity grain
+    census: Mapping[str, Any], member_shards: Mapping[str, set[str]],
+    census_member_nodes: Mapping[str, set[str]], path_shards: Mapping[str, set[str]],
+    errors: list[str],
+) -> dict[str, Any]:
+    manifests = census.get("manifests")
+    if not isinstance(manifests, dict):
+        errors.append("candidate universe: base census manifests mapping required")
+        return {"enforced": True, "valid": False, "classes": {}}
+
+    def member_status(member: str) -> str:
+        direct = member_shards.get(member, set())
+        nodes = census_member_nodes.get(member, set())
+        node_owners = [member_shards.get(node, set()) for node in sorted(nodes)]
+        owners = set(direct)
+        for node_owner in node_owners:
+            owners.update(node_owner)
+        structurally_covered = bool(direct) or bool(nodes) and all(node_owners)
+        if not structurally_covered:
+            return "missing"
+        return "covered" if len(owners) == 1 else "ambiguous"
+
+    class_members: dict[str, list[str]] = {"inert": [], "exact": [], "promoted": []}
+    inert = manifests.get("inert_candidates")
+    if isinstance(inert, list):
+        class_members["inert"] = [
+            row["member"] for row in inert if isinstance(row, dict) and isinstance(row.get("member"), str)
+        ]
+    exact = manifests.get("exact_body_groups")
+    if isinstance(exact, list):
+        class_members["exact"] = [
+            member["member"] for group in exact if isinstance(group, dict)
+            for member in group.get("members", [])
+            if isinstance(member, dict) and isinstance(member.get("member"), str)
+        ]
+    promoted = manifests.get("promoted_semantic_groups")
+    if isinstance(promoted, list):
+        class_members["promoted"] = [
+            member["member"] for group in promoted if isinstance(group, dict)
+            for member in group.get("members", [])
+            if isinstance(member, dict) and isinstance(member.get("member"), str)
+        ]
+    class_counts: dict[str, dict[str, int]] = {}
+    for label, expected_members in class_members.items():
+        missing = [member for member in expected_members if member_status(member) == "missing"]
+        ambiguous = [member for member in expected_members if member_status(member) == "ambiguous"]
+        class_counts[label] = {
+            "expected": len(expected_members), "covered": len(expected_members) - len(missing) - len(ambiguous),
+            "missing": len(missing), "ambiguous": len(ambiguous),
+        }
+        if missing:
+            errors.append(
+                f"candidate universe: {label} missing terminal coverage count={len(missing)} sample={missing[:8]}"
+            )
+        if ambiguous:
+            errors.append(
+                f"candidate universe: {label} duplicated/mixed-grain coverage count={len(ambiguous)} sample={ambiguous[:8]}"
+            )
+    scanners = manifests.get("scanner_candidates")
+    scanner_paths = [
+        row["member"] for row in scanners if isinstance(row, dict) and isinstance(row.get("member"), str)
+    ] if isinstance(scanners, list) else []
+    scanner_missing = [path for path in scanner_paths if not path_shards.get(path)]
+    scanner_duplicated = [path for path in scanner_paths if len(path_shards.get(path, set())) > 1]
+    if scanner_missing:
+        errors.append(
+            f"candidate universe: scanner paths missing terminal shard count={len(scanner_missing)} sample={scanner_missing[:8]}"
+        )
+    if scanner_duplicated:
+        errors.append(
+            "candidate universe: scanner paths span multiple terminal shards "
+            f"count={len(scanner_duplicated)} sample={scanner_duplicated[:8]}"
+        )
+    class_counts["scanner"] = {
+        "expected": len(scanner_paths),
+        "covered": len(scanner_paths) - len(scanner_missing) - len(scanner_duplicated),
+        "missing": len(scanner_missing), "ambiguous": len(scanner_duplicated),
+    }
+    return {
+        "enforced": True,
+        "valid": all(row["missing"] == 0 and row["ambiguous"] == 0 for row in class_counts.values()),
+        "classes": class_counts,
+        "terminal_member_identities": len(member_shards),
+        "terminal_source_paths": len(path_shards),
+    }
+
+
 def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str], dict[str, Any]]:  # noqa: C901 - heterogeneous document fail-closed dispatch
     errors: list[str] = []
     members: dict[str, str] = {}
@@ -2029,6 +2913,7 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
             continue
         loaded.append(path.as_posix())
         documents.append((path, data))
+    documents = _apply_normalization(documents, errors)
     census_members: set[str] = set()
     census_nodes: set[str] = set()
     census_nodeids: list[str] = []
@@ -2039,22 +2924,35 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
     environment_locations: dict[str, str] = {}
     route_authority: dict[str, Mapping[str, Any]] = {}
     route_locations: dict[str, str] = {}
+    base_census_document: Mapping[str, Any] | None = None
+    terminal_member_shards: dict[str, set[str]] = {}
+    terminal_path_shards: dict[str, set[str]] = {}
+    enforce_candidate_universe = any(
+        isinstance(data.get("candidate_universe"), dict)
+        and cast(dict[str, Any], data["candidate_universe"]).get("enforce") is True
+        for _, data in documents
+    )
+    universe_summary: dict[str, Any] = {"enforced": False}
     for path, data in documents:
         if "source_units" in data and "reconciliation" in data:
             validate_census(data, errors)
-            if path.name == "base-census.json":
+            inventory = data.get("inventory", {})
+            role = inventory.get("role", "base") if isinstance(inventory, dict) else "base"
+            if role == "base" and path.name == "base-census.json":
                 if _sha(path.read_bytes()) != FROZEN_BASE_CENSUS_FILE_SHA256:
                     errors.append(f"{path}: bytes do not match immutable base census authority")
                 if data.get("content_sha256") != FROZEN_BASE_CENSUS_CONTENT_SHA256:
                     errors.append(f"{path}: content does not match immutable base census authority")
             document_nodeids, _ = _census_nodeids(data)
-            if census_nodeids and census_nodeids != document_nodeids:
-                errors.append(f"{path}: multiple census node universes disagree")
-            census_nodeids = document_nodeids
-            census_hashes.add(_sha(path.read_bytes()))
-            _collect_census_authority(
-                data, census_members, census_nodes, census_member_nodes, census_member_states,
-            )
+            if role == "base":
+                base_census_document = data
+                if census_nodeids and census_nodeids != document_nodeids:
+                    errors.append(f"{path}: multiple base census node universes disagree")
+                census_nodeids = document_nodeids
+                census_hashes.add(_sha(path.read_bytes()))
+                _collect_census_authority(
+                    data, census_members, census_nodes, census_member_nodes, census_member_states,
+                )
         _collect_route_authority(data, path, route_authority, route_locations, errors)
         environments = data.get("run_environments", data.get("environments", []))
         if isinstance(environments, dict):
@@ -2126,12 +3024,35 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
                 if member in members:
                     errors.append(f"duplicate deep membership {member}: {members[member]} and {path}")
                 members[member] = path.as_posix()
-    return sorted(errors), {"documents": loaded, "dispositions": disposition_count, "unique_members": len(members)}
+                if row.get("state") == "terminal" and row.get("verdict") not in {"FIX_TEST", "FIX_PRODUCT"}:
+                    terminal_member_shards.setdefault(member, set()).add(_document_key(path))
+            if (
+                isinstance(candidate, dict) and row.get("state") == "terminal"
+                and row.get("verdict") not in {"FIX_TEST", "FIX_PRODUCT"}
+            ):
+                source_paths = candidate.get("source_paths")
+                if isinstance(source_paths, list):
+                    for source_path in source_paths:
+                        if isinstance(source_path, str):
+                            terminal_path_shards.setdefault(source_path, set()).add(_document_key(path))
+    if enforce_candidate_universe:
+        if base_census_document is None:
+            errors.append("candidate universe: immutable base census required")
+        else:
+            universe_summary = _validate_candidate_universe(
+                base_census_document, terminal_member_shards, census_member_nodes,
+                terminal_path_shards, errors,
+            )
+    return sorted(errors), {
+        "documents": loaded, "dispositions": disposition_count, "unique_members": len(members),
+        "candidate_universe": universe_summary,
+    }
 
 
 def aggregate(paths: Sequence[Path]) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
     source_files: list[dict[str, str]] = []
+    documents: list[tuple[Path, dict[str, Any]]] = []
     for path in sorted(paths):
         try:
             data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -2140,6 +3061,12 @@ def aggregate(paths: Sequence[Path]) -> dict[str, Any]:
         if not isinstance(data, dict):
             raise AuditError(f"{path}: top-level mapping required")
         source_files.append({"path": path.as_posix(), "sha256": _sha(path.read_bytes())})
+        documents.append((path, data))
+    normalization_errors: list[str] = []
+    documents = _apply_normalization(documents, normalization_errors)
+    if normalization_errors:
+        raise AuditError("normalization invalid: " + "; ".join(sorted(normalization_errors)))
+    for path, data in documents:
         dispositions = data.get("dispositions", [])
         if not isinstance(dispositions, list) or not all(isinstance(row, dict) for row in dispositions):
             raise AuditError(f"{path}: dispositions must be a list of mappings")
@@ -3173,6 +4100,97 @@ def selftest() -> dict[str, Any]:  # noqa: C901 - independent adversarial probes
             checks[f"measurement_{field}_rejected"] = any(
                 fragment in error for error in find_workload_errors(invalid_measurement)
             )
+
+        universe = {
+            "manifests": {
+                "inert_candidates": [{"member": "tests/test_a.py::test_inert"}],
+                "exact_body_groups": [{"members": [{"member": "tests/test_b.py::test_exact"}]}],
+                "promoted_semantic_groups": [{"members": [{"member": "tests/test_c.py::test_promoted"}]}],
+                "scanner_candidates": [{"member": "tests/test_scanner.py"}],
+            },
+        }
+        universe_members = {
+            "tests/test_a.py::test_inert": {"WP-A"},
+            "tests/test_b.py::test_exact": {"WP-B"},
+            "tests/test_c.py::test_promoted": {"WP-C"},
+        }
+
+        def universe_errors(
+            member_owners: Mapping[str, set[str]], path_owners: Mapping[str, set[str]],
+        ) -> list[str]:
+            found: list[str] = []
+            _validate_candidate_universe(universe, member_owners, {}, path_owners, found)
+            return found
+
+        checks["candidate_universe_complete_positive"] = not universe_errors(
+            universe_members, {"tests/test_scanner.py": {"WP-S"}},
+        )
+        omitted_universe = dict(universe_members)
+        del omitted_universe["tests/test_b.py::test_exact"]
+        checks["candidate_universe_omission_rejected"] = any(
+            "exact missing terminal coverage" in error
+            for error in universe_errors(omitted_universe, {"tests/test_scanner.py": {"WP-S"}})
+        )
+        substituted_universe = dict(omitted_universe)
+        substituted_universe["tests/test_b.py::test_substituted"] = {"WP-B"}
+        checks["candidate_universe_substitution_rejected"] = any(
+            "exact missing terminal coverage" in error
+            for error in universe_errors(substituted_universe, {"tests/test_scanner.py": {"WP-S"}})
+        )
+        duplicated_universe = dict(universe_members)
+        duplicated_universe["tests/test_b.py::test_exact"] = {"WP-B", "WP-X"}
+        checks["candidate_universe_duplicate_owner_rejected"] = any(
+            "duplicated/mixed-grain coverage" in error
+            for error in universe_errors(duplicated_universe, {"tests/test_scanner.py": {"WP-S"}})
+        )
+        checks["candidate_universe_scanner_duplicate_rejected"] = any(
+            "scanner paths span multiple terminal shards" in error
+            for error in universe_errors(universe_members, {"tests/test_scanner.py": {"WP-S", "WP-X"}})
+        )
+
+        normalization_path = report_root / "raw" / "legacy-shard-normalization.yaml"
+        normalization_record = cast(dict[str, Any], yaml.safe_load(normalization_path.read_text(encoding="utf-8")))
+        normalization_documents: list[tuple[Path, dict[str, Any]]] = [(normalization_path, normalization_record)]
+        for source_authority in cast(list[dict[str, str]], normalization_record["source_documents"]):
+            source_path = Path(source_authority["path"])
+            normalization_documents.append(
+                (source_path, cast(dict[str, Any], yaml.safe_load(source_path.read_text(encoding="utf-8"))))
+            )
+        normalization_content_tamper = copy.deepcopy(normalization_record)
+        normalization_content_tamper["content_sha256"] = "0" * 64
+        normalization_content_errors: list[str] = []
+        _validate_normalization_authority(
+            normalization_path, normalization_content_tamper, normalization_documents,
+            normalization_content_errors,
+        )
+        checks["normalization_content_hash_tamper_rejected"] = any(
+            "normalization content_sha256 mismatch" in error for error in normalization_content_errors
+        )
+        normalization_source_tamper = copy.deepcopy(normalization_record)
+        normalization_source_tamper["source_documents"][0]["sha256"] = "0" * 64
+        normalization_source_body = dict(normalization_source_tamper)
+        normalization_source_body.pop("content_sha256", None)
+        normalization_source_tamper["content_sha256"] = _sha(_json_bytes(normalization_source_body))
+        normalization_source_errors: list[str] = []
+        _validate_normalization_authority(
+            normalization_path, normalization_source_tamper, normalization_documents,
+            normalization_source_errors,
+        )
+        checks["normalization_source_hash_tamper_rejected"] = any(
+            "content-addressed source drift" in error for error in normalization_source_errors
+        )
+
+        head_provenance_tamper = copy.deepcopy(committed_census)
+        head_commit = _git_rev_parse("HEAD")
+        head_provenance_tamper["inventory"] = {
+            "role": "head", "commit": head_commit, "target_commit": head_commit,
+            "tests_tree": "0" * 40,
+        }
+        head_provenance_errors: list[str] = []
+        validate_census(head_provenance_tamper, head_provenance_errors)
+        checks["head_tests_tree_tamper_rejected"] = any(
+            "HEAD tests_tree does not match recorded commit" in error for error in head_provenance_errors
+        )
         if not all(checks.values()):
             raise AuditError("selftest failures: " + ", ".join(key for key, value in checks.items() if not value))
         return {"valid": True, "checks": checks}
@@ -3194,6 +4212,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     snap.add_argument("--root", type=Path, default=Path.cwd())
     snap.add_argument("--tests", "--tests-path", dest="tests_path", default="tests")
     snap.add_argument("--inventory-sha")
+    snap.add_argument("--census-role", choices=sorted(CENSUS_ROLES), default="base")
     snap.add_argument("--output", type=Path)
     snap.add_argument("pytest_args", nargs=argparse.REMAINDER)
     val = commands.add_parser("validate")
@@ -3214,7 +4233,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "snapshot":
-            result = snapshot(args.root, args.tests_path, args.pytest_args, args.inventory_sha)
+            result = snapshot(
+                args.root, args.tests_path, args.pytest_args, args.inventory_sha,
+                args.census_role,
+            )
             reconciliation = result["reconciliation"]
             ownership = result["ownership"]
             if not reconciliation["complete"] or not ownership["complete"]:

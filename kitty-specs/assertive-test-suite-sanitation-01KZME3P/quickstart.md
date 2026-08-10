@@ -9,11 +9,32 @@ The mission-local auditor performs AST/ignore discovery and invokes pytest with 
 ```bash
 .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py snapshot \
   --tests tests \
+  --census-role head \
+  --inventory-sha HEAD \
   --output docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/head-census.json
 .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py validate \
-  --census docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/head-census.json \
-  --shards docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions \
-  --aggregate docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions.yaml
+  docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json \
+  docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/head-census.json \
+  docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-workloads.yaml \
+  docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-full-suite-summary.txt \
+  docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/legacy-shard-normalization.yaml \
+  docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP*.yaml
+.venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py aggregate \
+  docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json \
+  docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-workloads.yaml \
+  docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-full-suite-summary.txt \
+  docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/legacy-shard-normalization.yaml \
+  docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP*.yaml \
+  --output docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions.yaml
+```
+
+The CLI-shape and anti-vacuity self-check must pass before generation. These invocations also prove every documented subcommand parses on the installed auditor:
+
+```bash
+for command in snapshot validate aggregate selftest; do
+  .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py "$command" --help >/dev/null
+done
+.venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py selftest
 ```
 
 ## 2. Focused changed-cluster proof
