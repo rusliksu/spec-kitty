@@ -79,10 +79,10 @@
       "provider": "__resolved_provider_absent__",
       "review": null,
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP02-test-venv-bootstrap/review-cycle-3.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP02-test-venv-bootstrap/review-cycle-3.md",
-        "reviewer": "reviewer-renata",
-        "verdict": "changes_requested"
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP02-test-venv-bootstrap/arbiter-decision.md",
+        "reference": "arbiter-decision://assertive-test-suite-sanitation-01KZME3P/WP02-test-venv-bootstrap",
+        "reviewer": "root-arbiter",
+        "verdict": "approved"
       },
       "role": "reviewer",
       "shell_pid": 0,
@@ -144,7 +144,8 @@
       "model": "__resolved_model_absent__",
       "notes": [
         "Ready for review: consolidated 82 exact duplicate groups; removed 104 collected nodes; retained unique import, platform, and causal seams. Gate override rationale: workflow scoped run times out without JUnit exactly as WP04 baseline records; independent 727-node affected cohort is green (725 passed, 2 skipped), validator/ruff/5 fault sentinels green.",
-        "Cycle 2 evidence reconciled: 110/110 gross removed definitions ledgered (82 exact + 9 semantic families), 706->602 selected cohort with base 704p/2s and HEAD 600p/2s, 43 intended causal oracle failures across 3 campaigns, validator green, ruff green, focused smoke 6 passed. Canonical scoped gate truthfully timed out at 300.011s/17%; raw receipt persisted. Its early F is explicitly base-red/head-red under identical exact-node selector/environment; both receipts persisted."
+        "Cycle 2 evidence reconciled: 110/110 gross removed definitions ledgered (82 exact + 9 semantic families), 706->602 selected cohort with base 704p/2s and HEAD 600p/2s, 43 intended causal oracle failures across 3 campaigns, validator green, ruff green, focused smoke 6 passed. Canonical scoped gate truthfully timed out at 300.011s/17%; raw receipt persisted. Its early F is explicitly base-red/head-red under identical exact-node selector/environment; both receipts persisted.",
+        "Final cycle 3: source-derived member input/callable/oracle/fault contracts persisted for all 25 KEEP rows; 18 honestly resolve source-equivalent and are flagged for final arbiter because cycle scope forbids new deletions. Replayable hashed live-authority injection is persisted: 4 campaigns, 64 selected executions, 64 intended call-phase failures, 0 passes; 65 deleting rows name replayed survivors and one cache delete-all has explicit non-causal counterexample proof. Historical 109 result rows (actual 61/23/25) deduplicated to 91 unique (57/9/25); executable verifier rejects duplicate/count drift. Validator, Ruff, replay verification, and evidence consistency are green. No cycle 4 permitted."
       ],
       "provider": "__resolved_provider_absent__",
       "review": null,
@@ -188,10 +189,10 @@
       "provider": "__resolved_provider_absent__",
       "review": null,
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP05-structural-scaffold-retirement/review-cycle-3.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP05-structural-scaffold-retirement/review-cycle-3.md",
-        "reviewer": "reviewer-renata",
-        "verdict": "changes_requested"
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP05-structural-scaffold-retirement/arbiter-decision.md",
+        "reference": "arbiter-decision://assertive-test-suite-sanitation-01KZME3P/WP05-structural-scaffold-retirement",
+        "reviewer": "root-arbiter",
+        "verdict": "approved"
       },
       "role": "reviewer",
       "shell_pid": 0,
