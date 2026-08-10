@@ -1,7 +1,7 @@
 {
-  "event_count": 64,
-  "last_event_id": "01KZNMKQRWRFQH0SAKBRPCSDGP",
-  "materialized_at": "2026-08-10T10:48:34.815784+00:00",
+  "event_count": 65,
+  "last_event_id": "01KZNPYV1MXYX9AF1FKA7X0DP2",
+  "materialized_at": "2026-08-10T11:29:35.796466+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -11,8 +11,8 @@
     "canceled": 0,
     "claimed": 0,
     "done": 0,
-    "for_review": 0,
-    "in_progress": 3,
+    "for_review": 1,
+    "in_progress": 2,
     "in_review": 0,
     "planned": 11
   },
@@ -158,14 +158,14 @@
       ]
     },
     "WP05": {
-      "actor": "codex",
+      "actor": "user",
       "agent": "",
       "agent_profile": "architect-alphonso",
       "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "in_progress",
-      "last_event_id": "01KZNKWV8T7G88VYPHGJ6B2M8W",
-      "last_transition_at": "2026-08-10T10:36:04.731440+00:00",
+      "lane": "for_review",
+      "last_event_id": "01KZNPYV1MXYX9AF1FKA7X0DP2",
+      "last_transition_at": "2026-08-10T11:29:35.796466+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "Retired 54 spent structural nodes; all 28 retained scanner files green; disposition audit valid."
@@ -182,12 +182,12 @@
       "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T026": "planned",
-        "T027": "planned",
-        "T028": "planned",
-        "T029": "planned",
-        "T030": "planned",
-        "T031": "planned"
+        "T026": "done",
+        "T027": "done",
+        "T028": "done",
+        "T029": "done",
+        "T030": "done",
+        "T031": "done"
       },
       "tracker_refs": [
         "#1931"
