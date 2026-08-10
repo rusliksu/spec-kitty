@@ -1,0 +1,680 @@
+{
+  "schema_version": "test-sanitation-wp-results/v1",
+  "mission": "assertive-test-suite-sanitation-01KZME3P",
+  "work_package": "WP14",
+  "profile": "architect-alphonso",
+  "generated_at": "2026-08-10T17:45:52Z",
+  "implementation_cycle": 1,
+  "review_cycle_limit": 3,
+  "planning_base": "28ae75ea998c898aba57364db7a06d2088bd2af2",
+  "implementation_head_before_commit": "bbcdb7926feb32dbd83ea263975a447675bd597b",
+  "tracker": {
+    "reference": "#1931",
+    "state": "OPEN",
+    "assignee": "robertDouglass",
+    "mission_comment_author": "robertDouglass",
+    "mission_comment_verified": true
+  },
+  "environment": {
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "python": "3.14.5",
+    "pytest": "9.0.3",
+    "ruff": "0.15.12",
+    "mypy": "1.20.2",
+    "cache_provider": false,
+    "architectural_environment_id": "041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c",
+    "full_parallel_environment_id": "99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849"
+  },
+  "census": {
+    "path": "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json",
+    "source_branch": "kitty/mission-assertive-test-suite-sanitation-01KZME3P-lane-a",
+    "sha256": "c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b",
+    "assigned_test_paths": 46,
+    "reconciled_test_paths": 46,
+    "scanner_candidates_reconciled": 46,
+    "base_source_units": 557,
+    "base_nodes": 698,
+    "unowned": []
+  },
+  "baseline": {
+    "authority": "WP01 immutable base census",
+    "command": ".venv/bin/pytest --collect-only -q -p no:cacheprovider <46 owned test paths>",
+    "collected_nodes": 698,
+    "source_lines": 21714,
+    "execution_note": "WP01 census is immutable; no redundant pre-reduction execution."
+  },
+  "head": {
+    "command": ".venv/bin/pytest -q -p no:cacheprovider <25 surviving owned test paths>",
+    "collection_command": ".venv/bin/pytest --collect-only -q -p no:cacheprovider <25 surviving owned test paths>",
+    "collected_nodes": 390,
+    "collection_seconds": 42.35,
+    "wall_seconds": 84.62,
+    "pytest_summary": {
+      "passed": 390,
+      "failed": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "exit_code": 0
+    },
+    "live_test_files": 25,
+    "live_source_functions": 326,
+    "live_source_lines": 12082
+  },
+  "delta": {
+    "whole_files_deleted": 21,
+    "reduced_files": 22,
+    "unchanged_live_files": 3,
+    "deleted_base_source_units": 231,
+    "net_nodes_removed": 308,
+    "node_reduction_percent": 44.13,
+    "source_lines_removed": 9632,
+    "source_line_reduction_percent": 44.36,
+    "tracked_test_diff_insertions": 69,
+    "tracked_test_diff_deletions": 9693
+  },
+  "parallel_harness_observation": {
+    "command": ".venv/bin/pytest -q -n 4 --dist loadfile -p no:cacheprovider <28 then-surviving paths>",
+    "passed": 77,
+    "setup_errors": 328,
+    "classification": "PRE_ACT_INFRASTRUCTURE",
+    "cause": "Known #3283 lock-timeout cascade because approved WP02 harness changes remain isolated in lane-b until mission merge.",
+    "wp14_product_failures": 0,
+    "serial_replay": "PASS"
+  },
+  "typecheck": {
+    "base_command": "mypy <46 base owned paths>",
+    "base_errors": 60,
+    "base_error_files": 13,
+    "head_command": "mypy <25 surviving owned paths>",
+    "head_errors": 41,
+    "head_error_files": 6,
+    "new_error_signatures": [],
+    "non_regression": true,
+    "note": "Deletion reduced pre-existing annotation debt; no new signature was introduced."
+  },
+  "lint": {
+    "command": ".venv/bin/ruff check <23 modified surviving Python paths>",
+    "errors": 0,
+    "exit_code": 0
+  },
+  "ledger_validation": {
+    "command": "WP14 terminal/path/count/causal invariant validation",
+    "terminal_rows": 46,
+    "owned_paths": 46,
+    "base_nodes": 698,
+    "head_nodes": 390,
+    "keep_proofs_complete": true,
+    "temporary_count": 0,
+    "exit_code": 0
+  },
+  "deleted_paths": [
+    "tests/next/test_retrospective_terminus_wiring.py",
+    "tests/runtime/test_bridge_compat_surface.py",
+    "tests/runtime/test_runtime_bridge_family_arch.py",
+    "tests/specify_cli/cli/commands/agent/test_record_analysis_double_resolution.py",
+    "tests/specify_cli/cli/commands/agent/test_tasks_coreless_orchestration.py",
+    "tests/specify_cli/cli/commands/agent/test_workflow_placement_routing.py",
+    "tests/specify_cli/coordination/test_commit_router_planning_residue.py",
+    "tests/specify_cli/status/test_inert_field_reduction.py",
+    "tests/specify_cli/test_clock_consolidation.py",
+    "tests/specify_cli/workspace/test_context_worktree_routing.py",
+    "tests/architectural/test_commit_target_kind_guard.py",
+    "tests/architectural/test_no_absolute_event_timestamp_mixture.py",
+    "tests/architectural/test_no_phantom_worktree_repair.py",
+    "tests/architectural/test_no_raw_mission_spec_paths.py",
+    "tests/architectural/test_no_tracked_test_feature_missions.py",
+    "tests/architectural/test_pre_review_scope_singlesource.py",
+    "tests/architectural/test_safe_commit_import_boundary.py",
+    "tests/architectural/test_status_command_guidance.py",
+    "tests/architectural/test_tasks_command_surface.py",
+    "tests/architectural/test_verdict_seam_census.py",
+    "tests/architectural/test_worktrees_index_clean.py"
+  ],
+  "renamed_paths": [],
+  "reduced_paths": [
+    {
+      "path": "tests/mission_runtime/test_write_target_degrade.py",
+      "base_nodes": 9,
+      "head_nodes": 8,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/runtime/test_bridge_decide_next.py",
+      "base_nodes": 36,
+      "head_nodes": 34,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/runtime/test_bridge_engine.py",
+      "base_nodes": 15,
+      "head_nodes": 13,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/runtime/test_bridge_retrospective.py",
+      "base_nodes": 26,
+      "head_nodes": 24,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/runtime/test_setup_plan_sync_evidence.py",
+      "base_nodes": 10,
+      "head_nodes": 6,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/specify_cli/cli/commands/agent/test_tasks_cli_contract_coord.py",
+      "base_nodes": 21,
+      "head_nodes": 19,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/specify_cli/cli/commands/test_coordination_doctor.py",
+      "base_nodes": 61,
+      "head_nodes": 59,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/specify_cli/cli/commands/test_daemon_doctor.py",
+      "base_nodes": 10,
+      "head_nodes": 9,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/specify_cli/cli/commands/test_mission_state_doctor.py",
+      "base_nodes": 26,
+      "head_nodes": 25,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/specify_cli/cli/commands/test_workspace_husk_doctor.py",
+      "base_nodes": 16,
+      "head_nodes": 15,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/specify_cli/coordination/test_partition_authority_characterization.py",
+      "base_nodes": 11,
+      "head_nodes": 9,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/specify_cli/coordination/test_wp05_status_read_contract.py",
+      "base_nodes": 8,
+      "head_nodes": 7,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/specify_cli/status/test_wp_state.py",
+      "base_nodes": 85,
+      "head_nodes": 77,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/status/test_aggregate_surface_resolution.py",
+      "base_nodes": 13,
+      "head_nodes": 12,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/architectural/test_coord_rollback_coherence_guard.py",
+      "base_nodes": 6,
+      "head_nodes": 3,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/architectural/test_events_tracker_public_imports.py",
+      "base_nodes": 4,
+      "head_nodes": 1,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/architectural/test_mission_runtime_surface.py",
+      "base_nodes": 7,
+      "head_nodes": 6,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/architectural/test_no_worktree_name_guess.py",
+      "base_nodes": 11,
+      "head_nodes": 5,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/architectural/test_session_reaper.py",
+      "base_nodes": 14,
+      "head_nodes": 13,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/architectural/test_status_module_boundary.py",
+      "base_nodes": 7,
+      "head_nodes": 5,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/architectural/test_status_sync_boundary.py",
+      "base_nodes": 2,
+      "head_nodes": 1,
+      "verdict": "KEEP_REDUCED"
+    },
+    {
+      "path": "tests/architectural/test_verdict_vocab_single_source.py",
+      "base_nodes": 31,
+      "head_nodes": 24,
+      "verdict": "KEEP_REDUCED"
+    }
+  ],
+  "unchanged_paths": [
+    "tests/coordination/test_verdict_dir_co_resolution.py",
+    "tests/architectural/test_no_production_worktree_guard_bypass.py",
+    "tests/architectural/test_resume_non_reemission_guard.py"
+  ],
+  "survivor_proofs": [
+    {
+      "family": "tests-coordination-test-verdict-dir-co-resolution-py",
+      "path": "tests/coordination/test_verdict_dir_co_resolution.py",
+      "corpus": [
+        "src/specify_cli/coordination/placement_seam.py",
+        "src/specify_cli/cli/commands/agent/review_cycle.py"
+      ],
+      "nonzero": true,
+      "fault": "Pass a divergent partition kind or caller-selected directory to one consumer.",
+      "control": "Default and sanctioned-kind calls resolve the same directory.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 8
+    },
+    {
+      "family": "tests-mission-runtime-test-write-target-degrade-py",
+      "path": "tests/mission_runtime/test_write_target_degrade.py",
+      "corpus": [
+        "src/mission_runtime/write_target_degrade.py",
+        "src/specify_cli/events/decision_log.py",
+        "src/specify_cli/git/bookkeeping_commit.py"
+      ],
+      "nonzero": true,
+      "fault": "Lose CoordinationBranchDeleted/ActionContext cause or silently invent a target for missing mission metadata.",
+      "control": "Resolvable mission and explicit branch select their declared target.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 8
+    },
+    {
+      "family": "tests-runtime-test-bridge-decide-next-py",
+      "path": "tests/runtime/test_bridge_decide_next.py",
+      "corpus": [
+        "src/runtime/next/runtime_bridge.py"
+      ],
+      "nonzero": true,
+      "fault": "Continue after a blocking phase or persist buffered state after retrospective refusal.",
+      "control": "Accepted terminal and non-terminal decisions materialize once.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 34
+    },
+    {
+      "family": "tests-runtime-test-bridge-engine-py",
+      "path": "tests/runtime/test_bridge_engine.py",
+      "corpus": [
+        "src/runtime/next/runtime_bridge_engine.py"
+      ],
+      "nonzero": true,
+      "fault": "Skip prior-step completion, duplicate a decision event, or bypass the terminal retrospective gate.",
+      "control": "Valid step and terminal transitions append one coherent event sequence.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 13
+    },
+    {
+      "family": "tests-runtime-test-bridge-retrospective-py",
+      "path": "tests/runtime/test_bridge_retrospective.py",
+      "corpus": [
+        "src/runtime/next/runtime_bridge_retrospective.py",
+        "src/specify_cli/retrospective/gate.py"
+      ],
+      "nonzero": true,
+      "fault": "Swallow a strict failure, emit an unclassified failure, or write when disabled.",
+      "control": "Enabled capture writes/emits; disabled policy no-ops.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 24
+    },
+    {
+      "family": "tests-runtime-test-setup-plan-sync-evidence-py",
+      "path": "tests/runtime/test_setup_plan_sync_evidence.py",
+      "corpus": [
+        "src/specify_cli/cli/commands/setup_plan.py"
+      ],
+      "nonzero": true,
+      "fault": "Write with missing auth, owner mismatch, or orphan owner record.",
+      "control": "Authenticated coherent ownership reaches the scoped write.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 6
+    },
+    {
+      "family": "tests-specify-cli-cli-commands-agent-test-tasks-cli-contract-coord-py",
+      "path": "tests/specify_cli/cli/commands/agent/test_tasks_cli_contract_coord.py",
+      "corpus": [
+        "src/specify_cli/cli/commands/agent/tasks.py",
+        "src/specify_cli/review/arbiter.py"
+      ],
+      "nonzero": true,
+      "fault": "Approve a rejected/stale review or fabricate approval during an arbiter override.",
+      "control": "Current review evidence and legal transition persist the intended event.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 19
+    },
+    {
+      "family": "tests-specify-cli-cli-commands-test-coordination-doctor-py",
+      "path": "tests/specify_cli/cli/commands/test_coordination_doctor.py",
+      "corpus": [
+        "src/specify_cli/cli/commands/coordination_doctor.py",
+        "src/specify_cli/coordination/coherence.py"
+      ],
+      "nonzero": true,
+      "fault": "Treat a live strand or pruned worktree as healthy, or silently skip an unreadable mission.",
+      "control": "Healthy/stale-marker topologies stay clean and fixes are idempotent.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 59
+    },
+    {
+      "family": "tests-specify-cli-cli-commands-test-daemon-doctor-py",
+      "path": "tests/specify_cli/cli/commands/test_daemon_doctor.py",
+      "corpus": [
+        "src/specify_cli/cli/commands/daemon_doctor.py"
+      ],
+      "nonzero": true,
+      "fault": "Report an orphan as clean or claim restart success for a failed state.",
+      "control": "No-orphan and successful restart paths emit clean outcomes.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 9
+    },
+    {
+      "family": "tests-specify-cli-cli-commands-test-mission-state-doctor-py",
+      "path": "tests/specify_cli/cli/commands/test_mission_state_doctor.py",
+      "corpus": [
+        "src/specify_cli/cli/commands/mission_state_doctor.py"
+      ],
+      "nonzero": true,
+      "fault": "Accept conflicting modes, invalid severity, or a missing mission as a clean audit.",
+      "control": "One valid mode dispatches the selected operation.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 25
+    },
+    {
+      "family": "tests-specify-cli-cli-commands-test-workspace-husk-doctor-py",
+      "path": "tests/specify_cli/cli/commands/test_workspace_husk_doctor.py",
+      "corpus": [
+        "src/specify_cli/cli/commands/workspace_husk_doctor.py"
+      ],
+      "nonzero": true,
+      "fault": "Delete a registered workspace or report a remaining husk as fixed.",
+      "control": "Clean and idempotent fixes stay clean.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 15
+    },
+    {
+      "family": "tests-specify-cli-coordination-test-partition-authority-characterization-py",
+      "path": "tests/specify_cli/coordination/test_partition_authority_characterization.py",
+      "corpus": [
+        "src/specify_cli/coordination/commit_router.py",
+        "src/specify_cli/coordination/coherence.py",
+        "src/mission_runtime/placement.py"
+      ],
+      "nonzero": true,
+      "fault": "Route kind=None residue to coordination on one side but primary on the other.",
+      "control": "Primary and explicit coordination cases agree.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 9
+    },
+    {
+      "family": "tests-specify-cli-coordination-test-wp05-status-read-contract-py",
+      "path": "tests/specify_cli/coordination/test_wp05_status_read_contract.py",
+      "corpus": [
+        "src/specify_cli/coordination/status_service.py"
+      ],
+      "nonzero": true,
+      "fault": "Prefer a relayed value over stored topology or write metadata during a read.",
+      "control": "Primary, materialized coordination, deleted-branch, and corrupt-meta cases resolve explicitly.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 7
+    },
+    {
+      "family": "tests-specify-cli-status-test-wp-state-py",
+      "path": "tests/specify_cli/status/test_wp_state.py",
+      "corpus": [
+        "src/specify_cli/status/wp_state.py",
+        "src/specify_cli/status/transitions.py"
+      ],
+      "nonzero": true,
+      "fault": "Permit a disallowed/terminal transition or omit a required review/workspace/evidence guard.",
+      "control": "Every declared legal pair transitions with complete context.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 77
+    },
+    {
+      "family": "tests-status-test-aggregate-surface-resolution-py",
+      "path": "tests/status/test_aggregate_surface_resolution.py",
+      "corpus": [
+        "src/specify_cli/status/aggregate.py",
+        "src/specify_cli/missions/_read_path_resolver.py"
+      ],
+      "nonzero": true,
+      "fault": "Select the first ambiguous mid8 match or silently fall back after a deleted coordination branch.",
+      "control": "Unambiguous primary and pre-materialization windows resolve deterministically.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 12
+    },
+    {
+      "family": "tests-architectural-test-coord-rollback-coherence-guard-py",
+      "path": "tests/architectural/test_coord_rollback_coherence_guard.py",
+      "corpus": [
+        "src/specify_cli/merge/executor.py",
+        "src/specify_cli/coordination/coherence.py"
+      ],
+      "nonzero": true,
+      "fault": "Stub persistence or strand authority to a no-op during rollback.",
+      "control": "The real marker and strand writer produce coherent state.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 3
+    },
+    {
+      "family": "tests-architectural-test-events-tracker-public-imports-py",
+      "path": "tests/architectural/test_events_tracker_public_imports.py",
+      "corpus": [
+        "src/specify_cli/"
+      ],
+      "nonzero": true,
+      "fault": "Add an import from spec_kitty_tracker._internal.store.",
+      "control": "Public package-root import remains accepted.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 1
+    },
+    {
+      "family": "tests-architectural-test-mission-runtime-surface-py",
+      "path": "tests/architectural/test_mission_runtime_surface.py",
+      "corpus": [
+        "src/mission_runtime/",
+        "src/specify_cli/"
+      ],
+      "nonzero": true,
+      "fault": "Inject a direct mission_runtime internal-submodule import in CLI source.",
+      "control": "Package-root and TYPE_CHECKING-safe imports remain accepted.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 6
+    },
+    {
+      "family": "tests-architectural-test-no-production-worktree-guard-bypass-py",
+      "path": "tests/architectural/test_no_production_worktree_guard_bypass.py",
+      "corpus": [
+        "src/"
+      ],
+      "nonzero": true,
+      "fault": "Plant allow_worktree_context=True in a production call.",
+      "control": "Default, omitted, and false values remain accepted.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 2
+    },
+    {
+      "family": "tests-architectural-test-no-worktree-name-guess-py",
+      "path": "tests/architectural/test_no_worktree_name_guess.py",
+      "corpus": [
+        "src/mission_runtime/placement.py",
+        "src/specify_cli/workspace/"
+      ],
+      "nonzero": true,
+      "fault": "Plant f-string, slice, failover, or allowlisted-function name guessing.",
+      "control": "Seam-owned composition and unrelated strings remain accepted.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 5
+    },
+    {
+      "family": "tests-architectural-test-resume-non-reemission-guard-py",
+      "path": "tests/architectural/test_resume_non_reemission_guard.py",
+      "corpus": [
+        "src/specify_cli/merge/done_bookkeeping.py",
+        "src/specify_cli/merge/state.py"
+      ],
+      "nonzero": true,
+      "fault": "Resume from any completed prefix and append done again.",
+      "control": "Missing suffix transitions emit exactly once.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 5
+    },
+    {
+      "family": "tests-architectural-test-session-reaper-py",
+      "path": "tests/architectural/test_session_reaper.py",
+      "corpus": [
+        "tests/conftest.py"
+      ],
+      "nonzero": true,
+      "fault": "Leak a current-run worktree/home or reap a pre-existing/registered worktree.",
+      "control": "Clean sessions and unrelated prior state remain untouched.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 13
+    },
+    {
+      "family": "tests-architectural-test-status-module-boundary-py",
+      "path": "tests/architectural/test_status_module_boundary.py",
+      "corpus": [
+        "src/specify_cli/status/",
+        "src/specify_cli/"
+      ],
+      "nonzero": true,
+      "fault": "Inject a direct submodule or submodule-object import.",
+      "control": "Facade and TYPE_CHECKING imports remain accepted.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 5
+    },
+    {
+      "family": "tests-architectural-test-status-sync-boundary-py",
+      "path": "tests/architectural/test_status_sync_boundary.py",
+      "corpus": [
+        "src/specify_cli/status/"
+      ],
+      "nonzero": true,
+      "fault": "Plant from specify_cli.sync import emit in the scanned package.",
+      "control": "Status-facade import remains accepted.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 1
+    },
+    {
+      "family": "tests-architectural-test-verdict-vocab-single-source-py",
+      "path": "tests/architectural/test_verdict_vocab_single_source.py",
+      "corpus": [
+        "src/specify_cli/status/verdict_vocab.py",
+        "src/specify_cli/status/reducer.py"
+      ],
+      "nonzero": true,
+      "fault": "Recreate inline equivalence, import without calling the bridge, or emit an arbiter-only override as review result.",
+      "control": "Known inbound/artifact values round-trip and scoped approved/rejected emissions succeed.",
+      "act_reached": true,
+      "intended_oracle_failed": true,
+      "head_nodes": 24
+    }
+  ],
+  "wp07_handoff": {
+    "central_map_edited": false,
+    "deleted_paths": [
+      "tests/next/test_retrospective_terminus_wiring.py",
+      "tests/runtime/test_bridge_compat_surface.py",
+      "tests/runtime/test_runtime_bridge_family_arch.py",
+      "tests/specify_cli/cli/commands/agent/test_record_analysis_double_resolution.py",
+      "tests/specify_cli/cli/commands/agent/test_tasks_coreless_orchestration.py",
+      "tests/specify_cli/cli/commands/agent/test_workflow_placement_routing.py",
+      "tests/specify_cli/coordination/test_commit_router_planning_residue.py",
+      "tests/specify_cli/status/test_inert_field_reduction.py",
+      "tests/specify_cli/test_clock_consolidation.py",
+      "tests/specify_cli/workspace/test_context_worktree_routing.py",
+      "tests/architectural/test_commit_target_kind_guard.py",
+      "tests/architectural/test_no_absolute_event_timestamp_mixture.py",
+      "tests/architectural/test_no_phantom_worktree_repair.py",
+      "tests/architectural/test_no_raw_mission_spec_paths.py",
+      "tests/architectural/test_no_tracked_test_feature_missions.py",
+      "tests/architectural/test_pre_review_scope_singlesource.py",
+      "tests/architectural/test_safe_commit_import_boundary.py",
+      "tests/architectural/test_status_command_guidance.py",
+      "tests/architectural/test_tasks_command_surface.py",
+      "tests/architectural/test_verdict_seam_census.py",
+      "tests/architectural/test_worktrees_index_clean.py"
+    ],
+    "renamed_paths": [],
+    "surviving_paths": [
+      "tests/coordination/test_verdict_dir_co_resolution.py",
+      "tests/mission_runtime/test_write_target_degrade.py",
+      "tests/runtime/test_bridge_decide_next.py",
+      "tests/runtime/test_bridge_engine.py",
+      "tests/runtime/test_bridge_retrospective.py",
+      "tests/runtime/test_setup_plan_sync_evidence.py",
+      "tests/specify_cli/cli/commands/agent/test_tasks_cli_contract_coord.py",
+      "tests/specify_cli/cli/commands/test_coordination_doctor.py",
+      "tests/specify_cli/cli/commands/test_daemon_doctor.py",
+      "tests/specify_cli/cli/commands/test_mission_state_doctor.py",
+      "tests/specify_cli/cli/commands/test_workspace_husk_doctor.py",
+      "tests/specify_cli/coordination/test_partition_authority_characterization.py",
+      "tests/specify_cli/coordination/test_wp05_status_read_contract.py",
+      "tests/specify_cli/status/test_wp_state.py",
+      "tests/status/test_aggregate_surface_resolution.py",
+      "tests/architectural/test_coord_rollback_coherence_guard.py",
+      "tests/architectural/test_events_tracker_public_imports.py",
+      "tests/architectural/test_mission_runtime_surface.py",
+      "tests/architectural/test_no_production_worktree_guard_bypass.py",
+      "tests/architectural/test_no_worktree_name_guess.py",
+      "tests/architectural/test_resume_non_reemission_guard.py",
+      "tests/architectural/test_session_reaper.py",
+      "tests/architectural/test_status_module_boundary.py",
+      "tests/architectural/test_status_sync_boundary.py",
+      "tests/architectural/test_verdict_vocab_single_source.py"
+    ],
+    "instruction": "Remove deleted paths from architectural/full-parallel ownership, retain all surviving path selectors, and account for the 698\u2192390 route-node delta without attributing WP02 bootstrap savings to WP14."
+  },
+  "scope": {
+    "production_files_changed": [],
+    "central_route_files_changed": [],
+    "owned_test_files_only": true,
+    "evidence_files": [
+      "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP14.yaml",
+      "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp14-results.json"
+    ]
+  }
+}

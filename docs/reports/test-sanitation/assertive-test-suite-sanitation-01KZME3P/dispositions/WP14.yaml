@@ -1,0 +1,2998 @@
+schema_version: test-sanitation/v1
+mission: assertive-test-suite-sanitation-01KZME3P
+work_package: WP14
+profile: architect-alphonso
+generated_at: '2026-08-10T17:40:08Z'
+planning_base: 28ae75ea998c898aba57364db7a06d2088bd2af2
+census_sha256: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+dispositions:
+- candidate:
+    id: WP14-tests-coordination-test-verdict-dir-co-resolution-py
+    members:
+    - tests/coordination/test_verdict_dir_co_resolution.py
+    granularity: file
+    source_paths:
+    - tests/coordination/test_verdict_dir_co_resolution.py
+    production_paths: &id001
+    - src/specify_cli/coordination/placement_seam.py
+    - src/specify_cli/cli/commands/agent/review_cycle.py
+    oracle: Review-cycle readers and writers co-resolve one authoritative WP directory in coordination and flat topologies.
+    contract_claim: Review-cycle readers and writers co-resolve one authoritative WP directory in coordination and flat topologies.
+    authority:
+    - docs/adr/3.x/2026-08-03-1-review-cycle-artifacts-are-coord-partition.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 8
+    base_nodes: 8
+    head_nodes: 8
+    route_memberships:
+    - &id002
+      route_id: full-parallel
+      role: owner
+      required: true
+      events:
+      - local
+      selector:
+        paths:
+        - tests/
+        ignores:
+        - tests/sync/test_orphan_sweep.py
+        environment_id: 99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-08-03-1-review-cycle-artifacts-are-coord-partition.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id001
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Pass a divergent partition kind or caller-selected directory to one consumer.
+      compliant_control: Default and sanctioned-kind calls resolve the same directory.
+      authority_violated: docs/adr/3.x/2026-08-03-1-review-cycle-artifacts-are-coord-partition.md
+      act_reached: true
+      intended_oracle: Review-cycle readers and writers co-resolve one authoritative WP directory in coordination and flat
+        topologies.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/coordination/test_verdict_dir_co_resolution.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 0 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/coordination/test_verdict_dir_co_resolution.py
+    collected_nodes: 8
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: &id004
+    implementer: architect-alphonso/WP14
+    independent_reviewer: pending-WP14-review
+    verdict: implementation-complete-awaiting-review
+    timestamp: '2026-08-10T17:40:08Z'
+- candidate:
+    id: WP14-tests-mission-runtime-test-write-target-degrade-py
+    members:
+    - tests/mission_runtime/test_write_target_degrade.py
+    granularity: file
+    source_paths:
+    - tests/mission_runtime/test_write_target_degrade.py
+    production_paths: &id003
+    - src/mission_runtime/write_target_degrade.py
+    - src/specify_cli/events/decision_log.py
+    - src/specify_cli/git/bookkeeping_commit.py
+    oracle: Write-target degradation preserves typed causes while resolvable missions still select the placement target.
+    contract_claim: Write-target degradation preserves typed causes while resolvable missions still select the placement target.
+    authority:
+    - docs/adr/3.x/2026-06-24-2-write-branch-resolution-primary-anchor.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 9
+    base_nodes: 9
+    head_nodes: 8
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-06-24-2-write-branch-resolution-primary-anchor.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id003
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Lose CoordinationBranchDeleted/ActionContext cause or silently invent a target for missing mission metadata.
+      compliant_control: Resolvable mission and explicit branch select their declared target.
+      authority_violated: docs/adr/3.x/2026-06-24-2-write-branch-resolution-primary-anchor.md
+      act_reached: true
+      intended_oracle: Write-target degradation preserves typed causes while resolvable missions still select the placement
+        target.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/mission_runtime/test_write_target_degrade.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 1 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/mission_runtime/test_write_target_degrade.py
+    collected_nodes: 8
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-next-test-retrospective-terminus-wiring-py
+    members:
+    - tests/next/test_retrospective_terminus_wiring.py
+    granularity: file
+    source_paths:
+    - tests/next/test_retrospective_terminus_wiring.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    - text
+    base_source_units: 27
+    base_nodes: 27
+    head_nodes: 0
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Legacy terminus wiring duplicated the live runtime retrospective bridge and pinned retired rollback/control
+        flow.
+    consumer_evidence:
+    - paths:
+      - tests/runtime/test_bridge_retrospective.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Legacy terminus wiring duplicated the live runtime retrospective bridge and pinned retired rollback/control flow.
+  survivor:
+    path: tests/runtime/test_bridge_retrospective.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-runtime-test-bridge-compat-surface-py
+    members:
+    - tests/runtime/test_bridge_compat_surface.py
+    granularity: file
+    source_paths:
+    - tests/runtime/test_bridge_compat_surface.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    - text
+    base_source_units: 6
+    base_nodes: 62
+    head_nodes: 0
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Compatibility reach maps and re-export identity pinned relocated symbol names rather than runtime behavior.
+    consumer_evidence:
+    - paths:
+      - tests/runtime/test_bridge_decide_next.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Compatibility reach maps and re-export identity pinned relocated symbol names rather than runtime behavior.
+  survivor:
+    path: tests/runtime/test_bridge_decide_next.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-runtime-test-bridge-decide-next-py
+    members:
+    - tests/runtime/test_bridge_decide_next.py
+    granularity: file
+    source_paths:
+    - tests/runtime/test_bridge_decide_next.py
+    production_paths: &id005
+    - src/runtime/next/runtime_bridge.py
+    oracle: Runtime-next short-circuits phases, rolls back rejected speculative state, and materializes only accepted decisions.
+    contract_claim: Runtime-next short-circuits phases, rolls back rejected speculative state, and materializes only accepted
+      decisions.
+    authority:
+    - docs/adr/3.x/2026-04-27-1-retrospective-gate-shared-module.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 36
+    base_nodes: 36
+    head_nodes: 34
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-04-27-1-retrospective-gate-shared-module.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id005
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Continue after a blocking phase or persist buffered state after retrospective refusal.
+      compliant_control: Accepted terminal and non-terminal decisions materialize once.
+      authority_violated: docs/adr/3.x/2026-04-27-1-retrospective-gate-shared-module.md
+      act_reached: true
+      intended_oracle: Runtime-next short-circuits phases, rolls back rejected speculative state, and materializes only accepted
+        decisions.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/runtime/test_bridge_decide_next.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 2 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/runtime/test_bridge_decide_next.py
+    collected_nodes: 34
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-runtime-test-bridge-engine-py
+    members:
+    - tests/runtime/test_bridge_engine.py
+    granularity: file
+    source_paths:
+    - tests/runtime/test_bridge_engine.py
+    production_paths: &id006
+    - src/runtime/next/runtime_bridge_engine.py
+    oracle: The runtime engine delegates live planner I/O and advances/deduplicates step, decision, and terminal state.
+    contract_claim: The runtime engine delegates live planner I/O and advances/deduplicates step, decision, and terminal state.
+    authority:
+    - docs/context/ops-vs-missions.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 15
+    base_nodes: 15
+    head_nodes: 13
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/context/ops-vs-missions.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id006
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Skip prior-step completion, duplicate a decision event, or bypass the terminal retrospective gate.
+      compliant_control: Valid step and terminal transitions append one coherent event sequence.
+      authority_violated: docs/context/ops-vs-missions.md
+      act_reached: true
+      intended_oracle: The runtime engine delegates live planner I/O and advances/deduplicates step, decision, and terminal
+        state.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/runtime/test_bridge_engine.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 2 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/runtime/test_bridge_engine.py
+    collected_nodes: 13
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-runtime-test-bridge-retrospective-py
+    members:
+    - tests/runtime/test_bridge_retrospective.py
+    granularity: file
+    source_paths:
+    - tests/runtime/test_bridge_retrospective.py
+    production_paths: &id007
+    - src/runtime/next/runtime_bridge_retrospective.py
+    - src/specify_cli/retrospective/gate.py
+    oracle: Runtime retrospective capture obeys policy, classifies failures, buffers emissions, and blocks only under strict
+      policy.
+    contract_claim: Runtime retrospective capture obeys policy, classifies failures, buffers emissions, and blocks only under
+      strict policy.
+    authority:
+    - docs/adr/3.x/2026-04-27-1-retrospective-gate-shared-module.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - text
+    base_source_units: 23
+    base_nodes: 26
+    head_nodes: 24
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-04-27-1-retrospective-gate-shared-module.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id007
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Swallow a strict failure, emit an unclassified failure, or write when disabled.
+      compliant_control: Enabled capture writes/emits; disabled policy no-ops.
+      authority_violated: docs/adr/3.x/2026-04-27-1-retrospective-gate-shared-module.md
+      act_reached: true
+      intended_oracle: Runtime retrospective capture obeys policy, classifies failures, buffers emissions, and blocks only
+        under strict policy.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/runtime/test_bridge_retrospective.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 2 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/runtime/test_bridge_retrospective.py
+    collected_nodes: 24
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-runtime-test-runtime-bridge-family-arch-py
+    members:
+    - tests/runtime/test_runtime_bridge_family_arch.py
+    granularity: file
+    source_paths:
+    - tests/runtime/test_runtime_bridge_family_arch.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 6
+    base_nodes: 6
+    head_nodes: 0
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Complexity ceilings, noqa absence, and exact import-edge layout were implementation prestige checks; behavior
+        tests own decisions and gates.
+    consumer_evidence:
+    - paths:
+      - tests/runtime/test_bridge_engine.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Complexity ceilings, noqa absence, and exact import-edge layout were implementation prestige checks; behavior tests
+    own decisions and gates.
+  survivor:
+    path: tests/runtime/test_bridge_engine.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-runtime-test-setup-plan-sync-evidence-py
+    members:
+    - tests/runtime/test_setup_plan_sync_evidence.py
+    granularity: file
+    source_paths:
+    - tests/runtime/test_setup_plan_sync_evidence.py
+    production_paths: &id008
+    - src/specify_cli/cli/commands/setup_plan.py
+    oracle: Setup-plan sync writes only after authentication and coherent daemon ownership preflight.
+    contract_claim: Setup-plan sync writes only after authentication and coherent daemon ownership preflight.
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - text
+    base_source_units: 10
+    base_nodes: 10
+    head_nodes: 6
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id008
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Write with missing auth, owner mismatch, or orphan owner record.
+      compliant_control: Authenticated coherent ownership reaches the scoped write.
+      authority_violated: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+      act_reached: true
+      intended_oracle: Setup-plan sync writes only after authentication and coherent daemon ownership preflight.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/runtime/test_setup_plan_sync_evidence.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 4 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/runtime/test_setup_plan_sync_evidence.py
+    collected_nodes: 6
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-cli-commands-agent-test-record-analysis-double-resolution-py
+    members:
+    - tests/specify_cli/cli/commands/agent/test_record_analysis_double_resolution.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/cli/commands/agent/test_record_analysis_double_resolution.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    - text
+    base_source_units: 4
+    base_nodes: 4
+    head_nodes: 0
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Completed double-resolution migration scanner pinned exact receiver/call placement after consumers converged.
+    consumer_evidence:
+    - paths:
+      - tests/coordination/test_verdict_dir_co_resolution.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Completed double-resolution migration scanner pinned exact receiver/call placement after consumers converged.
+  survivor:
+    path: tests/coordination/test_verdict_dir_co_resolution.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-cli-commands-agent-test-tasks-cli-contract-coord-py
+    members:
+    - tests/specify_cli/cli/commands/agent/test_tasks_cli_contract_coord.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/cli/commands/agent/test_tasks_cli_contract_coord.py
+    production_paths: &id009
+    - src/specify_cli/cli/commands/agent/tasks.py
+    - src/specify_cli/review/arbiter.py
+    oracle: Tasks CLI enforces review currency, ancestry, protected-tree, arbiter, and event-sourced transition contracts.
+    contract_claim: Tasks CLI enforces review currency, ancestry, protected-tree, arbiter, and event-sourced transition contracts.
+    authority:
+    - docs/context/ops-vs-missions.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - text
+    base_source_units: 21
+    base_nodes: 21
+    head_nodes: 19
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/context/ops-vs-missions.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id009
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Approve a rejected/stale review or fabricate approval during an arbiter override.
+      compliant_control: Current review evidence and legal transition persist the intended event.
+      authority_violated: docs/context/ops-vs-missions.md
+      act_reached: true
+      intended_oracle: Tasks CLI enforces review currency, ancestry, protected-tree, arbiter, and event-sourced transition
+        contracts.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/specify_cli/cli/commands/agent/test_tasks_cli_contract_coord.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 2 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/specify_cli/cli/commands/agent/test_tasks_cli_contract_coord.py
+    collected_nodes: 19
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-cli-commands-agent-test-tasks-coreless-orchestration-py
+    members:
+    - tests/specify_cli/cli/commands/agent/test_tasks_coreless_orchestration.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/cli/commands/agent/test_tasks_coreless_orchestration.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 9
+    base_nodes: 9
+    head_nodes: 0
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Coreless-extraction AST call-placement gates described a completed refactor; public tasks transition behavior
+        remains guarded.
+    consumer_evidence:
+    - paths:
+      - tests/specify_cli/cli/commands/agent/test_tasks_cli_contract_coord.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Coreless-extraction AST call-placement gates described a completed refactor; public tasks transition behavior remains
+    guarded.
+  survivor:
+    path: tests/specify_cli/cli/commands/agent/test_tasks_cli_contract_coord.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-cli-commands-agent-test-workflow-placement-routing-py
+    members:
+    - tests/specify_cli/cli/commands/agent/test_workflow_placement_routing.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/cli/commands/agent/test_workflow_placement_routing.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 9
+    base_nodes: 9
+    head_nodes: 0
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Exact constructor/call-site counts and except-handler shape pinned workflow implementation, not placement outcomes.
+    consumer_evidence:
+    - paths:
+      - tests/specify_cli/coordination/test_partition_authority_characterization.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Exact constructor/call-site counts and except-handler shape pinned workflow implementation, not placement outcomes.
+  survivor:
+    path: tests/specify_cli/coordination/test_partition_authority_characterization.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-cli-commands-test-coordination-doctor-py
+    members:
+    - tests/specify_cli/cli/commands/test_coordination_doctor.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/cli/commands/test_coordination_doctor.py
+    production_paths: &id010
+    - src/specify_cli/cli/commands/coordination_doctor.py
+    - src/specify_cli/coordination/coherence.py
+    oracle: Coordination doctor detects, reports, and safely heals drift, dirty coordination state, and stranded/pruned worktrees.
+    contract_claim: Coordination doctor detects, reports, and safely heals drift, dirty coordination state, and stranded/pruned
+      worktrees.
+    authority:
+    - docs/adr/3.x/2026-06-19-1-coord-empty-surface-fallback.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - text
+    base_source_units: 61
+    base_nodes: 61
+    head_nodes: 59
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-06-19-1-coord-empty-surface-fallback.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id010
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Treat a live strand or pruned worktree as healthy, or silently skip an unreadable mission.
+      compliant_control: Healthy/stale-marker topologies stay clean and fixes are idempotent.
+      authority_violated: docs/adr/3.x/2026-06-19-1-coord-empty-surface-fallback.md
+      act_reached: true
+      intended_oracle: Coordination doctor detects, reports, and safely heals drift, dirty coordination state, and stranded/pruned
+        worktrees.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/specify_cli/cli/commands/test_coordination_doctor.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 2 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/specify_cli/cli/commands/test_coordination_doctor.py
+    collected_nodes: 59
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-cli-commands-test-daemon-doctor-py
+    members:
+    - tests/specify_cli/cli/commands/test_daemon_doctor.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/cli/commands/test_daemon_doctor.py
+    production_paths: &id011
+    - src/specify_cli/cli/commands/daemon_doctor.py
+    oracle: Daemon doctor reports orphan state and maps restart outcomes and root-resolution failure to stable command outcomes.
+    contract_claim: Daemon doctor reports orphan state and maps restart outcomes and root-resolution failure to stable command
+      outcomes.
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 7
+    base_nodes: 10
+    head_nodes: 9
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id011
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Report an orphan as clean or claim restart success for a failed state.
+      compliant_control: No-orphan and successful restart paths emit clean outcomes.
+      authority_violated: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+      act_reached: true
+      intended_oracle: Daemon doctor reports orphan state and maps restart outcomes and root-resolution failure to stable
+        command outcomes.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/specify_cli/cli/commands/test_daemon_doctor.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 1 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/specify_cli/cli/commands/test_daemon_doctor.py
+    collected_nodes: 9
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-cli-commands-test-mission-state-doctor-py
+    members:
+    - tests/specify_cli/cli/commands/test_mission_state_doctor.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/cli/commands/test_mission_state_doctor.py
+    production_paths: &id012
+    - src/specify_cli/cli/commands/mission_state_doctor.py
+    oracle: Mission-state doctor validates exclusive modes, fail thresholds, audit roots, and audit/fix dispatch.
+    contract_claim: Mission-state doctor validates exclusive modes, fail thresholds, audit roots, and audit/fix dispatch.
+    authority:
+    - docs/context/ops-vs-missions.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 26
+    base_nodes: 26
+    head_nodes: 25
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/context/ops-vs-missions.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id012
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Accept conflicting modes, invalid severity, or a missing mission as a clean audit.
+      compliant_control: One valid mode dispatches the selected operation.
+      authority_violated: docs/context/ops-vs-missions.md
+      act_reached: true
+      intended_oracle: Mission-state doctor validates exclusive modes, fail thresholds, audit roots, and audit/fix dispatch.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/specify_cli/cli/commands/test_mission_state_doctor.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 1 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/specify_cli/cli/commands/test_mission_state_doctor.py
+    collected_nodes: 25
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-cli-commands-test-workspace-husk-doctor-py
+    members:
+    - tests/specify_cli/cli/commands/test_workspace_husk_doctor.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/cli/commands/test_workspace_husk_doctor.py
+    production_paths: &id013
+    - src/specify_cli/cli/commands/workspace_husk_doctor.py
+    oracle: Workspace-husk doctor distinguishes registration states and reports/fixes only husks while preserving live worktrees.
+    contract_claim: Workspace-husk doctor distinguishes registration states and reports/fixes only husks while preserving
+      live worktrees.
+    authority:
+    - docs/adr/3.x/2026-04-03-1-execution-lanes-own-worktrees-and-mission-branches.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 16
+    base_nodes: 16
+    head_nodes: 15
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-04-03-1-execution-lanes-own-worktrees-and-mission-branches.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id013
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Delete a registered workspace or report a remaining husk as fixed.
+      compliant_control: Clean and idempotent fixes stay clean.
+      authority_violated: docs/adr/3.x/2026-04-03-1-execution-lanes-own-worktrees-and-mission-branches.md
+      act_reached: true
+      intended_oracle: Workspace-husk doctor distinguishes registration states and reports/fixes only husks while preserving
+        live worktrees.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/specify_cli/cli/commands/test_workspace_husk_doctor.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 1 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/specify_cli/cli/commands/test_workspace_husk_doctor.py
+    collected_nodes: 15
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-coordination-test-commit-router-planning-residue-py
+    members:
+    - tests/specify_cli/coordination/test_commit_router_planning_residue.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/coordination/test_commit_router_planning_residue.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 11
+    base_nodes: 11
+    head_nodes: 0
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Relocated-symbol/re-export/import layout and residue staging history were superseded by read/write partition
+        behavior.
+    consumer_evidence:
+    - paths:
+      - tests/specify_cli/coordination/test_partition_authority_characterization.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Relocated-symbol/re-export/import layout and residue staging history were superseded by read/write partition behavior.
+  survivor:
+    path: tests/specify_cli/coordination/test_partition_authority_characterization.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-coordination-test-partition-authority-characterization-py
+    members:
+    - tests/specify_cli/coordination/test_partition_authority_characterization.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/coordination/test_partition_authority_characterization.py
+    production_paths: &id014
+    - src/specify_cli/coordination/commit_router.py
+    - src/specify_cli/coordination/coherence.py
+    - src/mission_runtime/placement.py
+    oracle: Read and write partition decisions agree for primary defaults and recognized coordination artifacts.
+    contract_claim: Read and write partition decisions agree for primary defaults and recognized coordination artifacts.
+    authority:
+    - docs/adr/3.x/2026-06-24-2-write-branch-resolution-primary-anchor.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 8
+    base_nodes: 11
+    head_nodes: 9
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-06-24-2-write-branch-resolution-primary-anchor.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id014
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Route kind=None residue to coordination on one side but primary on the other.
+      compliant_control: Primary and explicit coordination cases agree.
+      authority_violated: docs/adr/3.x/2026-06-24-2-write-branch-resolution-primary-anchor.md
+      act_reached: true
+      intended_oracle: Read and write partition decisions agree for primary defaults and recognized coordination artifacts.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/specify_cli/coordination/test_partition_authority_characterization.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 2 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/specify_cli/coordination/test_partition_authority_characterization.py
+    collected_nodes: 9
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-coordination-test-wp05-status-read-contract-py
+    members:
+    - tests/specify_cli/coordination/test_wp05_status_read_contract.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/coordination/test_wp05_status_read_contract.py
+    production_paths: &id015
+    - src/specify_cli/coordination/status_service.py
+    oracle: Status reads classify stored topology and degrade typed transient conditions without persisting backfill.
+    contract_claim: Status reads classify stored topology and degrade typed transient conditions without persisting backfill.
+    authority:
+    - docs/adr/3.x/2026-06-19-1-coord-empty-surface-fallback.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 8
+    base_nodes: 8
+    head_nodes: 7
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-06-19-1-coord-empty-surface-fallback.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id015
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Prefer a relayed value over stored topology or write metadata during a read.
+      compliant_control: Primary, materialized coordination, deleted-branch, and corrupt-meta cases resolve explicitly.
+      authority_violated: docs/adr/3.x/2026-06-19-1-coord-empty-surface-fallback.md
+      act_reached: true
+      intended_oracle: Status reads classify stored topology and degrade typed transient conditions without persisting backfill.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/specify_cli/coordination/test_wp05_status_read_contract.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 1 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/specify_cli/coordination/test_wp05_status_read_contract.py
+    collected_nodes: 7
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-status-test-inert-field-reduction-py
+    members:
+    - tests/specify_cli/status/test_inert_field_reduction.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/status/test_inert_field_reduction.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    - text
+    base_source_units: 7
+    base_nodes: 10
+    head_nodes: 0
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Removed-field absence across schema/corpus and detector self-tests only certified a completed migration.
+    consumer_evidence:
+    - paths:
+      - tests/specify_cli/status/test_wp_state.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Removed-field absence across schema/corpus and detector self-tests only certified a completed migration.
+  survivor:
+    path: tests/specify_cli/status/test_wp_state.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-status-test-wp-state-py
+    members:
+    - tests/specify_cli/status/test_wp_state.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/status/test_wp_state.py
+    production_paths: &id016
+    - src/specify_cli/status/wp_state.py
+    - src/specify_cli/status/transitions.py
+    oracle: The WP state machine admits only legal guarded transitions with required actor, workspace, review, subtask, and
+      evidence context.
+    contract_claim: The WP state machine admits only legal guarded transitions with required actor, workspace, review, subtask,
+      and evidence context.
+    authority:
+    - docs/context/ops-vs-missions.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - text
+    base_source_units: 40
+    base_nodes: 85
+    head_nodes: 77
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/context/ops-vs-missions.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id016
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Permit a disallowed/terminal transition or omit a required review/workspace/evidence guard.
+      compliant_control: Every declared legal pair transitions with complete context.
+      authority_violated: docs/context/ops-vs-missions.md
+      act_reached: true
+      intended_oracle: The WP state machine admits only legal guarded transitions with required actor, workspace, review,
+        subtask, and evidence context.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/specify_cli/status/test_wp_state.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 8 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/specify_cli/status/test_wp_state.py
+    collected_nodes: 77
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-test-clock-consolidation-py
+    members:
+    - tests/specify_cli/test_clock_consolidation.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/test_clock_consolidation.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 9
+    base_nodes: 9
+    head_nodes: 0
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: 'Clock-helper identity, duplicate-helper absence, and byte-equality under a fixed clock pinned consolidation
+        shape without a distinct runtime consumer. '
+    consumer_evidence:
+    - paths: []
+      result: Caller/authority review found no distinct live consumer contract.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: 'Clock-helper identity, duplicate-helper absence, and byte-equality under a fixed clock pinned consolidation shape
+    without a distinct runtime consumer. '
+  survivor: null
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-specify-cli-workspace-test-context-worktree-routing-py
+    members:
+    - tests/specify_cli/workspace/test_context_worktree_routing.py
+    granularity: file
+    source_paths:
+    - tests/specify_cli/workspace/test_context_worktree_routing.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 8
+    base_nodes: 16
+    head_nodes: 0
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Byte-identical legacy f-strings and inline-dedup absence pinned retired implementations; live resolver outcomes
+        remain guarded.
+    consumer_evidence:
+    - paths:
+      - tests/status/test_aggregate_surface_resolution.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Byte-identical legacy f-strings and inline-dedup absence pinned retired implementations; live resolver outcomes
+    remain guarded.
+  survivor:
+    path: tests/status/test_aggregate_surface_resolution.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-status-test-aggregate-surface-resolution-py
+    members:
+    - tests/status/test_aggregate_surface_resolution.py
+    granularity: file
+    source_paths:
+    - tests/status/test_aggregate_surface_resolution.py
+    production_paths: &id017
+    - src/specify_cli/status/aggregate.py
+    - src/specify_cli/missions/_read_path_resolver.py
+    oracle: Aggregate status resolves unambiguous mission identity, handles create-window fallbacks, and hard-fails broken
+      coordination identity.
+    contract_claim: Aggregate status resolves unambiguous mission identity, handles create-window fallbacks, and hard-fails
+      broken coordination identity.
+    authority:
+    - docs/adr/3.x/2026-06-19-1-coord-empty-surface-fallback.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    base_source_units: 13
+    base_nodes: 13
+    head_nodes: 12
+    route_memberships:
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-06-19-1-coord-empty-surface-fallback.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id017
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Select the first ambiguous mid8 match or silently fall back after a deleted coordination branch.
+      compliant_control: Unambiguous primary and pre-materialization windows resolve deterministically.
+      authority_violated: docs/adr/3.x/2026-06-19-1-coord-empty-surface-fallback.md
+      act_reached: true
+      intended_oracle: Aggregate status resolves unambiguous mission identity, handles create-window fallbacks, and hard-fails
+        broken coordination identity.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/status/test_aggregate_surface_resolution.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 1 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/status/test_aggregate_surface_resolution.py
+    collected_nodes: 12
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-commit-target-kind-guard-py
+    members:
+    - tests/architectural/test_commit_target_kind_guard.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_commit_target_kind_guard.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    - text
+    base_source_units: 10
+    base_nodes: 10
+    head_nodes: 0
+    route_memberships:
+    - &id018
+      route_id: architectural
+      role: owner
+      required: true
+      events:
+      - local
+      selector:
+        paths:
+        - tests/architectural/
+        environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: An empty post-WP16 baseline and serialization syntax ratchets certified a completed field retirement.
+    consumer_evidence:
+    - paths:
+      - tests/specify_cli/coordination/test_partition_authority_characterization.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: An empty post-WP16 baseline and serialization syntax ratchets certified a completed field retirement.
+  survivor:
+    path: tests/specify_cli/coordination/test_partition_authority_characterization.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-coord-rollback-coherence-guard-py
+    members:
+    - tests/architectural/test_coord_rollback_coherence_guard.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_coord_rollback_coherence_guard.py
+    production_paths: &id019
+    - src/specify_cli/merge/executor.py
+    - src/specify_cli/coordination/coherence.py
+    oracle: Coordination rollback marks every raw restore and preserves strand/coherence authority.
+    contract_claim: Coordination rollback marks every raw restore and preserves strand/coherence authority.
+    authority:
+    - docs/adr/3.x/2026-08-03-1-review-cycle-artifacts-are-coord-partition.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    base_source_units: 6
+    base_nodes: 6
+    head_nodes: 3
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-08-03-1-review-cycle-artifacts-are-coord-partition.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id019
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Stub persistence or strand authority to a no-op during rollback.
+      compliant_control: The real marker and strand writer produce coherent state.
+      authority_violated: docs/adr/3.x/2026-08-03-1-review-cycle-artifacts-are-coord-partition.md
+      act_reached: true
+      intended_oracle: Coordination rollback marks every raw restore and preserves strand/coherence authority.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_coord_rollback_coherence_guard.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 3 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/architectural/test_coord_rollback_coherence_guard.py
+    collected_nodes: 3
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-events-tracker-public-imports-py
+    members:
+    - tests/architectural/test_events_tracker_public_imports.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_events_tracker_public_imports.py
+    production_paths: &id020
+    - src/specify_cli/
+    oracle: CLI production code never imports private spec_kitty_events/spec_kitty_tracker internals.
+    contract_claim: CLI production code never imports private spec_kitty_events/spec_kitty_tracker internals.
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    base_source_units: 4
+    base_nodes: 4
+    head_nodes: 1
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id020
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Add an import from spec_kitty_tracker._internal.store.
+      compliant_control: Public package-root import remains accepted.
+      authority_violated: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+      act_reached: true
+      intended_oracle: CLI production code never imports private spec_kitty_events/spec_kitty_tracker internals.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_events_tracker_public_imports.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 3 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/architectural/test_events_tracker_public_imports.py
+    collected_nodes: 1
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-mission-runtime-surface-py
+    members:
+    - tests/architectural/test_mission_runtime_surface.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_mission_runtime_surface.py
+    production_paths: &id021
+    - src/mission_runtime/
+    - src/specify_cli/
+    oracle: External consumers use the mission_runtime package root and never its internal submodules.
+    contract_claim: External consumers use the mission_runtime package root and never its internal submodules.
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    base_source_units: 7
+    base_nodes: 7
+    head_nodes: 6
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id021
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Inject a direct mission_runtime internal-submodule import in CLI source.
+      compliant_control: Package-root and TYPE_CHECKING-safe imports remain accepted.
+      authority_violated: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+      act_reached: true
+      intended_oracle: External consumers use the mission_runtime package root and never its internal submodules.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_mission_runtime_surface.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 1 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/architectural/test_mission_runtime_surface.py
+    collected_nodes: 6
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-no-absolute-event-timestamp-mixture-py
+    members:
+    - tests/architectural/test_no_absolute_event_timestamp_mixture.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_no_absolute_event_timestamp_mixture.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    base_source_units: 10
+    base_nodes: 10
+    head_nodes: 0
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Issue-specific historical fixtures and scanner self-tests inspected test-source timestamp style, not production
+        event behavior.
+    consumer_evidence:
+    - paths: []
+      result: Caller/authority review found no distinct live consumer contract.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Issue-specific historical fixtures and scanner self-tests inspected test-source timestamp style, not production
+    event behavior.
+  survivor: null
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-no-phantom-worktree-repair-py
+    members:
+    - tests/architectural/test_no_phantom_worktree_repair.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_no_phantom_worktree_repair.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - structural
+    base_source_units: 1
+    base_nodes: 1
+    head_nodes: 0
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Single token scanner had no controlled fault or consumer oracle; live doctor behavior owns repair availability.
+    consumer_evidence:
+    - paths:
+      - tests/specify_cli/cli/commands/test_workspace_husk_doctor.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Single token scanner had no controlled fault or consumer oracle; live doctor behavior owns repair availability.
+  survivor:
+    path: tests/specify_cli/cli/commands/test_workspace_husk_doctor.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-no-production-worktree-guard-bypass-py
+    members:
+    - tests/architectural/test_no_production_worktree_guard_bypass.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_no_production_worktree_guard_bypass.py
+    production_paths: &id022
+    - src/
+    oracle: Production callers never pass allow_worktree_context=True to mission creation.
+    contract_claim: Production callers never pass allow_worktree_context=True to mission creation.
+    authority:
+    - docs/adr/3.x/2026-04-03-1-execution-lanes-own-worktrees-and-mission-branches.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    base_source_units: 2
+    base_nodes: 2
+    head_nodes: 2
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-04-03-1-execution-lanes-own-worktrees-and-mission-branches.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id022
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Plant allow_worktree_context=True in a production call.
+      compliant_control: Default, omitted, and false values remain accepted.
+      authority_violated: docs/adr/3.x/2026-04-03-1-execution-lanes-own-worktrees-and-mission-branches.md
+      act_reached: true
+      intended_oracle: Production callers never pass allow_worktree_context=True to mission creation.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_no_production_worktree_guard_bypass.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 0 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/architectural/test_no_production_worktree_guard_bypass.py
+    collected_nodes: 2
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-no-raw-mission-spec-paths-py
+    members:
+    - tests/architectural/test_no_raw_mission_spec_paths.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_no_raw_mission_spec_paths.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - source
+    - structural
+    base_source_units: 2
+    base_nodes: 2
+    head_nodes: 0
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: A growing raw-token/constructor allowlist pinned path spelling and historical relocation rather than resolver
+        outcomes.
+    consumer_evidence:
+    - paths:
+      - tests/status/test_aggregate_surface_resolution.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: A growing raw-token/constructor allowlist pinned path spelling and historical relocation rather than resolver outcomes.
+  survivor:
+    path: tests/status/test_aggregate_surface_resolution.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-no-tracked-test-feature-missions-py
+    members:
+    - tests/architectural/test_no_tracked_test_feature_missions.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_no_tracked_test_feature_missions.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - structural
+    base_source_units: 1
+    base_nodes: 1
+    head_nodes: 0
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Repository-local stale fixture naming was cleanliness policy, not a live runtime invariant.
+    consumer_evidence:
+    - paths: []
+      result: Caller/authority review found no distinct live consumer contract.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Repository-local stale fixture naming was cleanliness policy, not a live runtime invariant.
+  survivor: null
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-no-worktree-name-guess-py
+    members:
+    - tests/architectural/test_no_worktree_name_guess.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_no_worktree_name_guess.py
+    production_paths: &id023
+    - src/mission_runtime/placement.py
+    - src/specify_cli/workspace/
+    oracle: Production code never guesses lane worktree/branch names or mission short IDs outside the placement seam.
+    contract_claim: Production code never guesses lane worktree/branch names or mission short IDs outside the placement seam.
+    authority:
+    - docs/adr/3.x/2026-04-03-1-execution-lanes-own-worktrees-and-mission-branches.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    - text
+    base_source_units: 11
+    base_nodes: 11
+    head_nodes: 5
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-04-03-1-execution-lanes-own-worktrees-and-mission-branches.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id023
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Plant f-string, slice, failover, or allowlisted-function name guessing.
+      compliant_control: Seam-owned composition and unrelated strings remain accepted.
+      authority_violated: docs/adr/3.x/2026-04-03-1-execution-lanes-own-worktrees-and-mission-branches.md
+      act_reached: true
+      intended_oracle: Production code never guesses lane worktree/branch names or mission short IDs outside the placement
+        seam.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_no_worktree_name_guess.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 6 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/architectural/test_no_worktree_name_guess.py
+    collected_nodes: 5
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-pre-review-scope-singlesource-py
+    members:
+    - tests/architectural/test_pre_review_scope_singlesource.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_pre_review_scope_singlesource.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - source
+    - structural
+    base_source_units: 10
+    base_nodes: 10
+    head_nodes: 0
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Exact shard filter/group/cone mappings compared current configuration to itself; WP07 owns route integration.
+    consumer_evidence:
+    - paths:
+      - kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP07-proportional-ci-routing.md
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Exact shard filter/group/cone mappings compared current configuration to itself; WP07 owns route integration.
+  survivor: null
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-resume-non-reemission-guard-py
+    members:
+    - tests/architectural/test_resume_non_reemission_guard.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_resume_non_reemission_guard.py
+    production_paths: &id024
+    - src/specify_cli/merge/done_bookkeeping.py
+    - src/specify_cli/merge/state.py
+    oracle: Merge resume never re-emits a durably recorded done transition.
+    contract_claim: Merge resume never re-emits a durably recorded done transition.
+    authority:
+    - docs/context/ops-vs-missions.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - structural
+    base_source_units: 1
+    base_nodes: 5
+    head_nodes: 5
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/context/ops-vs-missions.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id024
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Resume from any completed prefix and append done again.
+      compliant_control: Missing suffix transitions emit exactly once.
+      authority_violated: docs/context/ops-vs-missions.md
+      act_reached: true
+      intended_oracle: Merge resume never re-emits a durably recorded done transition.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_resume_non_reemission_guard.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 0 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/architectural/test_resume_non_reemission_guard.py
+    collected_nodes: 5
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-safe-commit-import-boundary-py
+    members:
+    - tests/architectural/test_safe_commit_import_boundary.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_safe_commit_import_boundary.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    base_source_units: 4
+    base_nodes: 8
+    head_nodes: 0
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Deleted-symbol absence, empty compat allowlists, and exact CommitTarget construction grammar certified completed
+        guard migrations.
+    consumer_evidence:
+    - paths:
+      - tests/architectural/test_no_production_worktree_guard_bypass.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Deleted-symbol absence, empty compat allowlists, and exact CommitTarget construction grammar certified completed
+    guard migrations.
+  survivor:
+    path: tests/architectural/test_no_production_worktree_guard_bypass.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-session-reaper-py
+    members:
+    - tests/architectural/test_session_reaper.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_session_reaper.py
+    production_paths: &id025
+    - tests/conftest.py
+    oracle: The test session reaps only residue created by the current run and fails/self-heals leaked worktrees and homes.
+    contract_claim: The test session reaps only residue created by the current run and fails/self-heals leaked worktrees and
+      homes.
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - structural
+    base_source_units: 14
+    base_nodes: 14
+    head_nodes: 13
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id025
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Leak a current-run worktree/home or reap a pre-existing/registered worktree.
+      compliant_control: Clean sessions and unrelated prior state remain untouched.
+      authority_violated: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+      act_reached: true
+      intended_oracle: The test session reaps only residue created by the current run and fails/self-heals leaked worktrees
+        and homes.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_session_reaper.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 1 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/architectural/test_session_reaper.py
+    collected_nodes: 13
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-status-command-guidance-py
+    members:
+    - tests/architectural/test_status_command_guidance.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_status_command_guidance.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - source
+    - structural
+    - text
+    base_source_units: 5
+    base_nodes: 5
+    head_nodes: 0
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: 'Historical #2983 file/invocation denominators and exact command prose pinned five documents; CLI behavior/docs
+        routing own current guidance.'
+    consumer_evidence:
+    - paths: []
+      result: Caller/authority review found no distinct live consumer contract.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: 'Historical #2983 file/invocation denominators and exact command prose pinned five documents; CLI behavior/docs
+    routing own current guidance.'
+  survivor: null
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-status-module-boundary-py
+    members:
+    - tests/architectural/test_status_module_boundary.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_status_module_boundary.py
+    production_paths: &id026
+    - src/specify_cli/status/
+    - src/specify_cli/
+    oracle: CLI consumers import the status facade rather than internal status submodules.
+    contract_claim: CLI consumers import the status facade rather than internal status submodules.
+    authority:
+    - docs/context/ops-vs-missions.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    base_source_units: 7
+    base_nodes: 7
+    head_nodes: 5
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/context/ops-vs-missions.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id026
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Inject a direct submodule or submodule-object import.
+      compliant_control: Facade and TYPE_CHECKING imports remain accepted.
+      authority_violated: docs/context/ops-vs-missions.md
+      act_reached: true
+      intended_oracle: CLI consumers import the status facade rather than internal status submodules.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_status_module_boundary.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 2 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/architectural/test_status_module_boundary.py
+    collected_nodes: 5
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-status-sync-boundary-py
+    members:
+    - tests/architectural/test_status_sync_boundary.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_status_sync_boundary.py
+    production_paths: &id027
+    - src/specify_cli/status/
+    oracle: Status has no dependency edge into sync; side effects route through status adapters.
+    contract_claim: Status has no dependency edge into sync; side effects route through status adapters.
+    authority:
+    - docs/context/ops-vs-missions.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    base_source_units: 2
+    base_nodes: 2
+    head_nodes: 1
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/context/ops-vs-missions.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id027
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Plant from specify_cli.sync import emit in the scanned package.
+      compliant_control: Status-facade import remains accepted.
+      authority_violated: docs/context/ops-vs-missions.md
+      act_reached: true
+      intended_oracle: Status has no dependency edge into sync; side effects route through status adapters.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_status_sync_boundary.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 1 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/architectural/test_status_sync_boundary.py
+    collected_nodes: 1
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-tasks-command-surface-py
+    members:
+    - tests/architectural/test_tasks_command_surface.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_tasks_command_surface.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    base_source_units: 8
+    base_nodes: 8
+    head_nodes: 0
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: JSON-dumps call-shape allowlists constrained implementation syntax while CLI output behavior remains guarded.
+    consumer_evidence:
+    - paths:
+      - tests/specify_cli/cli/commands/agent/test_tasks_cli_contract_coord.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: JSON-dumps call-shape allowlists constrained implementation syntax while CLI output behavior remains guarded.
+  survivor:
+    path: tests/specify_cli/cli/commands/agent/test_tasks_cli_contract_coord.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-verdict-seam-census-py
+    members:
+    - tests/architectural/test_verdict_seam_census.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_verdict_seam_census.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    - text
+    base_source_units: 33
+    base_nodes: 35
+    head_nodes: 0
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Large fixture counts, exclusion inventories, and classifier self-tests certified a completed verdict migration.
+    consumer_evidence:
+    - paths:
+      - tests/architectural/test_verdict_vocab_single_source.py
+      result: Equivalent live authority remains at the named survivor.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Large fixture counts, exclusion inventories, and classifier self-tests certified a completed verdict migration.
+  survivor:
+    path: tests/architectural/test_verdict_vocab_single_source.py
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-verdict-vocab-single-source-py
+    members:
+    - tests/architectural/test_verdict_vocab_single_source.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_verdict_vocab_single_source.py
+    production_paths: &id028
+    - src/specify_cli/status/verdict_vocab.py
+    - src/specify_cli/status/reducer.py
+    oracle: Review verdict conversion and emission use one total canonical vocabulary and refuse override-only values.
+    contract_claim: Review verdict conversion and emission use one total canonical vocabulary and refuse override-only values.
+    authority:
+    - docs/adr/3.x/2026-08-03-1-review-cycle-artifacts-are-coord-partition.md
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-003
+    scanner_kinds:
+    - ast
+    - source
+    - structural
+    base_source_units: 21
+    base_nodes: 31
+    head_nodes: 24
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: collected
+      outcome: passed
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: docs/adr/3.x/2026-08-03-1-review-cycle-artifacts-are-coord-partition.md
+      result: Current operational authority and live consumers remain active.
+    consumer_evidence:
+    - paths: *id028
+      result: Retained tests execute or scan this nonzero live production corpus.
+    causal_probe:
+      kind: prohibited-runtime-or-coordination-change
+      fault: Recreate inline equivalence, import without calling the bridge, or emit an arbiter-only override as review result.
+      compliant_control: Known inbound/artifact values round-trip and scoped approved/rejected emissions succeed.
+      authority_violated: docs/adr/3.x/2026-08-03-1-review-cycle-artifacts-are-coord-partition.md
+      act_reached: true
+      intended_oracle: Review verdict conversion and emission use one total canonical vocabulary and refuse override-only
+        values.
+      intended_oracle_failed: true
+      command: .venv/bin/pytest -q -p no:cacheprovider tests/architectural/test_verdict_vocab_single_source.py
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: KEEP_REDUCED
+  state: terminal
+  action: Keep the live operational family with its prohibited-change/control proof; retire 7 historical, positive-shape,
+    prose, or duplicate node(s).
+  survivor:
+    path: tests/architectural/test_verdict_vocab_single_source.py
+    collected_nodes: 24
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004
+- candidate:
+    id: WP14-tests-architectural-test-worktrees-index-clean-py
+    members:
+    - tests/architectural/test_worktrees_index_clean.py
+    granularity: file
+    source_paths:
+    - tests/architectural/test_worktrees_index_clean.py
+    production_paths: []
+    oracle: null
+    contract_claim: null
+    authority:
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+    - kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-007
+    scanner_kinds:
+    - structural
+    base_source_units: 1
+    base_nodes: 1
+    head_nodes: 0
+    route_memberships:
+    - *id018
+    - *id002
+    platforms:
+    - linux
+    - macOS
+    - windows
+    observations:
+    - environment_id: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
+      collection_state: absent
+      outcome: deleted
+      skip_reason: null
+      artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  evidence:
+    profile: structural
+    authority_evidence:
+    - reference: kitty-specs/assertive-test-suite-sanitation-01KZME3P/spec.md#FR-006
+      result: Local git-index cleanliness duplicated repository/CI diff hygiene and had no production Act.
+    consumer_evidence:
+    - paths: []
+      result: Caller/authority review found no distinct live consumer contract.
+    causal_probe:
+      kind: behavior-preserving-structural-change
+      fault: Rename, relocate, simplify, or remove the pinned historical/positive shape while preserving live consumer behavior.
+      compliant_control: Retained WP14 operational families execute successfully after deletion.
+      authority_violated: No current authority; only retired structural prestige changes.
+      act_reached: true
+      intended_oracle: Live consumer outcomes remain green while the deleted scaffold would reject harmless structure or history
+        drift.
+      intended_oracle_failed: true
+      command: Delete the scaffold, collect the exact WP14 ownership set, then execute every survivor serially.
+      environment: CPython 3.11.15, Darwin arm64, pytest cache disabled
+      raw_artifact_hash: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  verdict: DELETE
+  state: terminal
+  action: Local git-index cleanliness duplicated repository/CI diff hygiene and had no production Act.
+  survivor: null
+  issue: null
+  owner: null
+  expires: null
+  hic_approval: null
+  review: *id004

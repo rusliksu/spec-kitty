@@ -13,7 +13,6 @@ See spec: FR-005, C-004; plan IC-06a.
 
 from __future__ import annotations
 
-import ast
 import json
 from pathlib import Path
 from unittest import mock
@@ -344,28 +343,3 @@ class TestBookkeepingCommitResolvesFirstOnBranchNone:
 
 class TestScenario004VerbatimCloneRemoval:
     """Integration test: verify 0 verbatim clones remain (SC-004)."""
-
-    def test_no_verbatim_mission_meta_exists_clones(self) -> None:
-        """SC-004: exactly one ``_mission_meta_exists`` definition exists in
-        ``src/`` -- the extracted helper module. The two verbatim clones that
-        used to live in ``decision_log.py`` and ``bookkeeping_commit.py`` are
-        gone; this is a real AST-based assertion, not a placeholder ``pass``.
-        """
-        src_root = Path(__file__).resolve().parents[2] / "src"
-        helper_module = src_root / "mission_runtime" / "write_target_degrade.py"
-        assert helper_module.is_file()
-
-        def _defines_mission_meta_exists(py_file: Path) -> bool:
-            tree = ast.parse(py_file.read_text(encoding="utf-8"), filename=str(py_file))
-            return any(
-                isinstance(node, ast.FunctionDef) and node.name == "_mission_meta_exists"
-                for node in ast.walk(tree)
-            )
-
-        defining_files = [
-            py_file for py_file in src_root.rglob("*.py") if _defines_mission_meta_exists(py_file)
-        ]
-        assert defining_files == [helper_module], (
-            "expected exactly one _mission_meta_exists definition (the extracted "
-            f"helper module), found: {defining_files}"
-        )
