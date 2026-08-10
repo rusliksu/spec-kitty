@@ -1,0 +1,138 @@
+{
+  "schema_version": "wp06-results/v1",
+  "mission": "assertive-test-suite-sanitation-01KZME3P",
+  "work_package": "WP06",
+  "captured_at": "2026-08-10T13:05:00Z",
+  "immutable_base": "28ae75ea998c898aba57364db7a06d2088bd2af2",
+  "harness": {
+    "dependency": "WP02 exact repaired harness merged from kitty/mission-assertive-test-suite-sanitation-01KZME3P-lane-b",
+    "environment_id": "99fac44bf78c2c10bc1f4b7e8946bf8ec4b99ba2dbdc48a0e531d1a613c1a849",
+    "install": "uv sync --frozen --all-extras",
+    "python": "CPython 3.11.15",
+    "os": "macOS 15.7.7 arm64"
+  },
+  "issue_3284_reconciliation": {
+    "issue_result": "24 failed, 37298 passed, 108 skipped, 5 xfailed, 2 errors in 1689.48s",
+    "issue_untracked": {"failed": 23, "errors": 2},
+    "wp06_owned": {"failed": 22, "errors": 2},
+    "handoffs": [
+      {
+        "nodeid": "tests/architectural/test_ci_quality_path_filters.py::test_core_misc_shards_plus_e2e_owner_cover_legacy_selection",
+        "owner": "WP07",
+        "outcome": "failed",
+        "reason": "explicit CI-route authority handoff"
+      }
+    ],
+    "excluded_existing_owner": {
+      "nodeid": "tests/regression/test_issue_2782_sync_strict_json_ingress_skip.py::test_mission_create_json_strict_when_sync_skips_ingress",
+      "owner": "WP03",
+      "issue": "#2782"
+    },
+    "terminal_wp06_product_reds": 0,
+    "base_green_head_red": 0
+  },
+  "isolated_replay": {
+    "topology": "one exact node per pytest process, serial, repaired WP02 harness",
+    "reproduced_failed": [
+      "tests/charter/test_config_stem_parity.py::test_config_declares_exactly_the_expected_directive_count",
+      "tests/charter/test_config_stem_parity.py::test_every_activated_directive_stem_round_trips_to_canonical_urn[reconcile-change-scope-tensions]",
+      "tests/charter/test_config_stem_parity.py::test_every_activated_directive_stem_round_trips_to_canonical_urn[use-c4-model-techniques]",
+      "tests/doctrine/drg/test_reachability.py::TestActionChannelReachability::test_unreachable_at_d1_is_the_pinned_membership",
+      "tests/doctrine/drg/test_reachability.py::TestActionChannelReachability::test_unreachable_at_d2_is_the_pinned_membership",
+      "tests/doctrine/drg/test_reachability.py::TestC009NormalizationSwingExcluded::test_normalization_delta_is_the_declared_25_swing",
+      "tests/doctrine/drg/test_reachability.py::TestProfileChannelReachability::test_profile_unreachable_is_the_pinned_membership",
+      "tests/doctrine/drg/migration/test_extractor_projection.py::TestDRGZeroDelta::test_activated_but_unreachable_orphans_are_really_activated",
+      "tests/cli/test_cli_console.py::test_set_plain_false_restores_colour",
+      "tests/cli/test_cli_console.py::test_set_plain_true_strips_colour_from_human_output",
+      "tests/cli/test_cli_console.py::test_vanilla_console_print_json_would_leak_ansi",
+      "tests/cli/commands/test_agent_mission_commit_to_branch.py::test_commit_to_branch_treats_empty_safe_commit_shape_as_unchanged_when_dirty"
+    ],
+    "not_reproduced_under_repaired_harness": {
+      "completion_latency": "all selected issue candidates passed in isolation",
+      "doctor_restart": "passed",
+      "mission_template_resolution": "3 passed",
+      "compact_threshold": "passed",
+      "charter_e2e": "passed in 40.61s",
+      "upgrade_e2e": "passed in 17.97s",
+      "dual_write_teardown": "candidate call passed and no teardown error",
+      "identity_teardown": "candidate call passed and no teardown error"
+    },
+    "classification": {
+      "stale_or_non_causal_delete": [
+        "exact directive count",
+        "four exact reachability membership/swing pins",
+        "activated orphan acceptability pin",
+        "three 500ms completion thresholds",
+        "two compact-size parameter nodes",
+        "safe-commit hook-failure masking oracle"
+      ],
+      "harness_or_oracle_repair": [
+        "console terminal negotiation",
+        "global mission-template home isolation",
+        "doctor restart functional-health oracle",
+        "daemon port ownership"
+      ],
+      "dependency_repair_keep": ["charter E2E", "upgrade E2E"],
+      "dominated_duplicate_delete": [
+        "tests/sync/test_sync_e2e_integration.py (17 nodes)",
+        "tests/sync/test_dual_write_integration.py (4 nodes)"
+      ]
+    }
+  },
+  "flake_matrix": {
+    "candidate": "tests/sync/test_daemon_self_retirement.py::TestRunSyncDaemonWiring::test_sigterm_exits_without_deadlocking_server_shutdown",
+    "seeds": [11, 22, 33, 44, 55],
+    "pre_repair": {
+      "isolated": {"passes": 20, "failures": 1, "classification": "confirmed setup flake; only the fully labelled 20-pass run is counted"},
+      "ci_parallel_cluster": {"passes": 1, "failures": 0, "evidence": "139-node owned cohort under xdist"}
+    },
+    "root_cause": "parent selected then released a supposedly free TCP port before the daemon subprocess bound it",
+    "repair": "parent binds/listens once and transfers the live socket fd to the POSIX child; no retry, skip, xfail, timeout inflation, or product edit",
+    "post_repair": {
+      "isolated": {"passes": 20, "failures": 0, "seeds": [11, 22, 33, 44, 55], "repetitions_per_seed": 4},
+      "ci_parallel": {"passes": 10, "failures": 0, "seeds": [11, 22, 33, 44, 55], "repetitions_per_seed": 2, "topology": "ten concurrent pytest -n 2 --dist loadfile processes"},
+      "persistent_fault_behavior": "any startup, health, SIGTERM, cleanup, or exit failure remains immediately visible"
+    }
+  },
+  "reduction": {
+    "owned_cohort_nodes_before": 177,
+    "owned_cohort_nodes_after": 139,
+    "nodes_removed": 38,
+    "files_deleted": 2,
+    "test_diff_insertions": 78,
+    "test_diff_deletions": 1872,
+    "net_test_loc": -1794,
+    "focused_after_seconds": {
+      "serial_initial": 62.40,
+      "ci_parallel_final": 45.68
+    },
+    "deleted_call_time_seconds": null,
+    "deleted_call_time_note": "The immutable #3284 artifact retained suite wall time and outcome hashes, not per-node call durations; no duration was fabricated."
+  },
+  "verification": [
+    {
+      "command": ".venv/bin/pytest -q <12 surviving owned files> --tb=short",
+      "result": "138 passed, 1 harness-oracle failure in 62.40s; targeted console repair then 12/12 console nodes passed"
+    },
+    {
+      "command": ".venv/bin/pytest -q -n auto --dist loadfile <12 surviving owned files> --tb=short",
+      "result": "139 passed in 45.68s (post-repair final run)"
+    },
+    {
+      "command": ".venv/bin/ruff check <12 surviving owned files>",
+      "result": "All checks passed"
+    },
+    {
+      "command": ".venv/bin/pytest --collect-only -q <12 surviving owned files>",
+      "result": "139 tests collected"
+    }
+  ],
+  "safety": {
+    "production_files_changed": [],
+    "skips_added": 0,
+    "xfails_added": 0,
+    "quarantines_added": 0,
+    "retries_added": 0,
+    "timeouts_inflated": 0
+  }
+}

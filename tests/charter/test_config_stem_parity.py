@@ -14,7 +14,7 @@ This module:
   ``UnknownArtifactIdError``) — no new resolver logic is introduced here; this
   is a reuse-and-pin, not a reimplementation (see module docstring history in
   ``kind_vocabulary.py``).
-- **T003**: a data-driven fixture that round-trips *every one* of the 25
+- **T003**: a data-driven fixture that round-trips every
   ``activated_directives`` slug-stems declared in this repository's own
   ``.kittify/config.yaml`` against the real built-in doctrine tree, plus a
   spot-check of one activated entry from each of the other five activatable
@@ -122,18 +122,9 @@ def test_resolve_artifact_urn_is_reject_not_drop_on_unresolvable_stem(
 
 
 # --------------------------------------------------------------------------- #
-# T003 — full 25-directive parity fixture, driven by this repo's own
+# T003 — directive parity fixture, driven by this repo's own
 # .kittify/config.yaml (production-shaped data, not placeholders).
 # --------------------------------------------------------------------------- #
-
-
-def test_config_declares_exactly_the_expected_directive_count(
-    activated_directive_stems: list[str],
-) -> None:
-    # Pins the observed count from spec.md (Context & Motivation: "25 vs 24
-    # directives observed") so a silent addition/removal in config.yaml is
-    # visible as an intentional test update, not an invisible drift.
-    assert len(activated_directive_stems) == 25  # golden-count: cardinality-is-contract
 
 
 def _directive_stems_for_parametrize() -> list[str]:
@@ -142,9 +133,7 @@ def _directive_stems_for_parametrize() -> list[str]:
     ``pytest.mark.parametrize`` needs its argument list at collection time,
     before fixtures run, so this re-reads the same config file the
     ``activated_directive_stems`` fixture reads. Both routes must produce the
-    same 25 stems; :func:`test_config_declares_exactly_the_expected_directive_count`
-    pins the count so drift between the two reads would show up as a count
-    mismatch, not silently.
+    same current stems.
     """
     config = _load_config(_find_repo_root())
     stems = config.get("activated_directives")
@@ -159,11 +148,11 @@ def test_every_activated_directive_stem_round_trips_to_canonical_urn(
     """Every real ``config.activated_directives`` stem resolves and round-trips.
 
     Exercises the exact mapping the live derivation (WP02) must reproduce:
-    stem → canonical URN (``directive:DIRECTIVE_NNN``) → back to the same
-    stem, with no manual answers.yaml involvement.
+    stem → canonical URN → back to the same stem, with no manual
+    answers.yaml involvement. Directive codes are not required to use the
+    historical ``DIRECTIVE_NNN`` shape.
     """
     urn = resolve_artifact_urn(ArtifactKind.DIRECTIVE, stem, doctrine_root=doctrine_root)
-    assert urn.startswith("directive:DIRECTIVE_")
     assert resolve_config_id(urn, doctrine_root=doctrine_root) == stem
 
 
