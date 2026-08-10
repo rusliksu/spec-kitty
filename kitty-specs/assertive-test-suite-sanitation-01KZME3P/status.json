@@ -1,7 +1,7 @@
 {
-  "event_count": 167,
-  "last_event_id": "01KZPAQE7TY2NYCRMZVKVQA9DV",
-  "materialized_at": "2026-08-10T17:15:04.826764+00:00",
+  "event_count": 169,
+  "last_event_id": "01KZPASR001QE1PJXV06TRNFW6",
+  "materialized_at": "2026-08-10T17:16:20.316373+00:00",
   "mission_number": "",
   "mission_slug": "assertive-test-suite-sanitation-01KZME3P",
   "mission_type": "software-dev",
@@ -12,9 +12,9 @@
     "claimed": 0,
     "done": 0,
     "for_review": 0,
-    "in_progress": 0,
+    "in_progress": 1,
     "in_review": 1,
-    "planned": 4
+    "planned": 3
   },
   "work_packages": {
     "WP01": {
@@ -361,7 +361,8 @@
         "Pre-review scoped gate timed out at fixed 300s with zero failures. Override justified by 535 passed/2 xfailed full WP cohort, 137-node changed-file coverage, clean lint/type/evidence audit; WP07 shard-map handoff recorded.",
         "Cycle 2: 42 deep KEEP rows and 12 deletion mappings bound to SHA256 replay evidence; guard/dossier probes now traverse exact live enforcement oracles. Fresh full 535 passed/2 xfailed, selected 55 passed, oracle pair 8 passed; validator, Ruff, mypy, JSON/YAML, diff checks clean. Skipped duplicate pre-review gate after recording fresh full/focused executions; fixed gate timed out in cycle 1.",
         "Cycle 2 changes requested: survivor proof passes; split heterogeneous deletion families and bind exact successor/no-authority evidence",
-        "Ready for final cycle-3 review. Default scoped gate produced no failure output and timed out at its 300s ceiling; bounded final evidence is green: 41 successor tests passed in 61.35s plus 2 supplemental in 61.94s, artifacts parse/hash clean, exact -304 node patch unchanged, no production/test edits in cycle 3."
+        "Ready for final cycle-3 review. Default scoped gate produced no failure output and timed out at its 300s ceiling; bounded final evidence is green: 41 successor tests passed in 61.35s plus 2 supplemental in 61.94s, artifacts parse/hash clean, exact -304 node patch unchanged, no production/test edits in cycle 3.",
+        "Arbiter decision after final cycle: substantive sanitation approved at 841→537 (-304); all 54 paths terminal and three disputed files split into 26 exact families. WP08 must fail closed until stale WP10 evidence hashes are rebound to current artifacts or immutable historical blobs. No cycle 4."
       ],
       "provider": "__resolved_provider_absent__",
       "review": {
@@ -498,11 +499,19 @@
       ]
     },
     "WP14": {
-      "actor": "finalize-tasks",
+      "actor": "wp14-impl",
+      "agent": "wp14-impl",
+      "agent_profile": "architect-alphonso",
+      "agent_profile_version": "1.0",
       "force_count": 0,
-      "lane": "planned",
-      "last_event_id": "01KZMJP927VR76MYD0TSYGM551",
-      "last_transition_at": "2026-08-10T00:55:46.503925+00:00",
+      "lane": "in_progress",
+      "last_event_id": "01KZPASR001QE1PJXV06TRNFW6",
+      "last_transition_at": "2026-08-10T17:16:20.316373+00:00",
+      "model": "__resolved_model_absent__",
+      "provider": "__resolved_provider_absent__",
+      "role": "implementer",
+      "shell_pid": 28365,
+      "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
         "T066": "planned",
         "T067": "planned",
