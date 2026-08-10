@@ -5,17 +5,17 @@ inventory:
   proof_command: git diff --quiet 28ae75ea998c898aba57364db7a06d2088bd2af2 -- tests pyproject.toml pytest.ini tox.ini setup.cfg uv.lock
   proof_exit: 0
 census:
-  source_units: 29755
+  source_units: 29766
   collected_nodes: 37444
   collection_exit: 0
-  collection_states: {collected: 29753, deselected: 0, error: 0, ignored: 0, zero_node: 2}
+  collection_states: {collected: 29753, deselected: 0, error: 0, ignored: 0, zero_node: 13}
   reconciliation_complete: true
   unreconciled_or_duplicate_nodes: 0
-  compact_bytes: 23308745
+  compact_bytes: 23465927
   compact_tables: [paths, parent_source_functions, marker_sets, reasons]
 manifests:
-  docstring_normalized_strict_groups: 171
-  strict_group_members: 357
+  docstring_normalized_strict_groups: 173
+  strict_group_members: 365
   inert_candidates: 15
   structural_source_ast_text_scanner_files: 234
   promoted_semantic_groups: 0
@@ -25,6 +25,7 @@ environment_ids:
   local_base: 041621508d449a4ea75c1f8a7658a8f2d6477b31a4444718328201e6a33ae64c
   ci_regression: 8d4b0ec6f34bf221c05bf5d67d4498ab7fdaf83798f25ec6791e836d6e4d0e09
   ci_quarantine: d9351dc38c139f8d2c79a6716b633a068e1fa64fb58083de2779d2ff1bde7004
+  sibling_e2e_unobserved: 46ae15b53685042012156bed25ec658b059350860946d28032b7e0cee2eca1f0
 commands:
   snapshot: .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py snapshot --root . --inventory-sha 28ae75ea998c898aba57364db7a06d2088bd2af2 --output docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json
   validate: .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py validate docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-workloads.yaml
@@ -33,21 +34,29 @@ selftest:
   valid: true
   checks:
     - aggregate_empty_shard
+    - aggregate_malformed_controlled_error
     - byte_identical
     - collection_error
+    - collection_crash_fails_closed
+    - deselected_class_parameter_family
     - divergent_family_fails
     - duplicate_deep_membership_fails
     - dynamic_ignore
     - exact_duplicate
     - explicit_empty_census
     - inherited_marker
+    - ledger_types_refs_keep_family_rejected
     - malformed_shard_fails_without_crash
+    - modifyitems_crash_fails_closed
+    - recursive_nested_once
     - same_name_membership
     - static_ignore
     - unowned_fails
+    - workload_duplicate_argv_env_edge_rejected
+    - zero_function_file_not_empty_root
     - zero_node
 raw_artifacts:
-  base-census.json: c206ec46a37c0a19bcbd052e8054c02f078a9f80dca0b353d1d2ee11de0acdce
-  base-workloads.yaml: 7a165bef16dcffe4e0c7ece4d45dfb642d41f8d89a30b13a53613c64e9f51515
+  base-census.json: c15ef616766752ac1d30ddac8d24b7929f4f874d45cc131392d443c1de9d5d8b
+  base-workloads.yaml: 583ae4f5c9d68945270a0d62b10b9f4cc52393442a1eb2e0456cde959fed4ea8
   bootstrap-failure.txt: 0f288e5ea1009eeaf7f4f5b37a71b881b3aa73572adb838836277ff6cccb1955
-  base-full-suite-summary.txt: 8e227eba0fd10d69223f7add93ec904f44971eeb2be131edceaeac12a73163f6
+  base-full-suite-summary.txt: 2abc44fabfc32cd4cd76eb0dc819934025cf690aa6e75ad5430899023bc6c318

@@ -160,7 +160,7 @@ def _unit(
     )
 
 
-def discover_source(root: Path, tests_root: Path) -> tuple[list[SourceUnit], list[dict[str, str]]]:
+def discover_source(root: Path, tests_root: Path) -> tuple[list[SourceUnit], list[dict[str, str]]]:  # noqa: C901 - recursive AST forms
     units: list[SourceUnit] = []
     parse_errors: list[dict[str, str]] = []
     if not tests_root.exists():
@@ -182,14 +182,22 @@ def discover_source(root: Path, tests_root: Path) -> tuple[list[SourceUnit], lis
                         for child in ast.walk(value):
                             if isinstance(child, ast.Call):
                                 module_markers.add(_decorator_name(child.func))
-        for node in tree.body:
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and TEST_NAME.match(node.name):
-                units.append(_unit(rel, node.name, node, sorted(module_markers)))
-            elif isinstance(node, ast.ClassDef) and node.name.startswith("Test"):
-                inherited = sorted(module_markers | {_decorator_name(item) for item in node.decorator_list})
-                for child in node.body:
-                    if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and TEST_NAME.match(child.name):
-                        units.append(_unit(rel, f"{node.name}.{child.name}", child, inherited))
+        def visit(body: Sequence[ast.stmt], prefix: tuple[str, ...], inherited: set[str], source_path: str = rel) -> None:
+            for node in body:
+                if isinstance(node, ast.ClassDef):
+                    class_markers = inherited | {_decorator_name(item) for item in node.decorator_list}
+                    visit(node.body, (*prefix, node.name), class_markers)
+                elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    qualname = ".".join((*prefix, node.name))
+                    if TEST_NAME.match(node.name):
+                        units.append(_unit(source_path, qualname, node, sorted(inherited)))
+                    visit(node.body, (*prefix, node.name), inherited)
+                else:
+                    nested_bodies = [value for value in ast.iter_child_nodes(node) if isinstance(value, ast.stmt)]
+                    if nested_bodies:
+                        visit(nested_bodies, prefix, inherited)
+
+        visit(tree.body, (), module_markers)
     return sorted(units, key=lambda item: item.id), parse_errors
 
 
@@ -234,7 +242,9 @@ class CollectionPlugin:
         self.tests_root = tests_root
         self.nodes: list[dict[str, Any]] = []
         self.deselected: list[str] = []
+        self.deselected_items: list[dict[str, Any]] = []
         self.errors: list[dict[str, str]] = []
+        self.internal_errors: list[str] = []
         self.ignored: set[str] = set()
 
     @hookimpl(wrapper=True, tryfirst=True)
@@ -247,8 +257,14 @@ class CollectionPlugin:
                 self.ignored.add(_rel(path, self.root))
         return result
 
-    def pytest_collection_modifyitems(self, session: pytest.Session, config: pytest.Config, items: list[pytest.Item]) -> None:
+    @hookimpl(wrapper=True, trylast=True)
+    def pytest_collection_modifyitems(self, session: pytest.Session, config: pytest.Config, items: list[pytest.Item]) -> Any:
         del session, config
+        try:
+            result = yield
+        except BaseException as exc:
+            self.internal_errors.append(str(_stable(repr(exc))))
+            raise
         for item in items:
             path, line, source_name = item.location
             effective_markers = list(item.iter_markers())
@@ -261,7 +277,7 @@ class CollectionPlugin:
                     break
             self.nodes.append({
                 "nodeid": item.nodeid.replace("\\", "/"),
-                "path": Path(path).as_posix(), "line": line + 1,
+                "path": Path(path).as_posix(), "line": int(line or 0) + 1,
                 "parent_source_function": source_name.split("[")[0],
                 # Arguments (especially parametrize payloads) are not inventory
                 # identity and can be enormous; effective marker names plus the
@@ -270,13 +286,26 @@ class CollectionPlugin:
                 "quarantined": "quarantine" in marker_names,
                 "skip_or_xfail_reason": reason,
             })
+        return result
 
     def pytest_deselected(self, items: list[pytest.Item]) -> None:
-        self.deselected.extend(item.nodeid.replace("\\", "/") for item in items)
+        for item in items:
+            path, line, source_name = item.location
+            nodeid = item.nodeid.replace("\\", "/")
+            self.deselected.append(nodeid)
+            self.deselected_items.append({
+                "nodeid": nodeid, "path": Path(path).as_posix(),
+                "line": int(line or 0) + 1,
+                "parent_source_function": source_name.split("[")[0],
+            })
 
     def pytest_collectreport(self, report: pytest.CollectReport) -> None:
         if report.failed:
             self.errors.append({"nodeid": report.nodeid.replace("\\", "/"), "error": _stable(str(report.longrepr))})
+
+    def pytest_internalerror(self, excrepr: object, excinfo: object) -> None:
+        del excinfo
+        self.internal_errors.append(str(_stable(str(excrepr))))
 
 
 def collect_pytest(root: Path, tests_root: Path, extra_args: Sequence[str]) -> dict[str, Any]:
@@ -295,7 +324,9 @@ def collect_pytest(root: Path, tests_root: Path, extra_args: Sequence[str]) -> d
         "argv": ["pytest", *argv], "exit_code": code,
         "nodes": sorted(plugin.nodes, key=lambda row: row["nodeid"]),
         "deselected": sorted(set(plugin.deselected)),
+        "deselected_items": sorted(plugin.deselected_items, key=lambda row: row["nodeid"]),
         "collection_errors": sorted(plugin.errors, key=lambda row: row["nodeid"]),
+        "internal_errors": sorted(set(plugin.internal_errors)),
         "ignored_paths": sorted(plugin.ignored),
     }))
 
@@ -421,7 +452,8 @@ def _compact_collection(collection: Mapping[str, Any]) -> dict[str, Any]:
         "node_fields": ["nodeid", "path_ref", "line", "parent_source_function_ref", "marker_set_ref", "quarantined", "reason_ref"],
         "tables": {"paths": paths, "parent_source_functions": functions, "marker_sets": [list(row) for row in marker_sets], "reasons": reasons},
         "nodes": compact_nodes,
-        "deselected": collection["deselected"], "collection_errors": collection["collection_errors"],
+        "deselected": collection["deselected"], "deselected_items": collection["deselected_items"],
+        "collection_errors": collection["collection_errors"], "internal_errors": collection["internal_errors"],
         "ignored_paths": collection["ignored_paths"],
     }
 
@@ -429,7 +461,8 @@ def _compact_collection(collection: Mapping[str, Any]) -> dict[str, Any]:
 def _reconcile(units: Sequence[SourceUnit], collection: Mapping[str, Any], config: Mapping[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     nodes = collection["nodes"]
     errors = collection["collection_errors"]
-    deselected = set(collection["deselected"])
+    deselected_items = cast(list[dict[str, Any]], collection.get("deselected_items", []))
+    deselected_keys = {(str(row["path"]), str(row["parent_source_function"])) for row in deselected_items}
     ignored_cfg = [str(item) for item in config.get("collect_ignore", [])]
     ignored_glob = [str(item) for item in config.get("collect_ignore_glob", [])]
     ignored_observed = [str(item) for item in collection.get("ignored_paths", [])]
@@ -449,7 +482,7 @@ def _reconcile(units: Sequence[SourceUnit], collection: Mapping[str, Any], confi
             or any(unit.path == path or unit.path.startswith(f"{path}/") for path in ignored_observed)
             or any(fnmatch.fnmatch(unit.path, pat) for pat in ignored_glob)
         )
-        matched_deselected = [nodeid for nodeid in deselected if nodeid.startswith(f"{unit.path}::") and unit.qualname.split(".")[-1] in nodeid]
+        matched_deselected = (unit.path, unit.qualname) in deselected_keys
         if matched:
             state = "collected"
         elif matched_deselected:
@@ -466,7 +499,12 @@ def _reconcile(units: Sequence[SourceUnit], collection: Mapping[str, Any], confi
     return rows, {
         "source_units": len(units), "collected_nodes": len(nodes), "state_counts": counts,
         "unreconciled_or_duplicate_nodes": bad_nodes,
-        "complete": not bad_nodes and len(rows) == len(units),
+        "complete": (
+            not bad_nodes and len(rows) == len(units)
+            and int(collection["exit_code"]) in {0, 5}
+            and not collection.get("internal_errors")
+            and not collection.get("collection_errors")
+        ),
     }
 
 
@@ -474,10 +512,13 @@ def snapshot(root: Path, tests_path: str, extra_args: Sequence[str], inventory_s
     root = root.resolve()
     tests_root = (root / tests_path).resolve()
     units, parse_errors = discover_source(root, tests_root)
+    test_files = sorted(_rel(path, root) for path in tests_root.rglob("*.py")) if tests_root.exists() else []
+    unit_paths = {unit.path for unit in units}
     config = discover_config(root)
     collection = collect_pytest(root, tests_root, extra_args) if tests_root.exists() else {
         "argv": ["pytest", tests_path, "--collect-only", "-q", "-p", "no:cacheprovider"],
-        "exit_code": 5, "nodes": [], "deselected": [], "collection_errors": [], "ignored_paths": [],
+        "exit_code": 5, "nodes": [], "deselected": [], "deselected_items": [],
+        "collection_errors": [], "internal_errors": [], "ignored_paths": [],
     }
     rows, reconciliation = _reconcile(units, collection, config)
     owners = load_owners(root) if (root / "kitty-specs" / "assertive-test-suite-sanitation-01KZME3P" / "tasks").exists() else {}
@@ -526,10 +567,12 @@ def snapshot(root: Path, tests_path: str, extra_args: Sequence[str], inventory_s
             "normalization": ["JSON mapping-key ordering", "explicit set-like field sorting only", "absolute temporary roots -> <TEMP_ROOT>"],
         },
         "config": config, "source_parse_errors": parse_errors,
+        "test_files": test_files,
+        "zero_function_files": sorted(path for path in test_files if path not in unit_paths),
         "source_units": compact_rows, "collection": _compact_collection(collection),
         "reconciliation": reconciliation, "manifests": manifests,
         "ownership": {"unowned": sorted(set(unowned)), "complete": not unowned},
-        "empty_tests_root": not units and not collection["nodes"],
+        "empty_tests_root": not test_files,
     }
     evidence["content_sha256"] = _sha(_json_bytes(evidence))
     return cast(dict[str, Any], _stable(evidence))
@@ -547,6 +590,14 @@ def _keys(row: Mapping[str, Any], fields: Iterable[str], where: str, errors: lis
             errors.append(f"{where}: missing field {field}")
 
 
+def _str_list(value: Any, *, nonempty: bool = False) -> bool:
+    return isinstance(value, list) and (not nonempty or bool(value)) and all(isinstance(item, str) for item in value)
+
+
+def _hash_value(value: Any) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
 def validate_environment(env: Mapping[str, Any], where: str, errors: list[str]) -> None:
     required = (
         "id", "os", "runner_image", "cpu_class", "python", "event", "env", "lock_hash",
@@ -554,7 +605,13 @@ def validate_environment(env: Mapping[str, Any], where: str, errors: list[str]) 
     )
     _keys(env, required, where, errors)
     _required(env, required[:-1], where, errors)
-    if not isinstance(env.get("env"), dict) or not isinstance(env.get("install_command"), list):
+    scalar_fields = ("id", "os", "runner_image", "cpu_class", "python", "event", "lock_hash", "install_state", "workers", "cache_policy")
+    if any(not isinstance(env.get(field), str) for field in scalar_fields):
+        errors.append(f"{where}: scalar environment fields must be strings")
+    env_map = env.get("env")
+    if not isinstance(env_map, dict) or not all(isinstance(key, str) and isinstance(value, str) for key, value in env_map.items()):
+        errors.append(f"{where}: env must be string mapping")
+    if not _str_list(env.get("install_command"), nonempty=True):
         errors.append(f"{where}: env must be mapping and install_command must be list")
     if env.get("event") not in {"local", "PR", "push", "schedule", "manual"}:
         errors.append(f"{where}: invalid event")
@@ -570,7 +627,7 @@ def validate_route(route: Mapping[str, Any], where: str, errors: list[str]) -> N
         errors.append(f"{where}: invalid route role")
     if not isinstance(route.get("required"), bool):
         errors.append(f"{where}: required must be boolean")
-    if not isinstance(route.get("events"), list) or not isinstance(route.get("selector"), dict):
+    if not isinstance(route.get("route_id"), str) or not _str_list(route.get("events"), nonempty=True) or not isinstance(route.get("selector"), dict):
         errors.append(f"{where}: events must be list and selector must be mapping")
 
 
@@ -583,11 +640,15 @@ def validate_causal_probe(probe: Any, where: str, errors: list[str]) -> None:
         "intended_oracle_failed", "command", "environment", "raw_artifact_hash",
     )
     _required(probe, fields, where, errors)
+    if any(not isinstance(probe.get(field), str) for field in ("kind", "fault", "authority_violated", "intended_oracle", "command", "environment")):
+        errors.append(f"{where}: causal text fields must be strings")
+    if not _hash_value(probe.get("raw_artifact_hash")):
+        errors.append(f"{where}: raw_artifact_hash must be SHA-256")
     if probe.get("act_reached") is not True or probe.get("intended_oracle_failed") is not True:
         errors.append(f"{where}: causal proof must reach Act and fail intended oracle")
 
 
-def validate_workload(dag: Mapping[str, Any], where: str, errors: list[str]) -> None:  # noqa: C901 - schema branches are intentionally explicit
+def validate_workload(dag: Mapping[str, Any], where: str, errors: list[str], environment_ids: set[str]) -> None:  # noqa: C901 - schema branches are intentionally explicit
     _keys(dag, ("routes", "edges", "repetitions", "measurements"), where, errors)
     routes = dag.get("routes", [])
     edges = dag.get("edges", [])
@@ -596,21 +657,46 @@ def validate_workload(dag: Mapping[str, Any], where: str, errors: list[str]) -> 
         return
     if not isinstance(dag.get("repetitions"), int) or dag.get("repetitions", 0) < 3:
         errors.append(f"{where}: repetitions must be >= 3")
-    route_ids = set()
+    route_ids: set[str] = set()
     for index, route in enumerate(routes):
         if not isinstance(route, dict):
             errors.append(f"{where}.routes[{index}]: mapping required")
             continue
-        _required(route, ("id", "argv", "environment_id", "base_mapping", "head_mapping"), f"{where}.routes[{index}]", errors)
-        route_ids.add(route.get("id"))
+        route_where = f"{where}.routes[{index}]"
+        _keys(route, ("id", "argv", "environment_id", "base_mapping", "head_mapping", "cwd", "env"), route_where, errors)
+        _required(route, ("id", "argv", "environment_id", "base_mapping", "head_mapping", "cwd"), route_where, errors)
+        route_id = route.get("id")
+        if not isinstance(route_id, str):
+            errors.append(f"{route_where}: id must be string")
+            continue
+        if route_id in route_ids:
+            errors.append(f"{route_where}: duplicate route id {route_id}")
+        route_ids.add(route_id)
+        if not _str_list(route.get("argv"), nonempty=True):
+            errors.append(f"{route_where}: argv must be nonempty string list")
+        route_env = route.get("env")
+        if (
+            not isinstance(route.get("cwd"), str)
+            or not isinstance(route_env, dict)
+            or not all(isinstance(k, str) and isinstance(v, str) for k, v in route_env.items())
+        ):
+            errors.append(f"{route_where}: cwd/string env mapping required")
+        if route.get("environment_id") not in environment_ids:
+            errors.append(f"{route_where}: unknown environment_id")
+        if not isinstance(route.get("base_mapping"), str) or not isinstance(route.get("head_mapping"), str):
+            errors.append(f"{route_where}: base/head mappings must be strings")
     graph: dict[Any, set[Any]] = {route_id: set() for route_id in route_ids}
     for index, edge in enumerate(edges):
         if not isinstance(edge, dict) or set(edge) < {"from", "to"}:
             errors.append(f"{where}.edges[{index}]: from/to required")
             continue
-        if edge["from"] not in route_ids or edge["to"] not in route_ids:
+        edge_from, edge_to = edge.get("from"), edge.get("to")
+        if not isinstance(edge_from, str) or not isinstance(edge_to, str):
+            errors.append(f"{where}.edges[{index}]: from/to strings required")
+            continue
+        if edge_from not in route_ids or edge_to not in route_ids:
             errors.append(f"{where}.edges[{index}]: unknown route")
-        graph.setdefault(edge["from"], set()).add(edge["to"])
+        graph.setdefault(edge_from, set()).add(edge_to)
     visiting: set[Any] = set()
     visited: set[Any] = set()
     def visit(node: Any) -> bool:
@@ -658,6 +744,16 @@ def validate_census(data: Mapping[str, Any], errors: list[str]) -> None:  # noqa
     if not isinstance(units, list) or not isinstance(collection, dict):
         errors.append("census: source_units list and collection mapping required")
         return
+    test_files = data.get("test_files")
+    zero_function_files = data.get("zero_function_files")
+    if not _str_list(test_files) or not _str_list(zero_function_files):
+        errors.append("census: test_files and zero_function_files must be string lists")
+    elif not set(cast(list[str], zero_function_files)) <= set(cast(list[str], test_files)):
+        errors.append("census: zero_function_files must reference test_files")
+    elif data.get("empty_tests_root") is not (test_files == []):
+        errors.append("census: empty_tests_root inconsistent with discovered files")
+    if collection.get("exit_code") not in {0, 5} or collection.get("internal_errors") or collection.get("collection_errors"):
+        errors.append("census: collection exited nonzero or recorded collection/internal errors")
     states = {row.get("collection_state") for row in units if isinstance(row, dict)}
     if not states <= COLLECTION_STATES:
         errors.append("census: invalid collection_state")
@@ -707,6 +803,17 @@ def validate_census(data: Mapping[str, Any], errors: list[str]) -> None:  # noqa
             errors.append(f"census: source_units[{index}] id missing/duplicate")
         if isinstance(source_id, str):
             source_ids.add(source_id)
+        if (
+            not isinstance(row.get("path"), str)
+            or not isinstance(row.get("qualname"), str)
+            or not isinstance(row.get("line"), int)
+            or not _str_list(row.get("decorators"))
+            or not _str_list(row.get("inert_reasons"))
+            or not _hash_value(row.get("exact_body_sha256"))
+            or not _hash_value(row.get("structural_shape_sha256"))
+            or not isinstance(row.get("zero_node"), bool)
+        ):
+            errors.append(f"census: source_units[{index}] typed fields invalid")
         refs = row.get("node_refs")
         if not isinstance(refs, list):
             errors.append(f"census: source_units[{index}] node_refs list required")
@@ -748,7 +855,10 @@ def _validate_temporary(row: Mapping[str, Any], where: str, profile: Any, today:
         errors.append(f"{where}: invalid TEMPORARY expiry")
 
 
-def validate_disposition(row: Mapping[str, Any], index: int, today: dt.date, errors: list[str]) -> None:  # noqa: C901 - fail-closed schema matrix
+def validate_disposition(  # noqa: C901 - fail-closed schema matrix
+    row: Mapping[str, Any], index: int, today: dt.date, errors: list[str],
+    census_members: set[str], environment_ids: set[str],
+) -> None:
     where = f"dispositions[{index}]"
     _required(row, ("candidate", "evidence", "verdict", "state", "action", "review"), where, errors)
     verdict, state = row.get("verdict"), row.get("state")
@@ -771,6 +881,22 @@ def validate_disposition(row: Mapping[str, Any], index: int, today: dt.date, err
     else:
         evidence = evidence_value
     _required(candidate, ("id", "members", "granularity", "source_paths", "route_memberships", "platforms", "observations"), f"{where}.candidate", errors)
+    if not isinstance(candidate.get("id"), str):
+        errors.append(f"{where}: candidate id must be string")
+    members_value = candidate.get("members")
+    if not _str_list(members_value, nonempty=True):
+        errors.append(f"{where}: members must be nonempty string list")
+        members_value = []
+    for member in cast(list[str], members_value):
+        if member not in census_members:
+            errors.append(f"{where}: stale/unknown census member {member}")
+    for field in ("source_paths", "production_paths", "authority", "platforms"):
+        value = candidate.get(field)
+        if field in candidate and not _str_list(value, nonempty=field in {"source_paths", "platforms"}):
+            errors.append(f"{where}: {field} must be string list")
+    for field in ("oracle", "contract_claim", "duplicate_group"):
+        if candidate.get(field) is not None and not isinstance(candidate.get(field), str):
+            errors.append(f"{where}: {field} must be string or null")
     if candidate.get("granularity") not in GRANULARITIES:
         errors.append(f"{where}: invalid granularity")
     profile = evidence.get("profile")
@@ -807,9 +933,26 @@ def validate_disposition(row: Mapping[str, Any], index: int, today: dt.date, err
         )
         _keys(obs, observation_fields, f"{where}.observations[{obs_index}]", errors)
         _required(obs, ("environment_id", "collection_state", "markers", "duration", "artifact_hash"), f"{where}.observations[{obs_index}]", errors)
+        if obs.get("environment_id") not in environment_ids:
+            errors.append(f"{where}.observations[{obs_index}]: unknown environment_id")
+        if obs.get("nodeid") is not None and not isinstance(obs.get("nodeid"), str):
+            errors.append(f"{where}.observations[{obs_index}]: nodeid must be string/null")
+        if obs.get("collection_state") not in {"zero_node", "ignored", "error"} and obs.get("nodeid") is None:
+            errors.append(f"{where}.observations[{obs_index}]: nodeid null only for non-collected source states")
+        if obs.get("skip_reason") is not None and not isinstance(obs.get("skip_reason"), str):
+            errors.append(f"{where}.observations[{obs_index}]: skip_reason must be string/null")
+        if not _str_list(obs.get("markers")) or not _hash_value(obs.get("artifact_hash")):
+            errors.append(f"{where}.observations[{obs_index}]: markers/string list and SHA artifact required")
         duration = obs.get("duration")
         if not isinstance(duration, dict) or not {"collection", "setup", "call", "cost_class"} <= set(duration):
             errors.append(f"{where}.observations[{obs_index}]: typed duration fields required")
+        elif any(
+            not isinstance(duration.get(phase), (int, float))
+            or isinstance(duration.get(phase), bool)
+            or cast(float, duration.get(phase)) < 0
+            for phase in ("collection", "setup", "call")
+        ) or not isinstance(duration.get("cost_class"), str):
+            errors.append(f"{where}.observations[{obs_index}]: invalid duration values")
         if obs.get("outcome") in {"skipped", "xfailed"} and not obs.get("skip_reason"):
             errors.append(f"{where}.observations[{obs_index}]: skip_reason required")
     memberships = candidate.get("route_memberships", [])
@@ -825,6 +968,7 @@ def validate_disposition(row: Mapping[str, Any], index: int, today: dt.date, err
         errors.append(f"{where}: exactly one owner route required")
     if verdict == "KEEP":
         _required(candidate, ("production_paths", "oracle", "contract_claim", "authority"), f"{where}.KEEP", errors)
+        validate_causal_probe(evidence.get("causal_probe"), f"{where}.KEEP.causal_probe", errors)
     if verdict == "CONSOLIDATE" and state == "terminal":
         _required(row, ("survivor",), where, errors)
         members = candidate.get("members", [])
@@ -835,6 +979,12 @@ def validate_disposition(row: Mapping[str, Any], index: int, today: dt.date, err
     review = row.get("review", {})
     if isinstance(review, dict):
         _required(review, ("implementer", "independent_reviewer", "verdict", "timestamp"), f"{where}.review", errors)
+        if any(not isinstance(review.get(field), str) for field in ("implementer", "independent_reviewer", "verdict", "timestamp")):
+            errors.append(f"{where}.review: fields must be strings")
+        try:
+            dt.datetime.fromisoformat(str(review.get("timestamp")).replace("Z", "+00:00"))
+        except ValueError:
+            errors.append(f"{where}.review: invalid timestamp")
     else:
         errors.append(f"{where}.review: mapping required")
     if candidate.get("granularity") in {"family", "duplicate_cluster"}:
@@ -842,14 +992,24 @@ def validate_disposition(row: Mapping[str, Any], index: int, today: dt.date, err
         required_dimensions = {"production_path", "oracle", "outcome", "route_role", "cost_class", "platform", "disposition"}
         if not isinstance(dimensions, dict) or not required_dimensions <= set(dimensions):
             errors.append(f"{where}: family equivalence dimensions required")
-        if candidate.get("divergent_dimensions") and not candidate.get("node_rows"):
+        observations_list = [obs for obs in observations if isinstance(obs, dict)]
+        observed_divergence = (
+            len({obs.get("collection_state") for obs in observations_list}) > 1
+            or len({obs.get("outcome") for obs in observations_list}) > 1
+            or len({obs.get("duration", {}).get("cost_class") for obs in observations_list if isinstance(obs.get("duration"), dict)}) > 1
+        )
+        node_rows = candidate.get("node_rows")
+        if (candidate.get("divergent_dimensions") or observed_divergence) and not isinstance(node_rows, list):
             errors.append(f"{where}: divergent family dimensions require node_rows")
+        if node_rows is not None and (not isinstance(node_rows, list) or not all(isinstance(item, dict) for item in node_rows)):
+            errors.append(f"{where}: node_rows must be mapping list")
 
 
 def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str], dict[str, Any]]:  # noqa: C901 - heterogeneous document fail-closed dispatch
     errors: list[str] = []
     members: dict[str, str] = {}
-    loaded = []
+    loaded: list[str] = []
+    documents: list[tuple[Path, dict[str, Any]]] = []
     disposition_count = 0
     for path in paths:
         try:
@@ -861,12 +1021,36 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
             errors.append(f"{path}: top-level mapping required")
             continue
         loaded.append(path.as_posix())
+        documents.append((path, data))
+    census_members: set[str] = set()
+    environment_ids: set[str] = set()
+    for _, data in documents:
         if "source_units" in data and "reconciliation" in data:
             validate_census(data, errors)
+            for unit in data.get("source_units", []):
+                if isinstance(unit, dict) and isinstance(unit.get("id"), str):
+                    census_members.add(unit["id"])
+            collection = data.get("collection", {})
+            if isinstance(collection, dict):
+                for node in collection.get("nodes", []):
+                    if isinstance(node, list) and node and isinstance(node[0], str):
+                        census_members.add(node[0])
         environments = data.get("run_environments", data.get("environments", []))
         if isinstance(environments, dict):
             environments = list(environments.values())
-        for env_index, env in enumerate(environments or []):
+        if not isinstance(environments, list):
+            errors.append("environments must be list or mapping")
+            environments = []
+        for env in environments:
+            if isinstance(env, dict) and isinstance(env.get("id"), str):
+                environment_ids.add(env["id"])
+    for path, data in documents:
+        environments = data.get("run_environments", data.get("environments", []))
+        if isinstance(environments, dict):
+            environments = list(environments.values())
+        if not isinstance(environments, list):
+            environments = []
+        for env_index, env in enumerate(environments):
             if isinstance(env, dict):
                 validate_environment(env, f"{path}.environments[{env_index}]", errors)
             else:
@@ -874,17 +1058,20 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
         workload = data.get("frozen_workload_dag")
         if workload is not None:
             if isinstance(workload, dict):
-                validate_workload(workload, f"{path}.frozen_workload_dag", errors)
+                validate_workload(workload, f"{path}.frozen_workload_dag", errors, environment_ids)
             else:
                 errors.append(f"{path}.frozen_workload_dag: mapping required")
         rows = data.get("dispositions", [])
+        if not isinstance(rows, list):
+            errors.append(f"{path}: dispositions must be list")
+            continue
         if rows and data.get("schema_version") != SCHEMA:
             errors.append(f"{path}: schema_version must be {SCHEMA}")
         for index, row in enumerate(rows):
             if not isinstance(row, dict):
                 errors.append(f"{path}: dispositions[{index}] must be mapping")
                 continue
-            validate_disposition(row, index, today, errors)
+            validate_disposition(row, index, today, errors, census_members, environment_ids)
             disposition_count += 1
             candidate = row.get("candidate", {})
             candidate_members = candidate.get("members", []) if isinstance(candidate, dict) else []
@@ -901,14 +1088,20 @@ def validate_documents(paths: Sequence[Path], today: dt.date) -> tuple[list[str]
 
 
 def aggregate(paths: Sequence[Path]) -> dict[str, Any]:
-    rows = []
-    source_files = []
+    rows: list[dict[str, Any]] = []
+    source_files: list[dict[str, str]] = []
     for path in sorted(paths):
-        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        try:
+            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        except Exception as exc:
+            raise AuditError(f"{path}: cannot load: {exc}") from exc
         if not isinstance(data, dict):
             raise AuditError(f"{path}: top-level mapping required")
         source_files.append({"path": path.as_posix(), "sha256": _sha(path.read_bytes())})
-        rows.extend(data.get("dispositions", []))
+        dispositions = data.get("dispositions", [])
+        if not isinstance(dispositions, list) or not all(isinstance(row, dict) for row in dispositions):
+            raise AuditError(f"{path}: dispositions must be a list of mappings")
+        rows.extend(cast(list[dict[str, Any]], dispositions))
     rows.sort(key=lambda row: str(row.get("candidate", {}).get("id", "")))
     result = {"schema_version": SCHEMA, "generated_from": source_files, "dispositions": rows}
     result["content_sha256"] = _sha(_json_bytes(result))
@@ -931,13 +1124,17 @@ def selftest() -> dict[str, Any]:
         (tests / "test_cases.py").write_text(
             "import pytest\n"
             "@pytest.mark.inherited\n"
+            "@pytest.mark.selected\n"
             "class TestOne:\n"
             "    def test_same(self): assert True\n"
             "class TestTwo:\n"
             "    @pytest.mark.parametrize('value', [1, 2])\n"
             "    def test_same(self, value): assert value\n"
             "def test_duplicate_a(): assert 1 == 1\n"
-            "def test_duplicate_b(): assert 1 == 1\n",
+            "def test_duplicate_b(): assert 1 == 1\n"
+            "def factory():\n"
+            "    def test_nested(): assert True\n"
+            "    return test_nested\n",
             encoding="utf-8",
         )
         (tests / "helper.py").write_text("def test_zero_node(): assert True\n", encoding="utf-8")
@@ -969,7 +1166,14 @@ def selftest() -> dict[str, Any]:
             ),
             "exact_duplicate": bool(first["manifests"]["exact_body_groups"]),
             "unowned_fails": first["ownership"]["complete"] is False,
+            "recursive_nested_once": list(units).count("tests/test_cases.py::factory.test_nested") == 1,
         }
+        selected = snapshot(root, "tests", ["-m", "selected", "--ignore=tests/test_error.py"], "SELFTEST-SELECT")
+        selected_units = {row["id"]: row for row in selected["source_units"]}
+        checks["deselected_class_parameter_family"] = (
+            selected_units["tests/test_cases.py::TestTwo.test_same"]["collection_state"] == "deselected"
+            and selected["reconciliation"]["state_counts"]["deselected"] >= 1
+        )
         empty = root / "empty"
         (empty / "tests").mkdir(parents=True)
         empty_snapshot = snapshot(empty, "tests", [], "SELFTEST-EMPTY")
@@ -978,6 +1182,28 @@ def selftest() -> dict[str, Any]:
             and empty_snapshot["reconciliation"]["source_units"] == 0
             and empty_snapshot["collection"]["exit_code"] == 5
         )
+        zero_file = root / "zero-file"
+        (zero_file / "tests").mkdir(parents=True)
+        (zero_file / "tests" / "test_empty.py").write_text("VALUE = 1\n", encoding="utf-8")
+        zero_file_snapshot = snapshot(zero_file, "tests", [], "SELFTEST-ZERO-FILE")
+        checks["zero_function_file_not_empty_root"] = (
+            zero_file_snapshot["empty_tests_root"] is False
+            and zero_file_snapshot["zero_function_files"] == ["tests/test_empty.py"]
+        )
+        for hook_name, hook_source in {
+            "collection": "def pytest_collection(session): raise RuntimeError('collection crash')\n",
+            "modifyitems": "def pytest_collection_modifyitems(session, config, items): raise RuntimeError('modify crash')\n",
+        }.items():
+            crash_root = root / f"crash-{hook_name}"
+            (crash_root / "tests").mkdir(parents=True)
+            (crash_root / "tests" / "conftest.py").write_text(hook_source, encoding="utf-8")
+            (crash_root / "tests" / "test_case.py").write_text("def test_case(): assert True\n", encoding="utf-8")
+            crashed = snapshot(crash_root, "tests", [], f"SELFTEST-{hook_name}")
+            checks[f"{hook_name}_crash_fails_closed"] = (
+                crashed["collection"]["exit_code"] not in {0, 5}
+                and bool(crashed["collection"]["internal_errors"])
+                and crashed["reconciliation"]["complete"] is False
+            )
         shard = {
             "schema_version": SCHEMA,
             "dispositions": [{
@@ -1003,6 +1229,63 @@ def selftest() -> dict[str, Any]:
         )
         malformed_errors, _ = validate_documents([malformed], dt.date.today())
         checks["malformed_shard_fails_without_crash"] = bool(malformed_errors)
+        aggregate_bad = root / "aggregate-bad.yaml"
+        aggregate_bad.write_text(yaml.safe_dump({"dispositions": "abc"}), encoding="utf-8")
+        try:
+            aggregate([aggregate_bad])
+            checks["aggregate_malformed_controlled_error"] = False
+        except AuditError:
+            checks["aggregate_malformed_controlled_error"] = True
+        workload_bad = root / "workload-bad.yaml"
+        workload_bad.write_text(yaml.safe_dump({
+            "frozen_workload_dag": {
+                "repetitions": 3,
+                "routes": [
+                    {"id": "dup", "argv": "pytest", "environment_id": "missing", "base_mapping": "x", "head_mapping": "x", "cwd": ".", "env": {}},
+                    {"id": "dup", "argv": ["pytest"], "environment_id": "missing", "base_mapping": "x", "head_mapping": "x", "cwd": ".", "env": {}},
+                ],
+                "edges": [{"from": "dup"}], "measurements": [],
+            },
+        }), encoding="utf-8")
+        workload_errors, _ = validate_documents([workload_bad], dt.date.today())
+        checks["workload_duplicate_argv_env_edge_rejected"] = all(
+            any(fragment in error for error in workload_errors)
+            for fragment in ("duplicate route", "argv must", "unknown environment", "from/to required")
+        )
+        ledger_bad = root / "ledger-bad.yaml"
+        common_duration = {"collection": 0, "setup": 0, "call": 1, "cost_class": "fast"}
+        def malicious_observation(nodeid: str, outcome: str) -> dict[str, Any]:
+            return {
+                "environment_id": "missing", "nodeid": nodeid,
+                "collection_state": "collected", "outcome": outcome,
+                "skip_reason": None, "markers": [], "duration": common_duration,
+                "artifact_hash": "0" * 64,
+            }
+        ledger_bad.write_text(yaml.safe_dump({"schema_version": SCHEMA, "dispositions": [{
+            "candidate": {
+                "id": "bad", "members": ["stale-member"], "granularity": "family",
+                "source_paths": "tests/x.py", "production_paths": [], "oracle": "oracle",
+                "contract_claim": "claim", "authority": ["authority"], "duplicate_group": None,
+                "route_memberships": [], "platforms": {"linux": True},
+                "observations": [
+                    malicious_observation("n1", "passed"),
+                    malicious_observation("n2", "failed"),
+                ],
+                "equivalence": {
+                    "production_path": "x", "oracle": "x", "outcome": "same",
+                    "route_role": "owner", "cost_class": "fast",
+                    "platform": "linux", "disposition": "KEEP",
+                },
+            },
+            "evidence": {"profile": "inert", "routing_evidence": ["x"], "authority_evidence": ["x"]},
+            "verdict": "KEEP", "state": "terminal", "action": "keep",
+            "review": {"implementer": "a", "independent_reviewer": "b", "verdict": "approved", "timestamp": "2026-08-10T00:00:00Z"},
+        }]}), encoding="utf-8")
+        ledger_errors, _ = validate_documents([ledger_bad], dt.date.today())
+        checks["ledger_types_refs_keep_family_rejected"] = all(
+            any(fragment in error for error in ledger_errors)
+            for fragment in ("source_paths must", "platforms must", "stale/unknown", "causal_probe", "divergent family")
+        )
         if not all(checks.values()):
             raise AuditError("selftest failures: " + ", ".join(key for key, value in checks.items() if not value))
         return {"valid": True, "checks": checks}
