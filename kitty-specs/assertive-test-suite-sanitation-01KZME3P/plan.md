@@ -17,7 +17,7 @@ Reduce the test suite to executable, causally sensitive guards. First establish 
 **Project Type**: single Python CLI/package repository with a large pytest suite  
 **Performance Goals**: target at least 15% lower median whole-suite collection and fixed-route cost without reducing unique causal coverage  
 **Constraints**: no retry-to-green, blanket skip/xfail/quarantine, deliberate red required CI, deletion quota, or marker immunity; PR-only delivery  
-**Scale/Scope**: baseline 37,444 nodes, 2,432 test files, 833,936 Python test lines, 171 exact-body duplicate groups; initial high-confidence candidates span permanent skips, advisory tests, historical scaffolds, duplicate suites, and route-wide collection
+**Scale/Scope**: baseline 37,444 nodes, 2,432 test files, 833,936 Python test lines; refreshed planning scan found 173 strict AST-body groups/365 members across 131 files (the earlier projections were 75 stricter and 171 normalized groups), with WP01's deterministic dual manifest authoritative. All 164 architectural test files, including the nested enrolment scanner, are assigned across six authority-coherent structural WPs.
 
 ## Charter Check
 
@@ -28,7 +28,7 @@ Reduce the test suite to executable, causally sensitive guards. First establish 
 - **Cross-platform**: PASS — platform-specific tests cannot be removed on single-platform evidence.
 - **Tracker ownership**: REQUIRED before implementation — assign #1931 and #3283 to the HiC and comment with this mission.
 - **Quality gates**: contract and architectural suites pass unconditionally; E2E uses only the canonical environmental exception path.
-- **PR workflow**: PASS — mission integrations target `pr/assertive-test-suite-sanitation`; operator merges protected `main`.
+- **PR workflow**: PASS — after analyze, push the planning branch and open a draft PR targeting `main` before WP claims so Linux/Windows PR jobs are reachable; mission integrations continue targeting `pr/assertive-test-suite-sanitation`; only the operator merges protected `main`.
 
 Re-check after design: PASS. No charter exception or complexity violation is required.
 
@@ -41,9 +41,9 @@ Re-check after design: PASS. No charter exception or complexity violation is req
 | D3 | Bootstrap comparison | Preserve raw #3283 failure; implement the lease/temp-build/validate/atomic-publish state machine in `research.md`; replay the exact patch artifact in disposable base and HEAD worktrees. |
 | D4 | Timing universe | Freeze exact commands, path/marker route map, worker count, cache policy, and runner class before deletion; report sum compute and critical path separately. |
 | D5 | Test inventory | Discover test-like source independently of pytest collection, then reconcile collected, ignored, deselected, errored, quarantined, and zero-node files. |
-| D6 | Product scope | Only #3283 harness reliability and caller-proven test-only dead symbols may change. Other product defects remain tracker work; each accepted open P0 retains exactly one blocking live reproduction under the red-main ADR. |
+| D6 | Product scope | Only #3283/#2645 test-harness reliability/performance and caller-proven test-only dead symbols may change. Other product defects require separately authorized prerequisite/follow-up work; each accepted open P0 retains exactly one blocking live reproduction under the red-main ADR. |
 | D7 | Mutation scope | Focus mutation/fault probes on changed clusters and claimed source targets; no global mutation percentage theater. Surviving unique non-equivalent kills are mandatory. |
-| D8 | Delivery slicing | Foundation, inert states, duplicate/shim consolidation, structural/scaffold retirement, CI/bootstrap, and aggregate evidence use non-overlapping file ownership. |
+| D8 | Delivery slicing | Foundation, inert states, three duplicate-domain WPs, six authority-coherent structural WPs, CI/bootstrap, and aggregate evidence use non-overlapping exact file ownership. Central shard-map integration has one downstream owner. |
 
 ## Project Structure
 
@@ -60,16 +60,17 @@ kitty-specs/assertive-test-suite-sanitation-01KZME3P/
 │   ├── disposition-ledger.md
 │   ├── evidence-gates.md
 │   └── ci-routing.md
-├── evidence/
-│   ├── audit.py             # mission-local census/validator, not installed
-│   ├── dispositions/        # WP-owned non-overlapping deep-ledger shards
-│   ├── dispositions.yaml    # generated canonical aggregate, never hand-edited by WPs
-│   ├── raw/                 # command outputs/checksums, not hand-maintained prose
-│   └── final-report.md      # generated from ledger + raw artifacts
 ├── tracer-approach.md
 ├── tracer-design-decisions.md
 ├── tracer-tooling-friction.md
 └── tasks.md
+
+docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/
+├── audit.py                 # mission-scoped census/validator, not installed
+├── dispositions/            # WP-owned non-overlapping deep-ledger shards
+├── dispositions.yaml        # generated canonical aggregate, never hand-edited by WPs
+├── raw/                     # command outputs/checksums, not hand-maintained prose
+└── final-report.md          # generated from ledger + raw artifacts
 ```
 
 ### Source and test surfaces
@@ -77,12 +78,12 @@ kitty-specs/assertive-test-suite-sanitation-01KZME3P/
 ```text
 src/specify_cli/                 # only caller-proven dead test surfaces, if any
 tests/
-├── conftest.py                  # #3283 shared test-venv bootstrap
+├── conftest.py                  # #3283 shared test-venv bootstrap + #2645 collection hook
 ├── sync/ readiness/ regression/ retrospective/  # inert/red/quarantine adjudication
 ├── runtime/ kernel/ git_ops/ test_dashboard/     # duplicate/shim adjudication
 ├── architectural/ release/ docs/ lanes/          # scaffold/shape/prose adjudication
 └── contract/                    # hard gate; deletions only with consumed-contract proof
-.github/workflows/ci-quality.yml # explicit narrow route manifests and bootstrap use
+.github/workflows/               # explicit narrow routes + Windows platform proof
 ```
 
 **Structure Decision**: keep one Python package. Census/validation logic is a mission-local evidence script, not installed production tooling and not a new permanent pytest subtree. The canonical ledger and raw artifacts generate the report; no duplicate hand-maintained timing narrative is introduced.
@@ -93,17 +94,17 @@ tests/
 
 - **Purpose**: create a lightweight global machine census, reconcile source discovery with collection, and validate deep rows only for deletions, exceptions, fixes, and affected survivors.
 - **Relevant requirements**: FR-001, FR-002, FR-014; NFR-001, NFR-002, NFR-009
-- **Affected surfaces**: mission-local `evidence/audit.py`, global census/raw artifacts, contracts; adjudication WPs own separate `evidence/dispositions/WP##.yaml` shards and only closure generates the aggregate
+- **Affected surfaces**: report-bundle `audit.py`, global census/raw artifacts, contracts; adjudication WPs own separate `dispositions/WP##.yaml` shards and only closure generates the aggregate
 - **Sequencing/depends-on**: none
 - **Risks**: a node-only narrative creates bureaucracy; a source-only census misses divergence. Machine census is global; deep proof expands only affected families.
 
 ### IC-02 — Base attribution and bootstrap reliability
 
-- **Purpose**: reproduce and repair #3283, then make base/HEAD comparison valid without conflating harness and sanitation effects.
-- **Relevant requirements**: FR-010, FR-013, FR-015; NFR-004, NFR-005, NFR-008
-- **Affected surfaces**: `tests/conftest.py`, focused bootstrap tests, baseline evidence
+- **Purpose**: reproduce and repair #3283, make base/HEAD comparison valid, and eliminate #2645's repeated whole-tree wall-clock scan without weakening its oracle.
+- **Relevant requirements**: FR-010, FR-013, FR-015; NFR-004, NFR-005, NFR-006, NFR-008
+- **Affected surfaces**: `tests/conftest.py`, wall-clock assertion support/tests, focused spawned-process bootstrap tests, Windows route, baseline evidence
 - **Sequencing/depends-on**: IC-01 for evidence shape; repair may proceed in parallel after the schema is fixed
-- **Risks**: a larger-than-minimal harness patch invalidates the base replay; lock timeout alone must not mask a dead creator.
+- **Risks**: a larger-than-minimal harness patch invalidates base replay; thread/fake races miss the inter-process defect; a stale scan cache could silently bypass enforcement.
 
 ### IC-03 — Inert, skipped, quarantined, and regression states
 
@@ -111,13 +112,13 @@ tests/
 - **Relevant requirements**: FR-004, FR-009, FR-010, FR-011
 - **Affected surfaces**: `tests/sync/`, `tests/readiness/`, `tests/regression/`, `tests/retrospective/`
 - **Sequencing/depends-on**: IC-01; base attribution from IC-02 where an outcome claim is required
-- **Risks**: deleting the only current defect reproduction; preserve one issue diagnostic outside required CI until fixed.
+- **Risks**: deleting the only current defect reproduction; current authority requires exactly one accepted-P0 reproduction to remain live and blocking.
 
 ### IC-04 — Duplicate and compatibility-shim consolidation
 
 - **Purpose**: delete exact/semantic duplicates while keeping every unique live boundary, platform case, or compatibility behavior.
 - **Relevant requirements**: FR-003, FR-005, FR-008; NFR-007, NFR-010
-- **Affected surfaces**: exact duplicate-group manifests in dashboard, runtime/kernel, git operations, and lane/template guards; no broad directory ownership
+- **Affected surfaces**: every file named by WP01's strict/normalized manifests split into core, Specify CLI/dashboard, and sync/status/upgrade WPs; exact task ownership remains mandatory
 - **Sequencing/depends-on**: IC-01
 - **Risks**: similar syntax can encode distinct public import paths; compatibility matrix and live callers decide.
 
@@ -125,16 +126,16 @@ tests/
 
 - **Purpose**: remove tests that pin names, tokens, counts, exact prose, deleted branches, historical reports, or test-only symbols without a current invariant.
 - **Relevant requirements**: FR-006, FR-007, FR-016
-- **Affected surfaces**: exact listed architectural/release/scaffold files excluding lane/template duplicate files; narrowly proven dead `src/` symbols only
-- **Sequencing/depends-on**: IC-01
+- **Affected surfaces**: all 164 architectural test files split into six authority-coherent families (historical/migration, CI/gate, boundary/safety, doctrine/resolver, runtime/coordination, packaging/CLI), named release/scaffold files, and narrowly proven dead `src/` symbols; route/duplicate/inert exceptions retain exact alternate owners
+- **Sequencing/depends-on**: IC-01; cohort handoffs converge only in IC-06's single central shard-map owner
 - **Risks**: a negative invariant may be embedded beside positive-shape cruft; split and preserve it only after plausible fault proof.
 
 ### IC-06 — Proportional CI routing
 
 - **Purpose**: stop whole-tree collection for stable narrow regression/quarantine classes and keep route ownership explicit.
 - **Relevant requirements**: FR-012, FR-015; NFR-005, NFR-006
-- **Affected surfaces**: `.github/workflows/ci-quality.yml` and one dedicated routing-contract test file owned only by this concern
-- **Sequencing/depends-on**: IC-03 establishes the final routed set; IC-02 establishes reliable startup
+- **Affected surfaces**: `.github/workflows/ci-quality.yml`, central `tests/_arch_shard_map.py`, and four exact route/policy contract tests owned only by this concern (`test_ci_quality_path_filters.py`, `test_marker_job_completeness.py`, `test_quarantine_marker.py`, `test_suite_jobs_gate_blocking.py`)
+- **Sequencing/depends-on**: IC-02 establishes reliable startup; IC-03/IC-04/all three IC-05 cohorts and baseline-red adjudication establish final paths before shard-map/route integration
 - **Risks**: renamed/deleted routes can manufacture savings or strand tests. Frozen base route mapping is mandatory.
 
 ### IC-07 — Aggregate proof and closure

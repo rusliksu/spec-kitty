@@ -8,7 +8,7 @@ Inventory commit: `28ae75ea998c898aba57364db7a06d2088bd2af2`.
 |-------------|----------|----------------------|
 | 37,444 nodes collect in 94.26s; a marker-only probe was ~109.63s | local `pytest --collect-only` probes | collection is a first-class cost; narrow routes must name paths |
 | 2,432 `test_*.py` files and 833,936 Python test lines | repository census | source discovery must precede collection reconciliation |
-| 171 exact-body groups / 357 functions | AST-normalized census | exact duplicates are candidates, not automatic deletes |
+| 173 strict AST-body groups / 365 members across 131 files after docstring normalization; earlier projections found 171 normalized groups / 357 functions and 75 stricter groups / 162 functions | Multiple AST-normalization projections | fingerprints are candidates, not automatic deletes; WP01 records algorithm/version and owns canonical reconciliation |
 | First fresh parallel run cascaded setup errors before Act | repeated lock-timeout logs; #3283 | repair/replay harness before outcome attribution |
 | Mutation CI is hard-disabled | `.github/workflows/ci-quality.yml` | changed clusters need focused local mutation/fault evidence |
 | Only one file currently bears the regression marker | `tests/regression/test_issue_2782_sync_strict_json_ingress_skip.py` | whole-tree marker collection is disproportionate and the sole guard can self-skip |

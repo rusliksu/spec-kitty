@@ -1,6 +1,6 @@
 # Contract: Disposition Ledger
 
-The canonical aggregate is generated as `evidence/dispositions.yaml` from the global machine census plus non-overlapping WP-owned shards under `evidence/dispositions/WP##.yaml`. Adjudication WPs never edit the aggregate or another WP's shard.
+The canonical aggregate is generated as `docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions.yaml` from the global machine census plus non-overlapping WP-owned shards under `docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP##.yaml`. Adjudication WPs never edit the aggregate or another WP's shard.
 
 ## Required invariants
 

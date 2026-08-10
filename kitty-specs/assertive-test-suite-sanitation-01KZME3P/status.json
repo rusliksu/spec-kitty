@@ -1,0 +1,138 @@
+{
+  "event_count": 0,
+  "last_event_id": null,
+  "materialized_at": "",
+  "mission_number": "",
+  "mission_slug": "",
+  "mission_type": "software-dev",
+  "summary": {
+    "approved": 0,
+    "blocked": 0,
+    "canceled": 0,
+    "claimed": 0,
+    "done": 0,
+    "for_review": 0,
+    "in_progress": 0,
+    "in_review": 0,
+    "planned": 0
+  },
+  "work_packages": {
+    "WP01": {
+      "actor": "spec-kitty agent tasks map-requirements",
+      "force_count": 0,
+      "lane": "uninitialized",
+      "last_event_id": null,
+      "last_transition_at": null,
+      "tracker_refs": [
+        "#1931",
+        "#2645",
+        "#3284"
+      ]
+    },
+    "WP02": {
+      "actor": "spec-kitty agent tasks map-requirements",
+      "force_count": 0,
+      "lane": "uninitialized",
+      "last_event_id": null,
+      "last_transition_at": null,
+      "tracker_refs": [
+        "#3283",
+        "#2645"
+      ]
+    },
+    "WP03": {
+      "actor": "spec-kitty agent tasks map-requirements",
+      "force_count": 0,
+      "lane": "uninitialized",
+      "last_event_id": null,
+      "last_transition_at": null,
+      "tracker_refs": [
+        "#2309",
+        "#2316",
+        "#2342",
+        "#2782",
+        "#3184"
+      ]
+    },
+    "WP04": {
+      "actor": "spec-kitty agent tasks map-requirements",
+      "force_count": 0,
+      "lane": "uninitialized",
+      "last_event_id": null,
+      "last_transition_at": null,
+      "tracker_refs": [
+        "#1931"
+      ]
+    },
+    "WP05": {
+      "actor": "spec-kitty agent tasks map-requirements",
+      "force_count": 0,
+      "lane": "uninitialized",
+      "last_event_id": null,
+      "last_transition_at": null,
+      "tracker_refs": [
+        "#1931"
+      ]
+    },
+    "WP06": {
+      "actor": "spec-kitty agent tasks map-requirements",
+      "force_count": 0,
+      "lane": "uninitialized",
+      "last_event_id": null,
+      "last_transition_at": null,
+      "tracker_refs": [
+        "#3284"
+      ]
+    },
+    "WP07": {
+      "actor": "spec-kitty agent tasks map-requirements",
+      "force_count": 0,
+      "lane": "uninitialized",
+      "last_event_id": null,
+      "last_transition_at": null,
+      "tracker_refs": [
+        "#2645",
+        "#2782",
+        "#3284"
+      ]
+    },
+    "WP08": {
+      "actor": "spec-kitty agent tasks map-requirements",
+      "force_count": 0,
+      "lane": "uninitialized",
+      "last_event_id": null,
+      "last_transition_at": null,
+      "tracker_refs": [
+        "#1931",
+        "#2309",
+        "#2316",
+        "#2342",
+        "#2645",
+        "#2782",
+        "#3184",
+        "#3283",
+        "#3284"
+      ]
+    },
+    "WP09": {
+      "actor": "spec-kitty agent tasks map-requirements",
+      "force_count": 0,
+      "lane": "uninitialized",
+      "last_event_id": null,
+      "last_transition_at": null,
+      "tracker_refs": [
+        "#1931"
+      ]
+    },
+    "WP10": {
+      "actor": "spec-kitty agent tasks map-requirements",
+      "force_count": 0,
+      "lane": "uninitialized",
+      "last_event_id": null,
+      "last_transition_at": null,
+      "tracker_refs": [
+        "#1931"
+      ]
+    }
+  }
+}

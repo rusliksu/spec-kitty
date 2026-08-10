@@ -151,7 +151,7 @@ As a reviewer, I want a machine-readable disposition ledger and before/after evi
 | C-001 | No green-washing | No retry-to-green, assertion weakening, blanket skip, xfail, or quarantine may be introduced to make the suite pass. | Governance | High | Approved |
 | C-002 | No deletion quota | Deletion count is an outcome, not a target. Evidence decides disposition; numerical quotas must not override a unique live contract. | Scope | High | Approved |
 | C-003 | No marker immunity | `contract`, `architectural`, `regression`, `slow`, and directory names are claims requiring evidence, not automatic keep/delete decisions. | Quality | High | Approved |
-| C-004 | Product fixes are exceptional | Do not change product behavior merely to make stale tests green. Product changes are limited to #3283 bootstrap reliability and proven removal of test-only dead symbols/surfaces. | Scope | High | Approved |
+| C-004 | Product fixes are exceptional | Do not change product behavior merely to make stale tests green. Changes outside tests/evidence/workflows are limited to #3283/#2645 test-harness reliability/performance and proven removal of test-only dead symbols/surfaces. | Scope | High | Approved |
 | C-005 | Current authority wins | Active specs, ADRs, public contracts, supported-version policy, and live entry points determine intent; historical mission artifacts do not. | Architecture | High | Approved |
 | C-006 | Test deletions remain reviewable | Partition changes by coherent test class/surface with non-overlapping file ownership and independent review. | Workflow | High | Approved |
 | C-007 | Issue traceability | Referenced issues #1931, #2309, #2316, #2342, #2645, #2782, #3184, #3283, and #3284 must have explicit issue-matrix verdicts before merge. | Tracking | High | Approved |
@@ -178,7 +178,7 @@ As a reviewer, I want a machine-readable disposition ledger and before/after evi
 ## Assumptions
 
 - The immutable inventory baseline is commit `28ae75ea998c898aba57364db7a06d2088bd2af2`. Outcome and timing baselines replay only the minimal #3283 harness fix in a disposable worktree, apply that identical patch to HEAD, and keep raw pre-fix infrastructure results separate.
-- The suite currently contains approximately 37,444 collected nodes, 2,432 `test_*.py` files, 833,936 Python test lines, and 171 exact-body duplicate groups covering 357 functions; final planning will refresh these measurements after #3283 recovery.
+- The suite currently contains approximately 37,444 collected nodes, 2,432 `test_*.py` files, and 833,936 Python test lines. Refreshed planning found 173 docstring-normalized strict AST-body groups/365 members across 131 files; earlier projections found 171 normalized groups/357 functions and 75 stricter groups/162 functions. WP01 will version both algorithms and establish deterministic canonical manifests after #3283 recovery.
 - CI and issue state may change during the mission; the final report uses the current target-branch base and records any drift.
 - Tracker issues are authoritative for unresolved product defects; pytest is not an issue backlog.
 

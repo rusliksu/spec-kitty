@@ -7,13 +7,13 @@ All commands run from repository root. Evidence captures exact environment and e
 The mission-local auditor performs AST/ignore discovery and invokes pytest with an in-process collection plugin that records deterministic nodeids, parent source functions, effective markers, deselection, skips, hook errors, and collection states. JUnit is not used as a collection inventory.
 
 ```bash
-.venv/bin/python kitty-specs/assertive-test-suite-sanitation-01KZME3P/evidence/audit.py snapshot \
+.venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py snapshot \
   --tests tests \
-  --output kitty-specs/assertive-test-suite-sanitation-01KZME3P/evidence/raw/head-census.json
-.venv/bin/python kitty-specs/assertive-test-suite-sanitation-01KZME3P/evidence/audit.py validate \
-  --census kitty-specs/assertive-test-suite-sanitation-01KZME3P/evidence/raw/head-census.json \
-  --shards kitty-specs/assertive-test-suite-sanitation-01KZME3P/evidence/dispositions \
-  --aggregate kitty-specs/assertive-test-suite-sanitation-01KZME3P/evidence/dispositions.yaml
+  --output docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/head-census.json
+.venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py validate \
+  --census docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/head-census.json \
+  --shards docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions \
+  --aggregate docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions.yaml
 ```
 
 ## 2. Focused changed-cluster proof
@@ -35,7 +35,7 @@ PWHEADLESS=1 .venv/bin/pytest tests/sync/test_orphan_sweep.py -q -p no:cacheprov
 .venv/bin/mypy src
 ```
 
-Repeat the frozen collection and changed-route workloads three times for base and HEAD. Do not reuse unlike cache/runner states.
+Repeat the frozen collection and changed-route workloads three times at each matched stage: repaired base (#3283 only), scanner-optimized base (#3283 plus the exact #2645 replay patch and no sanitation deletions), integrated pre-routing HEAD, and routed HEAD. Keep raw pre-fix bootstrap evidence separate. Do not reuse unlike cache/runner states.
 
 Validate changed route ownership/selectors from the frozen manifest and attach the applicable Linux/macOS/Windows matrix results for platform-owned survivors. Accepted unresolved P0 owner routes are expected red and must match the recorded live known-red set exactly.
 
@@ -54,4 +54,4 @@ SPEC_KITTY_ENABLE_SAAS_SYNC=1 uv run pytest scenarios/ -v
 
 ## 5. Acceptance
 
-Validate `evidence/final-report.md`, issue matrix, and ledger; then run canonical `spec-kitty next`, `accept`, `merge`, post-merge mission review, retrospective synthesis, push, and PR checks.
+Validate `docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/final-report.md`, issue matrix, and ledger; then run canonical `spec-kitty next`, `accept`, `merge`, post-merge mission review, retrospective synthesis, push, and PR checks.

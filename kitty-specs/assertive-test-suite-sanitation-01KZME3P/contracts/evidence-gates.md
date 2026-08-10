@@ -23,4 +23,4 @@ A retained contract guard must identify a live consumer and fail under an incomp
 
 ## Mission closure gate
 
-The census/ledger validates; every WP is independently approved; live known-red deltas are explicit; frozen workloads have three base/HEAD measurements; focused fault/mutation evidence preserves unique kills; changed route manifests select their owners; applicable platform ownership is evidenced; contract and architectural suites pass unconditionally; cross-repo E2E passes or has the canonical environmental exception; issue matrix is complete.
+The census/ledger validates; every WP is independently approved; live known-red deltas are explicit; frozen workloads have three equivalent cold measurements at repaired base, scanner-optimized base, integrated pre-routing HEAD, and routed HEAD (raw pre-fix bootstrap separate); focused fault/mutation evidence preserves unique kills; changed route manifests select their owners; actual applicable platform outcomes are evidenced; contract and architectural suites pass unconditionally; cross-repo E2E passes or has the canonical environmental exception; issue matrix is complete.
