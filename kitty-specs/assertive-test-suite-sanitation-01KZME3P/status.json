@@ -267,7 +267,7 @@
       ]
     },
     "WP07": {
-      "actor": "user",
+      "actor": "reviewer-renata",
       "agent": "wp07-review1",
       "agent_profile": "reviewer-renata",
       "agent_profile_version": "1.0",
@@ -280,21 +280,22 @@
         "Implemented proportional regression/quarantine owner manifests; reconciled integrated shard maps, live baselines, and retired sidecars; replaced recursive #3284 probe; four-stage three-repetition timing evidence records honest criterion outcomes; full architectural hard gate 748 passed, 2 xfailed. Commit b700f116c."
       ],
       "provider": "__resolved_provider_absent__",
+      "review": null,
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP07-proportional-ci-routing/review-cycle-2.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP07-proportional-ci-routing/review-cycle-2.md",
-        "reviewer": "user",
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP07-proportional-ci-routing/review-cycle-1.md",
+        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP07-proportional-ci-routing/review-cycle-1.md",
+        "reviewer": "reviewer-renata",
         "verdict": "changes_requested"
       },
       "role": "reviewer",
-      "shell_pid": 28365,
+      "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T039": "done",
-        "T040": "done",
-        "T041": "done",
-        "T042": "done",
-        "T043": "done"
+        "T039": "planned",
+        "T040": "planned",
+        "T041": "planned",
+        "T042": "planned",
+        "T043": "planned"
       },
       "tracker_refs": [
         "#2645",
