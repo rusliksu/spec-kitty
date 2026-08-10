@@ -31,7 +31,7 @@ from tests._support.quarantine import (
     quarantine_skip_mark,
 )
 from tests._support.wall_clock_assertions import (
-    find_wall_clock_assertion_violations,
+    find_wall_clock_assertion_violations_cached,
     find_test_python_paths,
     format_wall_clock_assertion_violations,
 )
@@ -293,7 +293,11 @@ def _apply_shard_markers(item: pytest.Item) -> None:
 def _fail_on_wall_clock_assertions(items: list[pytest.Item]) -> None:
     del items
     paths = find_test_python_paths(Path(__file__).parent)
-    violations = find_wall_clock_assertion_violations(paths)
+    violations = find_wall_clock_assertion_violations_cached(
+        paths,
+        REPO_ROOT / ".pytest_cache" / "wall-clock-assertion-scan",
+        config_paths=(REPO_ROOT / "pytest.ini", REPO_ROOT / "pyproject.toml"),
+    )
     if violations:
         raise pytest.UsageError(format_wall_clock_assertion_violations(violations))
 
