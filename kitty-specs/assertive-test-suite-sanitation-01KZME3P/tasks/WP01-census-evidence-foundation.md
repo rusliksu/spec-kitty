@@ -37,6 +37,7 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/foundation-summary.yaml
 execution_mode: code_change
 owned_files:
+- docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-workloads.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/bootstrap-failure.txt
@@ -109,7 +110,6 @@ Create a deterministic mission-local auditor and immutable base evidence. It mus
 - Fail closed before class dispatch when any candidate/group is unowned. Amend tasks/ownership, rerun `finalize-tasks`, and record the replan; “out of scope” is not a sanitation verdict.
 - `foundation-summary.yaml` records counts, commands, environment IDs, discovery/collection reconciliation, and known raw artifacts.
 - Keep human prose derived and minimal; raw + schema are authority.
-- After the immutable foundation is approved, ownership of `audit.py` transfers to WP08 solely for truthful HEAD-role validation, fail-closed aggregate coverage, and closure-time CLI compatibility. WP08 may not rewrite the frozen base census or workload.
 - Commit all owned files and mark T001–T006 complete.
 
 ## Definition of Done

@@ -46,16 +46,6 @@ execution_mode: code_change
 owned_files:
 - .github/workflows/ci-quality.yml
 - tests/_arch_shard_map.py
-- tests/_next_shard_map.py
-- tests/architectural/_baselines.yaml
-- tests/architectural/baselines/fast-tests-core-misc-nodeids.txt
-- tests/architectural/baselines/integration-tests-next-nodeids.txt
-- tests/architectural/marker_baseline.txt
-- tests/architectural/mission_exit_baseline.txt
-- tests/architectural/_golden_count_baseline.json
-- tests/architectural/verdict_seam_census.yaml
-- tests/architectural/census/verdict_seam_IC01.yaml
-- tests/architectural/census/verdict_seam_IC08.yaml
 - tests/architectural/test_ci_quality_path_filters.py
 - tests/architectural/test_marker_job_completeness.py
 - tests/architectural/test_quarantine_marker.py
@@ -97,7 +87,6 @@ Stop paying whole-tree collection for stable narrow classes. Each changed narrow
 ## T041 — Architectural Contracts
 
 - Consume deterministic deleted/renamed-path handoffs from every deleting WP (WP03/WP04/WP05/WP09–WP15) and update `_arch_shard_map.py` exactly once. Prove no deleted entry, missing assigned survivor, or duplicate explicit assignment remains before running the hard gate.
-- Reconcile `_next_shard_map.py` and every live node/marker/mission-exit baseline against the final integrated deletion set. Regenerate live baselines from the integrated tree; delete a sidecar only after proving no live reader remains. Preserve support-only scanner modules that are imported by live gates even when they collect zero nodes.
 - Update existing owned architecture tests; do not add redundant new test files.
 - `test_ci_quality_path_filters.py`: terminalize WP06's #3284 handoff and validate exact manifest/selector without recursively collecting the entire suite inside a 240-second test. Use static workflow parsing plus bounded owned-path collection.
 - `test_marker_job_completeness.py`: distinguish owner vs secondary routes.
@@ -127,7 +116,6 @@ Stop paying whole-tree collection for stable narrow classes. Each changed narrow
 - [ ] #2782 owner stays blocking red; quarantine stays non-blocking Tier-3 only.
 - [ ] Static/bounded route tests replace 240-second recursive collection probe.
 - [ ] Central shard map integrates all deletion handoffs and the full architectural hard gate passes.
-- [ ] Next-shard assignments and all live architectural baselines contain no deleted node/path and preserve every retained owner.
 - [ ] Three-run fixed workload comparison records compute and critical path.
 - [ ] Repaired-base, scanner-optimized-base, pre-routing HEAD, and routed-HEAD stages attribute scanner/deletion/routing effects separately.
 

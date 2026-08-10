@@ -11,6 +11,7 @@
         "WP01"
       ],
       "write_scope": [
+        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py",
         "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/foundation-summary.yaml",
         "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-census.json",
         "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-full-suite-summary.txt",
@@ -137,7 +138,6 @@
         "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP05.yaml",
         "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp05-results.json",
         "src/specify_cli/coordination/status_transition.py",
-        "tests/acceptance/test_post_consolidation.py",
         "tests/architectural/test_batch_drain_retired_3167.py",
         "tests/architectural/test_contract_registry_parity.py",
         "tests/architectural/test_coord_read_residuals_closeout.py",
@@ -164,11 +164,6 @@
         "tests/architectural/test_retired_contracts_absent.py",
         "tests/architectural/test_topology_inference_retired.py",
         "tests/architectural/test_wp05_write_target_drain.py",
-        "tests/audit/test_audit_architecture.py",
-        "tests/core/test_retrospective_filename_constant.py",
-        "tests/migration/test_backfill_provenance.py",
-        "tests/missions/test_wp02_coord_routing_consolidation.py",
-        "tests/missions/test_wp17_husk_arm_collapse.py",
         "tests/specify_cli/coordination/test_simple_case_flat_topology.py",
         "tests/specify_cli/write_side/test_characterization_write_target.py",
         "tests/sync/test_no_queue_drain_constructed_3030.py"
@@ -224,10 +219,7 @@
         "tests/architectural/test_ui_e2e_coverage_discovered.py",
         "tests/architectural/test_unit_contract_residual_gate.py",
         "tests/architectural/test_workflow_coherence.py",
-        "tests/architectural/test_workflow_dist_lint.py",
-        "tests/merge/test_push_preflight.py",
-        "tests/review/test_pre_review_gate_sole_caller_audit.py",
-        "tests/specify_cli/cli/commands/test_merge_residue_gate_single_authority_wp13.py"
+        "tests/architectural/test_workflow_dist_lint.py"
       ],
       "predicted_surfaces": [
         "api",
@@ -285,22 +277,7 @@
         "tests/architectural/test_untrusted_path_containment.py",
         "tests/architectural/test_wp_owned_files_no_kitty_specs.py",
         "tests/architectural/test_wp_prompt_build_latency.py",
-        "tests/architectural/test_write_surface_placement_guard.py",
-        "tests/git/test_guard_capability_regression.py",
-        "tests/integration/test_cross_seam_consumers.py",
-        "tests/specify_cli/cli/commands/test_identity_audit.py",
-        "tests/specify_cli/cli/commands/test_sparse_checkout_doctor.py",
-        "tests/specify_cli/cli/commands/test_wp03_bypass_writers_fr008.py",
-        "tests/specify_cli/core/test_load_meta_fail_closed_authority.py",
-        "tests/specify_cli/decisions/test_ownership_3111.py",
-        "tests/specify_cli/saas_client/test_client_consent_gate_3030.py",
-        "tests/specify_cli/test_egress_consolidation_3110.py",
-        "tests/specify_cli/test_meta_fail_closed_full_census_contract.py",
-        "tests/specify_cli/test_meta_reader_sweep.py",
-        "tests/sync/test_consent_resolver_3030.py",
-        "tests/sync/test_project_identity_resolver_3030.py",
-        "tests/sync/test_sync_action_gate.py",
-        "tests/sync/tracker/test_saas_client_consent_gate_3030.py"
+        "tests/architectural/test_write_surface_placement_guard.py"
       ],
       "predicted_surfaces": [
         "api",
@@ -456,20 +433,7 @@
         "tests/architectural/test_single_mission_surface_resolver.py",
         "tests/architectural/test_surface_resolution_audit.py",
         "tests/architectural/test_topology_resolution_boundary.py",
-        "tests/architectural/test_urn_resolver_scalar_fence.py",
-        "tests/charter/test_append_promotion_primitive.py",
-        "tests/charter/test_charter_ownership_invariant.py",
-        "tests/charter/test_chokepoint_coverage.py",
-        "tests/charter/test_context_decomposition_completion.py",
-        "tests/charter/test_mission_type_key.py",
-        "tests/charter/test_operational_context.py",
-        "tests/charter/test_surface_calibration.py",
-        "tests/cli/test_charter_mission_type_commands.py",
-        "tests/doctrine/drg/test_kind_mapping_totality.py",
-        "tests/doctrine/test_activation_parity_guard.py",
-        "tests/doctrine/test_pack_root_resolver.py",
-        "tests/specify_cli/cli/commands/test_doctrine_collect.py",
-        "tests/specify_cli/test_doctrine_service_factory.py"
+        "tests/architectural/test_urn_resolver_scalar_fence.py"
       ],
       "predicted_surfaces": [
         "api",
@@ -511,32 +475,7 @@
         "tests/architectural/test_tasks_command_surface.py",
         "tests/architectural/test_verdict_seam_census.py",
         "tests/architectural/test_verdict_vocab_single_source.py",
-        "tests/architectural/test_worktrees_index_clean.py",
-        "tests/coordination/test_verdict_dir_co_resolution.py",
-        "tests/mission_runtime/test_write_target_degrade.py",
-        "tests/next/test_retrospective_terminus_wiring.py",
-        "tests/runtime/test_bridge_compat_surface.py",
-        "tests/runtime/test_bridge_decide_next.py",
-        "tests/runtime/test_bridge_engine.py",
-        "tests/runtime/test_bridge_retrospective.py",
-        "tests/runtime/test_runtime_bridge_family_arch.py",
-        "tests/runtime/test_setup_plan_sync_evidence.py",
-        "tests/specify_cli/cli/commands/agent/test_record_analysis_double_resolution.py",
-        "tests/specify_cli/cli/commands/agent/test_tasks_cli_contract_coord.py",
-        "tests/specify_cli/cli/commands/agent/test_tasks_coreless_orchestration.py",
-        "tests/specify_cli/cli/commands/agent/test_workflow_placement_routing.py",
-        "tests/specify_cli/cli/commands/test_coordination_doctor.py",
-        "tests/specify_cli/cli/commands/test_daemon_doctor.py",
-        "tests/specify_cli/cli/commands/test_mission_state_doctor.py",
-        "tests/specify_cli/cli/commands/test_workspace_husk_doctor.py",
-        "tests/specify_cli/coordination/test_commit_router_planning_residue.py",
-        "tests/specify_cli/coordination/test_partition_authority_characterization.py",
-        "tests/specify_cli/coordination/test_wp05_status_read_contract.py",
-        "tests/specify_cli/status/test_inert_field_reduction.py",
-        "tests/specify_cli/status/test_wp_state.py",
-        "tests/specify_cli/test_clock_consolidation.py",
-        "tests/specify_cli/workspace/test_context_worktree_routing.py",
-        "tests/status/test_aggregate_surface_resolution.py"
+        "tests/architectural/test_worktrees_index_clean.py"
       ],
       "predicted_surfaces": [
         "api",
@@ -565,10 +504,7 @@
         "tests/architectural/test_template_governance_payload_contract.py",
         "tests/architectural/test_typer_compat_ci.py",
         "tests/architectural/test_uv_lock_pin_drift.py",
-        "tests/architectural/tool_artifact_enrolment/test_enrolment_inventory.py",
-        "tests/specify_cli/cli/commands/test_command_surface_doctor.py",
-        "tests/specify_cli/cli/commands/test_doctor_shared.py",
-        "tests/specify_cli/tool_surface/providers/test_plugin_bundle.py"
+        "tests/architectural/tool_artifact_enrolment/test_enrolment_inventory.py"
       ],
       "predicted_surfaces": [
         "api",
@@ -596,8 +532,7 @@
         "tests/release/test_diff_coverage_policy.py",
         "tests/retrospective/test_summary_tolerance.py",
         "tests/sync/test_client_integration.py",
-        "tests/sync/test_daemon_singleton_reaper_consolidation.py",
-        "tests/unit/migration/test_backfill_runtime_state.py"
+        "tests/sync/test_daemon_singleton_reaper_consolidation.py"
       ],
       "predicted_surfaces": [
         "api",
@@ -657,20 +592,10 @@
         "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-results.json",
         "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-route-manifest.yaml",
         "tests/_arch_shard_map.py",
-        "tests/_next_shard_map.py",
-        "tests/architectural/_baselines.yaml",
-        "tests/architectural/_golden_count_baseline.json",
-        "tests/architectural/baselines/fast-tests-core-misc-nodeids.txt",
-        "tests/architectural/baselines/integration-tests-next-nodeids.txt",
-        "tests/architectural/census/verdict_seam_IC01.yaml",
-        "tests/architectural/census/verdict_seam_IC08.yaml",
-        "tests/architectural/marker_baseline.txt",
-        "tests/architectural/mission_exit_baseline.txt",
         "tests/architectural/test_ci_quality_path_filters.py",
         "tests/architectural/test_marker_job_completeness.py",
         "tests/architectural/test_quarantine_marker.py",
-        "tests/architectural/test_suite_jobs_gate_blocking.py",
-        "tests/architectural/verdict_seam_census.yaml"
+        "tests/architectural/test_suite_jobs_gate_blocking.py"
       ],
       "predicted_surfaces": [
         "api",
@@ -698,14 +623,11 @@
       ],
       "write_scope": [
         "CHANGELOG.md",
-        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py",
         "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions.yaml",
         "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/final-report.md",
         "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md",
         "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/head-census.json",
         "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/head-workloads.yaml",
-        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/legacy-shard-normalization.yaml",
-        "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/workflow-evidence.md",
         "tests/README.md"
       ],
       "predicted_surfaces": [
@@ -732,8 +654,8 @@
       "parallel_group": 4
     }
   ],
-  "computed_at": "2026-08-10T18:31:18.076841+00:00",
+  "computed_at": "2026-08-10T00:55:47.254688+00:00",
   "computed_from": "dependency_graph+ownership",
   "planning_artifact_wps": [],
-  "planning_commit_sha": "15835c87aa6bf75d5cd59b810c51bc9441de5705"
+  "planning_commit_sha": "9d2879f78a9894b7f5cf5362978365ebe2e356e5"
 }
