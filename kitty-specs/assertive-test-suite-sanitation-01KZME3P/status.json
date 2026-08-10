@@ -73,27 +73,28 @@
       "notes": [
         "Ready for review: recoverable cross-platform lease, bounded cached scanner, exact replay and matched evidence",
         "Cycle 2 ready: invalid final entries recover safely; scanner rows authenticated across processes; causal pre-fix raw evidence and three documented clean starts recorded",
-        "Final cycle 3 ready for arbiter: external HMAC cache authority rejects recomputed self-signatures; lexical no-follow stale-lease symlink recovery preserves target"
+        "Final cycle 3 ready for arbiter: external HMAC cache authority rejects recomputed self-signatures; lexical no-follow stale-lease symlink recovery preserves target",
+        "Arbiter APPROVE after three-review cap; no cycle4. Bootstrap lease/publication recovery, symlink-safe stale-lease repair, exact replay, three clean starts, 126 focused passes/2 platform skips, integration, Ruff/mypy and scanner concurrency are proven. Residual accepted under #2645: coherent active rewriting of both readable authority key and cache rows can forge results; authority-key directory corruption errors closed instead of rescanning. Ordinary/schema-valid row corruption is authenticated and rescans; no silent accidental bypass. Availability/security hardening is follow-up, not a fourth mission cycle."
       ],
       "provider": "__resolved_provider_absent__",
       "review": null,
       "review_result": {
-        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP02-test-venv-bootstrap/review-cycle-3.md",
-        "reference": "review-cycle://assertive-test-suite-sanitation-01KZME3P/WP02-test-venv-bootstrap/review-cycle-3.md",
-        "reviewer": "reviewer-renata",
-        "verdict": "changes_requested"
+        "feedback_path": "/private/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260810-011637-xWqxfc/spec-kitty/.worktrees/assertive-test-suite-sanitation-01KZME3P-coord/kitty-specs/assertive-test-suite-sanitation-01KZME3P/tasks/WP02-test-venv-bootstrap/arbiter-decision.md",
+        "reference": "arbiter-decision://assertive-test-suite-sanitation-01KZME3P/WP02-test-venv-bootstrap",
+        "reviewer": "user/root-arbiter",
+        "verdict": "approved"
       },
       "role": "reviewer",
       "shell_pid": 0,
       "shell_pid_created_at": "1786191813.84724",
       "subtasks": {
-        "T007": "planned",
-        "T008": "planned",
-        "T009": "planned",
-        "T010": "planned",
-        "T011": "planned",
-        "T012": "planned",
-        "T050": "planned"
+        "T007": "done",
+        "T008": "done",
+        "T009": "done",
+        "T010": "done",
+        "T011": "done",
+        "T012": "done",
+        "T050": "done"
       },
       "tracker_refs": [
         "#3283",
