@@ -67,6 +67,9 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/legacy-shard-normalization.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/workflow-evidence.md
+- kitty-specs/assertive-test-suite-sanitation-01KZME3P/quickstart.md
+- kitty-specs/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md
+- kitty-specs/assertive-test-suite-sanitation-01KZME3P/acceptance-matrix.json
 execution_mode: code_change
 owned_files:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py
@@ -79,6 +82,9 @@ owned_files:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/workflow-evidence.md
 - tests/README.md
 - CHANGELOG.md
+- kitty-specs/assertive-test-suite-sanitation-01KZME3P/quickstart.md
+- kitty-specs/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md
+- kitty-specs/assertive-test-suite-sanitation-01KZME3P/acceptance-matrix.json
 tags: []
 tracker_refs:
 - '#1931'
