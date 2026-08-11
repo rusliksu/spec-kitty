@@ -2380,7 +2380,9 @@ def _patch_wp07_current_route(
         errors.append("normalization wp07 current route: legacy causal evidence missing")
         return
     causal = cast(dict[str, Any], evidence["causal_probe"])
-    if "#2782" not in str(causal.get("intended_oracle")) or "regression-tests" not in str(causal.get("fault")):
+    # The capped shard left its unquoted ``#2782`` text YAML-truncated to
+    # ``"The exact"``. Pin that parsed legacy body before replacing it.
+    if causal.get("intended_oracle") != "The exact" or "regression-tests" not in str(causal.get("fault")):
         errors.append("normalization wp07 current route: legacy authority no longer matches reviewed shard")
         return
     candidate = cast(dict[str, Any], row["candidate"])
