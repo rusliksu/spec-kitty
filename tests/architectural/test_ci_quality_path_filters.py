@@ -97,6 +97,31 @@ def _job(data: dict[str, Any], job_name: str) -> dict[str, Any]:
     return dict(data["jobs"][job_name])
 
 
+def test_quarantine_marker_discovery_finds_module_and_function_markers(
+    tmp_path: Path,
+) -> None:
+    """The owner-manifest guard must discover every direct quarantine marker."""
+    tests_root = tmp_path / "tests"
+    tests_root.mkdir()
+    (tests_root / "test_module_marker.py").write_text(
+        "import pytest\n\npytestmark = [pytest.mark.quarantine]\n",
+        encoding="utf-8",
+    )
+    (tests_root / "test_function_marker.py").write_text(
+        "import pytest\n\n@pytest.mark.quarantine\ndef test_flake():\n    pass\n",
+        encoding="utf-8",
+    )
+    (tests_root / "test_unmarked.py").write_text(
+        "def test_stable():\n    pass\n",
+        encoding="utf-8",
+    )
+
+    assert _discover_quarantine_owner_paths(tests_root) == (
+        "tests/test_function_marker.py",
+        "tests/test_module_marker.py",
+    )
+
+
 # T021 (mission review-cycle-verdict-seam-rebuild-01KZ2W7W, WP05): a shard job
 # must not condition its own execution on a predecessor's `.result` — it
 # should still run and report its own outcome regardless of whether the
