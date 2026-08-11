@@ -106,6 +106,9 @@ owned_files:
 - tests/upgrade/conftest.py
 - tests/cli/commands/test_sync_doctor_tracker_egress_3108.py
 - tests/integration/test_review_durability_matrix.py
+- tests/sync/test_lifecycle_readiness.py
+- tests/sync/_leak_guard.py
+- tests/test_dashboard/test_charter_chokepoint_regression.py
 tags: []
 tracker_refs:
 - '#1931'
