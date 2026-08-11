@@ -181,14 +181,18 @@ def test_doctor_restart_daemon_restarts_and_becomes_healthy(
         )
         assert health_payload["status"] == "ok"
     finally:
-        _run_python(
-            """
-            from specify_cli.sync.daemon import stop_sync_daemon
+        try:
+            _run_python(
+                """
+                from specify_cli.sync.daemon import stop_sync_daemon
 
-            stop_sync_daemon(timeout=1.0)
-            """,
-            cwd=repo_root,
-            env=env,
-            timeout=5.0,
-        )
-        _terminate_known_daemon_pids(created_pids)
+                stop_sync_daemon(timeout=1.0)
+                """,
+                cwd=repo_root,
+                env=env,
+                timeout=5.0,
+            )
+        except subprocess.TimeoutExpired:
+            pass
+        finally:
+            _terminate_known_daemon_pids(created_pids)

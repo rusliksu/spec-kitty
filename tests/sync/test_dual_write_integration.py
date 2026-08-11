@@ -61,14 +61,35 @@ def _read_snapshot(mission_dir: Path) -> dict[str, object]:
 
 
 @pytest.fixture(autouse=True)
-def _reset_sync_singletons_after_emit():  # type: ignore[no-untyped-def]
-    """Do not let emit's runtime/background singletons escape a test."""
-    yield
-    from specify_cli.sync.background import reset_sync_service
-    from specify_cli.sync.runtime import reset_runtime
+def _reset_sync_singletons_after_emit(
+    monkeypatch: pytest.MonkeyPatch,
+):  # type: ignore[no-untyped-def]
+    """Isolate emit's local-only path without destroying prior worker state."""
+    from specify_cli.sync import background as background_module
+    from specify_cli.sync import runtime as runtime_module
 
-    reset_runtime()
-    reset_sync_service()
+    monkeypatch.delenv("SPEC_KITTY_ENABLE_SAAS_SYNC", raising=False)
+    prior_runtime = runtime_module._runtime
+    prior_service = background_module._service
+    runtime_module._runtime = None
+    background_module._service = None
+    try:
+        yield
+    finally:
+        current_runtime = runtime_module._runtime
+        current_service = background_module._service
+        runtime_module._runtime = None
+        background_module._service = None
+        try:
+            if current_runtime is not None and current_runtime is not prior_runtime:
+                current_runtime.stop()
+        finally:
+            try:
+                if current_service is not None and current_service is not prior_service:
+                    current_service.stop()
+            finally:
+                runtime_module._runtime = prior_runtime
+                background_module._service = prior_service
 
 
 class TestDualWriteAliasResolvedEverywhere:
