@@ -109,6 +109,8 @@ owned_files:
 - tests/sync/test_lifecycle_readiness.py
 - tests/sync/_leak_guard.py
 - tests/test_dashboard/test_charter_chokepoint_regression.py
+- packs/built-in/styleguides/common-docs.styleguide.yaml
+- kitty-specs/assertive-test-suite-sanitation-01KZME3P/mission-exception.md
 tags: []
 tracker_refs:
 - '#1931'
