@@ -120,6 +120,20 @@ def _git_rev_parse(spec: str, *, root: Path | None = None) -> str:
     return value
 
 
+def _git_tree_paths(commit: str, path: str, *, root: Path) -> set[str]:
+    """Return exact tracked paths beneath ``path`` at ``commit``."""
+    completed = subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", commit, "--", path],
+        cwd=root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if completed.returncode != 0:
+        raise AuditError(f"cannot enumerate git tree {commit}:{path}")
+    return {line for line in completed.stdout.splitlines() if line}
+
+
 def _rel(path: Path, root: Path) -> str:
     try:
         return path.resolve().relative_to(root.resolve()).as_posix()
@@ -778,11 +792,13 @@ def snapshot(
         raise AuditError(f"unknown census role {census_role!r}")
     if census_role == "head":
         commit = _git_rev_parse(f"{inventory_sha or 'HEAD'}^{{commit}}", root=root)
+        frozen_paths = _git_tree_paths(TARGET_INVENTORY_SHA, tests_path, root=root)
         inventory: dict[str, Any] = {
             "role": "head", "commit": commit, "target_commit": commit,
             "tests_tree": _git_rev_parse(f"{commit}:{tests_path}", root=root),
         }
     else:
+        frozen_paths = set()
         inventory = {
             "role": "base", "commit": inventory_sha or "WORKTREE",
             "target_commit": TARGET_INVENTORY_SHA,
@@ -823,12 +839,17 @@ def snapshot(
         },
         "scanner_candidates": scanners,
     }
-    unowned = []
+    unowned: list[str] = []
+    post_base_additions: list[str] = []
     for row in inert + scanners:
         if not row["owner"]:
-            unowned.append(row["member"])
+            target = unowned if census_role == "base" or row["path"] in frozen_paths else post_base_additions
+            target.append(row["member"])
     for group in exact:
-        unowned.extend(row["member"] for row in group["members"] if not row["owner"])
+        for row in group["members"]:
+            if not row["owner"]:
+                target = unowned if census_role == "base" or row["path"] in frozen_paths else post_base_additions
+                target.append(row["member"])
     node_ref = {node["nodeid"]: index for index, node in enumerate(collection_nodes)}
     compact_rows = []
     for row in rows:
@@ -848,7 +869,11 @@ def snapshot(
         "zero_function_files": sorted(path for path in test_files if path not in unit_paths),
         "source_units": compact_rows, "collection": _compact_collection(collection),
         "reconciliation": reconciliation, "manifests": manifests,
-        "ownership": {"unowned": sorted(set(unowned)), "complete": not unowned},
+        "ownership": {
+            "unowned": sorted(set(unowned)),
+            "post_base_additions": sorted(set(post_base_additions)),
+            "complete": not unowned,
+        },
         "empty_tests_root": not test_files,
     }
     evidence["content_sha256"] = _sha(_json_bytes(evidence))
@@ -1349,8 +1374,20 @@ def validate_census(data: Mapping[str, Any], errors: list[str]) -> None:  # noqa
         errors.append("census: discovery/collection reconciliation incomplete")
     if reconciliation.get("unreconciled_or_duplicate_nodes"):
         errors.append("census: node membership is missing or duplicated")
-    if not data.get("ownership", {}).get("complete"):
+    ownership = data.get("ownership", {})
+    if not isinstance(ownership, dict):
+        errors.append("census: ownership mapping required")
+        ownership = {}
+    unowned = ownership.get("unowned")
+    post_base_additions = ownership.get("post_base_additions", [])
+    if not _str_list(unowned) or not _str_list(post_base_additions):
+        errors.append("census: ownership partitions must be string lists")
+        unowned = []
+        post_base_additions = []
+    if ownership.get("complete") is not (unowned == []):
         errors.append("census: candidate/group owner reconciliation incomplete")
+    if set(cast(list[str], unowned)) & set(cast(list[str], post_base_additions)):
+        errors.append("census: ownership partitions overlap")
     inventory = data.get("inventory", {})
     if not isinstance(inventory, dict):
         errors.append("census: inventory mapping required")
@@ -1364,6 +1401,8 @@ def validate_census(data: Mapping[str, Any], errors: list[str]) -> None:  # noqa
                 or inventory.get("target_commit") != TARGET_INVENTORY_SHA
             ):
                 errors.append("census: immutable base inventory and target commits must match target SHA")
+            if post_base_additions:
+                errors.append("census: base inventory cannot contain post-base additions")
         else:
             commit = inventory.get("commit")
             target_commit = inventory.get("target_commit")
@@ -1385,6 +1424,15 @@ def validate_census(data: Mapping[str, Any], errors: list[str]) -> None:  # noqa
                         errors.append("census: HEAD tests_tree does not match recorded commit")
                     if current_tree != tests_tree:
                         errors.append("census: current tests tree drifted from recorded HEAD census")
+            try:
+                frozen_paths = _git_tree_paths(TARGET_INVENTORY_SHA, "tests", root=Path.cwd())
+            except AuditError as exc:
+                errors.append(f"census: {exc}")
+            else:
+                for member in cast(list[str], post_base_additions):
+                    member_path = member.split("::", 1)[0]
+                    if member_path in frozen_paths:
+                        errors.append(f"census: frozen-base member misclassified as post-base addition: {member}")
     if data.get("source_parse_errors"):
         errors.append("census: source parse errors require explicit repair before inventory")
     units = data.get("source_units", [])
@@ -2203,7 +2251,7 @@ def _validate_normalization_authority(  # noqa: C901 - content authorities have 
     if not isinstance(authority, dict) or authority.get("no_fourth_cycle") is not True or authority.get("review_cycle_cap") != 3:
         errors.append(f"{record_path}: normalization must record the three-cycle arbiter cap")
     document_map = {_document_key(path): path for path, _ in documents}
-    for section in ("source_documents", "raw_artifacts"):
+    for section in ("source_documents", "raw_artifacts", "integration_surfaces"):
         rows = record.get(section)
         if not isinstance(rows, list) or not rows:
             errors.append(f"{record_path}: nonempty {section} required")
@@ -2264,6 +2312,83 @@ def _drop_normalized_candidates(
         if not isinstance(row, dict) or not isinstance(row.get("candidate"), dict)
         or cast(dict[str, Any], row["candidate"]).get("id") not in expected
     ]
+
+
+def _patch_wp07_current_route(
+    source: dict[str, Any], operation: Mapping[str, Any],
+    surface_hashes: Mapping[str, str], errors: list[str],
+) -> None:
+    """Reconcile capped WP07 route evidence with the post-review #2782 redesign."""
+    rows = source.get("dispositions")
+    candidate_id = operation.get("candidate_id")
+    workflow_path = operation.get("workflow_path")
+    test_path = operation.get("test_path")
+    if (
+        not isinstance(rows, list) or not isinstance(candidate_id, str)
+        or not isinstance(workflow_path, str) or not isinstance(test_path, str)
+        or surface_hashes.get(workflow_path) != operation.get("workflow_sha256")
+        or surface_hashes.get(test_path) != operation.get("test_sha256")
+    ):
+        errors.append("normalization wp07 current route: invalid content-addressed authority")
+        return
+    matches = [
+        row for row in rows if isinstance(row, dict)
+        and isinstance(row.get("candidate"), dict)
+        and cast(dict[str, Any], row["candidate"]).get("id") == candidate_id
+    ]
+    if len(matches) != 1:
+        errors.append(f"normalization wp07 current route: expected one {candidate_id} row")
+        return
+    workflow = Path(workflow_path).read_text(encoding="utf-8")
+    test_source = Path(test_path).read_text(encoding="utf-8")
+    retired = "test_issue_2782_sync_strict_json_ingress_skip.py"
+    if (
+        "python -m pytest tests/ -m regression" not in workflow
+        or 'if [ "$ec" -eq 5 ]' not in workflow
+        or "REGRESSION_PATHS" in workflow
+        or retired in workflow or retired in test_source
+        or "_CORE_MISC_CAUSAL_NODE" not in test_source
+    ):
+        errors.append("normalization wp07 current route: integrated generic/empty-capable route drift")
+        return
+    row = matches[0]
+    evidence = row.get("evidence")
+    if not isinstance(evidence, dict) or not isinstance(evidence.get("causal_probe"), dict):
+        errors.append("normalization wp07 current route: legacy causal evidence missing")
+        return
+    causal = cast(dict[str, Any], evidence["causal_probe"])
+    if "#2782" not in str(causal.get("intended_oracle")) or "regression-tests" not in str(causal.get("fault")):
+        errors.append("normalization wp07 current route: legacy authority no longer matches reviewed shard")
+        return
+    candidate = cast(dict[str, Any], row["candidate"])
+    candidate["authority"] = [
+        *cast(list[str], candidate.get("authority", [])), workflow_path, test_path,
+    ]
+    routing = evidence.get("routing_evidence")
+    if isinstance(routing, list) and routing and isinstance(routing[0], dict):
+        routing[0]["result"] = (
+            "Current-main reconciliation retains the blocking generic regression marker route, "
+            "accepts an empty marker set via pytest exit 5, and removes the deleted #2782 literal owner."
+        )
+    evidence["causal_probe"] = {
+        "kind": "live replacement-union route fault",
+        "fault": "Remove the current non-empty arch-adversarial gates from the parsed replacement union.",
+        "authority_violated": "The exact legacy core-misc node set must remain covered by the union of live replacement routes.",
+        "act_reached": True,
+        "intended_oracle": "The live CI path-filter guard node becomes missing from the replacement union.",
+        "intended_oracle_failed": True,
+        "command": (
+            ".venv/bin/pytest -q -p no:cacheprovider "
+            "tests/architectural/test_ci_quality_path_filters.py::"
+            "test_live_core_misc_replacement_union_covers_legacy_selection"
+        ),
+        "environment": "macOS 15.7.7 arm64; CPython 3.11.15; current-main integrated WP08 lane",
+        "raw_artifact_hash": cast(str, operation["test_sha256"]),
+    }
+    row["action"] = (
+        "Delete the recursive eight-subprocess implementation; preserve its boundary with one live universe "
+        "and a causal non-empty route fault. Keep regression generic, blocking, and empty-capable."
+    )
 
 
 def _patch_wp10(
@@ -2821,7 +2946,7 @@ def _backfill_approved_review_metadata(
             }
 
 
-def _apply_normalization(
+def _apply_normalization(  # noqa: C901 - each content-addressed operation is dispatched explicitly
     documents: Sequence[tuple[Path, dict[str, Any]]], errors: list[str],
 ) -> list[tuple[Path, dict[str, Any]]]:
     normalized = [(path, copy.deepcopy(data)) for path, data in documents]
@@ -2839,6 +2964,12 @@ def _apply_normalization(
         for row in raw_rows if isinstance(row, dict) and isinstance(row.get("path"), str)
         and isinstance(row.get("sha256"), str)
     } if isinstance(raw_rows, list) else {}
+    surface_rows = record.get("integration_surfaces")
+    surface_hashes = {
+        row["path"]: row["sha256"]
+        for row in surface_rows if isinstance(row, dict) and isinstance(row.get("path"), str)
+        and isinstance(row.get("sha256"), str)
+    } if isinstance(surface_rows, list) else {}
     operations = record.get("operations")
     if not isinstance(operations, list) or not operations:
         errors.append(f"{record_path}: normalization operations required")
@@ -2869,6 +3000,8 @@ def _apply_normalization(
             _append_wp06_omissions(source, operation, normalized, raw_hashes, errors)
         elif kind == "append_wp07_scanner_paths":
             _append_wp07_scanner_paths(source, operation, normalized, raw_hashes, errors)
+        elif kind == "patch_wp07_current_route":
+            _patch_wp07_current_route(source, operation, surface_hashes, errors)
         elif kind == "synthesize_wp09_node_map":
             _synthesize_wp09(source, operation, normalized, raw_hashes, errors)
         else:

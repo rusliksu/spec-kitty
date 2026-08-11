@@ -58,6 +58,11 @@ historical_blobs:
     path: kitty-specs/assertive-test-suite-sanitation-01KZME3P/status.json
     git_blob: d662ffdc1cceb369be9173f5d447fe2afa29015f
     sha256: dc47405b7ffd59c4e977983da440ba44dde24a5ab2672741feab6d3775de1f25
+integration_surfaces:
+  - path: .github/workflows/ci-quality.yml
+    sha256: 1589d1b7e2a0ca24e9e1eb189a6e39cf6afd8aa435bddfa95a97ffdb9b3e567d
+  - path: tests/architectural/test_ci_quality_path_filters.py
+    sha256: 542a3f9fd55a288b403732e95620f5679e492d65bad713f9b7424dd302dcff0e
 operations:
   - id: wp05-retained-scanner-closure
     kind: synthesize_wp05_survivors
@@ -113,6 +118,15 @@ operations:
       - tests/architectural/test_marker_job_completeness.py
       - tests/architectural/test_quarantine_marker.py
       - tests/architectural/test_suite_jobs_gate_blocking.py
+  - id: wp07-current-main-route-reconciliation
+    kind: patch_wp07_current_route
+    source: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP07.yaml
+    candidate_id: wp07-terminalize-recursive-route-probe
+    workflow_path: .github/workflows/ci-quality.yml
+    workflow_sha256: 1589d1b7e2a0ca24e9e1eb189a6e39cf6afd8aa435bddfa95a97ffdb9b3e567d
+    test_path: tests/architectural/test_ci_quality_path_filters.py
+    test_sha256: 542a3f9fd55a288b403732e95620f5679e492d65bad713f9b7424dd302dcff0e
+    decision: Retain generic blocking regression-tests, accept empty marker set via exit 5, remove deleted #2782 literal owner, and use a current non-empty architectural route for causal proof.
   - id: wp09-capped-legacy-normalization
     kind: synthesize_wp09_node_map
     source: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP09.yaml
@@ -148,4 +162,4 @@ candidate_universe:
   exact_body_members: exactly_once
   promoted_semantic_members: exactly_once
   scanner_source_units: exactly_once
-content_sha256: 13efa3d4718c3ce79f6dd1c7c59588fb54bd871ad29399b3e0dfcf8798a58551
+content_sha256: 2ffc2326b6edf101079935320e669aacbc02b6f1c82ce601a8407119ad6b1f4b

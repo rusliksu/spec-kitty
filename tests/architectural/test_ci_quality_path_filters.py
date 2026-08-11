@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import re
-import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -17,15 +15,10 @@ pytestmark = pytest.mark.architectural
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _WORKFLOW = _REPO_ROOT / ".github" / "workflows" / "ci-quality.yml"
-_COLLECT_TIMEOUT_SECONDS = 60
-
-_REGRESSION_OWNER_PATHS = (
-    "tests/regression/test_issue_2782_sync_strict_json_ingress_skip.py",
-)
 _QUARANTINE_OWNER_PATHS: tuple[str, ...] = ()
-_REGRESSION_NODE = (
-    "tests/regression/test_issue_2782_sync_strict_json_ingress_skip.py::"
-    "test_mission_create_json_strict_when_sync_skips_ingress"
+_CORE_MISC_CAUSAL_NODE = (
+    "tests/architectural/test_ci_quality_path_filters.py::"
+    "test_live_core_misc_replacement_union_covers_legacy_selection"
 )
 
 # Exact pre-split catch-all selector from #3284. Its replacement is evaluated
@@ -149,24 +142,6 @@ def _find_result_gated_jobs(jobs: dict[str, Any]) -> dict[str, str]:
     return offending
 
 
-def _collect_nodes(args: list[str]) -> set[str]:
-    result = subprocess.run(
-        [sys.executable, "-m", "pytest", "--collect-only", "-q", *args],
-        cwd=_REPO_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-        # Bounded to the explicit narrow owner path; never recursively collects
-        # the suite (WP07/#3284 sanitation handoff).
-        timeout=_COLLECT_TIMEOUT_SECONDS,
-    )
-    return {
-        line.strip()
-        for line in result.stdout.splitlines()
-        if line.startswith("tests/") and "::" in line
-    }
-
-
 def _shell_array(run_script: str, name: str) -> tuple[str, ...]:
     """Parse one literal multiline Bash array from a workflow run step."""
     match = re.search(rf"(?m)^\s*{re.escape(name)}=\((.*?)^\s*\)", run_script, re.S)
@@ -203,15 +178,14 @@ def test_live_core_misc_replacement_union_covers_legacy_selection() -> None:
         f"{sorted(missing)[:20]}"
     )
 
-    # Causal fault: removing the real blocking regression owner must expose the
-    # accepted #2782 reproduction, proving the union assertion can red on an
-    # actual route loss rather than only comparing two vacuous/model-only sets.
-    without_regression = [
-        gate for gate in replacement_gates if gate.job != "regression-tests"
+    # Causal fault: remove a current non-empty owner route, not the deliberately
+    # empty-capable regression route. This proves the union oracle can red.
+    without_architectural = [
+        gate for gate in replacement_gates if gate.job != "arch-adversarial"
     ]
-    fault_missing = legacy_nodes - gc._selected_nodeids(without_regression, universe)
-    assert _REGRESSION_NODE in fault_missing, (
-        "removing the live regression route did not expose its #2782 owner; "
+    fault_missing = legacy_nodes - gc._selected_nodeids(without_architectural, universe)
+    assert _CORE_MISC_CAUSAL_NODE in fault_missing, (
+        "removing the live architectural route did not expose its owner; "
         "the core-misc replacement oracle is no longer causal"
     )
 
@@ -517,8 +491,8 @@ def test_ci_quality_guards_trigger_core_misc_validation() -> None:
     assert "tests/architectural/**" in core_misc_filter
 
 
-def test_narrow_route_manifests_are_literal_and_proportional() -> None:
-    """Narrow routes use literal owners, never recursive whole-tree discovery."""
+def test_marker_routes_are_explicit_and_empty_capable() -> None:
+    """Marker routes encode their distinct empty-set policies explicitly."""
     data = _load_workflow()
     regression = _job_run_script(
         data,
@@ -531,25 +505,29 @@ def test_narrow_route_manifests_are_literal_and_proportional() -> None:
         "Run quarantined tests (visible, never blocks merge)",
     )
 
-    assert _shell_array(regression, "REGRESSION_PATHS") == _REGRESSION_OWNER_PATHS
     assert _shell_array(quarantine, "QUARANTINE_PATHS") == _QUARANTINE_OWNER_PATHS
-    assert '"${REGRESSION_PATHS[@]}" -m regression' in regression
     assert '"${QUARANTINE_PATHS[@]}" -m quarantine' in quarantine
-    assert "python -m pytest tests/ -m regression" not in regression
+    assert "python -m pytest tests/ -m regression" in regression
     assert "python -m pytest tests/ -m quarantine" not in quarantine
+    assert 'if [ "$ec" -eq 5 ]' in regression
     assert '${#QUARANTINE_PATHS[@]}" -eq 0' in quarantine
 
 
-def test_regression_owner_manifest_collects_exactly_the_2782_node() -> None:
-    """Bounded live proof: the one literal owner selects exactly the P0 node."""
-    nodes = _collect_nodes([*_REGRESSION_OWNER_PATHS, "-m", "regression"])
-    assert nodes == {_REGRESSION_NODE}
+def test_regression_route_has_no_literal_owner_manifest() -> None:
+    """An empty marker set must not retain a deleted reproduction path."""
+    regression = _job_run_script(
+        _load_workflow(),
+        "regression-tests",
+        "Run regression red-first reproductions (blocking — gates releases)",
+    )
+    assert "REGRESSION_PATHS" not in regression
+    assert "test_issue_2782_sync_strict_json_ingress_skip.py" not in regression
 
 
-def test_narrow_route_owner_paths_exist() -> None:
-    """Static complement to bounded collection; no stale owner can fake green."""
-    missing = [path for path in _REGRESSION_OWNER_PATHS if not (_REPO_ROOT / path).is_file()]
-    assert not missing, f"narrow-route owner path(s) missing: {missing}"
+def test_regression_route_remains_release_blocking() -> None:
+    """Empty-capable does not mean visibility-only: nonempty reds still gate."""
+    quality_gate = _job(_load_workflow(), "quality-gate")
+    assert "regression-tests" in quality_gate["needs"]
 
 
 def test_core_misc_excludes_e2e_and_cross_cutting_suites() -> None:

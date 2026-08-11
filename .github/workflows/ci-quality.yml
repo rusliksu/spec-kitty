@@ -3318,14 +3318,11 @@ jobs:
         env:
           PWHEADLESS: "1"
         run: |
-          # The single accepted P0 owner (#2782). This literal manifest keeps
-          # regression discovery proportional while preserving honest blocking
-          # red authority under ADR 2026-07-17-1.
-          REGRESSION_PATHS=(
-            tests/regression/test_issue_2782_sync_strict_json_ingress_skip.py
-          )
+          # Regression is marker-owned. The route remains blocking when a red-first
+          # reproduction exists and explicitly accepts pytest exit 5 while the
+          # marker set is empty; there is no stale literal owner manifest.
           set +e
-          python -m pytest "${REGRESSION_PATHS[@]}" -m regression -p no:cacheprovider -q --tb=short
+          python -m pytest tests/ -m regression -p no:cacheprovider -q --tb=short
           ec=$?
           set -e
           if [ "$ec" -eq 5 ]; then
@@ -3344,7 +3341,7 @@ jobs:
             echo "--- resolved pytest/plugin versions ---"
             python -m pip freeze | grep -Ei "^(pytest|pluggy|iniconfig)" || true
             echo "--- plugin registration + collection attempt (diagnostic only) ---"
-            python -m pytest "${REGRESSION_PATHS[@]}" -m regression -p no:cacheprovider --collect-only -q 2>&1 | tail -40 || true
+            python -m pytest tests/ -m regression -p no:cacheprovider --collect-only -q 2>&1 | tail -40 || true
             exit "$ec"
           fi
           exit "$ec"
