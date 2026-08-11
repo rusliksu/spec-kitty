@@ -16,6 +16,9 @@ pytestmark = pytest.mark.architectural
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _WORKFLOW = _REPO_ROOT / ".github" / "workflows" / "ci-quality.yml"
+_DOCTRINE_CHARTER_WORKFLOW = (
+    _REPO_ROOT / ".github" / "workflows" / "doctrine-charter-tests.yml"
+)
 _CORE_MISC_CAUSAL_NODE = (
     "tests/architectural/test_ci_quality_path_filters.py::"
     "test_live_core_misc_replacement_union_covers_legacy_selection"
@@ -74,6 +77,21 @@ _CORE_MISC_REPLACEMENT_JOBS = frozenset(
 def _load_workflow() -> dict[str, Any]:
     data: dict[str, Any] = yaml.safe_load(_WORKFLOW.read_text(encoding="utf-8"))
     return data
+
+
+def test_parallel_doctrine_signal_excludes_serial_timing_tests() -> None:
+    """Timing-owned tests must not be duplicated under the xdist fast signal."""
+    data: dict[str, Any] = yaml.safe_load(
+        _DOCTRINE_CHARTER_WORKFLOW.read_text(encoding="utf-8")
+    )
+    run_script = _job_run_script(
+        data,
+        "doctrine-charter-tests",
+        "Run the doctrine/charter/invocation fast signal",
+    )
+
+    assert '-m "fast and not windows_ci and not timing"' in run_script
+    assert "-n auto --dist loadfile" in run_script
 
 
 def _path_filters(data: dict[str, Any]) -> dict[str, list[str]]:
