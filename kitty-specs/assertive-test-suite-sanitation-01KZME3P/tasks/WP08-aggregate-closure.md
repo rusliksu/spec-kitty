@@ -67,11 +67,8 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/legacy-shard-normalization.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/workflow-evidence.md
-- kitty-specs/assertive-test-suite-sanitation-01KZME3P/quickstart.md
 - kitty-specs/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md
 - kitty-specs/assertive-test-suite-sanitation-01KZME3P/acceptance-matrix.json
-- .github/workflows/ci-quality.yml
-- tests/architectural/test_ci_quality_path_filters.py
 execution_mode: code_change
 owned_files:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py
@@ -90,6 +87,11 @@ owned_files:
 - kitty-specs/assertive-test-suite-sanitation-01KZME3P/acceptance-matrix.json
 - .github/workflows/ci-quality.yml
 - tests/architectural/test_ci_quality_path_filters.py
+- docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-results.json
+- docs/development/how-to/review-gates.md
+- tests/architectural/test_ci_corpus_trigger_completeness.py
+- tests/conftest.py
+- tests/test_test_venv_bootstrap.py
 tags: []
 tracker_refs:
 - '#1931'
