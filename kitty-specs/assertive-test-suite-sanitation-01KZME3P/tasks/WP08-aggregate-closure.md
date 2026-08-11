@@ -100,6 +100,7 @@ owned_files:
 - tests/sync/test_runtime.py
 - tests/sync/_daemon_harness.py
 - tests/integration/test_tool_artifact_owner.py
+- tests/cli/commands/test_implement_base_flag.py
 tags: []
 tracker_refs:
 - '#1931'
