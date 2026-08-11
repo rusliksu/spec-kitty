@@ -366,12 +366,12 @@ After analyze passes and planning artifacts are committed, push `pr/assertive-te
 
 ### Included Subtasks
 
-- [ ] T044 Generate canonical aggregate ledger and HEAD census from WP shards (WP08)
-- [ ] T045 Generate before/after report, live known-red delta, causal/mutation matrix, and issue matrix (WP08)
-- [ ] T046 Run full parallel suite, orphan sweep, ruff, mypy, and route/platform gates (WP08)
-- [ ] T047 Run contract, architectural, and sibling cross-repository E2E hard gates (WP08)
-- [ ] T048 Update durable test docs/changelog and generated workflow evidence (WP08)
-- [ ] T049 Validate all success criteria, temporary states, tracker verdicts, and PR readiness (WP08)
+- [x] T044 Generate canonical aggregate ledger and HEAD census from WP shards (WP08)
+- [x] T045 Generate before/after report, live known-red delta, causal/mutation matrix, and issue matrix (WP08)
+- [x] T046 Run full parallel suite, orphan sweep, ruff, mypy, and route/platform gates (WP08)
+- [x] T047 Run contract, architectural, and sibling cross-repository E2E hard gates (WP08)
+- [x] T048 Update durable test docs/changelog and generated workflow evidence (WP08)
+- [x] T049 Validate all success criteria, temporary states, tracker verdicts, and PR readiness (WP08)
 
 **Dependencies**: WP02, WP03, WP04, WP05, WP06, WP07, WP09, WP10, WP11, WP12, WP13, WP14, WP15.
 **Risks**: aggregate prose drifting from canonical evidence; report generation and checksums prevent dual authority.  

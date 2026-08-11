@@ -1,12 +1,17 @@
+---
+doc_status: active
+updated: '2026-08-11'
+---
+
 # Assertive Test-Suite Sanitation — Final Report
 
 Closure state: **for-review-with-explicit-gate-misses**  
 Evidence commit: `f527f8733b87d567957b771101405478309b8b70`  
-Generated: `2026-08-11T00:00:00Z`
+Generated: `2026-08-11T06:45:00Z`
 
 ## Outcome
 
-The integrated suite is leaner by 64 Python test files, 971 source units, 1,431 collected nodes, and 27,371 Python test LOC. The exact integrated repository suite is green. Closure remains honestly red on the frozen 15% critical-path target, missing exact-commit three-OS workflow proof, inherited current-main mypy debt, and sibling E2E daemon source/executable mismatch.
+The integrated suite is leaner by 64 Python test files, 971 source units, 1,431 collected nodes, and 27,371 Python test LOC. The exact integrated repository suite is green. The 1.3815% SC-003 criterion miss remains explicit and is accepted by the root operator under the user-directed KISS wrap; it is not rewritten as a pass. Current PR CI proves Windows success while Linux/macOS jobs remain in progress. Inherited current-main mypy debt and the narrowly scoped nested-wheel-build sibling exception remain visible.
 
 ## Before / after inventory
 
@@ -51,8 +56,8 @@ Repaired-base failures were dispositioned; exact integrated HEAD full suite is g
 |---|---|---|
 | SC-001 | pass | 15 frozen inert candidates terminally owned; HEAD inert candidates=0. |
 | SC-002 | pass | Candidate universe exact365/inert15/scanner234 validates with zero missing, ambiguous, or duplicate ownership. |
-| SC-003 | fail | Frozen changed-route critical-path reduction is 1.3815%, below 15%; no waiver. |
-| SC-004 | fail | Contract and architecture pass; sibling E2E has two environment-boundary failures and exact-commit three-OS proof is absent. |
+| SC-003 | fail | Frozen changed-route critical-path reduction is 1.3815%, below 15%. Root operator accepts this recorded miss under the user-directed KISS wrap; no waiver or fabricated pass. |
+| SC-004 | fail | Contract and architecture pass; dependent_wp_planning_lane passes after one daemon restart; contract_drift_caught has the narrow nested-wheel-build exception; Windows CI is green; current Linux/macOS CI is still in progress. |
 | SC-005 | pass | Three consecutive WP02 clean starts reached real test bodies with no bootstrap cascade. |
 | SC-006 | pass | Deterministic aggregate/census, terminal issue rows, and independent approvals for dependency WPs are present. |
 
@@ -61,6 +66,6 @@ Repaired-base failures were dispositioned; exact integrated HEAD full suite is g
 - Review cap: three cycles per WP; fourth cycles prohibited and not opened.
 - Arbiter normalization: content-addressed legacy-shard-normalization.yaml supersedes capped WP06/WP09/WP10 legacy rows without source-shard mutation or cycle 4.
 - Independent WP approvals: WP01-WP07 and WP09-WP15 approved before WP08 integration; WP08 independent review still required.
-- Remaining closure blockers: SC-003 performance miss; SC-004 exact-commit platform evidence absent and sibling E2E red; inherited origin/main mypy debt recorded separately.
+- Remaining closure blockers: Root-accepted SC-003 criterion miss remains red; current Linux/macOS PR jobs are in progress; inherited origin/main mypy debt is recorded separately.
 
 See `issue-matrix.md` and `workflow-evidence.md` for terminal issue and gate details.

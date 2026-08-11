@@ -1,3 +1,8 @@
+---
+doc_status: active
+updated: '2026-08-11'
+---
+
 # Test Sanitation Issue Matrix
 
 Generated from content-addressed closure authority for `f527f8733b87d567957b771101405478309b8b70`.

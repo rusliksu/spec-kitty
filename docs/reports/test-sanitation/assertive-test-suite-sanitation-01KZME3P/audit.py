@@ -4573,6 +4573,7 @@ def _closure_authority(path: Path) -> dict[str, Any]:
 
 def _render_issue_matrix(data: Mapping[str, Any]) -> str:
     lines = [
+        "---", "doc_status: active", f"updated: '{str(data['generated_at'])[:10]}'", "---", "",
         "# Test Sanitation Issue Matrix", "",
         f"Generated from content-addressed closure authority for `{data['evidence_commit']}`.", "",
         "| Issue | Tracker state | Mission verdict | Evidence | Owner | Follow-up |", "|---|---|---|---|---|---|",
@@ -4587,6 +4588,7 @@ def _render_issue_matrix(data: Mapping[str, Any]) -> str:
 
 def _render_workflow_evidence(data: Mapping[str, Any]) -> str:
     lines = [
+        "---", "doc_status: active", f"updated: '{str(data['generated_at'])[:10]}'", "---", "",
         "# Test Sanitation Workflow Evidence", "",
         f"Evidence commit: `{data['evidence_commit']}`  ",
         f"Environment: {_md_cell(data['environment'])}", "",
@@ -4618,6 +4620,7 @@ def _render_final_report(data: Mapping[str, Any]) -> str:
     known_red = cast(dict[str, Any], data["known_red_diff"])
     review = cast(dict[str, Any], data["review"])
     lines = [
+        "---", "doc_status: active", f"updated: '{str(data['generated_at'])[:10]}'", "---", "",
         "# Assertive Test-Suite Sanitation — Final Report", "",
         f"Closure state: **{data.get('closure_state', 'unknown')}**  ",
         f"Evidence commit: `{data['evidence_commit']}`  ",
