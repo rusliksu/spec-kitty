@@ -2954,6 +2954,12 @@
   owning_workstream: none
   current_target: true
   notes: null
+- path: docs/plans/doctrine/3179-public-api-surface-scoping.md
+  tag: current
+  divio_type: none
+  owning_workstream: none
+  current_target: true
+  notes: null
 - path: docs/plans/doctrine/391-doctrine-usage-test.md
   tag: current
   divio_type: none
