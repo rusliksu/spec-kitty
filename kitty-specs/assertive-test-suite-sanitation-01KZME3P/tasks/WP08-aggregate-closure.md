@@ -104,6 +104,8 @@ owned_files:
 - tests/agent/cli/commands/test_implement_preflight.py
 - tests/e2e/conftest.py
 - tests/upgrade/conftest.py
+- tests/cli/commands/test_sync_doctor_tracker_egress_3108.py
+- tests/integration/test_review_durability_matrix.py
 tags: []
 tracker_refs:
 - '#1931'
