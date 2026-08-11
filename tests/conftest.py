@@ -374,6 +374,36 @@ def _enable_saas_sync_feature_flag(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("SPEC_KITTY_ENABLE_SAAS_SYNC", "1")
 
 
+@pytest.fixture(autouse=True)
+def _isolate_global_encoding_provenance(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Keep relative charter provenance writes inside each test sandbox.
+
+    ``charter._io`` intentionally routes non-mission inputs to the relative
+    ``.kittify/encoding-provenance/global.jsonl`` sink.  Tests commonly load
+    absolute files from ``tmp_path`` while pytest's process CWD remains the
+    source checkout; under xdist those otherwise append the same ignored
+    source file while source-pollution tests inventory it.  Redirect only that
+    canonical relative sink.  Absolute and per-mission routes keep exercising
+    the production resolver unchanged, and CLI subprocesses retain their own
+    project CWD.
+    """
+    import charter._io as charter_io
+
+    original_route = charter_io._route_provenance_path
+    isolated_sink = tmp_path / ".kittify" / "encoding-provenance" / "global.jsonl"
+
+    def _isolated_route(source_path: Path | None) -> Path:
+        routed = original_route(source_path)
+        if routed == Path(".kittify/encoding-provenance/global.jsonl"):
+            return isolated_sink
+        return routed
+
+    monkeypatch.setattr(charter_io, "_route_provenance_path", _isolated_route)
+
+
 # ---------------------------------------------------------------------------
 # WP02 — render-surface width pin (FR-002, #3115)
 #
