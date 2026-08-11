@@ -48,6 +48,10 @@ def find_free_port_in_range(start: int, end: int) -> int:
     """
     for port in range(start, end):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            # Match HTTPServer and the daemon-shaped test listeners. Without
+            # this, a recently released TIME_WAIT port is rejected by the
+            # probe even though the server can immediately and safely rebind it.
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 sock.bind(("127.0.0.1", port))
                 return port
