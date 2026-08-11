@@ -57,7 +57,10 @@ FROZEN_BASE_RAW_RESULT_REFERENCE = f"sha256:{FROZEN_BASE_RAW_RESULT_SHA256}"
 FROZEN_BASE_EXECUTION_CONTENT_SHA256 = "62d9db3a9dfbde24dc9c4e887eb840f65664afd8aa9aea3fcef28c4584cbbd93"
 WP08_OWNERSHIP_TAKEOVERS = {
     ".github/workflows/ci-quality.yml": ("WP07", "WP08"),
+    "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-results.json": ("WP07", "WP08"),
     "tests/architectural/test_ci_quality_path_filters.py": ("WP07", "WP08"),
+    "tests/conftest.py": ("WP02", "WP08"),
+    "tests/test_test_venv_bootstrap.py": ("WP02", "WP08"),
 }
 VERDICTS = {"KEEP", "CONSOLIDATE", "FIX_TEST", "FIX_PRODUCT", "DELETE", "TEMPORARY"}
 PROFILES = {
