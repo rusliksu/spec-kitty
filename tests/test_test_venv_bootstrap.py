@@ -52,6 +52,22 @@ def _fake_valid(venv_dir: Path, source_version: str) -> bool:
     )
 
 
+def test_existing_executables_win_over_spoofed_platform(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Platform-spoof tests must not redirect a published POSIX venv."""
+    python = tmp_path / "bin" / "python"
+    pip = tmp_path / "bin" / "pip"
+    python.parent.mkdir(parents=True)
+    python.write_text("python", encoding="utf-8")
+    pip.write_text("pip", encoding="utf-8")
+
+    monkeypatch.setattr(root_conftest.sys, "platform", "win32")
+
+    assert root_conftest._venv_python(tmp_path) == python
+    assert root_conftest._venv_pip(tmp_path) == pip
+
+
 def _bootstrap_worker(
     project_root: str,
     start: Any,

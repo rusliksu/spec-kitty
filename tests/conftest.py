@@ -598,15 +598,23 @@ def _neutralize_worktree_detection(request, monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def _venv_python(venv_dir: Path) -> Path:
-    if sys.platform == "win32":
-        return venv_dir / "Scripts" / "python.exe"
-    return venv_dir / "bin" / "python"
+    posix = venv_dir / "bin" / "python"
+    windows = venv_dir / "Scripts" / "python.exe"
+    if posix.exists():
+        return posix
+    if windows.exists():
+        return windows
+    return windows if os.name == "nt" else posix
 
 
 def _venv_pip(venv_dir: Path) -> Path:
-    if sys.platform == "win32":
-        return venv_dir / "Scripts" / "pip.exe"
-    return venv_dir / "bin" / "pip"
+    posix = venv_dir / "bin" / "pip"
+    windows = venv_dir / "Scripts" / "pip.exe"
+    if posix.exists():
+        return posix
+    if windows.exists():
+        return windows
+    return windows if os.name == "nt" else posix
 
 
 def _venv_has_required_runtime(venv_dir: Path) -> bool:
