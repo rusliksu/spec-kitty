@@ -103,6 +103,7 @@ owned_files:
 - tests/cli/commands/test_implement_base_flag.py
 - tests/agent/cli/commands/test_implement_preflight.py
 - tests/e2e/conftest.py
+- tests/upgrade/conftest.py
 tags: []
 tracker_refs:
 - '#1931'
