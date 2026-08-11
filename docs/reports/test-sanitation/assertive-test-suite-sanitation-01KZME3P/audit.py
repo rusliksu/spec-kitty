@@ -55,6 +55,10 @@ FROZEN_BASE_CENSUS_CONTENT_SHA256 = "08ef931c46e9d6a2608baec729203442640933bf297
 FROZEN_BASE_RAW_RESULT_SHA256 = "67120f918ecef7e45791aa81d3c6823b1546820f478e53fa24d075f1adbfb60c"
 FROZEN_BASE_RAW_RESULT_REFERENCE = f"sha256:{FROZEN_BASE_RAW_RESULT_SHA256}"
 FROZEN_BASE_EXECUTION_CONTENT_SHA256 = "62d9db3a9dfbde24dc9c4e887eb840f65664afd8aa9aea3fcef28c4584cbbd93"
+WP08_OWNERSHIP_TAKEOVERS = {
+    ".github/workflows/ci-quality.yml": ("WP07", "WP08"),
+    "tests/architectural/test_ci_quality_path_filters.py": ("WP07", "WP08"),
+}
 VERDICTS = {"KEEP", "CONSOLIDATE", "FIX_TEST", "FIX_PRODUCT", "DELETE", "TEMPORARY"}
 PROFILES = {
     "inert", "duplicate", "structural", "contract", "slow", "flake",
@@ -629,7 +633,10 @@ def load_owners(root: Path) -> dict[str, str]:
         for line in match.group("body").splitlines():
             path = line[2:].strip().strip("`'")
             previous = owners.get(path)
-            if previous and previous != wp:
+            if (
+                previous and previous != wp
+                and WP08_OWNERSHIP_TAKEOVERS.get(path) != (previous, wp)
+            ):
                 collisions.append(f"{path}: {previous}, {wp}")
             owners[path] = wp
     if collisions:
