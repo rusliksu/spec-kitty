@@ -84,6 +84,7 @@ owned_files:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/workflow-evidence.md
 - tests/README.md
 - CHANGELOG.md
+- docs/changelog/CHANGELOG.md
 - kitty-specs/assertive-test-suite-sanitation-01KZME3P/quickstart.md
 - kitty-specs/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md
 - kitty-specs/assertive-test-suite-sanitation-01KZME3P/acceptance-matrix.json
