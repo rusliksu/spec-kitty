@@ -2293,8 +2293,9 @@ jobs:
   # existing timing-marked test the same way it rescues the WP-prompt ones
   # (Issue #2034 anti-pattern). ``--ignore`` excludes
   # ``test_doctor_restart_daemon_timing.py``: that file's tests stay the sole
-  # responsibility of ``restart-daemon-nfr-timing`` below (OS-matrixed,
-  # cli-gated by design) — ignoring it here is what prevents a double-run.
+  # responsibility of ``restart-daemon-nfr-timing`` below (the historical job
+  # id is retained for aggregation compatibility; it is OS-matrixed and
+  # cli-gated by design) — ignoring it here prevents a double-run.
   #
   # ALWAYS-ON by construction: ``if: always()``, no dorny filter-group ``if:``
   # gate, no ``needs`` edge — mirrors the arch-adversarial pole above, NOT the
@@ -3195,12 +3196,14 @@ jobs:
           if-no-files-found: ignore
 
   # ---------------------------------------------------------------------------
-  # restart-daemon-nfr-timing: issue #1153 / NFR-002. Runs the real daemon
-  # restart path on Linux and macOS, but stays out of the fast suite because it
-  # starts subprocesses and asserts wall-clock time.
+  # restart-daemon-nfr-timing: historical job id retained for quality-gate
+  # compatibility. PR #3285 retires issue #1153 / NFR-002's portable <=10s
+  # shared-runner performance claim. This OS-matrixed gate now enforces the
+  # replacement functional contract: stop the old daemon, spawn a distinct pid,
+  # and observe a healthy control plane within bounded operation timeouts.
   # ---------------------------------------------------------------------------
   restart-daemon-nfr-timing:
-    name: doctor restart-daemon NFR-002 timing (${{ matrix.os }})
+    name: doctor restart-daemon functional health (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs: [changes]
     if: >-
@@ -3223,7 +3226,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .[test]
-      - name: Run NFR-002 timing gate
+      - name: Run restart-daemon functional health gate
         env:
           SPEC_KITTY_ENABLE_SAAS_SYNC: "1"
         run: |
@@ -3265,6 +3268,8 @@ jobs:
           # Empty by adjudication: quarantine is reserved for irreducible Tier-3
           # environmental flakes, and the sanitation census found none. Keep the
           # manifest explicit so this job never scans the unrelated whole tree.
+          # The architectural guard discovers direct quarantine markers across
+          # tests/ and requires this owner manifest to match exactly.
           QUARANTINE_PATHS=()
           if [ "${#QUARANTINE_PATHS[@]}" -eq 0 ]; then
             echo "::notice::No tests are currently quarantined (owner manifest is empty)."

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import re
 from pathlib import Path
 from typing import Any
@@ -15,7 +16,6 @@ pytestmark = pytest.mark.architectural
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _WORKFLOW = _REPO_ROOT / ".github" / "workflows" / "ci-quality.yml"
-_QUARANTINE_OWNER_PATHS: tuple[str, ...] = ()
 _CORE_MISC_CAUSAL_NODE = (
     "tests/architectural/test_ci_quality_path_filters.py::"
     "test_live_core_misc_replacement_union_covers_legacy_selection"
@@ -95,6 +95,29 @@ def _job_run_script(data: dict[str, Any], job_name: str, step_name: str) -> str:
 
 def _job(data: dict[str, Any], job_name: str) -> dict[str, Any]:
     return dict(data["jobs"][job_name])
+
+
+def _is_direct_pytest_quarantine_marker(node: ast.AST) -> bool:
+    """Return whether *node* is the canonical ``pytest.mark.quarantine`` chain."""
+    return (
+        isinstance(node, ast.Attribute)
+        and node.attr == "quarantine"
+        and isinstance(node.value, ast.Attribute)
+        and node.value.attr == "mark"
+        and isinstance(node.value.value, ast.Name)
+        and node.value.value.id == "pytest"
+    )
+
+
+def _discover_quarantine_owner_paths(tests_root: Path) -> tuple[str, ...]:
+    """Find test files that directly use the canonical quarantine marker."""
+    repository_root = tests_root.parent
+    owners: list[str] = []
+    for test_path in sorted(tests_root.rglob("*.py")):
+        tree = ast.parse(test_path.read_text(encoding="utf-8"), filename=str(test_path))
+        if any(_is_direct_pytest_quarantine_marker(node) for node in ast.walk(tree)):
+            owners.append(test_path.relative_to(repository_root).as_posix())
+    return tuple(owners)
 
 
 def test_quarantine_marker_discovery_finds_module_and_function_markers(
@@ -530,7 +553,10 @@ def test_marker_routes_are_explicit_and_empty_capable() -> None:
         "Run quarantined tests (visible, never blocks merge)",
     )
 
-    assert _shell_array(quarantine, "QUARANTINE_PATHS") == _QUARANTINE_OWNER_PATHS
+    assert _shell_array(
+        quarantine,
+        "QUARANTINE_PATHS",
+    ) == _discover_quarantine_owner_paths(_REPO_ROOT / "tests")
     assert '"${QUARANTINE_PATHS[@]}" -m quarantine' in quarantine
     assert "python -m pytest tests/ -m regression" in regression
     assert "python -m pytest tests/ -m quarantine" not in quarantine
