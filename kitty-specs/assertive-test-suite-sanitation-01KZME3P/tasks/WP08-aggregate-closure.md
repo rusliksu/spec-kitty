@@ -70,6 +70,8 @@ create_intent:
 - kitty-specs/assertive-test-suite-sanitation-01KZME3P/quickstart.md
 - kitty-specs/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md
 - kitty-specs/assertive-test-suite-sanitation-01KZME3P/acceptance-matrix.json
+- .github/workflows/ci-quality.yml
+- tests/architectural/test_ci_quality_path_filters.py
 execution_mode: code_change
 owned_files:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py
@@ -85,6 +87,8 @@ owned_files:
 - kitty-specs/assertive-test-suite-sanitation-01KZME3P/quickstart.md
 - kitty-specs/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md
 - kitty-specs/assertive-test-suite-sanitation-01KZME3P/acceptance-matrix.json
+- .github/workflows/ci-quality.yml
+- tests/architectural/test_ci_quality_path_filters.py
 tags: []
 tracker_refs:
 - '#1931'
