@@ -95,6 +95,11 @@ owned_files:
 - tests/status/test_emit_fanout_after_adapter.py
 - tests/sync/test_dual_write_integration.py
 - tests/specify_cli/cli/commands/test_doctor_restart_daemon_timing.py
+- tests/integration/test_pytest_venv_concurrency.py
+- tests/sync/test_background.py
+- tests/sync/test_runtime.py
+- tests/sync/_daemon_harness.py
+- tests/integration/test_tool_artifact_owner.py
 tags: []
 tracker_refs:
 - '#1931'
