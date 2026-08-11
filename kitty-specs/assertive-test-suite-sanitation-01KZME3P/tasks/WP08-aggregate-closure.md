@@ -101,6 +101,8 @@ owned_files:
 - tests/sync/_daemon_harness.py
 - tests/integration/test_tool_artifact_owner.py
 - tests/cli/commands/test_implement_base_flag.py
+- tests/agent/cli/commands/test_implement_preflight.py
+- tests/e2e/conftest.py
 tags: []
 tracker_refs:
 - '#1931'
