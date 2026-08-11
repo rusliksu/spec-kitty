@@ -60,6 +60,8 @@ WP08_OWNERSHIP_TAKEOVERS = {
     "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-results.json": ("WP07", "WP08"),
     "tests/architectural/test_ci_quality_path_filters.py": ("WP07", "WP08"),
     "tests/conftest.py": ("WP02", "WP08"),
+    "tests/specify_cli/cli/commands/test_doctor_restart_daemon_timing.py": ("WP06", "WP08"),
+    "tests/sync/test_dual_write_integration.py": ("WP06", "WP08"),
     "tests/test_test_venv_bootstrap.py": ("WP02", "WP08"),
 }
 VERDICTS = {"KEEP", "CONSOLIDATE", "FIX_TEST", "FIX_PRODUCT", "DELETE", "TEMPORARY"}
