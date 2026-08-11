@@ -1,4 +1,4 @@
-content_sha256: eb35b864f60c0dd1d0813fb295ff5e22192f64b30b3a3a396a9469c77b39a301
+content_sha256: 93de29843a183f0ce8027017618abc71fdfe0067ad16942172de989fe8ce250d
 dispositions:
 - action: delete dominated members and retain named survivor
   candidate:
@@ -165748,13 +165748,16 @@ dispositions:
   state: terminal
   survivor: tests/specify_cli/tool_surface/providers/test_plugin_bundle.py
   verdict: KEEP
-- action: FIX_TEST completed; retain executable spawned-process regression coverage
+- action: DELETE_TEST completed; remove the 84-second shared-cache destroy/rebuild
+    test. The spawned lease-state survivor and fresh-clone parallel starts cover the
+    contract without invalidating peers.
   candidate:
     authority:
     - issue:#3283
     - spec.md:FR-013
     - research.md:R4
     - data-model.md:BootstrapLease
+    - tasks/WP08-aggregate-closure.md:T044
     contract_claim: shared test-venv bootstrap is live-owner-safe, crash-recoverable,
       and atomically published
     duplicate_group: null
@@ -165811,34 +165814,38 @@ dispositions:
     - command: .venv/bin/pytest tests/integration/test_pytest_venv_concurrency.py
         -q --tb=short
       result: 1 passed in 84.02s after two real concurrent subprocess collections
+    - command: SPEC_KITTY_ENABLE_SAAS_SYNC=1 .venv/bin/pytest -q -n2 --dist loadfile
+        tests/integration/test_pytest_venv_concurrency.py tests/e2e/test_charter_epic_golden_path.py::test_charter_epic_golden_path
+        tests/e2e/test_upgrade_post_state.py::test_upgrade_then_branch_context_does_not_gate
+      result: '2 passed, 1 setup error: the destructive worker removed the shared
+        published venv while its peer traversed it; integrated full run also produced
+        two missing-executable failures.'
     causal_probe:
       act_reached: true
-      authority_violated: FR-013 and BootstrapLease live-owner/publication contract
-      command: .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp02-bootstrap-pre-fix-probe.py
-      environment: macOS 15.7.7 arm64, CPython 3.11.15, two spawned OS processes,
-        isolated temporary cache
-      fault: preserve the immutable-base fixed lock around direct-to-final installation
-        and compress 60s/>90s to 0.25s/1.0s with no heartbeat
-      intended_oracle: the live owner completes while its waiter never errors and
-        no incomplete final cache path is visible
+      authority_violated: FR-013 atomic publication must remain available to every
+        live consumer.
+      command: focused two-worker destructive-order probe
+      environment: macOS 15.7.7 arm64; CPython 3.11.15; integrated HEAD; two xdist
+        workers
+      fault: Run the legacy shared-cache deletion test beside live E2E consumers.
+      intended_oracle: No consumer observes removal or partial traversal of the published
+        venv.
       intended_oracle_failed: true
-      kind: controlled immutable-base spawned-process fixed-lock fault
-      raw_artifact_hash: 236a30ed498f08aa7694f0ac80fc5c7688880ef1e4343cf8f6b8026abd52c57c
-      result: partial_final_observed=true; outcomes contain one published and one
-        timeout; oracle_failed=true
+      kind: integrated parallel destructive-cache order probe
+      raw_artifact_hash: 69cce9ccda24e39aaa73920041dffc8f17a4137adc09bde39fb6595e188bdfe4
     profile: contract
   expires: null
   hic_approval: null
   issue: '#3283'
   owner: robertDouglass
   review:
-    implementer: codex/python-pedro
+    implementer: implementer-ivan/WP08
     independent_reviewer: reviewer-renata/root-arbiter
     timestamp: '2026-08-10T12:11:04.020610+00:00'
     verdict: runtime-approved:01KZNSARYMQ7XZAS61SRDSSAJR
   state: terminal
-  survivor: null
-  verdict: KEEP
+  survivor: tests/test_test_venv_bootstrap.py::test_two_spawned_processes_publish_one_shared_venv
+  verdict: DELETE
 - action: FIX_TEST completed; retain causal cross-file oracle and new deterministic
     complexity ratchet
   candidate:
@@ -171303,7 +171310,7 @@ generated_from:
 - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-workloads.yaml
   sha256: e9ea483bc776f1741fe33c7c039689805e4823cec16663b07db6b8721a9b7ed0
 - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/head-census.json
-  sha256: 47adf1fde7a12962577d320cec387e2e96c276777f1a8de1f14bd0853ca3ceb5
+  sha256: c72bd5d0fed8f7e4e98d3d11ea34b1bc5427f6b169425cfa975e7fb7099753af
 - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/legacy-shard-normalization.yaml
-  sha256: 8d2927db8cb9dea99a2650c9c8e0da1b8c078c763cffbf9a11501590039442a2
+  sha256: 3420838a918612e2560b7f5937b99aeb8bb1aa896e5c4abe72c5e5889ef850c8
 schema_version: test-sanitation/v1
