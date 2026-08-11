@@ -1,4 +1,4 @@
-content_sha256: 9ae5b4f116cfc25f0673de113be76b01aaf10e7557a43975425655d2cc79843f
+content_sha256: 04e7cf2ad45dacebeb1fa101fba41badbceb92f703ee49d2b5fafce608e82e68
 dispositions:
 - action: delete dominated members and retain named survivor
   candidate:
@@ -171310,7 +171310,7 @@ generated_from:
 - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/base-workloads.yaml
   sha256: e9ea483bc776f1741fe33c7c039689805e4823cec16663b07db6b8721a9b7ed0
 - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/head-census.json
-  sha256: cd5eab533c47bffc832bb2c6ee3a2ec2ed8a42271bd2a6e21d9609f16fc1cf56
+  sha256: 44349d051e845bc13a97babb59eb4034bebb515ab85cc9bc3ba111a6613c9bda
 - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/legacy-shard-normalization.yaml
   sha256: 3420838a918612e2560b7f5937b99aeb8bb1aa896e5c4abe72c5e5889ef850c8
 schema_version: test-sanitation/v1
