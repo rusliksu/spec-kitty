@@ -92,6 +92,9 @@ owned_files:
 - tests/architectural/test_ci_corpus_trigger_completeness.py
 - tests/conftest.py
 - tests/test_test_venv_bootstrap.py
+- tests/status/test_emit_fanout_after_adapter.py
+- tests/sync/test_dual_write_integration.py
+- tests/specify_cli/cli/commands/test_doctor_restart_daemon_timing.py
 tags: []
 tracker_refs:
 - '#1931'
