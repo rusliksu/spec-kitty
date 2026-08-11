@@ -564,6 +564,14 @@ def test_marker_routes_are_explicit_and_empty_capable() -> None:
     assert '${#QUARANTINE_PATHS[@]}" -eq 0' in quarantine
 
 
+def test_restart_daemon_health_uses_the_controlled_linux_runner() -> None:
+    """Hosted macOS is not the authority for the real-daemon health contract."""
+    job = _job(_load_workflow(), "restart-daemon-nfr-timing")
+
+    assert job["runs-on"] == "blacksmith-4vcpu-ubuntu-2404"
+    assert "strategy" not in job
+
+
 def test_regression_route_has_no_literal_owner_manifest() -> None:
     """An empty marker set must not retain a deleted reproduction path."""
     regression = _job_run_script(
