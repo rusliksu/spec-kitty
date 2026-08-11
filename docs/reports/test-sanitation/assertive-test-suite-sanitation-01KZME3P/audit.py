@@ -2341,6 +2341,101 @@ def _drop_normalized_candidates(
     ]
 
 
+def _patch_wp02_destructive_venv_test(
+    source: dict[str, Any], operation: Mapping[str, Any],
+    surface_hashes: Mapping[str, str], errors: list[str],
+) -> None:
+    """Delete the reviewed survivor once integrated xdist proves it destructive."""
+    rows = source.get("dispositions")
+    candidate_id = operation.get("candidate_id")
+    member = operation.get("member")
+    survivor = operation.get("survivor")
+    survivor_path = operation.get("survivor_path")
+    historical_commit = operation.get("historical_commit")
+    historical_path = operation.get("historical_path")
+    if (
+        not isinstance(rows, list) or not isinstance(candidate_id, str)
+        or not isinstance(member, str) or not isinstance(survivor, str)
+        or not isinstance(survivor_path, str)
+        or surface_hashes.get(survivor_path) != operation.get("survivor_sha256")
+        or not isinstance(historical_commit, str) or not isinstance(historical_path, str)
+    ):
+        errors.append("normalization wp02 destructive venv test: invalid authority")
+        return
+    try:
+        historical_blob = _git_blob(historical_commit, historical_path)
+        historical_blob_id = _git_rev_parse(f"{historical_commit}:{historical_path}")
+    except AuditError as exc:
+        errors.append(f"normalization wp02 destructive venv test: {exc}")
+        return
+    if (
+        historical_blob_id != operation.get("historical_blob")
+        or _sha(historical_blob) != operation.get("historical_sha256")
+        or b"shutil.rmtree(venv_path, ignore_errors=True)" not in historical_blob
+        or b"ThreadPoolExecutor(max_workers=2)" not in historical_blob
+    ):
+        errors.append("normalization wp02 destructive venv test: historical source drift")
+        return
+    matches = [
+        row for row in rows if isinstance(row, dict)
+        and isinstance(row.get("candidate"), dict)
+        and cast(dict[str, Any], row["candidate"]).get("id") == candidate_id
+    ]
+    if len(matches) != 1:
+        errors.append(f"normalization wp02 destructive venv test: expected one {candidate_id} row")
+        return
+    row = matches[0]
+    candidate = cast(dict[str, Any], row["candidate"])
+    if (
+        row.get("verdict") != "KEEP"
+        or candidate.get("members") != [member]
+        or candidate.get("source_paths") != [historical_path]
+    ):
+        errors.append("normalization wp02 destructive venv test: reviewed KEEP authority drift")
+        return
+    evidence = row.get("evidence")
+    if not isinstance(evidence, dict):
+        errors.append("normalization wp02 destructive venv test: evidence mapping missing")
+        return
+    candidate["authority"] = [
+        *cast(list[str], candidate.get("authority", [])),
+        "tasks/WP08-aggregate-closure.md:T044",
+    ]
+    evidence["caller_evidence"] = [
+        *cast(list[dict[str, Any]], evidence.get("caller_evidence", [])),
+        {
+            "command": (
+                "SPEC_KITTY_ENABLE_SAAS_SYNC=1 .venv/bin/pytest -q -n2 --dist loadfile "
+                "tests/integration/test_pytest_venv_concurrency.py "
+                "tests/e2e/test_charter_epic_golden_path.py::test_charter_epic_golden_path "
+                "tests/e2e/test_upgrade_post_state.py::test_upgrade_then_branch_context_does_not_gate"
+            ),
+            "result": (
+                "2 passed, 1 setup error: the destructive worker removed the shared published venv "
+                "while its peer traversed it; integrated full run also produced two missing-executable failures."
+            ),
+        },
+    ]
+    evidence["causal_probe"] = {
+        "kind": "integrated parallel destructive-cache order probe",
+        "fault": "Run the legacy shared-cache deletion test beside live E2E consumers.",
+        "authority_violated": "FR-013 atomic publication must remain available to every live consumer.",
+        "act_reached": True,
+        "intended_oracle": "No consumer observes removal or partial traversal of the published venv.",
+        "intended_oracle_failed": True,
+        "command": "focused two-worker destructive-order probe",
+        "environment": "macOS 15.7.7 arm64; CPython 3.11.15; integrated HEAD; two xdist workers",
+        "raw_artifact_hash": operation.get("order_probe_sha256"),
+    }
+    row["verdict"] = "DELETE"
+    row["action"] = (
+        "DELETE_TEST completed; remove the 84-second shared-cache destroy/rebuild test. "
+        "The spawned lease-state survivor and fresh-clone parallel starts cover the contract without invalidating peers."
+    )
+    row["survivor"] = survivor
+    row["review"] = _wp08_review(cast(str, operation["id"]))
+
+
 def _patch_wp07_current_route(
     source: dict[str, Any], operation: Mapping[str, Any],
     surface_hashes: Mapping[str, str], errors: list[str],
@@ -3023,6 +3118,10 @@ def _apply_normalization(  # noqa: C901 - each content-addressed operation is di
             continue
         if kind == "drop_candidates":
             _drop_normalized_candidates(source, operation, errors)
+        elif kind == "patch_wp02_destructive_venv_test":
+            _patch_wp02_destructive_venv_test(
+                source, operation, surface_hashes, errors,
+            )
         elif kind == "patch_wp10":
             _patch_wp10(source, operation, normalized, errors)
         elif kind == "synthesize_wp05_survivors":

@@ -50,6 +50,10 @@ raw_artifacts:
   - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp10-results.json
     sha256: 7d28f8feb01e77f55e8db82d193133e7220bd309d3be069c5d67d3e05d9d4116
 historical_blobs:
+  - commit: a332e5c0124479d29179e50bb75bd897fceb3928
+    path: tests/integration/test_pytest_venv_concurrency.py
+    git_blob: f7c4982f1dea691bffec122557aa0aab2fb43c13
+    sha256: cca54baaacca41c84c951bd758624843a5602cc1441eb1ef1aa3ce0db023df58
   - commit: 95a4f672906521da5b73bb91ce7c1ff4305a2502
     path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp10-probes-cycle2.json
     git_blob: ae10e9338394b700b53a620292169a7c990cd1d7
@@ -63,7 +67,22 @@ integration_surfaces:
     sha256: 1589d1b7e2a0ca24e9e1eb189a6e39cf6afd8aa435bddfa95a97ffdb9b3e567d
   - path: tests/architectural/test_ci_quality_path_filters.py
     sha256: 542a3f9fd55a288b403732e95620f5679e492d65bad713f9b7424dd302dcff0e
+  - path: tests/test_test_venv_bootstrap.py
+    sha256: de34c3f44d374b254a0a0b1d693fcc8151886a30a6767c7ce19a31e991a51f19
 operations:
+  - id: wp02-destructive-shared-venv-test
+    kind: patch_wp02_destructive_venv_test
+    source: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP02.yaml
+    candidate_id: wp02-shared-test-venv-concurrency-survivor
+    member: tests/integration/test_pytest_venv_concurrency.py::test_concurrent_contract_and_architectural_complete
+    historical_commit: a332e5c0124479d29179e50bb75bd897fceb3928
+    historical_path: tests/integration/test_pytest_venv_concurrency.py
+    historical_blob: f7c4982f1dea691bffec122557aa0aab2fb43c13
+    historical_sha256: cca54baaacca41c84c951bd758624843a5602cc1441eb1ef1aa3ce0db023df58
+    survivor_path: tests/test_test_venv_bootstrap.py
+    survivor_sha256: de34c3f44d374b254a0a0b1d693fcc8151886a30a6767c7ce19a31e991a51f19
+    survivor: tests/test_test_venv_bootstrap.py::test_two_spawned_processes_publish_one_shared_venv
+    order_probe_sha256: 69cce9ccda24e39aaa73920041dffc8f17a4137adc09bde39fb6595e188bdfe4
   - id: wp05-retained-scanner-closure
     kind: synthesize_wp05_survivors
     source: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/dispositions/WP05.yaml
@@ -162,4 +181,4 @@ candidate_universe:
   exact_body_members: exactly_once
   promoted_semantic_members: exactly_once
   scanner_source_units: exactly_once
-content_sha256: b0f4ee16389753070faf1581b034a353eccf2f6667f57f3b8326d2e52720b7c1
+content_sha256: 12512b26788ad10249949564487a4577306a1bcb6c74a19c326ae03d35184dd0

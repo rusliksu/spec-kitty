@@ -71,6 +71,29 @@ def wait_until_listening(port: int, timeout_s: float = 10.0) -> bool:
     return False
 
 
+def wait_until_healthy(
+    port: int, token: str, timeout_s: float = 10.0,
+) -> bool:
+    """Wait for a listener to publish its complete Spec Kitty identity."""
+    from specify_cli.sync.daemon import _fetch_health_payload
+
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        payload = _fetch_health_payload(
+            f"http://127.0.0.1:{port}/api/health",
+            timeout=0.5,
+        )
+        if (
+            isinstance(payload, dict)
+            and payload.get("token") == token
+            and payload.get("protocol_version") is not None
+            and payload.get("package_version") is not None
+        ):
+            return True
+        time.sleep(0.05)
+    return False
+
+
 def wait_until_port_free(port: int, timeout_s: float = 8.0) -> bool:
     """Poll ``port`` until it stops listening, or ``timeout_s`` elapses.
 
@@ -285,6 +308,13 @@ class DaemonHarness:
                 proc.wait(timeout=2.0)
             raise RuntimeError(
                 f"daemon on port {port} (version={version!r}) never started listening"
+            )
+        if not wait_until_healthy(port, token, timeout_s=10.0):
+            proc.terminate()
+            with contextlib.suppress(subprocess.TimeoutExpired):
+                proc.wait(timeout=2.0)
+            raise RuntimeError(
+                f"daemon on port {port} (version={version!r}) never published health identity"
             )
 
         self._procs.append(proc)
