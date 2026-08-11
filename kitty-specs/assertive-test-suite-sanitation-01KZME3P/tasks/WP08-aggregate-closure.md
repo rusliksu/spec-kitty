@@ -67,6 +67,8 @@ create_intent:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/legacy-shard-normalization.yaml
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/workflow-evidence.md
+- kitty-specs/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md
+- kitty-specs/assertive-test-suite-sanitation-01KZME3P/acceptance-matrix.json
 execution_mode: code_change
 owned_files:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py
@@ -79,6 +81,34 @@ owned_files:
 - docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/workflow-evidence.md
 - tests/README.md
 - CHANGELOG.md
+- docs/changelog/CHANGELOG.md
+- kitty-specs/assertive-test-suite-sanitation-01KZME3P/quickstart.md
+- kitty-specs/assertive-test-suite-sanitation-01KZME3P/issue-matrix.md
+- kitty-specs/assertive-test-suite-sanitation-01KZME3P/acceptance-matrix.json
+- .github/workflows/ci-quality.yml
+- tests/architectural/test_ci_quality_path_filters.py
+- docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-results.json
+- docs/development/how-to/review-gates.md
+- tests/architectural/test_ci_corpus_trigger_completeness.py
+- tests/conftest.py
+- tests/test_test_venv_bootstrap.py
+- tests/status/test_emit_fanout_after_adapter.py
+- tests/sync/test_dual_write_integration.py
+- tests/specify_cli/cli/commands/test_doctor_restart_daemon_timing.py
+- tests/integration/test_pytest_venv_concurrency.py
+- tests/sync/test_background.py
+- tests/sync/test_runtime.py
+- tests/sync/_daemon_harness.py
+- tests/integration/test_tool_artifact_owner.py
+- tests/cli/commands/test_implement_base_flag.py
+- tests/agent/cli/commands/test_implement_preflight.py
+- tests/e2e/conftest.py
+- tests/upgrade/conftest.py
+- tests/cli/commands/test_sync_doctor_tracker_egress_3108.py
+- tests/integration/test_review_durability_matrix.py
+- tests/sync/test_lifecycle_readiness.py
+- tests/sync/_leak_guard.py
+- tests/test_dashboard/test_charter_chokepoint_regression.py
 tags: []
 tracker_refs:
 - '#1931'
