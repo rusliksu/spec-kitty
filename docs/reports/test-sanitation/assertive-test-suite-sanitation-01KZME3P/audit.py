@@ -4432,6 +4432,157 @@ def _write(path: Path | None, value: Any, yaml_output: bool = False) -> None:
         sys.stdout.write(text)
 
 
+def _md_cell(value: Any) -> str:
+    return str(value).replace("|", "\\|").replace("\n", " ")
+
+
+def _closure_authority(path: Path) -> dict[str, Any]:
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise AuditError(f"cannot load closure authority: {exc}") from exc
+    if not isinstance(data, dict) or data.get("schema_version") != "test-sanitation-closure/v1":
+        raise AuditError("closure authority schema mismatch")
+    body = dict(data)
+    expected = body.pop("content_sha256", None)
+    if not _hash_value(expected) or expected != _sha(_json_bytes(body)):
+        raise AuditError("closure authority content_sha256 mismatch")
+    required = {
+        "mission", "evidence_commit", "generated_at", "environment", "artifacts",
+        "inventory", "dispositions", "performance", "known_red_diff", "gates",
+        "platforms", "fresh_starts", "issues", "criteria", "review",
+    }
+    if not required <= set(data):
+        raise AuditError(f"closure authority missing fields: {sorted(required - set(data))}")
+    for field in ("issues", "criteria", "gates", "platforms", "fresh_starts"):
+        if not isinstance(data[field], list):
+            raise AuditError(f"closure authority {field} must be a list")
+    issue_ids = [row.get("issue") for row in data["issues"] if isinstance(row, dict)]
+    expected_issues = {"#1931", "#2309", "#2316", "#2342", "#2645", "#2782", "#3184", "#3283", "#3284"}
+    if set(issue_ids) != expected_issues or len(issue_ids) != len(expected_issues):
+        raise AuditError("closure authority must terminalize all nine exact issue ids once")
+    criterion_ids = [row.get("criterion_id") for row in data["criteria"] if isinstance(row, dict)]
+    if len(criterion_ids) != len(set(criterion_ids)) or not criterion_ids:
+        raise AuditError("closure authority criteria must have unique nonempty ids")
+    return data
+
+
+def _render_issue_matrix(data: Mapping[str, Any]) -> str:
+    lines = [
+        "# Test Sanitation Issue Matrix", "",
+        f"Generated from content-addressed closure authority for `{data['evidence_commit']}`.", "",
+        "| Issue | Tracker state | Mission verdict | Evidence | Owner | Follow-up |", "|---|---|---|---|---|---|",
+    ]
+    for row in cast(list[dict[str, Any]], data["issues"]):
+        lines.append("| " + " | ".join(_md_cell(row[field]) for field in (
+            "issue", "tracker_state", "verdict", "evidence", "owner", "follow_up",
+        )) + " |")
+    lines.extend(["", "Tracker state is current metadata, not the verdict authority; evidence determines each terminal mission action.", ""])
+    return "\n".join(lines)
+
+
+def _render_workflow_evidence(data: Mapping[str, Any]) -> str:
+    lines = [
+        "# Test Sanitation Workflow Evidence", "",
+        f"Evidence commit: `{data['evidence_commit']}`  ",
+        f"Environment: {_md_cell(data['environment'])}", "",
+        "## Repository and cross-repository gates", "",
+        "| Gate | Command | Result | Duration | Exit | Artifact |", "|---|---|---|---:|---:|---|",
+    ]
+    for row in cast(list[dict[str, Any]], data["gates"]):
+        lines.append("| " + " | ".join(_md_cell(row[field]) for field in (
+            "name", "command", "result", "duration_seconds", "exit_code", "artifact",
+        )) + " |")
+    lines.extend(["", "## Integrated platform evidence", "", "| Platform | Workflow/job | Commit | Result | URL |", "|---|---|---|---|---|"])
+    for row in cast(list[dict[str, Any]], data["platforms"]):
+        lines.append("| " + " | ".join(_md_cell(row[field]) for field in (
+            "platform", "job", "commit", "result", "url",
+        )) + " |")
+    lines.extend(["", "## Fresh-clone starts", "", "| Run | Commit | Publication/body proof | Result | Artifact |", "|---:|---|---|---|---|"])
+    for row in cast(list[dict[str, Any]], data["fresh_starts"]):
+        lines.append("| " + " | ".join(_md_cell(row[field]) for field in (
+            "run", "commit", "body_proof", "result", "artifact",
+        )) + " |")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _render_final_report(data: Mapping[str, Any]) -> str:
+    inventory = cast(dict[str, Any], data["inventory"])
+    dispositions = cast(dict[str, Any], data["dispositions"])
+    performance = cast(dict[str, Any], data["performance"])
+    known_red = cast(dict[str, Any], data["known_red_diff"])
+    review = cast(dict[str, Any], data["review"])
+    lines = [
+        "# Assertive Test-Suite Sanitation — Final Report", "",
+        f"Closure state: **{data.get('closure_state', 'unknown')}**  ",
+        f"Evidence commit: `{data['evidence_commit']}`  ",
+        f"Generated: `{data['generated_at']}`", "",
+        "## Outcome", "",
+        str(data.get("outcome", "")), "",
+        "## Before / after inventory", "",
+        "| Metric | Repaired planning base | Integrated HEAD | Delta |", "|---|---:|---:|---:|",
+    ]
+    for metric in ("python_test_files", "source_units", "collected_nodes", "python_test_loc", "exact_duplicate_groups", "inert_candidates", "scanner_candidates"):
+        row = cast(dict[str, Any], inventory[metric])
+        lines.append(f"| {metric} | {row['base']} | {row['head']} | {row['delta']} |")
+    lines.extend([
+        "", "## Terminal disposition ledger", "",
+        f"The generated aggregate contains **{dispositions['rows']}** rows over **{dispositions['unique_members']}** unique identities: "
+        f"{dispositions['verdicts']}. No `FIX_*`, `TEMPORARY`, expired, renewed, ambiguous, or unowned frozen candidate remains.", "",
+        f"Aggregate SHA-256: `{cast(dict[str, Any], data['artifacts'])['aggregate_sha256']}`  ",
+        f"HEAD census SHA-256: `{cast(dict[str, Any], data['artifacts'])['head_census_sha256']}`", "",
+        "## Performance criteria", "",
+        "| Measure | Base | HEAD | Change | Verdict |", "|---|---:|---:|---:|---|",
+    ])
+    for row in cast(list[dict[str, Any]], performance["measurements"]):
+        lines.append("| " + " | ".join(_md_cell(row[field]) for field in ("measure", "base", "head", "change", "verdict")) + " |")
+    lines.extend(["", str(performance["summary"]), "", "## Repaired-base vs integrated-HEAD outcomes", "", str(known_red["summary"]), ""])
+    for label in ("resolved", "shared", "head_only"):
+        lines.append(f"- **{label}:** {_md_cell(known_red[label])}")
+    lines.extend(["", "## Acceptance criteria", "", "| Criterion | Result | Evidence / rationale |", "|---|---|---|"])
+    for row in cast(list[dict[str, Any]], data["criteria"]):
+        lines.append(f"| {_md_cell(row['criterion_id'])} | {_md_cell(row['pass_fail'])} | {_md_cell(row['notes'])} |")
+    lines.extend([
+        "", "## Workflow deviations and review", "",
+        f"- Review cap: {review['review_cycle_cap']}; fourth cycles prohibited and not opened.",
+        f"- Arbiter normalization: {review['normalization']}.",
+        f"- Independent WP approvals: {review['independent_approvals']}.",
+        f"- Remaining closure blockers: {review['blockers']}.", "",
+        "See `issue-matrix.md` and `workflow-evidence.md` for terminal issue and gate details.", "",
+    ])
+    return "\n".join(lines)
+
+
+def render_closure(
+    authority: Path, report_output: Path, issue_output: Path,
+    mission_issue_output: Path, acceptance_output: Path, workflow_output: Path,
+) -> dict[str, Any]:
+    data = _closure_authority(authority)
+    report = _render_final_report(data)
+    issue = _render_issue_matrix(data)
+    workflow = _render_workflow_evidence(data)
+    acceptance = {
+        "mission_slug": data["mission"], "mission_number": "",
+        "mission_type": "software-dev", "overall_verdict": data.get("overall_verdict", "pending"),
+        "criteria": data["criteria"], "negative_invariants": data.get("negative_invariants", []),
+    }
+    for path, text_value in (
+        (report_output, report), (issue_output, issue),
+        (mission_issue_output, issue), (workflow_output, workflow),
+    ):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text_value, encoding="utf-8")
+    _write(acceptance_output, acceptance)
+    return {
+        "valid": True,
+        "outputs": {
+            str(path): _sha(path.read_bytes())
+            for path in (report_output, issue_output, mission_issue_output, acceptance_output, workflow_output)
+        },
+    }
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -4456,6 +4607,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     capture.add_argument("--route", default="full-parallel")
     capture.add_argument("--raw-output", type=Path, required=True)
     capture.add_argument("--output", type=Path, required=True)
+    closure = commands.add_parser("render-closure")
+    closure.add_argument("authority", type=Path)
+    closure.add_argument("--report-output", type=Path, required=True)
+    closure.add_argument("--issue-output", type=Path, required=True)
+    closure.add_argument("--mission-issue-output", type=Path, required=True)
+    closure.add_argument("--acceptance-output", type=Path, required=True)
+    closure.add_argument("--workflow-output", type=Path, required=True)
     commands.add_parser("selftest")
     args = parser.parse_args(argv)
     try:
@@ -4491,6 +4649,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.root, args.census, args.workload, args.route, args.raw_output,
             )
             _write(args.output, result)
+        elif args.command == "render-closure":
+            _write(None, render_closure(
+                args.authority, args.report_output, args.issue_output,
+                args.mission_issue_output, args.acceptance_output, args.workflow_output,
+            ))
         else:
             _write(None, selftest())
     except AuditError as exc:
