@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 
+from kernel.clock import now_epoch
 from tests import conftest as root_conftest
 
 
@@ -195,7 +196,7 @@ def test_pid_reuse_or_crash_state_is_rebuilt(tmp_path: Path, state: str) -> None
                 "state": state,
                 "owner_pid": os.getpid(),
                 "process_start_token": "reused-pid-token",
-                "heartbeat_at": time.time(),
+                "heartbeat_at": now_epoch(),
                 "lease_seconds": 30.0,
                 "temp_path": str(abandoned),
                 "source_version": _SOURCE_VERSION,
@@ -230,7 +231,7 @@ def test_expired_heartbeat_is_reclaimed_even_when_pid_is_live(tmp_path: Path) ->
                 "state": "BUILDING",
                 "owner_pid": os.getpid(),
                 "process_start_token": root_conftest._process_start_token(os.getpid()),
-                "heartbeat_at": time.time() - 60,
+                "heartbeat_at": now_epoch() - 60,
                 "lease_seconds": 0.1,
                 "temp_path": str(abandoned),
                 "source_version": _SOURCE_VERSION,

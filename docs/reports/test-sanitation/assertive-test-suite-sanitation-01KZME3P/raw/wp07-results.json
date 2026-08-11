@@ -259,7 +259,7 @@
         "result": "All checks passed; exit 0"
       },
       {
-        "command": "/Users/robert/go/bin/actionlint .github/workflows/ci-quality.yml",
+        "command": "<ACTIONLINT_BIN> .github/workflows/ci-quality.yml",
         "result": "65 inherited runner-label diagnostics on both integrated pre-routing HEAD and routed HEAD; only expected line-number shifts, zero new diagnostic"
       },
       {

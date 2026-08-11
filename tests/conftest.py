@@ -21,6 +21,7 @@ import pytest
 import yaml
 from filelock import FileLock, Timeout
 
+from kernel.clock import now_epoch
 from runtime.next._tmp_namespace import prompt_tmp_dir
 from tests import _arch_shard_map  # noqa: F401 — import-time `arch` group registration via register()
 from tests import _next_shard_map  # noqa: F401 — import-time `next` group registration via register()
@@ -790,7 +791,7 @@ def _heartbeat_bootstrap_lease(
                 lease = _read_bootstrap_lease(state_path)
                 if not _lease_owned_by(lease, owner) or lease is None or lease.state != "BUILDING":
                     return
-                _write_bootstrap_lease(state_path, lease.with_state("BUILDING", heartbeat_at=time.time()))
+                _write_bootstrap_lease(state_path, lease.with_state("BUILDING", heartbeat_at=now_epoch()))
         except (OSError, RuntimeError, Timeout):
             # A missed heartbeat is recoverable. Repeated misses eventually make
             # the lease stale, while the owning process remains independently
@@ -809,7 +810,7 @@ def _claim_bootstrap_lease(
     lock_path = project_root / _VENV_LOCK_PATH
     state_path = project_root / _VENV_STATE_PATH
     environment_hash = _test_venv_environment_hash(project_root, source_version)
-    now = time.time()
+    now = now_epoch()
     with FileLock(str(lock_path), timeout=_STATE_LOCK_TIMEOUT_S):
         if validate(final_path, source_version):
             return final_path, None, None
@@ -859,21 +860,21 @@ def _publish_bootstrap_lease(
         if not validate(owner.temp_path, source_version):
             raise RuntimeError(f"Test-venv validation failed before publication: {owner.temp_path}")
 
-        validated = lease.with_state("VALIDATED", heartbeat_at=time.time())
+        validated = lease.with_state("VALIDATED", heartbeat_at=now_epoch())
         _write_bootstrap_lease(state_path, validated)
         if final_path.exists() or final_path.is_symlink():
             if validate(final_path, source_version):
                 _remove_recorded_temp(validated, final_path)
                 _write_bootstrap_lease(
                     state_path,
-                    validated.with_state("PUBLISHED", heartbeat_at=time.time()),
+                    validated.with_state("PUBLISHED", heartbeat_at=now_epoch()),
                 )
                 return final_path
             _remove_path_without_following_symlinks(final_path)
         owner.temp_path.rename(final_path)
         _write_bootstrap_lease(
             state_path,
-            validated.with_state("PUBLISHED", heartbeat_at=time.time()),
+            validated.with_state("PUBLISHED", heartbeat_at=now_epoch()),
         )
         return final_path
 
@@ -955,7 +956,7 @@ def _ensure_test_venv(
     age = "unknown"
     owner_summary = "unknown"
     if last_observed is not None:
-        age = f"{max(0.0, time.time() - last_observed.heartbeat_at):.1f}s"
+        age = f"{max(0.0, now_epoch() - last_observed.heartbeat_at):.1f}s"
         owner_summary = f"pid={last_observed.owner_pid} start={last_observed.process_start_token}"
     raise RuntimeError(
         f"Timed out waiting {_wait_timeout:.1f}s for shared test venv {final_path}; "

@@ -32,7 +32,7 @@ The mission-local auditor performs AST/ignore discovery and invokes pytest with 
 The CLI-shape and anti-vacuity self-check must pass before generation. These invocations also prove every documented subcommand parses on the installed auditor:
 
 ```bash
-for command in snapshot validate aggregate selftest; do
+for command in snapshot validate aggregate capture-outcomes render-closure selftest; do
   .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py "$command" --help >/dev/null
 done
 .venv/bin/python docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/audit.py selftest

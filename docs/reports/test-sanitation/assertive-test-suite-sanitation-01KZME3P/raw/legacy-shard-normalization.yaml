@@ -40,7 +40,7 @@ raw_artifacts:
   - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp06-results.json
     sha256: 4c32aaca71def15d773d9473b1dd4984339cbcabf2d794063172fdc880a83024
   - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-results.json
-    sha256: c336743710998d015697f64dbbb8b11dbb7c8db6843ffba07d7da1bf0ff95174
+    sha256: 7210898f5503ea4f91f884ad99b7451837110c99bdac752bde9255e743f20bec
   - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp07-route-manifest.yaml
     sha256: 6f54882e123dac1714e3932f36790e4ad9430f8f821f67bb2e7784f26ec28fd5
   - path: docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/raw/wp09-results.json
@@ -162,4 +162,4 @@ candidate_universe:
   exact_body_members: exactly_once
   promoted_semantic_members: exactly_once
   scanner_source_units: exactly_once
-content_sha256: 2ffc2326b6edf101079935320e669aacbc02b6f1c82ce601a8407119ad6b1f4b
+content_sha256: fa3be1eaaa2713bd999f7fe26cc682b2b3beed378132176b04c620a23cbbe303
