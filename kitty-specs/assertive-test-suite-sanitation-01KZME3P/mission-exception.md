@@ -2,9 +2,11 @@
 
 **Operator**: Robert Douglass (`@robertDouglass`)  
 **Date**: 2026-08-11  
-**Scope**: `scenarios/contract_drift_caught.py::test_contract_drift_caught` only
+**Failing scenario**: `scenarios/contract_drift_caught.py::test_contract_drift_caught`
 
-## Failing assertion
+**Failing assertion**: the outer scenario asserted that stderr named `event_id`, `envelope`, or `999.0.0`; the nested run instead raised `subprocess.CalledProcessError` while executing `python -m build --wheel`.
+
+## Failure detail
 
 The scenario requires the intentionally drifted contract run to fail with a diagnostic naming `event_id`, `envelope`, or fake version `999.0.0`. Instead, its nested contract process stops earlier while setting up `test_wheel_does_not_contain_vendored_spec_kitty_events`:
 
@@ -22,7 +24,7 @@ This scenario creates a nested Python 3.13 virtual environment and installs only
 
 This exception does not cover `scenarios/dependent_wp_planning_lane.py`, the SaaS scenario, any other sibling test, or a product-code failure.
 
-## Reproduction
+## Reproduction command
 
 ```bash
 cd spec-kitty-end-to-end-testing
@@ -34,6 +36,8 @@ SPEC_KITTY_ENABLE_SAAS_SYNC=1 \
 
 Observed receipt: `/tmp/wp08-sibling-e2e-final.log`, SHA-256 `d0bbcba0...`; JUnit `/tmp/wp08-sibling-e2e-final.xml`, SHA-256 `b39bfe8e...`.
 
-## Follow-up and retry
+## Follow-up
 
 Robert Douglass (`@robertDouglass`) will retry this exact node after the sibling harness explicitly provisions its nested wheel-build dependency (for example, installs the repository's contract/build extras or `build` before running the nested contract suite). The retry must reach the intended drift assertion and name `event_id`, `envelope`, or `999.0.0`; a generic non-zero wheel-build setup error is not an acceptable pass.
+
+Retry window: by 2026-08-18 and before mission merge or release, whichever is earlier.
