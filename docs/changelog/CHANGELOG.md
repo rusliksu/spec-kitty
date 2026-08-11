@@ -1266,8 +1266,10 @@ _The 3.2.6 development cycle is open. Entries land here as missions merge._
   empty-set handling; quarantine remains an empty Tier-3 visibility route whose
   owner manifest is checked against repository-wide marker discovery. The
   original `doctor restart-daemon` NFR-002 ≤10-second shared-runner wall-clock
-  claim is explicitly retired; its OS-matrixed lane now enforces distinct-pid
-  restart and healthy-control-plane behavior under bounded operation timeouts.
+  claim is explicitly retired; its controlled Linux lane now enforces
+  distinct-PID restart and healthy-control-plane behavior under bounded
+  operation timeouts. Hosted-macOS performance evidence is deferred to a
+  controlled developer/canary harness rather than shared-runner wall clock.
   The integrated census records 36,013 nodes / 2,667 Python test files versus
   the frozen 37,444 / 2,731 baseline, with every frozen candidate terminally
   owned.

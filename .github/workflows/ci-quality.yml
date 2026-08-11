@@ -2294,8 +2294,8 @@ jobs:
   # (Issue #2034 anti-pattern). ``--ignore`` excludes
   # ``test_doctor_restart_daemon_timing.py``: that file's tests stay the sole
   # responsibility of ``restart-daemon-nfr-timing`` below (the historical job
-  # id is retained for aggregation compatibility; it is OS-matrixed and
-  # cli-gated by design) — ignoring it here prevents a double-run.
+  # id is retained for aggregation compatibility; it uses the controlled Linux
+  # runner and is cli-gated by design) — ignoring it here prevents a double-run.
   #
   # ALWAYS-ON by construction: ``if: always()``, no dorny filter-group ``if:``
   # gate, no ``needs`` edge — mirrors the arch-adversarial pole above, NOT the
@@ -3198,13 +3198,16 @@ jobs:
   # ---------------------------------------------------------------------------
   # restart-daemon-nfr-timing: historical job id retained for quality-gate
   # compatibility. PR #3285 retires issue #1153 / NFR-002's portable <=10s
-  # shared-runner performance claim. This OS-matrixed gate now enforces the
-  # replacement functional contract: stop the old daemon, spawn a distinct pid,
-  # and observe a healthy control plane within bounded operation timeouts.
+  # shared-runner performance claim. The controlled Linux runner now enforces
+  # the replacement functional contract: stop the old daemon, spawn a distinct
+  # pid, and observe a healthy control plane within bounded operation timeouts.
+  # Hosted macOS is excluded because its OS-global port/bootstrap environment
+  # repeatedly fails before the command under test; macOS performance evidence
+  # requires a controlled developer/canary harness rather than shared-runner CI.
   # ---------------------------------------------------------------------------
   restart-daemon-nfr-timing:
-    name: doctor restart-daemon functional health (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    name: doctor restart-daemon functional health
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [changes]
     if: >-
       ${{ always()
@@ -3212,10 +3215,6 @@ jobs:
       && !contains(github.event.pull_request.labels.*.name, 'pr:deferred')
       && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     timeout-minutes: 5
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [blacksmith-4vcpu-ubuntu-2404, macos-latest]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
