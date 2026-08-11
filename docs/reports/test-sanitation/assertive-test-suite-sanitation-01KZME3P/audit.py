@@ -124,18 +124,34 @@ def _git_rev_parse(spec: str, *, root: Path | None = None) -> str:
     return value
 
 
-def _git_tree_paths(commit: str, path: str, *, root: Path) -> set[str]:
-    """Return exact tracked paths beneath ``path`` at ``commit``."""
-    completed = subprocess.run(
-        ["git", "ls-tree", "-r", "--name-only", commit, "--", path],
-        cwd=root,
-        check=False,
-        capture_output=True,
-        text=True,
+def _frozen_candidate_members(root: Path) -> set[str]:
+    """Load candidate identities from the immutable, content-addressed base census."""
+    path = (
+        root / "docs/reports/test-sanitation/assertive-test-suite-sanitation-01KZME3P/"
+        "raw/base-census.json"
     )
-    if completed.returncode != 0:
-        raise AuditError(f"cannot enumerate git tree {commit}:{path}")
-    return {line for line in completed.stdout.splitlines() if line}
+    try:
+        body = path.read_bytes()
+        census = json.loads(body)
+        manifests = census["manifests"]
+    except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise AuditError(f"cannot load frozen candidate universe: {exc}") from exc
+    if _sha(body) != FROZEN_BASE_CENSUS_FILE_SHA256:
+        raise AuditError("frozen candidate universe census hash drift")
+    members = {
+        row["member"]
+        for key in ("inert_candidates", "scanner_candidates")
+        for row in manifests[key]
+        if isinstance(row, dict) and isinstance(row.get("member"), str)
+    }
+    members.update(
+        row["member"]
+        for group in manifests["exact_body_groups"]
+        if isinstance(group, dict)
+        for row in group.get("members", [])
+        if isinstance(row, dict) and isinstance(row.get("member"), str)
+    )
+    return members
 
 
 def _rel(path: Path, root: Path) -> str:
@@ -799,13 +815,13 @@ def snapshot(
         raise AuditError(f"unknown census role {census_role!r}")
     if census_role == "head":
         commit = _git_rev_parse(f"{inventory_sha or 'HEAD'}^{{commit}}", root=root)
-        frozen_paths = _git_tree_paths(TARGET_INVENTORY_SHA, tests_path, root=root)
+        frozen_candidates = _frozen_candidate_members(root)
         inventory: dict[str, Any] = {
             "role": "head", "commit": commit, "target_commit": commit,
             "tests_tree": _git_rev_parse(f"{commit}:{tests_path}", root=root),
         }
     else:
-        frozen_paths = set()
+        frozen_candidates = set()
         inventory = {
             "role": "base", "commit": inventory_sha or "WORKTREE",
             "target_commit": TARGET_INVENTORY_SHA,
@@ -850,12 +866,12 @@ def snapshot(
     post_base_additions: list[str] = []
     for row in inert + scanners:
         if not row["owner"]:
-            target = unowned if census_role == "base" or row["path"] in frozen_paths else post_base_additions
+            target = unowned if census_role == "base" or row["member"] in frozen_candidates else post_base_additions
             target.append(row["member"])
     for group in exact:
         for row in group["members"]:
             if not row["owner"]:
-                target = unowned if census_role == "base" or row["path"] in frozen_paths else post_base_additions
+                target = unowned if census_role == "base" or row["member"] in frozen_candidates else post_base_additions
                 target.append(row["member"])
     node_ref = {node["nodeid"]: index for index, node in enumerate(collection_nodes)}
     compact_rows = []
@@ -1432,13 +1448,12 @@ def validate_census(data: Mapping[str, Any], errors: list[str]) -> None:  # noqa
                     if current_tree != tests_tree:
                         errors.append("census: current tests tree drifted from recorded HEAD census")
             try:
-                frozen_paths = _git_tree_paths(TARGET_INVENTORY_SHA, "tests", root=Path.cwd())
+                frozen_candidates = _frozen_candidate_members(Path.cwd())
             except AuditError as exc:
                 errors.append(f"census: {exc}")
             else:
                 for member in cast(list[str], post_base_additions):
-                    member_path = member.split("::", 1)[0]
-                    if member_path in frozen_paths:
+                    if member in frozen_candidates:
                         errors.append(f"census: frozen-base member misclassified as post-base addition: {member}")
     if data.get("source_parse_errors"):
         errors.append("census: source parse errors require explicit repair before inventory")
