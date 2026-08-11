@@ -1734,7 +1734,6 @@ jobs:
               --ignore=tests/specify_cli/charter_lint
               --ignore=tests/specify_cli/charter_preflight
               --ignore=tests/specify_cli/test_lane_regression_guard.py
-              --ignore=tests/specify_cli/test_template_lane_guard.py
               --ignore=tests/specify_cli/compat
               --ignore=tests/specify_cli/tool_surface
               --ignore=tests/specify_cli/invocation
@@ -1743,7 +1742,6 @@ jobs:
           - shard: specify-cli-rest-2
             paths: >-
               tests/specify_cli/test_lane_regression_guard.py
-              tests/specify_cli/test_template_lane_guard.py
               tests/specify_cli/compat
               tests/specify_cli/tool_surface
               tests/specify_cli/invocation
@@ -3231,7 +3229,6 @@ jobs:
         run: |
           python -m pytest \
             tests/specify_cli/cli/commands/test_doctor_restart_daemon_timing.py \
-            -m timing \
             -q \
             --tb=short
 
@@ -3265,8 +3262,16 @@ jobs:
           SPEC_KITTY_RUN_QUARANTINE: "1"
           PWHEADLESS: "1"
         run: |
+          # Empty by adjudication: quarantine is reserved for irreducible Tier-3
+          # environmental flakes, and the sanitation census found none. Keep the
+          # manifest explicit so this job never scans the unrelated whole tree.
+          QUARANTINE_PATHS=()
+          if [ "${#QUARANTINE_PATHS[@]}" -eq 0 ]; then
+            echo "::notice::No tests are currently quarantined (owner manifest is empty)."
+            exit 0
+          fi
           set +e
-          python -m pytest tests/ -m quarantine -p no:cacheprovider -q --tb=short
+          python -m pytest "${QUARANTINE_PATHS[@]}" -m quarantine -p no:cacheprovider -q --tb=short
           ec=$?
           set -e
           if [ "$ec" -eq 5 ]; then
@@ -3313,6 +3318,9 @@ jobs:
         env:
           PWHEADLESS: "1"
         run: |
+          # Regression is marker-owned. The route remains blocking when a red-first
+          # reproduction exists and explicitly accepts pytest exit 5 while the
+          # marker set is empty; there is no stale literal owner manifest.
           set +e
           python -m pytest tests/ -m regression -p no:cacheprovider -q --tb=short
           ec=$?

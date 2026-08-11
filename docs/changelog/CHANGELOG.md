@@ -1256,6 +1256,17 @@ _The 3.2.6 development cycle is open. Entries land here as missions merge._
 
 ### ♻️ Changed
 
+- **The test suite is leaner and its CI ownership is explicit (mission
+  `assertive-test-suite-sanitation`).** Removed permanently inert tests,
+  dominated duplicates, historical shape/count pins, stale scaffolds, and
+  non-causal structural scanners while preserving reviewed live-path and
+  planted-fault guards. The shared pytest environment now publishes a validated
+  staged build with lease heartbeats, eliminating the `#3283` sibling timeout
+  cascade. Regression remains a generic blocking marker route with honest
+  empty-set handling; quarantine remains an empty Tier-3 visibility route. The
+  integrated census records 36,013 nodes / 2,667 Python test files versus the
+  frozen 37,444 / 2,731 baseline, with every frozen candidate terminally owned.
+
 - **The beginner guides now open with illustrated Mission Kitty splashes, and the
   Spec-Driven Development page carries a real diagram instead of ASCII art
   (`#3276`).** Getting Started, Understanding Missions, Your First Mission, and

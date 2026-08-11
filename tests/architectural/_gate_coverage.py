@@ -1902,21 +1902,11 @@ class BaselineTarget:
     job: str
 
 
-# T008: the three jobs WP06 actually changes the SELECTION for (see the scope
-# note above) — the pre-WP06 (pre-change) state GC-2b protects.
+# Only the still-owned slow-tests authoring baseline remains. The two deleted
+# selection baselines had no reader and were removed by sanitation WP07.
 BASELINE_TARGETS: tuple[BaselineTarget, ...] = (
-    BaselineTarget("integration-tests-next", "ci-quality.yml", "integration-tests-next"),
     BaselineTarget("slow-tests", "ci-quality.yml", "slow-tests"),
-    BaselineTarget("fast-tests-core-misc", "ci-quality.yml", "fast-tests-core-misc"),
 )
-
-
-def target_by_slug(slug: str) -> BaselineTarget:
-    """The single :data:`BASELINE_TARGETS` entry named ``slug``."""
-    for target in BASELINE_TARGETS:
-        if target.slug == slug:
-            return target
-    raise KeyError(f"no BaselineTarget with slug {slug!r}")
 
 
 def gates_for_target(gates: Sequence[Gate], target: BaselineTarget) -> list[Gate]:
@@ -1956,16 +1946,6 @@ def _baseline_header(target: BaselineTarget) -> str:
         "comment (data-model E3) when a WP legitimately changes this job's "
         "selection: uv run python -m tests.architectural._gate_coverage "
         "--freeze-baselines"
-    )
-
-
-def load_baseline_nodeids(target: BaselineTarget) -> frozenset[str]:
-    """The committed E3 baseline node-id set for one target (``#``-comment lines skipped)."""
-    lines = _baseline_path(target).read_text(encoding="utf-8").splitlines()
-    return frozenset(
-        stripped
-        for stripped in (line.strip() for line in lines)
-        if stripped and not stripped.startswith("#")
     )
 
 
@@ -2012,48 +1992,6 @@ def freeze_baselines(repo_root: Path | None = None) -> dict[str, int]:
         write_baseline_nodeids(target, nodeids)
         counts[target.slug] = len(nodeids)
     return counts
-
-
-def baseline_diff(
-    current: Iterable[str],
-    baseline: Iterable[str],
-) -> tuple[frozenset[str], frozenset[str]]:
-    """Pure GC-2b comparator: ``(dropped, added)`` — the symmetric-difference halves.
-
-    ``dropped`` = in ``baseline`` but not ``current`` (a real coverage loss);
-    ``added`` = in ``current`` but not ``baseline`` (an un-provenanced
-    selection widening, or a tampered/stale baseline). Both empty ==
-    the GC-2b invariant holds. Deliberately takes plain iterables (not a
-    :class:`BaselineTarget`/gates) so the fault-injection tests can feed it a
-    synthetic pair directly, with no I/O or subprocess involved.
-    """
-    current_set, baseline_set = frozenset(current), frozenset(baseline)
-    return baseline_set - current_set, current_set - baseline_set
-
-
-def gc2b_orphaned_drift(
-    dropped: Iterable[str],
-    orphan_nodeids: Iterable[str],
-) -> frozenset[str]:
-    """The subset of a GC-2b ``dropped`` set that is a GENUINE orphan today.
-
-    Mission test-suite-friction-remediation-01KXDKBX WP15 (#2616): GC-2b used to
-    require ``dropped`` (and ``added``) to be empty outright, which fires on
-    routine test-file add/remove — this mission alone adds/removes guard files
-    4-5x, forcing a baseline refreeze every time even though nothing regressed.
-
-    Most ``dropped`` entries are exactly that noise: the file was deleted
-    (it no longer exists in today's collected universe, so it cannot be an
-    orphan) or its coverage moved to a DIFFERENT CI gate (still selected by
-    >=1 of the ~40 gates, just not this target's) — neither is a coverage
-    problem. The load-bearing GC-2b signal this ratchet must still catch is a
-    node-id that still exists in the suite AND is now selected by ZERO gates
-    (``orphan_nodeids`` — the same whole-suite orphan set :func:`analyze`
-    computes): a genuine coverage-hole regression, not membership churn.
-    Intersecting ``dropped`` with ``orphan_nodeids`` scopes the ratchet to
-    exactly that signal.
-    """
-    return frozenset(dropped) & frozenset(orphan_nodeids)
 
 
 # ---------------------------------------------------------------------------
