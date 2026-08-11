@@ -2368,8 +2368,9 @@ def _patch_wp07_current_route(
         "python -m pytest tests/ -m regression" not in workflow
         or 'if [ "$ec" -eq 5 ]' not in workflow
         or "REGRESSION_PATHS" in workflow
-        or retired in workflow or retired in test_source
+        or retired in workflow
         or "_CORE_MISC_CAUSAL_NODE" not in test_source
+        or f'assert "{retired}" not in regression' not in test_source
     ):
         errors.append("normalization wp07 current route: integrated generic/empty-capable route drift")
         return
@@ -2848,6 +2849,7 @@ def _synthesize_wp09(
         errors.append("normalization wp09: legacy source unexpectedly has dispositions")
         return
     normalized_rows: list[dict[str, Any]] = []
+    errors_before_rows = len(errors)
     for mapped_row in mapped:
         member = cast(str, mapped_row["frozen_nodeid"])
         path = member.split("::", 1)[0]
@@ -2885,7 +2887,7 @@ def _synthesize_wp09(
             "expires": None, "hic_approval": None,
             "review": _wp08_review("WP09-cycle-3-content-addressed-map"),
         })
-    if errors:
+    if len(errors) != errors_before_rows:
         return
     deleted = sum(row["verdict"] == "DELETE" for row in normalized_rows)
     if deleted != operation.get("expected_terminal_deletions"):
