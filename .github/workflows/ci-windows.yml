@@ -8,7 +8,7 @@ on:
 jobs:
   changes:
     name: Detect Windows-critical changes
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     outputs:
       windows_critical: ${{ steps.filter.outputs.windows_critical }}
@@ -63,7 +63,7 @@ jobs:
       ${{ (needs.changes.outputs.windows_critical == 'true' || github.event_name == 'push')
       && !contains(github.event.pull_request.labels.*.name, 'pr:deferred')
       && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
-    runs-on: blacksmith-4vcpu-windows-2025
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-windows-2025' || 'windows-latest' }}
     timeout-minutes: 20
     env:
       PYTHONUTF8: "1"

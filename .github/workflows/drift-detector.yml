@@ -30,7 +30,7 @@ concurrency:
 jobs:
   drift-detector:
     name: drift-detector
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     timeout-minutes: 5
     steps:
       # Always-green shim (pr:skip-ci / pr:deferred): `drift-detector` is the
