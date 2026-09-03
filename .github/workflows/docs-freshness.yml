@@ -50,7 +50,7 @@ on:
 
 jobs:
   docs-freshness:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     # PYTHONPATH is hoisted job-level (B0): every gate step here runs
     # `uv run python scripts/docs/...`, and those scripts import the repo as a

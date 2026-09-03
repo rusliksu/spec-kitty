@@ -585,7 +585,10 @@ def test_restart_daemon_health_uses_the_controlled_linux_runner() -> None:
     """Hosted macOS is not the authority for the real-daemon health contract."""
     job = _job(_load_workflow(), "restart-daemon-nfr-timing")
 
-    assert job["runs-on"] == "blacksmith-4vcpu-ubuntu-2404"
+    assert job["runs-on"] == (
+        "${{ github.repository == 'Priivacy-ai/spec-kitty' && "
+        "'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}"
+    )
     assert "strategy" not in job
     run_script = _job_run_script(
         _load_workflow(),

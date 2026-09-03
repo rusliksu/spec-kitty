@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   fast-tests-doctrine:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     steps:
       - name: "[ENFORCED] Check out repository"
         uses: actions/checkout@v6

@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from specify_cli.skills.registry import CanonicalSkill, SkillRegistry
+from specify_cli.skills.retired import RETIRED_LEGACY_SKILL_REPLACEMENTS
 
 # Marked for mutmut sandbox skip — see ADR 2026-04-20-1.
 # Reason: subprocess CLI invocation
@@ -134,16 +135,38 @@ def test_from_local_repo(tmp_path: Path) -> None:
 
 
 def test_discover_multiple_skills_sorted(tmp_path: Path) -> None:
-    """Registry discovers multiple skills and returns them sorted by name."""
+    """Registry omits retired aliases and returns canonical skills sorted."""
     _make_skill(tmp_path, "spec-kitty-runtime-next")
     _make_skill(tmp_path, "spec-kitty-setup-doctor")
     _make_skill(tmp_path, "spec-kitty-glossary-context")
+    _make_skill(tmp_path, "spk-run-next")
+    _make_skill(tmp_path, "spk-admin-setup-doctor")
+    _make_skill(tmp_path, "spk-doctrine-glossary")
 
     registry = SkillRegistry(tmp_path)
     skills = registry.discover_skills()
     assert len(skills) == 3
     names = [s.name for s in skills]
-    assert names == ["spec-kitty-glossary-context", "spec-kitty-runtime-next", "spec-kitty-setup-doctor"]
+    assert names == ["spk-admin-setup-doctor", "spk-doctrine-glossary", "spk-run-next"]
+
+
+def test_retired_legacy_skill_replacement_map_is_exact() -> None:
+    assert RETIRED_LEGACY_SKILL_REPLACEMENTS == {
+        "spec-kitty": "spk-start-here",
+        "spec-kitty-bulk-edit-classification": "spk-doctrine-bulk-edit",
+        "spec-kitty-charter-doctrine": "spk-doctrine-charter",
+        "spec-kitty-git-workflow": "spk-admin-git-workflow",
+        "spec-kitty-glossary-context": "spk-doctrine-glossary",
+        "spec-kitty-implement-review": "spk-run-implement-review",
+        "spec-kitty-mission-review": "spk-gate-mission-review",
+        "spec-kitty-mission-system": "spk-mission-types",
+        "spec-kitty-orchestrator-api-operator": "spk-integrate-orchestrator-api",
+        "spec-kitty-program-orchestrate": "spk-run-program-orchestrate",
+        "spec-kitty-runtime-next": "spk-run-next",
+        "spec-kitty-runtime-review": "spk-run-review-wp",
+        "spec-kitty-setup-doctor": "spk-admin-setup-doctor",
+        "spec-kitty-spdd-reasons": "spk-doctrine-spdd-reasons",
+    }
 
 
 # ── Packaging verification ─────────────────────────────────────────
@@ -174,6 +197,7 @@ def test_doctrine_skills_exist_in_repo() -> None:
     registry = SkillRegistry.from_local_repo(repo_root)
     skills = registry.discover_skills()
     skill_names = {s.name for s in skills}
-    assert "spec-kitty-setup-doctor" in skill_names
-    assert "spec-kitty-runtime-next" in skill_names
-    assert len(skills) >= 2
+    assert "spk-admin-setup-doctor" in skill_names
+    assert "spk-run-next" in skill_names
+    assert skill_names.isdisjoint(RETIRED_LEGACY_SKILL_REPLACEMENTS)
+    assert set(RETIRED_LEGACY_SKILL_REPLACEMENTS.values()) <= skill_names
