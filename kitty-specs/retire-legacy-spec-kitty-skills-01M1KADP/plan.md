@@ -32,13 +32,18 @@
    production edit, then make the smallest implementation change.
 5. Build a wheel and execute bootstrap with an isolated `USERPROFILE` and
    `SPEC_KITTY_HOME`; inspect that aliases are absent and replacements present.
+6. After explicit operator approval, publish pre-existing failures to the
+   tracker, install the exact verified wheel side-by-side, preserve the prior
+   launcher as a fallback, and run one real-profile startup reconciliation.
+7. Re-run targeted quality gates and publish the task-owned branch as a draft
+   PR to the fork. Do not merge or release.
 
 ## Ownership and Safety
 
 The explicit finite retired-name mapping is the package-managed path contract;
-no wildcard is added. Unknown skills remain untouched. All runtime smoke work
-uses a temporary profile. No installation or launcher mutation is part of this
-mission.
+no wildcard is added. Unknown skills remain untouched. Test/runtime smoke work
+uses a temporary profile. The approved local installation is side-by-side,
+keeps previous runtimes as fallbacks, and preserves a pre-change launcher copy.
 
 ## Verification
 
@@ -49,12 +54,17 @@ mypy src/specify_cli/skills/retired.py src/specify_cli/skills/registry.py src/sp
 python -m build --wheel
 ```
 
-The wheel smoke then runs the built candidate in a temporary virtual
-environment and temporary profile, never against real global skill roots.
+The wheel smoke first runs the built candidate in a temporary virtual
+environment and profile. The later approved installation gate additionally
+checks the real global root before and after one startup reconciliation.
 
 ## Gates
 
 - No implementation before a failing test commit.
-- No push, PR transition, merge, installed-runtime replacement, launcher edit,
-  or real global recovery in this package.
+- Baseline-red failures must be reported before fork publication.
+- Task-branch push, draft PR creation, side-by-side installation, launcher
+  selection, and real-profile reconciliation were explicitly approved on
+  2026-09-03.
+- No direct push to `main`, PR merge, release, destructive fallback cleanup, or
+  unrelated global mutation.
 - Any need to widen beyond the fourteen names requires a new approval delta.

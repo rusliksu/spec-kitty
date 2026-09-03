@@ -4,7 +4,7 @@
 **Mission Type**: `software-dev`
 **Target Branch**: `main`
 **Bead**: `spk-8zh`
-**Status**: Approved
+**Status**: Approved (delivery extension approved 2026-09-03)
 
 ## Overview
 
@@ -14,9 +14,11 @@ canonical `spk-*` hierarchy already replaces them. This mission makes those
 fourteen names explicitly retired so a fresh startup installs only the
 canonical replacements and a migration startup removes stale managed copies.
 
-The approved package is source policy, focused migration coverage, and an
-isolated built-runtime smoke. It does not install the candidate, change the
-launcher, repair Ruslan's real global skill roots, push, or merge.
+The original package was source policy, focused migration coverage, and an
+isolated built-runtime smoke. On 2026-09-03 Ruslan explicitly extended the
+approved scope to install the verified candidate locally, repair his real
+global skill root, update the current Bead, and publish the task branch to the
+Spec Kitty fork through a draft PR. Merge and release remain separate gates.
 
 ## User Scenarios & Testing
 
@@ -38,7 +40,9 @@ user skill directories remain byte-identical.
 
 Unknown or third-party skill names are outside the retirement contract and
 must not be removed. Tests and candidate smoke runs use isolated temporary
-homes; the real user-global roots are not test fixtures.
+homes. The separately approved local-install step may run the verified startup
+once against Ruslan's real profile, with a preserved launcher fallback and
+before/after evidence.
 
 ## Domain Language
 
@@ -59,6 +63,8 @@ homes; the real user-global roots are not test fixtures.
 | FR-003 | Startup bootstrap MUST continue to install the corresponding canonical `spk-*` skills. | Accepted |
 | FR-004 | Startup bootstrap MUST preserve unrelated skill directories and their contents. | Accepted |
 | FR-005 | The retirement authority MUST expose an explicit legacy-to-canonical mapping so tests and future migrations cannot drift into two lists. | Accepted |
+| FR-006 | The verified wheel MUST be installed side-by-side and selected by the user launcher while prior runtimes remain available as fallbacks. | Accepted |
+| FR-007 | The task branch MUST be published through a draft PR to the fork after targeted gates pass. | Accepted |
 
 ### Non-Functional Requirements
 
@@ -67,13 +73,14 @@ homes; the real user-global roots are not test fixtures.
 | NFR-001 | Focused unit and migration tests MUST pass on Windows and remain platform-neutral. | Accepted |
 | NFR-002 | The isolated built-wheel bootstrap smoke MUST complete without writing to Ruslan's real global agent roots. | Accepted |
 | NFR-003 | The startup fast path MUST remain unchanged when no retired path needs cleanup. | Accepted |
+| NFR-004 | The real-profile installation MUST prove zero retired aliases, all canonical replacements, and byte preservation of an unrelated user skill. | Accepted |
 
 ### Constraints
 
 | ID | Constraint | Status |
 |---|---|---|
 | C-001 | Scope is limited to the fourteen aliases approved in this mission. | Accepted |
-| C-002 | No installed runtime, launcher, real global skill root, live service, or remote branch may be mutated. | Accepted |
+| C-002 | Local installation and task-branch publication are authorized only for this verified candidate; merge, release, and direct push to `main` remain prohibited. | Accepted |
 | C-003 | User-created skills outside the explicit retired-name contract are preserved. | Accepted |
 | C-004 | The mission is not a bulk edit: it changes one discovery/retirement policy rather than replacing one token across files. | Accepted |
 
@@ -87,6 +94,10 @@ homes; the real user-global roots are not test fixtures.
 - **SC-004**: unrelated fixture skills remain byte-identical.
 - **SC-005**: targeted pytest, ruff, mypy, wheel inspection, and isolated
   wheel-runtime smoke are green.
+- **SC-006**: the local launcher resolves the side-by-side candidate; real
+  `.agents/skills` has zero aliases and all 14 canonical replacements while an
+  unrelated skill remains byte-identical.
+- **SC-007**: a draft PR exposes the exact task-owned branch for fork review.
 
 ## Assumptions
 
@@ -94,5 +105,5 @@ homes; the real user-global roots are not test fixtures.
   explicit finite retirement set is their managed-path contract.
 - Bundled legacy source text may remain in the wheel as migration/reference
   material provided default registry discovery cannot install it.
-- A later release process owns versioning and installation. This task produces
-  a local candidate only.
+- A later release process owns versioning and public release. The approved
+  local installation is a recoverable side-by-side candidate, not a release.
