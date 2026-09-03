@@ -106,7 +106,7 @@ The fork CI gate was blocked because nine jobs requested
 `blacksmith-4vcpu-ubuntu-2404` with an empty `runner_name`. The approved WP03
 keeps Blacksmith labels for `Priivacy-ai/spec-kitty` and selects
 `ubuntu-latest` or `windows-latest` in forks for the seven PR-triggered
-workflow files.
+workflow files initially visible as PR checks.
 
 - Behavioral RED: `1 failed in 50.51s` on the first hard-coded runner.
 - Focused workflow-policy gate: `50 passed in 6.90s`.
@@ -120,6 +120,20 @@ which collected 39,266 tests and then rejected 87 POSIX-only collection errors
 including missing `fcntl`; the focused workflow-policy gate is green. The
 repository has no pinned `actionlint`, so GitHub's workflow parser and actual
 runner assignment remain the external syntax evidence after push.
+
+The first push proved all ten directly changed jobs executed on GitHub-hosted
+runners and all eleven reported PR checks passed. It also exposed a previously
+hidden workflow-level `CI Quality` run waiting behind an obsolete concurrency
+entry. The aggregate workflow and its four reusable module workflows therefore
+joined the same approved portability contract:
+
+- Aggregate behavioral RED: `1 failed in 47.22s` on
+  `ci-quality.yml:changes`.
+- Exact aggregate runner regression: `3 passed in 47.50s`.
+- CI-topology and workflow-policy gate: `78 passed, 1 deselected in 21.04s`;
+  the deselected node is the same Windows-incompatible full-suite collector
+  documented above.
+- Ruff: `All checks passed!`.
 
 ## Baseline Reporting
 

@@ -37,10 +37,11 @@
    launcher as a fallback, and run one real-profile startup reconciliation.
 7. Re-run targeted quality gates and publish the task-owned branch as a draft
    PR to the fork. Do not merge or release.
-8. For only the workflows triggered by the fork PR, select the existing
-   Blacksmith label when `github.repository == 'Priivacy-ai/spec-kitty'` and
-   the matching GitHub-hosted Linux/Windows label otherwise. Validate workflow
-   syntax and policy tests, then push to obtain real fork-CI evidence.
+8. For only the workflows triggered by or reused from the fork PR, select the
+   existing Blacksmith label when
+   `github.repository == 'Priivacy-ai/spec-kitty'` and the matching
+   GitHub-hosted Linux/Windows label otherwise. Validate workflow syntax and
+   policy tests, then push to obtain real fork-CI evidence.
 
 ## Ownership and Safety
 
@@ -76,5 +77,5 @@ checks the real global root before and after one startup reconciliation.
 - No direct push to `main`, PR merge, release, destructive fallback cleanup, or
   unrelated global mutation.
 - Any need to widen beyond the fourteen names requires a new approval delta.
-- The fork-runner portability delta for the seven blocking workflow files was
+- The fork-runner portability delta for the blocking PR workflow graph was
   approved by Ruslan on 2026-09-03; ready/merge still require green CI.

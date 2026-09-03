@@ -66,8 +66,8 @@ canonical replacements but none of the fourteen aliases.
 
 ## WP03 — Fork CI Runner Portability
 
-- [x] T017 Add repository-scoped runner selection to the seven workflows
-  currently blocking draft PR `rusliksu/spec-kitty#5`.
+- [x] T017 Add repository-scoped runner selection to the twelve direct and
+  reusable workflows reachable from draft PR `rusliksu/spec-kitty#5`.
 - [x] T018 Validate YAML structure and the related workflow policy tests.
 - [ ] T019 Push the exact task head and capture executed fork-CI evidence.
 
@@ -80,7 +80,13 @@ canonical replacements but none of the fourteen aliases.
 - `.github/workflows/plugin-validate.yml`
 - `.github/workflows/release-readiness.yml`
 - `.github/workflows/ui-e2e.yml`
+- `.github/workflows/ci-quality.yml`
+- `.github/workflows/module-doctrine-fast.yml`
+- `.github/workflows/module-doctrine-integration.yml`
+- `.github/workflows/module-kernel.yml`
+- `.github/workflows/module-packs.yml`
 - `tests/architectural/test_fork_runner_portability.py`
+- `tests/architectural/test_ci_quality_path_filters.py`
 - `kitty-specs/retire-legacy-spec-kitty-skills-01M1KADP/**`
 
 **Independent acceptance**: workflow parsing proves upstream and fork runner

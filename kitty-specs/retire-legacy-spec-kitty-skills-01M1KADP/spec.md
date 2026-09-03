@@ -65,7 +65,7 @@ before/after evidence.
 | FR-005 | The retirement authority MUST expose an explicit legacy-to-canonical mapping so tests and future migrations cannot drift into two lists. | Accepted |
 | FR-006 | The verified wheel MUST be installed side-by-side and selected by the user launcher while prior runtimes remain available as fallbacks. | Accepted |
 | FR-007 | The task branch MUST be published through a draft PR to the fork after targeted gates pass. | Accepted |
-| FR-008 | PR-triggered workflows blocking the fork PR MUST retain Blacksmith on `Priivacy-ai/spec-kitty` and select GitHub-hosted runners on forks. | Accepted |
+| FR-008 | PR-triggered and reusable workflows reachable from the fork PR MUST retain Blacksmith on `Priivacy-ai/spec-kitty` and select GitHub-hosted runners on forks. | Accepted |
 
 ### Non-Functional Requirements
 
@@ -85,7 +85,7 @@ before/after evidence.
 | C-002 | Local installation and task-branch publication are authorized only for this verified candidate; merge, release, and direct push to `main` remain prohibited. | Accepted |
 | C-003 | User-created skills outside the explicit retired-name contract are preserved. | Accepted |
 | C-004 | The mission is not a bulk edit: it changes one discovery/retirement policy rather than replacing one token across files. | Accepted |
-| C-005 | CI portability is limited to workflows that block draft PR `rusliksu/spec-kitty#5`; unrelated release and scheduled workflows remain unchanged. | Accepted |
+| C-005 | CI portability is limited to workflows reachable from draft PR `rusliksu/spec-kitty#5`; unrelated release-only and scheduled workflows remain unchanged. | Accepted |
 
 ## Success Criteria
 
