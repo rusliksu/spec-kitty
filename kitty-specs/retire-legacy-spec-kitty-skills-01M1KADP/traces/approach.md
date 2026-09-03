@@ -5,3 +5,11 @@
   compatibility; make them non-installable through the canonical registry.
 - 2026-09-03: One coupled WP is smaller and safer than separate test/policy WPs;
   ATDD still receives its own first commit.
+- 2026-09-03: RED was captured as an import failure for the missing mapping;
+  after the mapping and registry filter, the focused surface passed 19 tests.
+- 2026-09-03: Existing Windows tests now patch `Path.home()` directly instead
+  of setting POSIX-only `HOME`, keeping global-root fixtures deterministic.
+- 2026-09-03: Focused migration surface is green: 37 passed. Ruff and mypy are
+  green on the changed policy, registry, bootstrap, and test files.
+- 2026-09-03: Built wheel registry reports 41 discovered skills, zero retired
+  aliases, and all 14 canonical replacements.

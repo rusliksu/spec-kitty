@@ -28,7 +28,7 @@ def _create_skill(root: Path, name: str, content: str | None = None) -> None:
 
 def test_global_bootstrap_preserves_non_spec_kitty_user_skills(tmp_path: Path, monkeypatch) -> None:
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setattr(Path, "home", lambda: home)
     monkeypatch.setenv("SPEC_KITTY_HOME", str(home / ".kittify"))
 
     skills_root = tmp_path / "doctrine_skills"
@@ -57,7 +57,7 @@ def test_global_bootstrap_preserves_non_spec_kitty_user_skills(tmp_path: Path, m
 
 def test_global_bootstrap_removes_retired_paula_and_debbie_skills(tmp_path: Path, monkeypatch) -> None:
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setattr(Path, "home", lambda: home)
     monkeypatch.setenv("SPEC_KITTY_HOME", str(home / ".kittify"))
 
     skills_root = tmp_path / "doctrine_skills"
@@ -94,11 +94,11 @@ def test_global_bootstrap_removes_retired_paula_and_debbie_skills(tmp_path: Path
 
 def test_global_bootstrap_removes_retired_standalone_skill_surface(tmp_path: Path, monkeypatch) -> None:
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setattr(Path, "home", lambda: home)
     monkeypatch.setenv("SPEC_KITTY_HOME", str(home / ".kittify"))
 
     skills_root = tmp_path / "doctrine_skills"
-    _create_skill(skills_root, "spec-kitty")
+    _create_skill(skills_root, "spk-start-here")
     registry = SkillRegistry(skills_root)
 
     retired_name = next(iter(RETIRED_STANDALONE_SKILL_NAMES))
@@ -122,18 +122,18 @@ def test_global_bootstrap_removes_retired_standalone_skill_surface(tmp_path: Pat
         home / ".agents" / "skills",
     ]:
         assert not (root / retired_name).exists()
-    assert (home / ".agents" / "skills" / "spec-kitty" / "SKILL.md").is_file()
+    assert (home / ".agents" / "skills" / "spk-start-here" / "SKILL.md").is_file()
 
 
 def test_global_bootstrap_prunes_retired_skill_even_when_version_lock_is_current(tmp_path: Path, monkeypatch) -> None:
     home = tmp_path / "home"
     kittify_home = home / ".kittify"
-    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setattr(Path, "home", lambda: home)
     monkeypatch.setenv("SPEC_KITTY_HOME", str(kittify_home))
     monkeypatch.setattr("specify_cli.runtime.agent_skills._get_cli_version", lambda: "3.2.0rc45")
 
     skills_root = tmp_path / "doctrine_skills"
-    _create_skill(skills_root, "spec-kitty")
+    _create_skill(skills_root, "spk-start-here")
     registry = SkillRegistry(skills_root)
 
     retired_name = next(iter(RETIRED_STANDALONE_SKILL_NAMES))
@@ -153,7 +153,7 @@ def test_global_bootstrap_prunes_retired_skill_even_when_version_lock_is_current
     ensure_global_agent_skills()
 
     assert not stale.parent.exists()
-    assert (home / ".agents" / "skills" / "spec-kitty" / "SKILL.md").is_file()
+    assert (home / ".agents" / "skills" / "spk-start-here" / "SKILL.md").is_file()
 
 
 def test_global_bootstrap_retires_legacy_alias_pack_even_when_version_lock_is_current(
@@ -207,7 +207,7 @@ def test_global_bootstrap_removes_readonly_retired_skill_tree(tmp_path: Path, mo
     from specify_cli.runtime import agent_skills
 
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setattr(Path, "home", lambda: home)
     monkeypatch.setenv("SPEC_KITTY_HOME", str(home / ".kittify"))
 
     skills_root = tmp_path / "doctrine_skills"
@@ -250,14 +250,14 @@ def test_global_bootstrap_removes_readonly_retired_skill_tree(tmp_path: Path, mo
 
 def test_global_bootstrap_adds_frontmatter_to_plain_skill(tmp_path: Path, monkeypatch) -> None:
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setattr(Path, "home", lambda: home)
     monkeypatch.setenv("SPEC_KITTY_HOME", str(home / ".kittify"))
 
     skills_root = tmp_path / "doctrine_skills"
     _create_skill(
         skills_root,
-        "spec-kitty",
-        "# spec-kitty\n\nGet governance context for an action.\n",
+        "spk-start-here",
+        "# spk-start-here\n\nGet governance context for an action.\n",
     )
     registry = SkillRegistry(skills_root)
 
@@ -268,8 +268,8 @@ def test_global_bootstrap_adds_frontmatter_to_plain_skill(tmp_path: Path, monkey
 
     ensure_global_agent_skills()
 
-    managed_skill = home / ".agents" / "skills" / "spec-kitty" / "SKILL.md"
+    managed_skill = home / ".agents" / "skills" / "spk-start-here" / "SKILL.md"
     content = managed_skill.read_text(encoding="utf-8")
     assert content.startswith("---\n")
-    assert "name: spec-kitty\n" in content
+    assert "name: spk-start-here\n" in content
     assert "description: Get governance context for an action.\n" in content

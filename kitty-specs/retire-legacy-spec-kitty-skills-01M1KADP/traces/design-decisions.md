@@ -6,3 +6,5 @@
   mechanically replaced across multiple files.
 - **D-003**: Runtime candidate verification is isolated. Installation and real
   user-profile cleanup remain separate gates.
+- **D-004**: Keep legacy source directories bundled for compatibility and
+  reference use; retirement is enforced at the canonical registry boundary.

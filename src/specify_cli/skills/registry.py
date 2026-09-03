@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from specify_cli.skills.retired import RETIRED_CANONICAL_SKILL_NAMES
+
 
 @dataclass(frozen=True)
 class CanonicalSkill:
@@ -81,6 +83,8 @@ class SkillRegistry:
         skills: list[CanonicalSkill] = []
         for child in sorted(self._skills_root.iterdir()):
             if not child.is_dir():
+                continue
+            if child.name in RETIRED_CANONICAL_SKILL_NAMES:
                 continue
             skill_md = child / "SKILL.md"
             if not skill_md.is_file():

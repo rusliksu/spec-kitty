@@ -43,8 +43,8 @@ mission.
 ## Verification
 
 ```text
-pytest tests/skills/test_registry.py tests/runtime/test_agent_skills.py
-ruff check src/specify_cli/skills/retired.py src/specify_cli/skills/registry.py tests/skills/test_registry.py tests/runtime/test_agent_skills.py
+pytest tests/specify_cli/skills/test_registry.py tests/runtime/test_agent_skills.py
+ruff check src/specify_cli/skills/retired.py src/specify_cli/skills/registry.py tests/specify_cli/skills/test_registry.py tests/runtime/test_agent_skills.py
 mypy src/specify_cli/skills/retired.py src/specify_cli/skills/registry.py src/specify_cli/runtime/agent_skills.py
 python -m build --wheel
 ```
