@@ -37,6 +37,20 @@ a stable `fork-<github.ref>` namespace:
 - Concurrency behavioral RED: `1 failed in 43.76s`.
 - Runner and concurrency contract: `3 passed in 2.04s`.
 - Ruff: `All checks passed!`.
+
+The first complete aggregate run then failed its own topology oracle because
+the new architectural test file lacked the module-level `architectural` marker:
+all three tests had a deterministic `arch_shard_2` assignment but the job's
+combined marker expression selected none of them. This is a mission-owned CI
+failure, not a baseline exception.
+
+- Cloud RED: `arch-adversarial (arch_shard_2)` reported `1 failed, 683 passed`
+  and named all three orphan nodes in `test_fork_runner_portability.py`.
+- Local selector RED: `no tests collected (3 deselected)` for
+  `architectural and arch_shard_2`.
+- After adding `pytestmark = pytest.mark.architectural`, the same selector is
+  green: `3 passed in 50.52s`.
+- Ruff: `All checks passed!`.
 - Mypy: `Success: no issues found in 3 source files`.
 
 All pytest processes used a temporary `USERPROFILE` and

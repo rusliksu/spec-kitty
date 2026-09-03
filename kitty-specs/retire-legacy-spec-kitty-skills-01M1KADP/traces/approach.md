@@ -29,3 +29,7 @@
 - 2026-09-03: Fork `CI Quality` also uses a fork-specific concurrency namespace
   because one obsolete no-job run remained queued after cancellation. Upstream
   keeps its exact existing concurrency key and cancellation semantics.
+- 2026-09-03: The first aggregate cloud run found that the new architectural
+  test file lacked its `architectural` ownership marker. Added the marker and
+  proved the exact `architectural and arch_shard_2` selector now runs all three
+  tests.
