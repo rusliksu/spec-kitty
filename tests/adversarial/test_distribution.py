@@ -178,8 +178,11 @@ class TestInitWithoutTemplateRoot:
         manifest_path = project_dir / ".kittify" / "skills-manifest.json"
         assert manifest_path.is_file(), "skills-manifest.json should be created for bundled skills"
 
-        skill_file = project_dir / ".claude" / "skills" / "spec-kitty-setup-doctor" / "SKILL.md"
-        assert skill_file.is_file(), "Bundled canonical skill should be installed during init"
+        skills_dir = project_dir / ".claude" / "skills"
+        canonical_skill = skills_dir / "spk-admin-setup-doctor" / "SKILL.md"
+        retired_skill = skills_dir / "spec-kitty-setup-doctor" / "SKILL.md"
+        assert canonical_skill.is_file(), "Bundled canonical skill should be installed during init"
+        assert not retired_skill.exists(), "Retired skill alias should not be installed during init"
 
 
 # =============================================================================
