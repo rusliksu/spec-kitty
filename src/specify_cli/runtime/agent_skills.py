@@ -95,10 +95,7 @@ def _sync_skill_root(root: Path, registry: SkillRegistry) -> None:
 
     retired_names = RETIRED_CANONICAL_SKILL_NAMES - canonical_names
     for existing in root.iterdir():
-        if (
-            existing.name.startswith("spec-kitty-")
-            or existing.name in retired_names
-        ) and existing.name not in canonical_names:
+        if existing.name in retired_names:
             if existing.is_symlink() or existing.is_file():
                 _safe_unlink(existing)
             elif existing.is_dir():
