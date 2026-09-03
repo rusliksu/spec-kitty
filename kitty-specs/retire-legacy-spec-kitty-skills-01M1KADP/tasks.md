@@ -66,9 +66,9 @@ canonical replacements but none of the fourteen aliases.
 
 ## WP03 — Fork CI Runner Portability
 
-- [ ] T017 Add repository-scoped runner selection to the seven workflows
+- [x] T017 Add repository-scoped runner selection to the seven workflows
   currently blocking draft PR `rusliksu/spec-kitty#5`.
-- [ ] T018 Validate GitHub Actions syntax and the related workflow policy tests.
+- [x] T018 Validate YAML structure and the related workflow policy tests.
 - [ ] T019 Push the exact task head and capture executed fork-CI evidence.
 
 **Owned repository files**:
@@ -80,6 +80,7 @@ canonical replacements but none of the fourteen aliases.
 - `.github/workflows/plugin-validate.yml`
 - `.github/workflows/release-readiness.yml`
 - `.github/workflows/ui-e2e.yml`
+- `tests/architectural/test_fork_runner_portability.py`
 - `kitty-specs/retire-legacy-spec-kitty-skills-01M1KADP/**`
 
 **Independent acceptance**: workflow parsing proves upstream and fork runner

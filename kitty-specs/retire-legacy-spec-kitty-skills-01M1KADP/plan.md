@@ -56,8 +56,11 @@ pytest tests/specify_cli/skills/test_registry.py tests/runtime/test_agent_skills
 ruff check src/specify_cli/skills/retired.py src/specify_cli/skills/registry.py tests/specify_cli/skills/test_registry.py tests/runtime/test_agent_skills.py
 mypy src/specify_cli/skills/retired.py src/specify_cli/skills/registry.py src/specify_cli/runtime/agent_skills.py
 python -m build --wheel
-actionlint .github/workflows/canonical-producer-lint.yml .github/workflows/ci-windows.yml .github/workflows/docs-freshness.yml .github/workflows/drift-detector.yml .github/workflows/plugin-validate.yml .github/workflows/release-readiness.yml .github/workflows/ui-e2e.yml
+pytest tests/architectural/test_fork_runner_portability.py tests/architectural/test_workflow_coherence.py tests/architectural/test_ci_fast_jobs_have_timeout.py tests/architectural/test_suite_jobs_gate_blocking.py tests/docs/test_docs_freshness_invariant.py tests/release/test_release_ci_ownership.py
 ```
+
+The repository does not pin or install `actionlint`, so GitHub's workflow
+parser and actual runner assignment are the external syntax gate after push.
 
 The wheel smoke first runs the built candidate in a temporary virtual
 environment and profile. The later approved installation gate additionally

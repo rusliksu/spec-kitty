@@ -21,3 +21,7 @@
   against both installable global roots.
 - 2026-09-03: Rebuilt and installed the superseding wheel from implementation
   commit `30e790867`; isolated and real-profile startup checks are green.
+- 2026-09-03: Fork CI portability uses a repository-name conditional rather
+  than replacing upstream runner policy: upstream keeps Blacksmith, forks use
+  GitHub-hosted Linux or Windows runners. Scope is the seven workflows blocking
+  the current draft PR.

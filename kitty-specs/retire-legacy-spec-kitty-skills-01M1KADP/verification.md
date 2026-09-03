@@ -100,6 +100,27 @@ cleanup to `RETIRED_CANONICAL_SKILL_NAMES`; tests now preserve an unknown
 prefixed skill and exercise current-version-lock cleanup in both `.claude` and
 `.agents` roots.
 
+## Fork CI Runner Portability
+
+The fork CI gate was blocked because nine jobs requested
+`blacksmith-4vcpu-ubuntu-2404` with an empty `runner_name`. The approved WP03
+keeps Blacksmith labels for `Priivacy-ai/spec-kitty` and selects
+`ubuntu-latest` or `windows-latest` in forks for the seven PR-triggered
+workflow files.
+
+- Behavioral RED: `1 failed in 50.51s` on the first hard-coded runner.
+- Focused workflow-policy gate: `50 passed in 6.90s`.
+- Ruff on the new architectural test: `All checks passed!`.
+- YAML parsing and exact job-to-expression assertions pass for all ten changed
+  job definitions.
+
+An exploratory gate-coverage run produced `92 passed, 8 errors`. All eight
+errors came from the pre-existing full-suite collection oracle on Windows,
+which collected 39,266 tests and then rejected 87 POSIX-only collection errors
+including missing `fcntl`; the focused workflow-policy gate is green. The
+repository has no pinned `actionlint`, so GitHub's workflow parser and actual
+runner assignment remain the external syntax evidence after push.
+
 ## Baseline Reporting
 
 An exploratory broad skills-suite run produced `285 passed, 10 failed`. One
