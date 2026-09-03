@@ -107,6 +107,7 @@ class _MapReqState:
     repo_root: Path = field(default_factory=Path)
     mission_slug: str = ""
     main_repo_root: Path = field(default_factory=Path)
+    mission_anchor_root: Path = field(default_factory=Path)
     target_branch: str = ""
     auto_commit_on: bool = False
     commit_target: CommitTarget = field(default_factory=lambda: CommitTarget(ref=""))
@@ -177,12 +178,31 @@ def _mr_resolve_context(st: _MapReqState) -> None:
     # FR-010 / FR-019: one-shot sparse-checkout session warning.
     _tasks._emit_sparse_session_warning(repo_root, command="spec-kitty agent tasks map-requirements")
 
-    st.mission_slug = _tasks._find_mission_slug(
-        explicit_mission=st.mission, json_output=st.json_output, repo_root=repo_root
+    from specify_cli.missions.operation_context import resolve_mission_operation_context
+
+    operation = (
+        resolve_mission_operation_context(repo_root, st.mission.strip(), cwd=Path.cwd())
+        if st.mission and st.mission.strip()
+        else None
     )
-    st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
-        repo_root, st.mission_slug, st.json_output
-    )
+    if operation is not None and operation.identity is not None:
+        from specify_cli.core.git_ops import get_current_branch
+
+        st.mission_slug = operation.identity.mission_slug
+        st.mission_anchor_root = operation.mission_anchor_root
+        st.main_repo_root = operation.mission_anchor_root
+        current_branch = get_current_branch(st.main_repo_root)
+        if current_branch is None:
+            raise RuntimeError("Detached HEAD — checkout a branch before continuing")
+        st.target_branch = current_branch
+    else:
+        st.mission_slug = _tasks._find_mission_slug(
+            explicit_mission=st.mission, json_output=st.json_output, repo_root=repo_root
+        )
+        st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
+            repo_root, st.mission_slug, st.json_output
+        )
+        st.mission_anchor_root = st.main_repo_root
     st.auto_commit_on = (
         _tasks.get_auto_commit_default(st.main_repo_root) if st.auto_commit is None else st.auto_commit
     )
@@ -283,9 +303,10 @@ def _mr_resolve_read_dirs(st: _MapReqState, ports: TasksPorts) -> None:
         find_undeclared_requirement_citations,
         parse_requirement_ids_from_spec_md,
     )
+    _ = ports  # Compatibility injection seam; linked-worktree reads use the selected anchor.
 
     # #2064: resolve the WP ``tasks/`` dir through the SAME seam finalize uses.
-    st.feature_dir = _tasks._map_requirements_feature_dir(st.main_repo_root, st.mission_slug)
+    st.feature_dir = st.mission_anchor_root / "kitty-specs" / st.mission_slug
     # Boundary guard — hard-reject pre-3.0 layout before any WP mutation.
     try:
         check_pre30_layout(st.feature_dir)
@@ -296,8 +317,7 @@ def _mr_resolve_read_dirs(st: _MapReqState, ports: TasksPorts) -> None:
     # FR-011 / T012: fold the handle to its canonical dir NAME first so a bare
     # mid8 / human slug resolves the durable ``<slug>-<mid8>`` home (ambiguous
     # handle RAISES — no silent pick, C-002). Routed through the port (T030).
-    handle = MissionHandle(repo_root=st.main_repo_root, mission_slug=st.mission_slug)
-    st.primary_dir = ports.fs.primary_anchor_dir(handle)
+    st.primary_dir = st.feature_dir
 
     if not st.feature_dir.exists():
         _tasks._output_error(st.json_output, f"Mission directory not found: {st.feature_dir}")
@@ -323,12 +343,7 @@ def _mr_resolve_read_dirs(st: _MapReqState, ports: TasksPorts) -> None:
     # files are WORK_PACKAGE_TASK — a PRIMARY-partition kind. Resolve the read dir
     # through the kind-aware seam (the SAME single authority WP01 routed the rest
     # of the gate reads onto) instead of the topology-routed ``feature_dir``.
-    st.tasks_dir = (
-        placement_seam(st.main_repo_root, st.mission_slug).read_dir(
-            MissionArtifactKind.WORK_PACKAGE_TASK
-        )
-        / "tasks"
-    )
+    st.tasks_dir = st.feature_dir / "tasks"
     _mr_unknown_wp_gate(st)
 
 

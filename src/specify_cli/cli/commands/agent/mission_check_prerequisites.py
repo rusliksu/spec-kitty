@@ -571,7 +571,7 @@ def check_prerequisites(
             command_name="spec-kitty agent mission check-prerequisites",
         )
 
-        # Determine feature directory (main repo or worktree).
+        # Determine feature directory (main repo or caller-owned worktree).
         #
         # #2017-class surface-split fix: the planning-authoring surface this
         # command reports MUST agree with where ``finalize-tasks`` reads its
@@ -589,10 +589,24 @@ def check_prerequisites(
         # single-authority-topology-cleanup mission (#1716 write-surface coherence).
         cwd = Path.cwd().resolve()
         try:
-            feature_dir = _mission._primary_anchored_feature_dir(repo_root, feature)
+            if feature and feature.strip():
+                from specify_cli.missions.operation_context import (
+                    resolve_mission_operation_context,
+                )
+
+                operation = resolve_mission_operation_context(
+                    repo_root, feature.strip(), cwd=cwd
+                )
+                feature_dir = (
+                    operation.identity.feature_dir
+                    if operation.identity is not None
+                    else None
+                )
+            else:
+                feature_dir = _mission._primary_anchored_feature_dir(repo_root, feature)
             if feature_dir is None:
                 feature_dir = _mission._find_feature_directory(
-                    repo_root,
+                    operation.mission_anchor_root if feature and feature.strip() else repo_root,
                     cwd,
                     explicit_feature=feature,
                 )

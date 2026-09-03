@@ -501,6 +501,14 @@ def _resolve_mission_slug(repo_root: Path, feature: str | None, *, json_output: 
     from specify_cli.missions._read_path_resolver import MissionSelectorAmbiguous
 
     cwd = Path.cwd().resolve()
+    if feature and feature.strip():
+        from specify_cli.missions.operation_context import (
+            resolve_mission_operation_context,
+        )
+
+        operation = resolve_mission_operation_context(repo_root, feature.strip(), cwd=cwd)
+        if operation.identity is not None:
+            return operation.identity.mission_slug
     ambiguous: ActionContextError | None
     try:
         mission_dir_name: str | None = _resolve_mission_dir_name_primary_anchored(
@@ -3132,6 +3140,12 @@ def finalize_tasks(
         _run_saas_boundary_preflight(repo_root, json_output=json_output, validate_only=validate_only)
         mission_slug = _resolve_mission_slug(repo_root, feature, json_output=json_output)
 
+        from specify_cli.missions.operation_context import resolve_mission_operation_context
+
+        operation = resolve_mission_operation_context(repo_root, mission_slug, cwd=Path.cwd())
+        if operation.identity is not None:
+            repo_root = operation.mission_anchor_root
+
         from mission_runtime import placement_seam
 
         # WP05/FR-005: _resolve_mission_slug may return a raw operator-supplied
@@ -3143,8 +3157,12 @@ def finalize_tasks(
         # the retiring ``primary_feature_dir_for_mission`` wrapper onto the seam
         # directly — WORK_PACKAGE_TASK, since this finalize-tasks flow reads/writes
         # the ``tasks/`` WP files, ``wps.yaml``, and ``tasks.md`` under this dir.
-        primary_dir = placement_seam(repo_root, mission_slug).read_dir(
-            MissionArtifactKind.WORK_PACKAGE_TASK
+        primary_dir = (
+            operation.identity.feature_dir
+            if operation.identity is not None
+            else placement_seam(repo_root, mission_slug).read_dir(
+                MissionArtifactKind.WORK_PACKAGE_TASK
+            )
         )
         planning_dir = primary_dir
 
