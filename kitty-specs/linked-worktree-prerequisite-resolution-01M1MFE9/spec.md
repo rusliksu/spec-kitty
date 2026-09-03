@@ -7,7 +7,7 @@
 
 ## Intent Summary
 
-When an operator runs a planning prerequisite command from a validated linked task worktree and supplies an exact Mission slug or immutable Mission ID, Spec Kitty must resolve that Mission from the owned checkout instead of discarding the selector and falling back to the primary checkout's global Mission census. Explicit selectors remain fail-closed when missing or ambiguous, and planning commands must not write Mission artifacts into the primary checkout.
+When an operator runs a planning command from a validated linked task worktree and supplies an exact Mission slug or immutable Mission ID, Spec Kitty must resolve that Mission from the owned checkout instead of discarding the selector and falling back to the primary checkout's global Mission census. The canonical resolution path must govern prerequisites, plan setup, decision recording/verification, and planning-artifact commits. Explicit selectors remain fail-closed when missing or ambiguous, and planning commands must not write Mission artifacts into the primary checkout.
 
 ## User Scenarios & Testing
 
@@ -51,6 +51,7 @@ As an operator, I want context resolution and prerequisite resolution to agree o
 
 1. **Given** an exact Mission selector, **When** action context emits a prerequisite command, **Then** executing that command succeeds for the same Mission.
 2. **Given** a resolved task branch, **When** prerequisite output is inspected, **Then** current and target branch values match the owned task-worktree contract.
+3. **Given** a Mission present only in the validated linked task worktree, **When** plan setup, decision recording/verification, or planning-artifact commit resolves it, **Then** each command selects that same owned Mission rather than the primary checkout.
 
 ### Edge Cases
 
@@ -78,6 +79,7 @@ As an operator, I want context resolution and prerequisite resolution to agree o
 | FR-003 | Preserve structured refusal | As an operator, I receive a structured refusal for missing, ambiguous, or omitted selectors instead of a silently selected Mission. | High | Open |
 | FR-004 | Keep resolver command parity | As an operator, the prerequisite command emitted by action-context resolution succeeds for the same Mission and branch contract. | High | Open |
 | FR-005 | Protect primary placement | As an operator, resolving or validating a linked-worktree Mission creates or changes zero planning artifacts in the primary checkout. | High | Open |
+| FR-006 | Share owned-worktree resolution | As an operator, prerequisites, plan setup, decision recording/verification, and planning-artifact commit use one canonical owned-worktree Mission resolution contract. | High | Open |
 
 ### Non-Functional Requirements
 
@@ -104,7 +106,8 @@ As an operator, I want context resolution and prerequisite resolution to agree o
 - The existing action-context resolver result for the reproduction is correct and can serve as parity evidence.
 - Windows origin binding's missing `fcntl` module is separately tracked and is not part of this Mission.
 - The old upstream PR `#3429` is closed without merge and is evidence only; its 971-commit-stale branch will not be reused.
-- This is a focused resolver bug fix, not a bulk rename or a redesign of every planning artifact placement rule.
+- The user confirmed the shared canonical resolver scope after all four affected planning command families reproduced the same primary-only failure.
+- This is a focused resolver bug fix, not a bulk rename or a redesign of unrelated planning artifact placement rules.
 
 ## Success Criteria
 
@@ -115,3 +118,4 @@ As an operator, I want context resolution and prerequisite resolution to agree o
 - **SC-003**: Missing, ambiguous, and omitted selector controls retain 100% of their existing refusal scenarios.
 - **SC-004**: The primary checkout remains byte-clean and commit-clean across every linked-worktree acceptance reproduction.
 - **SC-005**: The original ancestry Mission can resume `/spec-kitty.tasks` without a manual file-placement fallback after the repaired branch is integrated and made available through the separately governed delivery path.
+- **SC-006**: Each reproduced planning command family resolves the owned Mission through the same canonical authority, with zero command-local filesystem scans added.
