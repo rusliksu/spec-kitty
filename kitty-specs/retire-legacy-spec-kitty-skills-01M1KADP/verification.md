@@ -28,6 +28,15 @@ behavioral regression test with a user-authored
 - Post-review registry/bootstrap run on commit `30e790867`: `19 passed in
   2.81s`.
 - Ruff: `All checks passed!`.
+
+The obsolete `f238b0882` run remained queued even after an exact cancellation
+request, so the new aggregate run could not leave its inherited concurrency
+group. The non-destructive fix preserves upstream's group value and gives forks
+a stable `fork-<github.ref>` namespace:
+
+- Concurrency behavioral RED: `1 failed in 43.76s`.
+- Runner and concurrency contract: `3 passed in 2.04s`.
+- Ruff: `All checks passed!`.
 - Mypy: `Success: no issues found in 3 source files`.
 
 All pytest processes used a temporary `USERPROFILE` and

@@ -26,3 +26,6 @@
   GitHub-hosted Linux or Windows runners. Scope is the twelve direct and
   reusable workflows reachable from the current draft PR; unrelated
   release-only and scheduled workflows remain unchanged.
+- 2026-09-03: Fork `CI Quality` also uses a fork-specific concurrency namespace
+  because one obsolete no-job run remained queued after cancellation. Upstream
+  keeps its exact existing concurrency key and cancellation semantics.
