@@ -113,7 +113,7 @@ on:
         type: boolean
 
 concurrency:
-  group: ci-quality-${{ github.ref }}
+  group: ci-quality-${{ github.repository == 'Priivacy-ai/spec-kitty' && github.ref || format('fork-{0}', github.ref) }}
   cancel-in-progress: true
 
 permissions:
