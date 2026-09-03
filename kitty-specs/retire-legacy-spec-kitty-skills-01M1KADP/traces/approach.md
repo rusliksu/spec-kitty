@@ -13,3 +13,11 @@
   green on the changed policy, registry, bootstrap, and test files.
 - 2026-09-03: Built wheel registry reports 41 discovered skills, zero retired
   aliases, and all 14 canonical replacements.
+- 2026-09-03: Three independent adversarial reviewers converged on a blocker:
+  prefix-wide cleanup could delete an unregistered user-authored
+  `spec-kitty-*` skill. A behavioral RED reproduced the deletion.
+- 2026-09-03: Cleanup now uses only the finite retired-name authority. The
+  regression preserves unknown prefixed skills, and current-lock coverage runs
+  against both installable global roots.
+- 2026-09-03: Rebuilt and installed the superseding wheel from implementation
+  commit `30e790867`; isolated and real-profile startup checks are green.

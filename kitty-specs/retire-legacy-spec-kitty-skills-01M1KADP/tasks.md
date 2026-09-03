@@ -44,6 +44,12 @@ canonical replacements but none of the fourteen aliases.
   unrelated user-skill hash.
 - [x] T012 Re-run targeted tests, ruff, and mypy on the final branch.
 - [x] T013 Push the task branch and open draft PR `rusliksu/spec-kitty#5`.
+- [x] T014 Run a three-profile adversarial review and capture the convergent
+  user-skill deletion blocker.
+- [x] T015 Add a behavioral RED, constrain cleanup to the retired-name set, and
+  verify both global roots.
+- [x] T016 Rebuild the wheel, install it side-by-side, and switch the launcher
+  while retaining the previous candidate as a fallback.
 
 **Owned repository files**:
 
@@ -52,6 +58,7 @@ canonical replacements but none of the fourteen aliases.
 **Authorized local surfaces**:
 
 - `C:/Users/Ruslan/.local/share/spec-kitty-retire-legacy-skills-e3f0846fa/`
+- `C:/Users/Ruslan/.local/share/spec-kitty-retire-legacy-skills-30e790867/`
 - `C:/Users/Ruslan/spec-kitty.cmd`
 
 **Independent acceptance**: inspect the installation evidence in

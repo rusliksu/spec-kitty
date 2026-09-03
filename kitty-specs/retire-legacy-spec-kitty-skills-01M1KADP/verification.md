@@ -12,12 +12,21 @@ Result on the pre-implementation test commit: collection failed twice because
 `RETIRED_LEGACY_SKILL_REPLACEMENTS` did not exist. This is the intended RED
 contract.
 
+Independent adversarial review later found that bootstrap cleanup also matched
+every unregistered `spec-kitty-*` directory. Commit `3d0d4bcbf` added a
+behavioral regression test with a user-authored
+`spec-kitty-user-authored/SKILL.md`; before the fix it failed with
+`FileNotFoundError` (`1 failed in 2.51s`).
+
 ## GREEN
 
 - Focused registry/bootstrap run: `19 passed in 75.92s`.
 - Focused registry/bootstrap/verifier/doctrine/migration run:
   `37 passed in 82.37s`.
 - Final delivery-gate rerun on commit `e28399063`: `58 passed in 5.04s`.
+- Post-review custom-prefix regression: `1 passed in 47.81s`.
+- Post-review registry/bootstrap run on commit `30e790867`: `19 passed in
+  2.81s`.
 - Ruff: `All checks passed!`.
 - Mypy: `Success: no issues found in 3 source files`.
 
@@ -27,13 +36,16 @@ All pytest processes used a temporary `USERPROFILE` and
 ## Candidate
 
 - Wheel: `spec_kitty_cli-3.2.6rc4-py3-none-any.whl`
-- Size: `8,295,502` bytes
-- SHA-256: `99E68A2DC683F0F2A026CB20BEBE825C27D1BFBE24E0C09F3C8608B08A2D00CE`
+- Size: `8,295,473` bytes
+- SHA-256: `F62511C1C46647B652AD67B79FCF623BDA88CBA3C2D643D5955FC066E7D10918`
 - Location:
-  `C:/Users/Ruslan/AppData/Local/Temp/codex-spec-kitty-retire-legacy-skills-candidates/ce9518f47182420197ace8a8f68e8ca5/`
+  `C:/Users/Ruslan/AppData/Local/Temp/codex-spec-kitty-retire-legacy-skills-candidates/30e790867/`
 - Installed-wheel registry: `DISCOVERED=41 ALIASES=0 REPLACEMENTS=14`.
-- Startup bootstrap in isolated profile:
-  `ALIASES_REMAINING=0 CANONICAL_MISSING=0 CUSTOM_PRESERVED=True`.
+- Startup bootstrap in both isolated installable roots:
+  `ALIASES=0 MISSING=0 CUSTOM_PRESERVED=True`.
+
+This wheel supersedes the earlier `99E68A...D00CE` candidate after the
+adversarial-review safety fix.
 
 The initial `--version` smoke was invalid because Typer handles that eager
 option before the startup callback. The valid smoke used
@@ -41,29 +53,29 @@ option before the startup callback. The valid smoke used
 
 ## Local Installation
 
-Installed the verified wheel side-by-side at:
+Installed the superseding verified wheel side-by-side at:
 
 ```text
-C:/Users/Ruslan/.local/share/spec-kitty-retire-legacy-skills-e3f0846fa/
+C:/Users/Ruslan/.local/share/spec-kitty-retire-legacy-skills-30e790867/
 ```
 
 The user launcher `C:/Users/Ruslan/spec-kitty.cmd` now selects that runtime
-first while retaining the prior recovery, patched, layerfix, and official
-installations as fallbacks. Its pre-change copy is preserved as:
+first while retaining the earlier retirement candidate plus the recovery,
+patched, layerfix, and official installations as fallbacks. Its pre-change
+copy for this safety update is preserved as:
 
 ```text
-C:/Users/Ruslan/spec-kitty.cmd.pre-retire-legacy-e3f0846fa.bak
+C:/Users/Ruslan/spec-kitty.cmd.pre-retired-skill-safety-30e790867.bak
 ```
 
 Real-profile startup verification via `upgrade --agent-check --json`:
 
 - Exit code: `0`.
-- Before startup: `14` legacy aliases in `.agents/skills`.
-- After startup: `0` legacy aliases and all `14` canonical replacements in
-  `.agents/skills`.
+- Before and after startup: `0` legacy aliases and all `14` canonical
+  replacements in `.agents/skills`.
 - `.codex/skills/best-step/SKILL.md` SHA-256 was unchanged.
 - Launcher version: `spec-kitty-cli version 3.2.6rc4`.
-- Runtime import resolved from the new side-by-side installation.
+- Runtime import resolved from `spec-kitty-retire-legacy-skills-30e790867`.
 
 The `.codex/skills` root contains neither the package-managed aliases nor their
 canonical replacements; the package-managed global surface is `.agents/skills`.
@@ -78,6 +90,15 @@ canonical replacements; the package-managed global surface is `.agents/skills`.
 
 The PR remains draft. Merge, release, and direct push to `main` were not
 performed.
+
+## Independent Review
+
+Three bounded, read-only reviewers (reviewer, architect, and debugger profiles)
+independently returned `BLOCK` on the same issue: the prefix-wide cleanup could
+delete an unregistered user-authored skill. The fix at `30e790867` limits
+cleanup to `RETIRED_CANONICAL_SKILL_NAMES`; tests now preserve an unknown
+prefixed skill and exercise current-version-lock cleanup in both `.claude` and
+`.agents` roots.
 
 ## Baseline Reporting
 
