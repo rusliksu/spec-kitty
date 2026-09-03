@@ -37,6 +37,14 @@ EXPECTED_RUNNERS = {
     "ui-e2e.yml": {"ui-e2e": LINUX_RUNNER},
 }
 
+QUALITY_WORKFLOWS = (
+    "ci-quality.yml",
+    "module-doctrine-fast.yml",
+    "module-doctrine-integration.yml",
+    "module-kernel.yml",
+    "module-packs.yml",
+)
+
 
 def test_pr_workflows_select_hosted_runners_for_forks() -> None:
     for workflow_name, expected_jobs in EXPECTED_RUNNERS.items():
@@ -48,3 +56,18 @@ def test_pr_workflows_select_hosted_runners_for_forks() -> None:
         assert {
             job_name: jobs[job_name]["runs-on"] for job_name in expected_jobs
         } == expected_jobs
+
+
+def test_quality_workflows_do_not_require_blacksmith_in_forks() -> None:
+    for workflow_name in QUALITY_WORKFLOWS:
+        workflow = yaml.safe_load(
+            (WORKFLOW_ROOT / workflow_name).read_text(encoding="utf-8")
+        )
+
+        for job_name, job in workflow["jobs"].items():
+            runner = job.get("runs-on")
+            if runner is None:
+                continue
+            assert runner in {LINUX_RUNNER, "ubuntu-latest"}, (
+                f"{workflow_name}:{job_name} has a non-portable runner: {runner}"
+            )
