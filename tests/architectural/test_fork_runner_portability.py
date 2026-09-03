@@ -71,3 +71,15 @@ def test_quality_workflows_do_not_require_blacksmith_in_forks() -> None:
             assert runner in {LINUX_RUNNER, "ubuntu-latest"}, (
                 f"{workflow_name}:{job_name} has a non-portable runner: {runner}"
             )
+
+
+def test_ci_quality_uses_a_fork_specific_concurrency_namespace() -> None:
+    workflow = yaml.safe_load(
+        (WORKFLOW_ROOT / "ci-quality.yml").read_text(encoding="utf-8")
+    )
+
+    assert workflow["concurrency"]["group"] == (
+        "ci-quality-${{ github.repository == 'Priivacy-ai/spec-kitty' && "
+        "github.ref || format('fork-{0}', github.ref) }}"
+    )
+    assert workflow["concurrency"]["cancel-in-progress"] is True
