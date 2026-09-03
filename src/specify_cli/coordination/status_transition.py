@@ -758,10 +758,19 @@ def _identity_for_request(request: TransitionRequest) -> _TransactionIdentity:
     canonical_feature_dir = canonicalize_feature_dir(raw_feature_dir)
     interim_repo_root = _repo_root_for_feature(canonical_feature_dir, request.repo_root)
     canonical_repo_root = _canonical_repo_root(canonical_feature_dir, interim_repo_root)
-    feature_dir = _canonical_primary_feature_dir(
-        canonical_repo_root, mission_slug, fallback=canonical_feature_dir
+    from specify_cli.missions.operation_context import resolve_mission_operation_context
+
+    operation = resolve_mission_operation_context(
+        canonical_repo_root, mission_slug, cwd=raw_feature_dir
     )
-    repo_root = request.repo_root or canonical_repo_root
+    feature_dir = (
+        operation.identity.feature_dir
+        if operation.identity is not None
+        else _canonical_primary_feature_dir(
+            canonical_repo_root, mission_slug, fallback=canonical_feature_dir
+        )
+    )
+    repo_root = request.repo_root or operation.mission_anchor_root
 
     # FR-007: fail-closed reader routing. Malformed meta surfaces typed
     # MissionMetaReadError instead of raw ValueError.
