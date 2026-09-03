@@ -68,6 +68,17 @@ Real-profile startup verification via `upgrade --agent-check --json`:
 The `.codex/skills` root contains neither the package-managed aliases nor their
 canonical replacements; the package-managed global surface is `.agents/skills`.
 
+## Fork Delivery
+
+- Remote: `https://github.com/rusliksu/spec-kitty.git`
+- Branch: `codex/spec-kitty-retire-legacy-skills`
+- Draft PR: `https://github.com/rusliksu/spec-kitty/pull/5`
+- Initial published head: `f238b0882b36801bc05667ac27edc7fe07e56f53`
+- Base: fork `main`
+
+The PR remains draft. Merge, release, and direct push to `main` were not
+performed.
+
 ## Baseline Reporting
 
 An exploratory broad skills-suite run produced `285 passed, 10 failed`. One

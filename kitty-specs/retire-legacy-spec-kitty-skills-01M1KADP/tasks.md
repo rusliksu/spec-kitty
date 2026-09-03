@@ -43,7 +43,7 @@ canonical replacements but none of the fourteen aliases.
 - [x] T011 Run real-profile startup and verify aliases, replacements, and an
   unrelated user-skill hash.
 - [x] T012 Re-run targeted tests, ruff, and mypy on the final branch.
-- [ ] T013 Push the task branch and open a draft PR to the fork.
+- [x] T013 Push the task branch and open draft PR `rusliksu/spec-kitty#5`.
 
 **Owned repository files**:
 
