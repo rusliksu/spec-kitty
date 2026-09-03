@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   fast-tests-corpus:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     steps:
       # fetch-depth: 0 so the shrink-only ratchet in
       # tests/architectural/test_transition_guard_shrink_only.py (carried by the

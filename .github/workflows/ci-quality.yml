@@ -179,7 +179,7 @@ jobs:
   # changes: detect which modules were touched so per-module jobs can skip.
   # ---------------------------------------------------------------------------
   changes:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     outputs:
       # ``run_all`` (workflow_dispatch input) and ``unmatched`` (the FR-010
@@ -603,7 +603,7 @@ jobs:
   # family) and is a `quality-gate.needs` member so a violation blocks merge.
   # ---------------------------------------------------------------------------
   deferral-consistency-check:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     steps:
       - name: "[ENFORCED] Check out repository"
@@ -614,7 +614,7 @@ jobs:
           python3 scripts/ci/check_dangling_deferrals.py --root kitty-specs
 
   lint:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     outputs:
       commitlint_has_failures: ${{ steps.commitlint.outputs.has_failures }}
@@ -988,7 +988,7 @@ jobs:
           fi
 
   lint-feedback:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: lint
     if: ${{ (always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (needs.lint.outputs.commitlint_has_failures == 'true' || needs.lint.outputs.markdownlint_has_failures == 'true' || needs.lint.outputs.ruff_has_failures == 'true' || needs.lint.outputs.mypy_has_failures == 'true')) && !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     permissions:
@@ -1106,7 +1106,7 @@ jobs:
   # Tier 0 fast-tests: no inter-module dependencies
   # ---------------------------------------------------------------------------
   fast-tests-sync:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes]
     if: >-
       always()
@@ -1174,7 +1174,7 @@ jobs:
   # job's own completion.
   # ---------------------------------------------------------------------------
   fast-tests-sync-orphan-sweep:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes]
     if: >-
       always()
@@ -1206,7 +1206,7 @@ jobs:
           path: out/reports/
 
   fast-tests-merge:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes]
     if: >-
       always()
@@ -1232,7 +1232,7 @@ jobs:
           path: out/reports/
 
   fast-tests-missions:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes]
     if: >-
       always()
@@ -1260,7 +1260,7 @@ jobs:
           path: out/reports/
 
   fast-tests-post-merge:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes]
     if: >-
       always()
@@ -1288,7 +1288,7 @@ jobs:
           if-no-files-found: ignore
 
   fast-tests-release:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes]
     if: >-
       always()
@@ -1319,7 +1319,7 @@ jobs:
   # Tier 1 fast-tests: depends on sync
   # ---------------------------------------------------------------------------
   fast-tests-status:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-sync]
     if: >-
       always()
@@ -1386,7 +1386,7 @@ jobs:
   # Tier 2 fast-tests: depends on status (and merge for lanes)
   # ---------------------------------------------------------------------------
   fast-tests-review:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-status]
     if: >-
       always()
@@ -1412,7 +1412,7 @@ jobs:
           path: out/reports/
 
   fast-tests-next:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-status]
     if: >-
       always()
@@ -1446,7 +1446,7 @@ jobs:
   # any existing fail_under threshold.
   # ---------------------------------------------------------------------------
   mission-loader-coverage:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-next]
     if: >-
       always()
@@ -1474,7 +1474,7 @@ jobs:
           path: out/reports/
 
   fast-tests-lanes:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-status, fast-tests-merge]
     if: >-
       always()
@@ -1500,7 +1500,7 @@ jobs:
           path: out/reports/
 
   fast-tests-dashboard:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-status]
     if: >-
       always()
@@ -1528,7 +1528,7 @@ jobs:
           if-no-files-found: ignore
 
   fast-tests-upgrade:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-status]
     if: >-
       always()
@@ -1557,7 +1557,7 @@ jobs:
   # Tier 3 fast-tests: depends on all Tier 2 jobs
   # ---------------------------------------------------------------------------
   fast-tests-cli:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-lanes, fast-tests-next, fast-tests-review, fast-tests-dashboard, fast-tests-upgrade]
     if: >-
       always()
@@ -1660,7 +1660,7 @@ jobs:
   # ---------------------------------------------------------------------------
   fast-tests-core-misc:
     name: fast-tests-core-misc (${{ matrix.shard }})
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, kernel-tests, fast-tests-doctrine]
     # `cli` is in this disjunction for a reason that is NOT obvious from the
     # group's name (mission egress-refusal-consolidation-3110, FR-017):
@@ -1873,7 +1873,7 @@ jobs:
   # is no longer caught pre-merge.
   # ---------------------------------------------------------------------------
   fast-tests-docs:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes]
     if: >-
       always()
@@ -1921,7 +1921,7 @@ jobs:
   # ---------------------------------------------------------------------------
   integration-tests-core-misc:
     name: integration-tests-core-misc (${{ matrix.shard }})
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     # De-serialized (mission ci-topology-shrink FR-013): the ``fast-tests-core-misc``
     # need is dropped so this matrix runs in parallel with the fast lane. The
     # architectural/adversarial shard that used to live here (and was the pole
@@ -2102,7 +2102,7 @@ jobs:
   # ---------------------------------------------------------------------------
   arch-adversarial:
     name: arch-adversarial (${{ matrix.shard }})
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: ${{ (always()) && !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     # 3-shard matrix (mission ci-health-charter-path-and-arch-shard-01KWRTB2,
     # #2397): the arch-pole selection is now routed by dedicated pytest
@@ -2269,7 +2269,7 @@ jobs:
   # ---------------------------------------------------------------------------
   stress-tests-serial:
     name: Stress NFR gate (serial, -m stress)
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: ${{ (always()) && !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     steps:
       - uses: actions/checkout@v6
@@ -2290,7 +2290,7 @@ jobs:
   # fast-tests-charter: charter package, depends on doctrine.
   # ---------------------------------------------------------------------------
   fast-tests-charter:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, kernel-tests, fast-tests-doctrine]
     if: >-
       always()
@@ -2342,7 +2342,7 @@ jobs:
   # rationale ties agent's suite to charter's completion).
   # ---------------------------------------------------------------------------
   fast-tests-agent:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, kernel-tests, fast-tests-doctrine]
     if: >-
       always()
@@ -2379,7 +2379,7 @@ jobs:
   # Integration tests: per-module, gated on their fast-tests counterpart.
   # ---------------------------------------------------------------------------
   integration-tests-agent:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-agent]
     if: >-
       always()
@@ -2416,7 +2416,7 @@ jobs:
     uses: ./.github/workflows/module-doctrine-integration.yml
 
   integration-tests-charter:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-charter]
     if: >-
       always()
@@ -2462,7 +2462,7 @@ jobs:
   # and is listed here only for symmetry/defense-in-depth with the registry).
   # ---------------------------------------------------------------------------
   integration-tests-sync:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-sync]
     if: >-
       always()
@@ -2501,7 +2501,7 @@ jobs:
   # integration-tests-sync so it runs concurrently with it, not after it.
   # ---------------------------------------------------------------------------
   integration-tests-sync-real-port:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-sync]
     if: >-
       always()
@@ -2533,7 +2533,7 @@ jobs:
           path: out/reports/
 
   integration-tests-merge:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-merge]
     if: >-
       always()
@@ -2561,7 +2561,7 @@ jobs:
           path: out/reports/
 
   integration-tests-missions:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-missions]
     if: >-
       always()
@@ -2591,7 +2591,7 @@ jobs:
           path: out/reports/
 
   integration-tests-post-merge:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-post-merge]
     if: >-
       always()
@@ -2620,7 +2620,7 @@ jobs:
           path: out/reports/
 
   integration-tests-release:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-release]
     if: >-
       always()
@@ -2662,7 +2662,7 @@ jobs:
   # fast shard are always run here. NEEDS CI CONFIRMATION.
   # See mission test-suite-acceleration.
   integration-tests-status:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-status]
     if: >-
       always()
@@ -2712,7 +2712,7 @@ jobs:
           path: out/reports/
 
   integration-tests-review:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-review]
     if: >-
       always()
@@ -2756,7 +2756,7 @@ jobs:
   # ---------------------------------------------------------------------------
   integration-tests-next:
     name: integration-tests-next (${{ matrix.shard }})
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-next]
     if: >-
       always()
@@ -2805,7 +2805,7 @@ jobs:
           path: out/reports/
 
   integration-tests-lanes:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-lanes]
     if: >-
       always()
@@ -2833,7 +2833,7 @@ jobs:
           path: out/reports/
 
   integration-tests-dashboard:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-dashboard]
     if: >-
       always()
@@ -2862,7 +2862,7 @@ jobs:
           path: out/reports/
 
   integration-tests-upgrade:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-upgrade]
     if: >-
       always()
@@ -2890,7 +2890,7 @@ jobs:
           path: out/reports/
 
   integration-tests-cli:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, fast-tests-cli]
     if: >-
       always()
@@ -2939,7 +2939,7 @@ jobs:
   # invariant keeps this expression consistent with the routed set.
   # ---------------------------------------------------------------------------
   unit-contract-residual:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     steps:
       - uses: actions/checkout@v6
@@ -2975,7 +2975,7 @@ jobs:
             --durations=25
 
   slow-tests:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs:
       - fast-tests-doctrine
       - fast-tests-sync
@@ -3086,7 +3086,7 @@ jobs:
   # ---------------------------------------------------------------------------
   restart-daemon-nfr-timing:
     name: doctor restart-daemon functional health
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes]
     if: >-
       ${{ always()
@@ -3125,7 +3125,7 @@ jobs:
   # ---------------------------------------------------------------------------
   quarantine-visibility:
     name: quarantine owner-manifest visibility (non-blocking)
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes]
     if: ${{ (always() && ( github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' )) && !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     timeout-minutes: 15
@@ -3187,7 +3187,7 @@ jobs:
   # ---------------------------------------------------------------------------
   regression-tests:
     name: regression tests (blocking)
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes]
     if: ${{ (always() && ( github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' )) && !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     timeout-minutes: 15
@@ -3238,7 +3238,7 @@ jobs:
   # fixtures. Runs tests/e2e/ and tests/cross_cutting/ in parallel with slow-tests.
   # ---------------------------------------------------------------------------
   e2e-cross-cutting:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes]
     if: ${{ (always() && ( github.event_name == 'push' || ( github.event_name == 'pull_request' && ( needs.changes.outputs.e2e == 'true' || needs.changes.outputs.core_misc == 'true' || needs.changes.outputs.execution_context == 'true' ) && ( ( github.event.pull_request.draft == false && !startsWith(github.event.pull_request.title, 'WIP') && !startsWith(github.event.pull_request.title, '[WIP]') ) || contains(github.event.pull_request.labels.*.name, 'ci:full') || contains(github.event.pull_request.labels.*.name, 'ready-for-ci') ) ) || (github.event_name == 'workflow_dispatch' && (inputs.run_extended || inputs.run_all)) )) && !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     timeout-minutes: 40
@@ -3306,7 +3306,7 @@ jobs:
   # Consumes kernel, fast-test, and integration-test coverage reports.
   # ---------------------------------------------------------------------------
   diff-coverage:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs:
       - kernel-tests
       - fast-tests-charter
@@ -3441,7 +3441,7 @@ jobs:
   # mutation-testing: disabled — too slow to run reliably in CI.
   # ---------------------------------------------------------------------------
   mutation-testing:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs:
       - fast-tests-doctrine
       - fast-tests-sync
@@ -3474,7 +3474,7 @@ jobs:
   # review latency low, and pushes skip it so main can report test/build health.
   # ---------------------------------------------------------------------------
   sonarcloud:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs:
       - kernel-tests
       - fast-tests-doctrine
@@ -3932,7 +3932,7 @@ jobs:
   # ---------------------------------------------------------------------------
   uv-lock-check:
     name: uv lock --check (NFR-005)
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     timeout-minutes: 3
     steps:
@@ -3957,7 +3957,7 @@ jobs:
   # ---------------------------------------------------------------------------
   build-wheel:
     name: Build wheel
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     timeout-minutes: 5
     steps:
@@ -4000,7 +4000,7 @@ jobs:
   # ---------------------------------------------------------------------------
   clean-install-verification:
     name: Clean install verification (FR-010)
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     timeout-minutes: 5     # NFR-004
     needs: [build-wheel]
@@ -4119,7 +4119,7 @@ jobs:
   # ---------------------------------------------------------------------------
   consumer-compatibility:
     name: SaaS consumer compatibility
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     needs: [changes, build-wheel]
     if: always() && needs.changes.outputs.release == 'true' && needs.build-wheel.result == 'success'
     env:
@@ -4328,7 +4328,7 @@ jobs:
       - clean-install-verification
       - consumer-compatibility
       - uv-lock-check
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ${{ github.repository == 'Priivacy-ai/spec-kitty' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     if: ${{ (always()) && !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
     steps:
       - name: "Check out repository (decision script)"
