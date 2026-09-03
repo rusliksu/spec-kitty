@@ -811,12 +811,20 @@ def _identity_for_request(request: TransitionRequest) -> _TransactionIdentity:
         coordination_branch=coord_branch,
     )
     transaction_dir_name = _transaction_dir_name(mission_slug, effective_mid8)
+    destination_ref = _resolve_write_target(repo_root, mission_slug, coord_branch)
+    if operation.mission_anchor_root != operation.repository_root and coord_branch is None:
+        from specify_cli.core.git_ops import get_current_branch
+
+        caller_branch = get_current_branch(operation.mission_anchor_root)
+        if caller_branch is not None:
+            destination_ref = caller_branch
+
     return _TransactionIdentity(
         repo_root=repo_root,
         feature_dir=feature_dir,
         mission_id=effective_mission_id,
         mid8=effective_mid8,
-        destination_ref=_resolve_write_target(repo_root, mission_slug, coord_branch),
+        destination_ref=destination_ref,
         meta_exists=meta_exists,
         coordination_branch=coord_branch,
         transaction_meta_exists=(feature_dir.parent / transaction_dir_name / "meta.json").exists(),
