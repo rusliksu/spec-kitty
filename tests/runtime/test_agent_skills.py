@@ -38,6 +38,15 @@ def test_global_bootstrap_preserves_non_spec_kitty_user_skills(tmp_path: Path, m
     custom_skill = home / ".claude" / "skills" / "custom-skill" / "SKILL.md"
     custom_skill.parent.mkdir(parents=True, exist_ok=True)
     custom_skill.write_text("# custom\n", encoding="utf-8")
+    prefixed_custom_skill = (
+        home
+        / ".claude"
+        / "skills"
+        / "spec-kitty-user-authored"
+        / "SKILL.md"
+    )
+    prefixed_custom_skill.parent.mkdir(parents=True)
+    prefixed_custom_skill.write_text("# prefixed custom\n", encoding="utf-8")
 
     monkeypatch.setattr(
         "specify_cli.runtime.agent_skills._discover_registry",
@@ -50,6 +59,7 @@ def test_global_bootstrap_preserves_non_spec_kitty_user_skills(tmp_path: Path, m
     assert managed_skill.is_file()
     assert custom_skill.is_file()
     assert custom_skill.read_text(encoding="utf-8") == "# custom\n"
+    assert prefixed_custom_skill.read_text(encoding="utf-8") == "# prefixed custom\n"
 
     mode = managed_skill.stat().st_mode
     assert mode & 0o200 == 0
