@@ -1,0 +1,17 @@
+{
+  "mission_id": "01M1KADPHZXDRJA7VMFVYJTEY0",
+  "mission_number": null,
+  "slug": "retire-legacy-spec-kitty-skills",
+  "mission_slug": "retire-legacy-spec-kitty-skills-01M1KADP",
+  "friendly_name": "Retire Legacy Spec Kitty Skills",
+  "purpose_tldr": "Stop startup bootstrap from restoring superseded Spec Kitty skill aliases.",
+  "purpose_context": "Spec Kitty 3.2.6rc4 still discovers fourteen legacy spec-kitty skill packages and copies them into every user-global agent skill root. The public spk hierarchy already supersedes those packages, so startup must retire the known aliases without touching unrelated user skills.",
+  "mission_type": "software-dev",
+  "target_branch": "main",
+  "planning_base_branch": "main",
+  "merge_target_branch": "main",
+  "change_mode": "standard",
+  "vcs": "git",
+  "created_at": "2026-09-03T09:43:00+00:00",
+  "beads_id": "spk-8zh"
+}
