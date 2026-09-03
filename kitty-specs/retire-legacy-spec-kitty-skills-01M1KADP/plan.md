@@ -37,6 +37,10 @@
    launcher as a fallback, and run one real-profile startup reconciliation.
 7. Re-run targeted quality gates and publish the task-owned branch as a draft
    PR to the fork. Do not merge or release.
+8. For only the workflows triggered by the fork PR, select the existing
+   Blacksmith label when `github.repository == 'Priivacy-ai/spec-kitty'` and
+   the matching GitHub-hosted Linux/Windows label otherwise. Validate workflow
+   syntax and policy tests, then push to obtain real fork-CI evidence.
 
 ## Ownership and Safety
 
@@ -52,6 +56,7 @@ pytest tests/specify_cli/skills/test_registry.py tests/runtime/test_agent_skills
 ruff check src/specify_cli/skills/retired.py src/specify_cli/skills/registry.py tests/specify_cli/skills/test_registry.py tests/runtime/test_agent_skills.py
 mypy src/specify_cli/skills/retired.py src/specify_cli/skills/registry.py src/specify_cli/runtime/agent_skills.py
 python -m build --wheel
+actionlint .github/workflows/canonical-producer-lint.yml .github/workflows/ci-windows.yml .github/workflows/docs-freshness.yml .github/workflows/drift-detector.yml .github/workflows/plugin-validate.yml .github/workflows/release-readiness.yml .github/workflows/ui-e2e.yml
 ```
 
 The wheel smoke first runs the built candidate in a temporary virtual
@@ -68,3 +73,5 @@ checks the real global root before and after one startup reconciliation.
 - No direct push to `main`, PR merge, release, destructive fallback cleanup, or
   unrelated global mutation.
 - Any need to widen beyond the fourteen names requires a new approval delta.
+- The fork-runner portability delta for the seven blocking workflow files was
+  approved by Ruslan on 2026-09-03; ready/merge still require green CI.

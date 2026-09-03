@@ -63,3 +63,25 @@ canonical replacements but none of the fourteen aliases.
 
 **Independent acceptance**: inspect the installation evidence in
 `verification.md`, re-run the focused quality gates, and review the draft PR.
+
+## WP03 — Fork CI Runner Portability
+
+- [ ] T017 Add repository-scoped runner selection to the seven workflows
+  currently blocking draft PR `rusliksu/spec-kitty#5`.
+- [ ] T018 Validate GitHub Actions syntax and the related workflow policy tests.
+- [ ] T019 Push the exact task head and capture executed fork-CI evidence.
+
+**Owned repository files**:
+
+- `.github/workflows/canonical-producer-lint.yml`
+- `.github/workflows/ci-windows.yml`
+- `.github/workflows/docs-freshness.yml`
+- `.github/workflows/drift-detector.yml`
+- `.github/workflows/plugin-validate.yml`
+- `.github/workflows/release-readiness.yml`
+- `.github/workflows/ui-e2e.yml`
+- `kitty-specs/retire-legacy-spec-kitty-skills-01M1KADP/**`
+
+**Independent acceptance**: workflow parsing proves upstream and fork runner
+branches resolve to the intended labels, and the fork PR jobs actually leave
+the queue and complete or skip by their existing predicates.

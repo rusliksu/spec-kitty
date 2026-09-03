@@ -65,6 +65,7 @@ before/after evidence.
 | FR-005 | The retirement authority MUST expose an explicit legacy-to-canonical mapping so tests and future migrations cannot drift into two lists. | Accepted |
 | FR-006 | The verified wheel MUST be installed side-by-side and selected by the user launcher while prior runtimes remain available as fallbacks. | Accepted |
 | FR-007 | The task branch MUST be published through a draft PR to the fork after targeted gates pass. | Accepted |
+| FR-008 | PR-triggered workflows blocking the fork PR MUST retain Blacksmith on `Priivacy-ai/spec-kitty` and select GitHub-hosted runners on forks. | Accepted |
 
 ### Non-Functional Requirements
 
@@ -74,6 +75,7 @@ before/after evidence.
 | NFR-002 | The isolated built-wheel bootstrap smoke MUST complete without writing to Ruslan's real global agent roots. | Accepted |
 | NFR-003 | The startup fast path MUST remain unchanged when no retired path needs cleanup. | Accepted |
 | NFR-004 | The real-profile installation MUST prove zero retired aliases, all canonical replacements, and byte preservation of an unrelated user skill. | Accepted |
+| NFR-005 | Fork-runner selection MUST be explicit, repository-scoped, and valid GitHub Actions syntax without weakening upstream runner selection. | Accepted |
 
 ### Constraints
 
@@ -83,6 +85,7 @@ before/after evidence.
 | C-002 | Local installation and task-branch publication are authorized only for this verified candidate; merge, release, and direct push to `main` remain prohibited. | Accepted |
 | C-003 | User-created skills outside the explicit retired-name contract are preserved. | Accepted |
 | C-004 | The mission is not a bulk edit: it changes one discovery/retirement policy rather than replacing one token across files. | Accepted |
+| C-005 | CI portability is limited to workflows that block draft PR `rusliksu/spec-kitty#5`; unrelated release and scheduled workflows remain unchanged. | Accepted |
 
 ## Success Criteria
 
@@ -98,6 +101,9 @@ before/after evidence.
   `.agents/skills` has zero aliases and all 14 canonical replacements while an
   unrelated skill remains byte-identical.
 - **SC-007**: a draft PR exposes the exact task-owned branch for fork review.
+- **SC-008**: every check triggered by the draft PR either completes on a
+  GitHub-hosted fork runner or is skipped by its documented path predicate;
+  upstream jobs still resolve to their existing Blacksmith labels.
 
 ## Assumptions
 
