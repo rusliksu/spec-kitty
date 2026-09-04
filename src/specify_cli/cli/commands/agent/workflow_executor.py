@@ -114,7 +114,10 @@ def _claim_policy_metadata(shell_pid: int, agent: str) -> dict[str, Any]:
     return metadata
 
 
-def _locate_wp(repo_root: Path, mission_slug: str, normalized_wp_id: str) -> WorkPackage:
+def _locate_wp(
+    repo_root: Path, mission_slug: str, normalized_wp_id: str, *,
+    effective_root: Path | None = None, status_read_dir: Path | None = None,
+) -> WorkPackage:
     """Typed accessor for ``workflow.locate_work_package`` (#2675 T054).
 
     ``_wf()`` returns ``ModuleType``, so ``.locate_work_package(...)`` leaks
@@ -122,9 +125,13 @@ def _locate_wp(repo_root: Path, mission_slug: str, normalized_wp_id: str) -> Wor
     this module -- every ``locate_work_package`` call site (erroring or not)
     routes through here instead of scattering casts at each read site.
     """
+    options = (
+        {"effective_root": effective_root, "status_read_dir": status_read_dir}
+        if effective_root is not None else {}
+    )
     return cast(
         "WorkPackage",
-        _wf().locate_work_package(repo_root, mission_slug, normalized_wp_id),
+        _wf().locate_work_package(repo_root, mission_slug, normalized_wp_id, **options),
     )
 
 
@@ -570,10 +577,14 @@ def implement_sparse_checkout_preflight(
         raise typer.Exit(1) from exc
 
 
-def implement_locate_wp(repo_root: Path, mission_slug: str, normalized_wp_id: str) -> WorkPackage:
+def implement_locate_wp(
+    repo_root: Path, mission_slug: str, normalized_wp_id: str, *,
+    effective_root: Path | None = None, status_read_dir: Path | None = None,
+) -> WorkPackage:
     """Find the WP file, translating the canonical-status-missing case."""
     try:
-        return _locate_wp(repo_root, mission_slug, normalized_wp_id)
+        return _locate_wp(repo_root, mission_slug, normalized_wp_id,
+                          effective_root=effective_root, status_read_dir=status_read_dir)
     except RuntimeError as e:
         if is_missing_canonical_status_error(e):
             print(f"Error: {missing_canonical_status_message(normalized_wp_id, mission_slug)}")
@@ -614,7 +625,8 @@ def implement_check_wp_charter_precondition(main_repo_root: Path, wp: WorkPackag
 
 
 def implement_check_dependency_gate(
-    main_repo_root: Path, mission_slug: str, normalized_wp_id: str, wp_meta: WPMetadata
+    main_repo_root: Path, mission_slug: str, normalized_wp_id: str, wp_meta: WPMetadata,
+    *, status_read_dir: Path | None = None,
 ) -> None:
     """Gate the not-yet-started claim transition on dependency readiness.
 
@@ -630,7 +642,10 @@ def implement_check_dependency_gate(
     from specify_cli.status import resolve_lane_alias as dep_resolve_alias
 
     w = _wf()
-    dependency_feature_dir = w._canonical_status_feature_dir(main_repo_root, mission_slug)
+    dependency_feature_dir = (
+        status_read_dir if status_read_dir is not None
+        else w._canonical_status_feature_dir(main_repo_root, mission_slug)
+    )
     dependency_snapshot = dep_reduce_events(dep_read_events(dependency_feature_dir))
     dependency_lanes = {
         wp_id: state.get("lane", Lane.PLANNED) for wp_id, state in dependency_snapshot.work_packages.items()
@@ -670,6 +685,7 @@ def implement_resolve_feedback_and_gate(
     mission_slug: str,
     normalized_wp_id: str,
     wp: WorkPackage,
+    *, effective_root: Path | None = None,
 ) -> tuple[Path, bool, str | None, Path | None, str | None]:
     """Resolve the review-feedback context and enforce the analysis-report gate.
 
@@ -677,6 +693,7 @@ def implement_resolve_feedback_and_gate(
     review_feedback_file, review_feedback_source)``.
     """
     w = _wf()
+    anchor_options = {"effective_root": effective_root} if effective_root is not None else {}
 
     # IC-04/T017: review-feedback-context READ. WORK_PACKAGE_TASK is a
     # PRIMARY-partition kind (review-cycle artifacts + this WP's baseline
@@ -684,7 +701,8 @@ def implement_resolve_feedback_and_gate(
     # fix-mode and baseline-commit sites) — routes through the kind-aware
     # seam instead of the kind-blind coord husk (NFR-001 / Directive-041).
     feature_dir = w._resolve_workflow_read_dir(
-        repo_root=main_repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK
+        repo_root=main_repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK,
+        **anchor_options,
     )
     has_feedback, review_feedback_ref, review_feedback_file, review_feedback_source = resolve_review_feedback_context(
         feature_dir=feature_dir,
@@ -700,7 +718,7 @@ def implement_resolve_feedback_and_gate(
     # #1989 (read-side companion to WP01): read the report from the PRIMARY
     # checkout where record-analysis writes it (see _analysis_report_gate_dir).
     w._require_current_analysis_report(
-        w._analysis_report_gate_dir(main_repo_root, mission_slug),
+        w._analysis_report_gate_dir(main_repo_root, mission_slug, **anchor_options),
         main_repo_root,
         mission_slug,
     )

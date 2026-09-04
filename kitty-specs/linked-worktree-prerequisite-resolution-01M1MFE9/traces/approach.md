@@ -66,3 +66,26 @@
   propagate context through the executor and branch-context consumers while
   retaining dependency, ownership and commit gates; do not replace repo_root
   wholesale with the Mission anchor. No workspace or status transition occurred.
+- 2026-09-04 executor pre-mutation recovery: RED `9c40def0f` pins the actual CLI
+  reaching dependency refusal without workspace/status mutation. RED `da181b6cd`
+  extends this to the exact linked analysis-report path; merely asserting
+  analysis_report_required had initially missed a wrong-primary-path refusal.
+  The implementation carries the validated anchor/status projection through
+  branch context, WP lookup, dependency reads and feedback/analysis reads.
+  Default callers retain existing behavior. Explicit-anchor read overrides are
+  restricted to PRIMARY-partition kinds by the canonical predicate; explicit
+  branch-context failures no longer degrade to a primary-branch fallback.
+- Final verification: linked CLI pre-mutation scenarios 2 passed, 26 deselected;
+  implement/programmatic-call/mixed-dependency and analysis-report-rehome suites
+  26 passed. Ruff, strict mypy and compileall pass. Two adjacent tests had
+  platform-specific path assumptions: workspace equality now uses Path, and the
+  Git revision path in the review-cycle test uses as_posix (also making the
+  negative git-show check meaningful on Windows). A temporary incorrect predicate
+  import was caught during iteration and replaced with is_primary_artifact_kind;
+  final tests were rerun after that correction.
+- Live WP01 implement now reports the task branch and analysis_report_required
+  for the actual task-owned Mission's analysis-report.md. That file is absent:
+  the next legitimate step is /spec-kitty.analyze plus canonical record-analysis,
+  not bypassing the gate. Post-analysis workspace allocation, claim persistence,
+  tasks transitions and review are still unverified/unrecovered. All three WPs
+  remain planned; primary is clean at 6befd9b43174b9f2c117f8bc02443001c9c25cb6.
