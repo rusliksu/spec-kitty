@@ -328,6 +328,50 @@ def test_linked_implement_reaches_dependency_gate_without_mutation(
     _assert_primary_unchanged(linked_mission)
 
 
+@pytest.mark.parametrize("selector", [_SLUG, _MISSION_ID])
+def test_implement_preserves_anchor_through_workspace_gate(
+    linked_mission: LinkedMission,
+    checked_cli: Callable[..., subprocess.CompletedProcess[str]],
+    selector: str,
+) -> None:
+    """After analysis, workspace lookup must reach the owned manifest guard."""
+    from specify_cli.analysis_report import write_analysis_report
+    from specify_cli.status.models import Lane, StatusEvent
+    from specify_cli.status.store import append_event
+
+    mission_dir = linked_mission.mission_dir
+    (mission_dir / "tasks" / "WP01-workspace.md").write_text(
+        "---\nwork_package_id: WP01\ntitle: Workspace gate\n"
+        "execution_mode: code_change\nowned_files:\n- src/recovery.py\n"
+        "dependencies: []\n---\n\n# Workspace gate\n", encoding="utf-8",
+    )
+    append_event(mission_dir, StatusEvent(
+        event_id="01M1MFE98JDK0S33WSYBQRPSDG", mission_slug=_SLUG, wp_id="WP01",
+        from_lane=Lane.PLANNED, to_lane=Lane.PLANNED, at="2026-09-04T00:00:00+00:00",
+        actor="fixture", force=False, execution_mode="worktree", mission_id=_MISSION_ID,
+    ))
+    write_analysis_report(
+        feature_dir=mission_dir, repo_root=linked_mission.linked,
+        body="---\nschema: analysis-findings/v1\nfindings: []\n"
+             "counts: {critical: 0, high: 0, medium: 0, low: 0, info: 0}\n---\n# Analysis\n",
+    )
+    _git(linked_mission.linked, "add", ".")
+    _git(linked_mission.linked, "commit", "-q", "-m", "seed post-analysis workspace gate")
+    events_before = (mission_dir / "status.events.jsonl").read_bytes()
+
+    result = checked_cli(linked_mission.linked, "agent", "action", "implement", "WP01",
+                         "--mission", selector, "--agent", "codex")
+
+    # The fixture deliberately omits lanes.json. This is a real safety guard,
+    # not an allocation mock: no WP claim or workspace may be created.
+    assert result.returncode != 0
+    output = result.stdout + result.stderr
+    assert f"lanes.json is required for {mission_dir}" in output
+    assert (mission_dir / "status.events.jsonl").read_bytes() == events_before
+    assert not (linked_mission.primary / ".worktrees").exists()
+    _assert_primary_unchanged(linked_mission)
+
+
 @pytest.mark.parametrize("action", ["implement", "review"])
 @pytest.mark.parametrize("selector", [_SLUG, _MISSION_ID])
 def test_lifecycle_context_selects_linked_wp(
