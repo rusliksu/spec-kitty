@@ -1,29 +1,42 @@
 ---
-work_package_id: "WP02"
-title: "Read-Side Planning Consumer Adoption"
-task_type: "implement"
-phase: "Phase 2 - Read-side adoption"
-subtasks: ["T005", "T006", "T007", "T008"]
-dependencies: ["WP01"]
-requirement_refs: ["FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006"]
-planning_base_branch: "codex/check-prerequisites-task-worktree-resolution"
-merge_target_branch: "codex/check-prerequisites-task-worktree-resolution"
-branch_strategy: "continue the sequential lane from approved WP01"
-execution_mode: "code_change"
-owned_files:
-  - "src/specify_cli/cli/commands/agent/mission_check_prerequisites.py"
-  - "src/specify_cli/cli/commands/agent/mission_setup_plan.py"
-  - "tests/specify_cli/cli/commands/agent/test_mission_check_prerequisites.py"
-  - "tests/specify_cli/cli/commands/agent/test_mission_planning_entry.py"
-authoritative_surface: "src/specify_cli/cli/commands/agent/"
-agent_profile: "python-pedro"
-role: "implementer"
-agent: "codex"
-model: ""
+work_package_id: WP02
+title: Read-Side Planning Consumer Adoption
+dependencies:
+- WP01
+requirement_refs:
+- FR-001
+- FR-002
+- FR-003
+- FR-004
+- FR-005
+- FR-006
+planning_base_branch: codex/check-prerequisites-task-worktree-resolution
+merge_target_branch: codex/check-prerequisites-task-worktree-resolution
+branch_strategy: Planning artifacts for this mission were generated on codex/check-prerequisites-task-worktree-resolution. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into codex/check-prerequisites-task-worktree-resolution unless the human explicitly redirects the landing branch.
+subtasks:
+- T005
+- T006
+- T007
+- T008
+phase: Phase 2 - Read-side adoption
 history:
-  - at: "2026-09-03T20:41:12Z"
-    actor: "system"
-    action: "Prompt generated via /spec-kitty.tasks"
+- at: '2026-09-03T20:41:12Z'
+  actor: system
+  action: Prompt generated via /spec-kitty.tasks
+agent_profile: python-pedro
+authoritative_surface: src/specify_cli/cli/commands/agent/
+create_intent: []
+execution_mode: code_change
+model: ''
+owned_files:
+- src/specify_cli/cli/commands/agent/mission_check_prerequisites.py
+- src/specify_cli/cli/commands/agent/mission_setup_plan.py
+- tests/specify_cli/cli/commands/agent/test_mission_check_prerequisites.py
+- tests/specify_cli/cli/commands/agent/test_mission_planning_entry.py
+role: implementer
+tags: []
+task_type: implement
+tracker_refs: []
 ---
 
 # Work Package Prompt: WP02 – Read-Side Planning Consumer Adoption

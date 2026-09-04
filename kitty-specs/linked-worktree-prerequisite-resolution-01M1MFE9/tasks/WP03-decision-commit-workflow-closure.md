@@ -1,29 +1,41 @@
 ---
-work_package_id: "WP03"
-title: "Decision, Commit, and Workflow Closure"
-task_type: "implement"
-phase: "Phase 3 - Write-side adoption and canary"
-subtasks: ["T009", "T010", "T011", "T012"]
-dependencies: ["WP02"]
-requirement_refs: ["FR-002", "FR-003", "FR-004", "FR-005", "FR-006"]
-planning_base_branch: "codex/check-prerequisites-task-worktree-resolution"
-merge_target_branch: "codex/check-prerequisites-task-worktree-resolution"
-branch_strategy: "continue the sequential lane from approved WP02"
-execution_mode: "code_change"
-owned_files:
-  - "src/specify_cli/cli/commands/decision.py"
-  - "src/specify_cli/cli/commands/spec_commit_cmd.py"
-  - "tests/specify_cli/cli/commands/test_decision_single_authority.py"
-  - "tests/specify_cli/cli/commands/test_safe_commit_cmd.py"
-authoritative_surface: "src/specify_cli/cli/commands/"
-agent_profile: "python-pedro"
-role: "implementer"
-agent: "codex"
-model: ""
+work_package_id: WP03
+title: Decision, Commit, and Workflow Closure
+dependencies:
+- WP02
+requirement_refs:
+- FR-002
+- FR-003
+- FR-004
+- FR-005
+- FR-006
+planning_base_branch: codex/check-prerequisites-task-worktree-resolution
+merge_target_branch: codex/check-prerequisites-task-worktree-resolution
+branch_strategy: Planning artifacts for this mission were generated on codex/check-prerequisites-task-worktree-resolution. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into codex/check-prerequisites-task-worktree-resolution unless the human explicitly redirects the landing branch.
+subtasks:
+- T009
+- T010
+- T011
+- T012
+phase: Phase 3 - Write-side adoption and canary
 history:
-  - at: "2026-09-03T20:41:12Z"
-    actor: "system"
-    action: "Prompt generated via /spec-kitty.tasks"
+- at: '2026-09-03T20:41:12Z'
+  actor: system
+  action: Prompt generated via /spec-kitty.tasks
+agent_profile: python-pedro
+authoritative_surface: src/specify_cli/cli/commands/
+create_intent: []
+execution_mode: code_change
+model: ''
+owned_files:
+- src/specify_cli/cli/commands/decision.py
+- src/specify_cli/cli/commands/spec_commit_cmd.py
+- tests/specify_cli/cli/commands/test_decision_single_authority.py
+- tests/specify_cli/cli/commands/test_safe_commit_cmd.py
+role: implementer
+tags: []
+task_type: implement
+tracker_refs: []
 ---
 
 # Work Package Prompt: WP03 – Decision, Commit, and Workflow Closure

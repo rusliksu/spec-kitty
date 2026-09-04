@@ -1,26 +1,38 @@
 ---
-work_package_id: "WP01"
-title: "Linked-Worktree RED Contract Harness"
-task_type: "implement"
-phase: "Phase 1 - Executable contract"
-subtasks: ["T001", "T002", "T003", "T004"]
+work_package_id: WP01
+title: Linked-Worktree RED Contract Harness
 dependencies: []
-requirement_refs: ["FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006"]
-planning_base_branch: "codex/check-prerequisites-task-worktree-resolution"
-merge_target_branch: "codex/check-prerequisites-task-worktree-resolution"
-branch_strategy: "single sequential code lane; external PR targets fork main"
-execution_mode: "code_change"
-owned_files:
-  - "tests/tasks/test_linked_worktree_planning_context.py"
-authoritative_surface: "tests/tasks/"
-agent_profile: "python-pedro"
-role: "implementer"
-agent: "codex"
-model: ""
+requirement_refs:
+- FR-001
+- FR-002
+- FR-003
+- FR-004
+- FR-005
+- FR-006
+planning_base_branch: codex/check-prerequisites-task-worktree-resolution
+merge_target_branch: codex/check-prerequisites-task-worktree-resolution
+branch_strategy: Planning artifacts for this mission were generated on codex/check-prerequisites-task-worktree-resolution. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into codex/check-prerequisites-task-worktree-resolution unless the human explicitly redirects the landing branch.
+subtasks:
+- T001
+- T002
+- T003
+- T004
+phase: Phase 1 - Executable contract
 history:
-  - at: "2026-09-03T20:41:12Z"
-    actor: "system"
-    action: "Prompt generated via /spec-kitty.tasks"
+- at: '2026-09-03T20:41:12Z'
+  actor: system
+  action: Prompt generated via /spec-kitty.tasks
+agent_profile: python-pedro
+authoritative_surface: tests/tasks/
+create_intent: []
+execution_mode: code_change
+model: ''
+owned_files:
+- tests/tasks/test_linked_worktree_planning_context.py
+role: implementer
+tags: []
+task_type: implement
+tracker_refs: []
 ---
 
 # Work Package Prompt: WP01 – Linked-Worktree RED Contract Harness
