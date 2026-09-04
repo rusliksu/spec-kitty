@@ -146,11 +146,64 @@ def test_record_analysis_persists_in_selected_worktree(
     report = linked_mission.mission_dir / "analysis-report.md"
     assert _payload(result)["path"] == str(report)
     assert "Fixture has no blocking findings." in report.read_text(encoding="utf-8")
-    assert check_analysis_report_current(linked_mission.mission_dir, linked_mission.primary).ok
+    assert check_analysis_report_current(linked_mission.mission_dir, linked_mission.linked).ok
     relative_report = report.relative_to(linked_mission.linked).as_posix()
     assert _git(linked_mission.linked, "show", "--pretty=", "--name-only", "HEAD") == relative_report
     assert _git(linked_mission.linked, "status", "--porcelain") == ""
     _assert_primary_unchanged(linked_mission)
+
+
+def test_linked_analysis_gate_uses_owned_hash_root(linked_mission: LinkedMission) -> None:
+    """A valid persisted report must not become stale by hashing another checkout."""
+    from specify_cli.analysis_report import write_analysis_report
+    from specify_cli.cli.commands.agent.workflow_executor import implement_resolve_feedback_and_gate
+    from specify_cli.task_utils import WorkPackage
+
+    write_analysis_report(
+        feature_dir=linked_mission.mission_dir, repo_root=linked_mission.linked,
+        body="---\nschema: analysis-findings/v1\nfindings: []\n"
+             "counts: {critical: 0, high: 0, medium: 0, low: 0, info: 0}\n---\n# Analysis\n",
+    )
+    wp = WorkPackage(
+        feature=_SLUG, path=linked_mission.mission_dir / "tasks" / "WP01.md",
+        current_lane="planned", relative_subpath=Path("WP01.md"),
+        frontmatter="", body="", padding="",
+    )
+    result = implement_resolve_feedback_and_gate(
+        linked_mission.primary, _SLUG, "WP01", wp, effective_root=linked_mission.linked,
+    )
+    assert result[0] == linked_mission.mission_dir
+    _assert_primary_unchanged(linked_mission)
+
+
+@pytest.mark.parametrize("refusal", ["missing", "ambiguous", "conflict", "dirty"])
+def test_record_analysis_refuses_unsafe_context(
+    linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]], refusal: str,
+) -> None:
+    selector = _SLUG
+    if refusal == "missing":
+        selector = "missing-01M1NONE"
+    elif refusal == "ambiguous":
+        selector = "01M1MFE9"
+        _write_mission(linked_mission.linked / "kitty-specs" / "other-01M1MFE9",
+                       "01M1MFE9ZZZZZZZZZZZZZZZZZZ")
+    elif refusal == "conflict":
+        _write_mission(linked_mission.primary / "kitty-specs" / _SLUG,
+                       "01M1MFE9ZZZZZZZZZZZZZZZZZZZZ")
+    else:
+        (linked_mission.linked / "README.md").write_text("unrelated edit\n", encoding="utf-8")
+    result = checked_cli(linked_mission.linked, "agent", "mission", "record-analysis",
+                         "--mission", selector, "--input-file", "not-read.md", "--json")
+    assert result.returncode != 0
+    payload = _payload(result)
+    if refusal == "dirty":
+        assert payload["error_code"] == "DIRTY_WORKTREE"
+    elif refusal == "conflict":
+        assert "different identities" in str(payload["error"])
+    else:
+        assert payload.get("error_code")
+    assert not (linked_mission.mission_dir / "analysis-report.md").exists()
+    assert not (linked_mission.primary / "kitty-specs" / _SLUG / "analysis-report.md").exists()
 
 
 @pytest.mark.parametrize("selector", [_SLUG, _MISSION_ID])
