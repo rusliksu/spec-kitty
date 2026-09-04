@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import subprocess
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -36,7 +37,7 @@ def _write_mission(mission_dir: Path, mission_id: str = _MISSION_ID) -> None:
     for child in ("tasks", "checklists", "research", "contracts"):
         (mission_dir / child).mkdir(parents=True, exist_ok=True)
     (mission_dir / "meta.json").write_text(
-        json.dumps({"mission_id": mission_id, "mission_slug": _SLUG, "slug": _SLUG,
+        json.dumps({"mission_id": mission_id, "mission_slug": mission_dir.name, "slug": mission_dir.name,
                     "mission_type": "software-dev", "target_branch": "codex/task"}),
         encoding="utf-8",
     )
@@ -55,7 +56,7 @@ def _write_mission(mission_dir: Path, mission_id: str = _MISSION_ID) -> None:
 
 
 @pytest.fixture
-def linked_mission(tmp_path: Path) -> LinkedMission:
+def linked_mission(tmp_path: Path) -> Iterator[LinkedMission]:
     primary = tmp_path / "repo"
     primary.mkdir()
     _git(primary, "init", "-q", "-b", "main")
@@ -81,14 +82,42 @@ def linked_mission(tmp_path: Path) -> LinkedMission:
     worktrees = _git(primary, "worktree", "list", "--porcelain").replace("\\", "/")
     assert "worktree " + str(linked).replace("\\", "/") in worktrees
     assert not (primary / "kitty-specs" / _SLUG).exists()
-    return LinkedMission(primary, linked, mission_dir, _git(primary, "rev-parse", "HEAD"),
-                         _git(primary, "status", "--porcelain"))
+    ctx = LinkedMission(primary, linked, mission_dir, _git(primary, "rev-parse", "HEAD"),
+                        _git(primary, "status", "--porcelain"))
+    yield ctx
+    # Teardown runs even when a command's success assertion fails.
+    assert _git(primary, "rev-parse", "HEAD") == ctx.primary_head
 
 
 def _payload(result: subprocess.CompletedProcess[str]) -> dict[str, object]:
     rows = [line for line in result.stdout.splitlines() if line.strip().startswith("{")]
     assert rows, result.stdout + result.stderr
-    return json.loads(rows[-1])
+    return cast(dict[str, object], json.loads(rows[-1]))
+
+
+@pytest.fixture
+def checked_cli(
+    linked_mission: LinkedMission,
+    run_cli: Callable[..., subprocess.CompletedProcess[str]],
+) -> Callable[..., subprocess.CompletedProcess[str]]:
+    """Check primary bytes, index, and HEAD for every command, including failures."""
+    def snapshot() -> tuple[str, str, dict[str, bytes]]:
+        root = linked_mission.primary
+        files = {
+            str(path.relative_to(root)): path.read_bytes()
+            for path in root.rglob("*")
+            if path.is_file() and ".git" not in path.relative_to(root).parts
+        }
+        return _git(root, "rev-parse", "HEAD"), _git(root, "status", "--porcelain"), files
+
+    def invoke(project: Path, *args: str) -> subprocess.CompletedProcess[str]:
+        before = snapshot()
+        try:
+            return run_cli(project, *args)
+        finally:
+            assert snapshot() == before, "Command mutated the primary checkout"
+
+    return invoke
 
 
 def _assert_primary_unchanged(ctx: LinkedMission) -> None:
@@ -99,9 +128,9 @@ def _assert_primary_unchanged(ctx: LinkedMission) -> None:
 
 @pytest.mark.parametrize("selector", [_SLUG, _MISSION_ID])
 def test_check_prerequisites_selects_linked_mission_by_stable_handle(
-    linked_mission: LinkedMission, run_cli: Callable[..., subprocess.CompletedProcess[str]], selector: str
+    linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]], selector: str
 ) -> None:
-    result = run_cli(linked_mission.linked, "agent", "mission", "check-prerequisites",
+    result = checked_cli(linked_mission.linked, "agent", "mission", "check-prerequisites",
                      "--mission", selector, "--paths-only", "--json")
     assert result.returncode == 0, result.stdout + result.stderr
     payload = _payload(result)
@@ -110,36 +139,62 @@ def test_check_prerequisites_selects_linked_mission_by_stable_handle(
     _assert_primary_unchanged(linked_mission)
 
 
-def test_setup_plan_selects_the_same_linked_mission(
-    linked_mission: LinkedMission, run_cli: Callable[..., subprocess.CompletedProcess[str]]
+def test_prerequisites_report_caller_branch(
+    linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]]
 ) -> None:
-    result = run_cli(linked_mission.linked, "agent", "mission", "setup-plan",
+    result = checked_cli(linked_mission.linked, "agent", "mission", "check-prerequisites",
+                         "--mission", _SLUG, "--json")
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = _payload(result)
+    assert payload["current_branch"] == "codex/task"
+    assert payload["target_branch"] == "codex/task"
+
+
+def test_setup_plan_selects_the_same_linked_mission(
+    linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]]
+) -> None:
+    result = checked_cli(linked_mission.linked, "agent", "mission", "setup-plan",
                      "--mission", _MISSION_ID, "--json")
     assert result.returncode == 0, result.stdout + result.stderr
     assert _payload(result)["feature_dir"] == str(linked_mission.mission_dir)
     _assert_primary_unchanged(linked_mission)
 
 
-def test_decision_open_and_verify_use_linked_identity(
-    linked_mission: LinkedMission, run_cli: Callable[..., subprocess.CompletedProcess[str]]
+def test_decision_open_uses_linked_identity(
+    linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]]
 ) -> None:
-    opened = run_cli(linked_mission.linked, "agent", "decision", "open", "--mission", _MISSION_ID,
+    opened = checked_cli(linked_mission.linked, "agent", "decision", "open", "--mission", _MISSION_ID,
                      "--flow", "plan", "--input-key", "resolver",
+                     "--slot-key", "resolver-surface",
                      "--question", "Which Mission surface is authoritative?", "--json")
     assert opened.returncode == 0, opened.stdout + opened.stderr
-    assert _payload(opened)["mission_id"] == _MISSION_ID
-    verified = run_cli(linked_mission.linked, "agent", "decision", "verify", "--mission", _SLUG,
+    payload = _payload(opened)
+    assert payload["mission_id"] == _MISSION_ID
+    artifact = Path(str(payload["artifact_path"]))
+    if not artifact.is_absolute():
+        artifact = linked_mission.linked / artifact
+    assert artifact.resolve().is_relative_to(linked_mission.mission_dir.resolve())
+    assert artifact.is_file()
+    events = (linked_mission.mission_dir / "status.events.jsonl").read_text(encoding="utf-8")
+    assert str(payload["decision_id"]) in events
+    _assert_primary_unchanged(linked_mission)
+
+
+def test_decision_verify_reads_linked_mission_independently(
+    linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]]
+) -> None:
+    verified = checked_cli(linked_mission.linked, "agent", "decision", "verify", "--mission", _SLUG,
                        "--no-fail-on-stale", "--json")
     assert verified.returncode == 0, verified.stdout + verified.stderr
     _assert_primary_unchanged(linked_mission)
 
 
 def test_spec_commit_never_selects_protected_primary(
-    linked_mission: LinkedMission, run_cli: Callable[..., subprocess.CompletedProcess[str]]
+    linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]]
 ) -> None:
     plan = linked_mission.mission_dir / "plan.md"
     plan.write_text(plan.read_text(encoding="utf-8") + "\nLinked edit.\n", encoding="utf-8")
-    result = run_cli(linked_mission.linked, "spec-commit", str(plan), "--message",
+    result = checked_cli(linked_mission.linked, "spec-commit", str(plan), "--message",
                      "test linked spec commit", "--mission", _MISSION_ID,
                      "--target-branch", "codex/task", "--json")
     assert result.returncode == 0, result.stdout + result.stderr
@@ -157,9 +212,28 @@ def test_conflicting_primary_and_linked_identities_fail_closed(linked_mission: L
 
 @pytest.mark.parametrize("selector", ["missing-01M1NONE", "../unsafe"])
 def test_invalid_selectors_fail_without_mutating_primary(
-    linked_mission: LinkedMission, run_cli: Callable[..., subprocess.CompletedProcess[str]], selector: str
+    linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]], selector: str
 ) -> None:
-    result = run_cli(linked_mission.linked, "agent", "mission", "check-prerequisites",
+    result = checked_cli(linked_mission.linked, "agent", "mission", "check-prerequisites",
                      "--mission", selector, "--paths-only", "--json")
     assert result.returncode != 0
+    assert _payload(result).get("error_code")
     _assert_primary_unchanged(linked_mission)
+
+
+@pytest.mark.parametrize("selector", [None, "01M1MFE9"])
+def test_multiple_missions_require_unambiguous_selection(
+    linked_mission: LinkedMission,
+    checked_cli: Callable[..., subprocess.CompletedProcess[str]],
+    selector: str | None,
+) -> None:
+    _write_mission(linked_mission.linked / "kitty-specs" / "other-01M1MFE9",
+                   mission_id="01M1MFE9ZZZZZZZZZZZZZZZZZZ")
+    args = ["agent", "mission", "check-prerequisites", "--paths-only", "--json"]
+    if selector is not None:
+        args.extend(["--mission", selector])
+    result = checked_cli(linked_mission.linked, *args)
+    assert result.returncode != 0
+    payload = _payload(result)
+    assert payload.get("error_code")
+    assert "feature_dir" not in payload
