@@ -1320,7 +1320,9 @@ def implement(
         # implement` WP-execution write site — refuse a claim invoked from a
         # checkout the mission does not own. write_intent gates the
         # checkout-identity refusal (pure reads leave it False).
-        workspace = resolve_workspace_for_wp(main_repo_root, mission_slug, normalized_wp_id, write_intent=True)
+        workspace = resolve_workspace_for_wp(
+            main_repo_root, mission_slug, normalized_wp_id, write_intent=True, **anchor_options
+        )
         status_execution_mode = "direct_repo" if workspace.resolution_kind == "repo_root" else "worktree"
 
         def _create_workspace() -> None:
