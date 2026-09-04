@@ -205,8 +205,10 @@ def test_setup_plan_selects_the_same_linked_mission(
     _assert_primary_unchanged(linked_mission)
 
 
+@pytest.mark.parametrize("has_dependency", [True, False])
 def test_linked_implement_reaches_dependency_gate_without_mutation(
     linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]],
+    has_dependency: bool,
 ) -> None:
     from specify_cli.status.models import Lane, StatusEvent
     from specify_cli.status.store import append_event
@@ -215,7 +217,8 @@ def test_linked_implement_reaches_dependency_gate_without_mutation(
     (mission_dir / "tasks" / "WP01-blocked.md").write_text(
         "---\nwork_package_id: WP01\ntitle: Blocked implementation\n"
         "execution_mode: code_change\nowned_files:\n- src/recovery.py\n"
-        "dependencies:\n- WP00\n---\n\n# Blocked implementation\n", encoding="utf-8",
+        + ("dependencies:\n- WP00\n" if has_dependency else "dependencies: []\n")
+        + "---\n\n# Blocked implementation\n", encoding="utf-8",
     )
     append_event(mission_dir, StatusEvent(
         event_id="01M1MFE98JDK0S33WSYBQRPSDG", mission_slug=_SLUG, wp_id="WP01",
@@ -228,7 +231,10 @@ def test_linked_implement_reaches_dependency_gate_without_mutation(
     result = checked_cli(linked_mission.linked, "agent", "action", "implement", "WP01",
                          "--mission", _MISSION_ID, "--agent", "codex")
     assert result.returncode != 0
-    assert "dependencies_not_satisfied" in result.stdout + result.stderr
+    expected_gate = "dependencies_not_satisfied" if has_dependency else "analysis_report_required"
+    assert expected_gate in result.stdout + result.stderr
+    if not has_dependency:
+        assert str(mission_dir / "analysis-report.md") in result.stdout
     assert "Branch: codex/task (target for this mission)" in result.stdout
     assert (mission_dir / "status.events.jsonl").read_bytes() == events_before
     assert not (linked_mission.primary / ".worktrees").exists()
