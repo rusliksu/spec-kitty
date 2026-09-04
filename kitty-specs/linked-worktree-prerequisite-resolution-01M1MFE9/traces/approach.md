@@ -19,3 +19,31 @@
   not yet demonstrate a successful implement/review transition or workspace
   allocation. Emitted-command execution and mutation guards remain recovery
   acceptance work; no WP is approved or advanced by this test package.
+- 2026-09-04 recovery implementation: WP lookup now receives the validated
+  effective root and pre-resolved status directory; workspace metadata and lane
+  manifest reads retain that anchor, while allocation/identity roots remain
+  unchanged. The four committed lifecycle RED cases now pass (4 passed,
+  12 deselected); the contract also asserts lane workspace paths stay under the
+  repository-root `.worktrees` directory. Live implement-context for WP01 now
+  succeeds with lane `planned`, lane_id `lane-a`, and the task-owned WP file.
+- Closest regression set: `tests/tasks/test_tasks_support.py`,
+  `tests/runtime/test_workspace_context_unit.py`,
+  `tests/agent/test_context_resolve_unit.py`, and
+  `tests/specify_cli/missions/test_operation_context.py`: 56 passed using a unique
+  `--basetemp C:/Windows/Temp/spec-kitty-recovery-<uuid>` outside the user's
+  `.kittify` ancestor. Initial default-temp execution had three root-discovery
+  fixture failures caused by that ancestor and one POSIX-only path assertion.
+  The latter now compares Path components; no product root-discovery behavior
+  was changed. These failures were resolved, not waived as accepted baseline.
+- Ruff passes on all five edited Python files. Strict mypy passes on the three
+  edited source files plus `core/paths.py` and the linked-worktree test. Including
+  `core/paths.py` avoids import-skip-induced Any diagnostics in unchanged
+  find_repo_root code. Compileall and diff-check pass. This remains a context-read
+  slice: workflow/task command execution and WP lifecycle advancement are pending.
+- Checkout-identity and context invariant/parity suite:
+  `tests/integration/test_wp_integrity_checkout_identity.py`,
+  `tests/mission_runtime/test_context_factory_invariant.py`, and
+  `tests/architectural/test_execution_context_parity.py`: 38 passed (200.32s).
+  Total across the three focused runs: 98 passed. Primary checkout remains clean
+  at `6befd9b43174b9f2c117f8bc02443001c9c25cb6`; no actual Mission transition,
+  workspace allocation, push, installation or deployment was performed.

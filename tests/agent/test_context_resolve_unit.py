@@ -152,7 +152,7 @@ def test_context_resolve_implement_auto_resolves_base(tmp_path: Path, monkeypatc
     payload = json.loads(result.stdout)
     assert payload["wp_id"] == "WP02"
     assert payload["resolved_base"] is None
-    assert payload["workspace_path"].endswith(".worktrees/021-context-test-lane-a")
+    assert Path(payload["workspace_path"]).parts[-2:] == (".worktrees", "021-context-test-lane-a")
     assert payload["commands"]["workflow"].endswith("implement WP02 --agent codex")
 
 

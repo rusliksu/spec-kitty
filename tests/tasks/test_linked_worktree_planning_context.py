@@ -201,6 +201,7 @@ def test_lifecycle_context_selects_linked_wp(
     assert payload["lane_id"] == "lane-a"
     assert payload["execution_mode"] == "code_change"
     assert payload["resolution_kind"] == "lane_workspace"
+    assert Path(payload["workspace_path"]).parent == linked_mission.primary / ".worktrees"
     _assert_primary_unchanged(linked_mission)
 
 

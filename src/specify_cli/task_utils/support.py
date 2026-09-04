@@ -547,11 +547,14 @@ class WorkPackage:
         return str(view.resolved.lane)
 
 
-def locate_work_package(repo_root: Path, feature: str, wp_id: str) -> WorkPackage:
+def locate_work_package(
+    repo_root: Path, feature: str, wp_id: str, *,
+    effective_root: Path | None = None, status_read_dir: Path | None = None,
+) -> WorkPackage:
     """Locate a work package by ID, supporting both legacy and new formats.
 
-    Always uses main repo's kitty-specs/ regardless of current directory.
-    Main branch is authoritative for planning artifacts.
+    Defaults to repository-root artifacts. A lifecycle caller may carry its
+    validated Mission anchor and resolved status directory explicitly.
 
     Legacy format: WP files in tasks/{lane}/ subdirectories
     New format: WP files in flat tasks/ directory with lane in frontmatter
@@ -560,18 +563,26 @@ def locate_work_package(repo_root: Path, feature: str, wp_id: str) -> WorkPackag
     from specify_cli.coordination import resolve_status_surface
     from specify_cli.core.paths import get_main_repo_root
     from specify_cli.status import reconstruct_wp_view
+    from mission_runtime.resolution import read_dir_for
 
-    # Always use main repo's kitty-specs - it's the source of truth.
+    if effective_root is not None and status_read_dir is None:
+        raise ValueError("An explicit Mission anchor requires its resolved status directory.")
+
+    # Preserve the default repository-root authority unless the caller carries
+    # an already-validated lifecycle anchor and status projection.
     # Route through the seam (WORK_PACKAGE_TASK) so tasks/ reads resolve to the
     # primary checkout under coord topology (coord husk carries STATUS only).
     # read-side-placement-seam-migration WP07: routed through
     # ``placement_seam`` (fail-loud on a deleted-coord mismatch, NFR-002)
     # instead of the kind-blind ``resolve_planning_read_dir``.
     main_root = get_main_repo_root(repo_root)
-    feature_path = placement_seam(main_root, feature).read_dir(
-        MissionArtifactKind.WORK_PACKAGE_TASK
+    feature_path = (
+        placement_seam(main_root, feature).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
+        if effective_root is None else read_dir_for(
+            effective_root, main_root, feature, kind=MissionArtifactKind.WORK_PACKAGE_TASK
+        )
     )
-    status_dir = resolve_status_surface(main_root, feature).parent
+    status_dir = status_read_dir if status_read_dir is not None else resolve_status_surface(main_root, feature).parent
 
     tasks_root = feature_path / "tasks"
     if not tasks_root.exists():
