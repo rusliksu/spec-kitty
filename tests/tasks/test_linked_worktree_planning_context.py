@@ -150,6 +150,20 @@ def test_prerequisites_report_caller_branch(
     assert payload["target_branch"] == "codex/task"
 
 
+@pytest.mark.parametrize("consumer", ["workflow", "tasks"])
+@pytest.mark.parametrize("selector", [_SLUG, _MISSION_ID])
+def test_lifecycle_command_selector_keeps_linked_mission(
+    linked_mission: LinkedMission, monkeypatch: pytest.MonkeyPatch,
+    consumer: str, selector: str,
+) -> None:
+    from specify_cli.cli.commands.agent import tasks_shared, workflow
+
+    monkeypatch.chdir(linked_mission.linked)
+    resolve = workflow._find_mission_slug if consumer == "workflow" else tasks_shared._find_mission_slug
+    assert resolve(explicit_mission=selector, repo_root=linked_mission.primary) == _SLUG
+    _assert_primary_unchanged(linked_mission)
+
+
 def test_setup_plan_selects_the_same_linked_mission(
     linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]]
 ) -> None:
