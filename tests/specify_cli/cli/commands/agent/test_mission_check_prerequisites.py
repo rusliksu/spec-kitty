@@ -44,7 +44,7 @@ def test_paths_only_payload_aliases_legacy_keys() -> None:
     assert out["SPEC_FILE"] == "/repo/kitty-specs/001-demo/spec.md"
     assert out["IMPL_PLAN"] == "/repo/kitty-specs/001-demo/plan.md"
     assert out["TASKS"] == "/repo/kitty-specs/001-demo/tasks.md"
-    assert out["SPECS_DIR"] == "/repo/kitty-specs"
+    assert out["SPECS_DIR"] == str(Path("/repo/kitty-specs"))
     assert out["artifact_files"] == {"x": 1}
 
 

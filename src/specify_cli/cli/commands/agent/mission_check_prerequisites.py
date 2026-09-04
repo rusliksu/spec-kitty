@@ -588,6 +588,7 @@ def check_prerequisites(
         # of every planning command onto one surface authority is tracked by the
         # single-authority-topology-cleanup mission (#1716 write-surface coherence).
         cwd = Path.cwd().resolve()
+        branch_root = repo_root
         try:
             if feature and feature.strip():
                 from specify_cli.missions.operation_context import (
@@ -597,6 +598,7 @@ def check_prerequisites(
                 operation = resolve_mission_operation_context(
                     repo_root, feature.strip(), cwd=cwd
                 )
+                branch_root = operation.mission_anchor_root
                 feature_dir = (
                     operation.identity.feature_dir
                     if operation.identity is not None
@@ -623,7 +625,7 @@ def check_prerequisites(
 
         validation_result = _mission.validate_feature_structure(feature_dir, check_tasks=include_tasks)
         target_branch = _resolve_feature_target_branch(feature_dir, repo_root)
-        current_branch = _mission.get_current_branch(repo_root) or target_branch
+        current_branch = _mission.get_current_branch(branch_root) or target_branch
         _emit_check_prerequisites_result(
             validation_result=validation_result,
             feature_dir=feature_dir,

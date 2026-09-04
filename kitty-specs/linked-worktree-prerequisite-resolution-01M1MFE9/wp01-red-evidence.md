@@ -58,3 +58,35 @@ the additional workflow consumers explicitly:
 Keep this recovery separate from WP02 completion. Reuse operation context and
 preserve distinct Git repository and Mission artifact authorities. Existing
 bootstrap patches are provisional and require review against these invariants.
+
+## 2026-09-04 prerequisite branch repair
+
+The existing caller-branch RED now passes: check-prerequisites reads the branch
+from `MissionOperationContext.mission_anchor_root` for an explicit selector.
+Git preflight retains the canonical repository root; omitted-selector behavior
+is unchanged. The nearby SPECS_DIR unit assertion now uses native Path rendering
+instead of assuming POSIX separators on Windows.
+
+Focused verification:
+
+```text
+.venv/Scripts/python.exe -m pytest -q tests/tasks/test_linked_worktree_planning_context.py -k prerequisites tests/tasks/test_check_prerequisites_surface_agreement.py tests/specify_cli/cli/commands/agent/test_mission_check_prerequisites.py
+36 passed, 9 deselected
+```
+
+Ruff passes for both edited Python files. Strict mypy passes when checking
+`mission_check_prerequisites.py` together with `mission_metadata.py`. A one-file
+check reported two no-any-return errors in unchanged metadata wrappers because
+the repository configuration skips specify_cli imports; explicitly including the
+typed metadata source resolves those diagnostics without casts or suppressions.
+
+Live candidate CLI canary returns valid=true, current_branch and target_branch
+both `codex/check-prerequisites-task-worktree-resolution`, and
+branch_matches_target=true. Primary remains clean at
+`6befd9b43174b9f2c117f8bc02443001c9c25cb6`.
+
+This bounded repair does not close WP01 or WP02. The full RED suite was not rerun;
+setup-plan, decision open/verify, spec-commit and lifecycle recovery remain open.
+WP-bearing context recovery also traverses `task_utils/support.py` and
+`workspace/context.py`, so changing only the argument in runtime resolution is
+insufficient. No lifecycle transition, push, PR, or installation was performed.
