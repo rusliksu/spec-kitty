@@ -88,7 +88,23 @@ As an operator, I want context resolution and prerequisite resolution to agree o
 | NFR-001 | Cross-platform regression evidence | The focused suite passes on Windows and a POSIX CI runner with zero new platform-specific skips. | Portability | High | Open |
 | NFR-002 | Deterministic parity | Repeating the same explicit-selector scenario through context and prerequisites produces one identical Mission directory and branch verdict in 100% of focused runs. | Reliability | High | Open |
 | NFR-003 | No primary side effects | Each linked-worktree prerequisite reproduction produces zero primary-checkout file changes and zero primary-branch commits. | Safety | High | Open |
-| NFR-004 | Focused quality gate | All focused selector, prerequisite, read-path, and planning-surface tests pass before review, with no retry-to-green. | Quality | High | Open |
+| NFR-004 | Focused quality gate | Before a WP is submitted for approval, its declared acceptance suite and affected regressions pass on its final commit, with separately committed RED evidence on its planning base. Before final Mission acceptance, all focused selector, prerequisite, read-path, and planning-surface suites pass together, with no retry-to-green. | Quality | High | Open |
+
+### Review and evidence boundaries
+
+- WP01 delivers the reusable real-Git harness, not a repaired planning consumer.
+  Its own harness acceptance tests must demonstrate RED before harness implementation
+  and GREEN on the final WP01 commit. Product RED evidence is a historical diagnostic
+  checkpoint, never sufficient evidence for WP01 approval.
+- WP02 owns prerequisite/setup-plan behavioral acceptance; WP03 owns decision/commit
+  behavioral acceptance and the complete integrated contract. Each preserves real
+  success assertions, separate RED history and final GREEN before independent review.
+- No failing product assertion may be inverted, removed, marked xfail/skipped, or
+  hidden by a filter to claim product acceptance. A declared WP-specific scope is not
+  Mission acceptance; the final gate runs the complete focused suite without filters.
+- NFR-001 is a final WP03/Mission acceptance gate: retain Windows and POSIX CI
+  evidence for the same candidate SHA and complete focused test inventory, with zero
+  new platform-specific skips. Unavailable or unexecuted CI remains pending.
 
 ### Constraints
 

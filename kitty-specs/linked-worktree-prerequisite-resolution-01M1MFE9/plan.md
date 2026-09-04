@@ -76,17 +76,20 @@ tests/tasks/test_planning_workflow_integration.py
 
 ## Implementation Concern Map
 
-### IC-01 — RED linked-worktree contract
+### IC-01 — Verified harness and historical RED evidence
 
 - Build a reusable real-Git fixture with a Mission present only in a registered linked task worktree.
-- Reproduce exact slug and immutable ID success expectations for prerequisites.
-- Reproduce parity expectations for setup-plan, decision open/verify, and spec-commit.
+- Drive harness correctness tests RED-to-GREEN independently of broken consumers.
+- Preserve immutable product RED commits and map every success assertion to WP02
+  (prerequisites/setup-plan) or WP03 (decisions/spec-commit/integrated contract).
 - Assert primary checkout remains byte-clean and commit-clean.
 - Preserve missing, omitted, ambiguous, traversal, and conflicting-identity failures.
 
 ### IC-02 — Read-side planning consumers
 
 - Route `check-prerequisites` and `setup-plan` through `MissionOperationContext`.
+- First commit consumer acceptance RED using WP01's verified harness; require the
+  unchanged success assertions and all affected regressions GREEN before WP02 review.
 - Keep repository-root preflight/protection checks anchored to the canonical primary repository.
 - Resolve/read Mission artifacts through `mission_anchor_root` and canonical identity.
 - Remove or bypass only the now-redundant primary-only selection inside those command paths.
@@ -94,6 +97,8 @@ tests/tasks/test_planning_workflow_integration.py
 ### IC-03 — Decision and planning-commit consumers
 
 - Route decision open/verify and spec-commit placement through the same operation context.
+- First commit write-consumer acceptance RED, then require it and the complete
+  integrated contract GREEN before WP03 review; historical RED is not final acceptance.
 - Preserve write-router protection policy and ensure files must belong to the selected Mission surface.
 - Refuse cross-surface identity conflicts and wrong-surface writes with actionable structured diagnostics.
 - Prove the original ancestry Mission can run the exact tasks prerequisite command after integration.
@@ -109,6 +114,33 @@ tests/tasks/test_planning_workflow_integration.py
 5. Execute the original `check-prerequisites --mission planning-artifact-ancestry-fix-01M1K666` canary from its task worktree against the built candidate.
 6. Confirm both task worktrees and the primary checkout have the expected clean/dirty state; candidate execution must not alter primary.
 7. Run Ruff, strict mypy on changed source, compileall, and `git diff --check`.
+8. For NFR-001, record the same candidate SHA, exact commands, source/interpreter
+   paths, collected/passed/failed/skipped counts and test inventory on Windows and
+   POSIX CI. Require both complete focused runs GREEN with zero new platform-specific
+   skips before WP03 approval and Mission acceptance. Missing CI is a pending gate.
+
+### Reviewable test ownership (C1 correction, approved 2026-09-04)
+
+| WP | Deliverable and acceptance scope | Final review gate |
+|---|---|---|
+| WP01 | `tests/tasks/linked_worktree_harness.py` and `tests/tasks/test_linked_worktree_harness.py`: registered topology, command invocation/result capture and primary snapshot invariants | Harness acceptance RED before implementation, then full harness suite plus operation-context controls GREEN; mutation of expected identity/path or a primary snapshot must fail |
+| WP02 | Existing owned prerequisite/setup-plan test modules consume that harness; keep exact product-success assertions | Consumer acceptance RED before its production change, then both complete consumer suites and affected resolver guards GREEN |
+| WP03 | Existing decision/safe-commit modules plus `tests/tasks/test_linked_worktree_planning_context.py` consume the harness; preserve every existing behavioral assertion | Write-consumer RED-to-GREEN, complete integrated focused inventory GREEN, and NFR-001 Windows/POSIX CI evidence |
+
+The existing mixed contract file remains intact until WP03 reconciles it; its known
+product failures are explicitly pending product work, not evidence that WP01's
+harness is broken or approved. Do not delete/skip/xfail/invert those assertions.
+WP01 does not edit that file or any production code. Preserve its historical RED
+commits without rewriting history. Each implementation WP still needs its own
+failing-first acceptance evidence for the deliverable it claims.
+
+POSIX CI entrypoint: `.github/workflows/ci-quality.yml`,
+`integration-tests-core-misc` includes `tests/tasks`; verify the actual shard,
+marker selection and collected node IDs for the candidate. Related command suites
+must also be covered by their CI jobs or an explicitly governed focused CI run.
+A green job that omitted the focused tests is insufficient. Record run/job URLs;
+Windows local evidence is allowed, POSIX CI evidence is required. This plan does
+not authorize pushing a branch, changing workflow configuration, or dispatching CI.
 
 ## Complexity Tracking
 

@@ -9,15 +9,34 @@ git status --short --branch
 
 Expected branch: `codex/check-prerequisites-task-worktree-resolution`.
 
-## RED contract
+## Historical product RED contract (not final acceptance)
 
 ```powershell
 uv run --extra test pytest -q tests/specify_cli/missions/test_operation_context.py tests/specify_cli/cli/commands/agent/test_mission_check_prerequisites.py tests/specify_cli/cli/commands/agent/test_mission_planning_entry.py tests/specify_cli/cli/commands/test_decision_single_authority.py tests/specify_cli/cli/commands/test_safe_commit_cmd.py -k "linked_worktree or owned_checkout"
 ```
 
-The new tests must fail because the affected consumers re-anchor to primary, while existing operation-context tests remain green.
+On the recorded pre-fix baseline, product tests must fail for the documented
+consumer re-anchoring reason while operation-context controls stay green. Keep
+the exact SHA and node IDs; this historical checkpoint does not approve WP01.
+
+## WP01 harness acceptance
+
+The approved planning correction assigns WP01 a reusable harness and its own
+acceptance suite (`tests/tasks/linked_worktree_harness.py` and
+`tests/tasks/test_linked_worktree_harness.py`). These are planned deliverables,
+not files created by the planning correction. Drive their acceptance RED-to-GREEN,
+then run the complete harness suite and operation-context controls before review.
+The existing mixed product contract remains intact for final WP03 closure.
 
 ## GREEN and integration
+
+Before WP03 approval/Mission acceptance, run this complete focused inventory plus
+the new harness and existing `tests/tasks/test_linked_worktree_planning_context.py`
+without `-k` filters on both Windows and POSIX CI at the same candidate SHA.
+Record commands, source/interpreter paths, node IDs, result/skip counts and CI
+run/job URLs. Require zero new platform-specific skips. A missing CI result is a
+pending gate, not equivalent to local success. See plan.md's reviewable ownership
+matrix and WP03 T012 for the exact completion obligations.
 
 ```powershell
 uv run --extra test pytest -q tests/specify_cli/missions/test_operation_context.py tests/specify_cli/cli/commands/agent/test_mission_check_prerequisites.py tests/specify_cli/cli/commands/agent/test_mission_planning_entry.py tests/specify_cli/cli/commands/test_decision_single_authority.py tests/specify_cli/cli/commands/test_safe_commit_cmd.py
