@@ -127,6 +127,33 @@ def _assert_primary_unchanged(ctx: LinkedMission) -> None:
 
 
 @pytest.mark.parametrize("selector", [_SLUG, _MISSION_ID])
+def test_record_analysis_persists_in_selected_worktree(
+    linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]], selector: str,
+) -> None:
+    """Catch primary re-anchoring in selection, persistence, and commit placement."""
+    from specify_cli.analysis_report import check_analysis_report_current
+
+    report_input = linked_mission.linked.parent / "analysis-input.md"
+    report_input.write_text(
+        "---\nschema: analysis-findings/v1\nfindings: []\n"
+        "counts: {critical: 0, high: 0, medium: 0, low: 0, info: 0}\n---\n"
+        "# Specification Analysis Report\n\nFixture has no blocking findings.\n",
+        encoding="utf-8",
+    )
+    result = checked_cli(linked_mission.linked, "agent", "mission", "record-analysis",
+                         "--mission", selector, "--input-file", str(report_input), "--json")
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = linked_mission.mission_dir / "analysis-report.md"
+    assert _payload(result)["path"] == str(report)
+    assert "Fixture has no blocking findings." in report.read_text(encoding="utf-8")
+    assert check_analysis_report_current(linked_mission.mission_dir, linked_mission.primary).ok
+    relative_report = report.relative_to(linked_mission.linked).as_posix()
+    assert _git(linked_mission.linked, "show", "--pretty=", "--name-only", "HEAD") == relative_report
+    assert _git(linked_mission.linked, "status", "--porcelain") == ""
+    _assert_primary_unchanged(linked_mission)
+
+
+@pytest.mark.parametrize("selector", [_SLUG, _MISSION_ID])
 def test_check_prerequisites_selects_linked_mission_by_stable_handle(
     linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]], selector: str
 ) -> None:
