@@ -1,6 +1,6 @@
 ---
 work_package_id: WP01
-title: Linked-Worktree RED Contract Harness
+title: Verified Linked-Worktree Harness
 dependencies: []
 requirement_refs:
 - FR-001
@@ -22,20 +22,23 @@ history:
 - at: '2026-09-03T20:41:12Z'
   actor: system
   action: Prompt generated via /spec-kitty.tasks
-agent_profile: reviewer-renata
+agent_profile: python-pedro
 authoritative_surface: tests/tasks/
-create_intent: []
+create_intent:
+- tests/tasks/linked_worktree_harness.py
+- tests/tasks/test_linked_worktree_harness.py
 execution_mode: code_change
 model: ''
 owned_files:
-- tests/tasks/test_linked_worktree_planning_context.py
-role: reviewer
+- tests/tasks/linked_worktree_harness.py
+- tests/tasks/test_linked_worktree_harness.py
+role: implementer
 tags: []
 task_type: implement
 tracker_refs: []
 ---
 
-# Work Package Prompt: WP01 – Linked-Worktree RED Contract Harness
+# Work Package Prompt: WP01 – Verified Linked-Worktree Harness
 
 ## ⚡ Do This First: Load Agent Profile
 
@@ -51,17 +54,18 @@ If no profile is available, run `spec-kitty agent profile list` and select the b
 
 ## Objective
 
-Create an executable, real-Git RED contract that reproduces every planning command's loss of caller-owned linked-worktree Mission context. Commit tests separately before any production change. A failure is useful only when it points to the current primary-only resolution behavior.
+Deliver a reusable real-Git command/snapshot harness with its own RED-to-GREEN acceptance cycle. This WP claims harness correctness, not repaired planning consumers. Preserve immutable product RED evidence and hand off the unchanged success contracts to WP02/WP03. RED evidence alone never authorizes WP01 approval.
 
 ## Context and Constraints
 
 - Read `../spec.md`, `../plan.md`, `../contracts/operation-context-consumer.md`, and `../quickstart.md` before editing.
-- Existing `agent context resolve` is reference evidence because it already uses `resolve_mission_operation_context()`.
+- Context output is parity evidence for the specific verified action, not proof that every lifecycle consumer already works.
 - Do not edit production files in this WP.
 - Do not weaken or rewrite existing assertions to manufacture RED.
 - Use a temporary primary repository plus a registered linked worktree; a plain copied directory is insufficient.
 - Snapshot primary branch HEAD and working-tree status before every write-capable command.
 - The Windows missing-`fcntl` origin-binding issue is out of scope.
+- Do not modify the existing mixed product contract in `tests/tasks/test_linked_worktree_planning_context.py`; WP03 owns its final reconciliation. No xfail, skip, deleted success assertion or inverted expected exit code may make an unrepaired consumer look accepted.
 
 ## Branch Strategy
 
@@ -92,35 +96,35 @@ spec-kitty agent action implement WP01 --agent codex
 4. Use a deterministic Mission slug and immutable ID so the same fixture can exercise both handle forms.
 5. Provide helpers that capture primary HEAD, porcelain status, and Mission-tree contents before and after each command.
 
-**Files**: `tests/tasks/test_linked_worktree_planning_context.py`.
+**Files**: `tests/tasks/linked_worktree_harness.py`, `tests/tasks/test_linked_worktree_harness.py`.
 
 **Validation**: Prove Git recognizes the secondary checkout as a worktree and that the Mission is absent from primary.
 
-### T002 — Add RED prerequisite and plan-setup cases
+### T002 — Drive harness acceptance RED-to-GREEN
 
-**Purpose**: Pin the read-side consumer failures.
-
-**Steps**:
-
-1. Invoke the actual `agent mission check-prerequisites` command from the linked worktree with the full slug.
-2. Repeat with the immutable Mission ID.
-3. Assert the future success contract: absolute linked-worktree `feature_dir`, correct current/target branch, and no 442-Mission-style census fallback.
-4. Invoke `agent mission setup-plan` against the same committed substantive spec and assert it selects the same Mission surface.
-5. Confirm current base fails for the expected primary-only reason; record the exact failing assertions in the RED commit message or evidence.
-
-**Validation**: Existing primary-only happy paths must continue to pass when the new tests are run together with their closest suites.
-
-### T003 — Add RED decision and spec-commit cases
-
-**Purpose**: Prevent a partial repair that only moves the first blocker.
+**Purpose**: Verify the harness itself before downstream consumers rely on it.
 
 **Steps**:
 
-1. Invoke decision open and verify using the linked-worktree-only Mission.
-2. Assert the decision artifact/event belongs to the selected immutable identity and linked Mission surface.
-3. Invoke spec-commit with a file under the linked Mission and assert it does not diagnose protected primary as the selected artifact surface.
-4. Keep all command routing real; patch external network or unrelated services only.
-5. Restore fixture state between write-capable cases so failures are independent.
+1. Before implementing the harness, commit acceptance checks that fail on its missing/incorrect behavior, not on syntax/import errors or an unrelated broken consumer.
+2. Verify real worktree registration, requested cwd/arguments, returned exit code/stdout/stderr, and exact primary HEAD/index/file snapshot preservation with controlled local command inputs.
+3. Use fixture literals as independent expected identities and paths, never the production resolver as both oracle and subject.
+4. Implement the harness to make the complete harness suite GREEN. Keep product command invocations real in downstream tests; only unrelated external services may be mocked.
+5. Mutate one expected Mission identity/path and deliberately alter a fixture primary file: the corresponding acceptance assertion must fail. Record these results; a green no-op or swallowed subprocess failure is not acceptable.
+
+**Validation**: Full harness suite and existing operation-context controls pass on the final WP01 commit. Product success acceptance remains owned by WP02/WP03.
+
+### T003 — Preserve RED evidence and behavioral handoff
+
+**Purpose**: Preserve outside-in product contracts without mislabelling historical RED as final WP01 acceptance.
+
+**Steps**:
+
+1. Inventory the existing immutable RED commits and exact failing node IDs/reasons; do not amend or rewrite that history.
+2. Map prerequisite/setup-plan success assertions to WP02's owned consumer suites and decision/spec-commit assertions to WP03's owned suites and final integrated contract.
+3. Retain the expected success semantics, immutable identity, absolute selected path, branch, containment and primary-cleanliness assertions in the handoff.
+4. Historical baseline reproduction is a diagnostic result, separate from the final harness acceptance result; record both honestly.
+5. Each product WP must commit its acceptance RED before its corresponding code change and show unchanged assertions GREEN at review. Existing RED evidence may be reused only with verified exact base/node/reason provenance.
 
 ### T004 — Pin fail-closed and cleanliness controls
 
@@ -128,28 +132,29 @@ spec-kitty agent action implement WP01 --agent codex
 
 **Steps**:
 
-1. Cover missing, omitted-in-multi-Mission, ambiguous, and unsafe/path-like selectors.
-2. Create a primary/caller selector collision with different immutable IDs and require typed conflict refusal.
-3. Assert every failed command leaves primary HEAD and porcelain status unchanged.
-4. Assert successful future linked-worktree cases also leave primary unchanged.
-5. Run `git diff --check` and commit only the new test file as the RED boundary.
+1. Provide reproducible fixture inputs for missing, omitted-in-multi-Mission, ambiguous, unsafe/path-like and conflicting-identity cases.
+2. Prove fixture identities really differ before asking downstream product tests to assert typed refusal.
+3. Make the snapshot assertion execute on both successful and failed command returns.
+4. Verify snapshots include tracked/untracked file bytes and index/status, not only HEAD; changes confined to the linked checkout must not falsely count as primary mutation.
+5. Run the complete harness tests and diff-check. Keep the harness acceptance RED commit separate from its GREEN implementation commit.
 
 ## Test Strategy
 
 ```powershell
-uv run --extra test pytest -q tests/tasks/test_linked_worktree_planning_context.py
+uv run --extra test pytest -q tests/tasks/test_linked_worktree_harness.py
 uv run --extra test pytest -q tests/specify_cli/missions/test_operation_context.py
 ```
 
-The first command must be RED for the intended consumer-routing reason. The second must remain green.
+Both commands must be GREEN on the final WP01 commit. The new harness acceptance must have separate failing-first evidence on the planning base. The existing mixed product suite is still mandatory at the final Mission gate, not erased or declared passed by this scoped run.
 
 ## Definition of Done
 
 - Four subtasks are represented by clear tests in the owned file.
-- RED is reproducible without timing assumptions or platform-specific skips.
+- Harness acceptance has a separate RED commit and is GREEN at final review, without timing assumptions or platform-specific skips.
 - Primary cleanliness and conflicting-identity controls are executable.
 - No production file changed.
-- A dedicated RED commit exists and its failure evidence is recorded.
+- Historical product RED and harness RED-to-GREEN evidence are recorded separately; no product completion is inferred.
+- Identity/path and primary-mutation checks demonstrably reject incorrect inputs; an independent reviewer verifies the full harness deliverable.
 
 ## Risks and Mitigations
 
@@ -159,7 +164,7 @@ The first command must be RED for the intended consumer-routing reason. The seco
 
 ## Review Guidance
 
-Reject if tests use only mocks, create an unregistered directory, omit immutable-ID coverage, or fail to prove primary cleanliness. Verify the RED reason on the planning base before approving implementation work.
+Reject mock-only topology, missing immutable-ID cases, ineffective snapshot checks, or any attempt to hide pending product failures. Verify harness RED on its planning base and GREEN on its final commit before approving WP01. A RED-only product checkpoint is never an approval. WP02 still requires canonical WP01 approval; do not edit lifecycle events manually.
 
 ## Activity Log
 

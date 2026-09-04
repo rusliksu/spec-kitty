@@ -32,6 +32,7 @@ owned_files:
 - src/specify_cli/cli/commands/spec_commit_cmd.py
 - tests/specify_cli/cli/commands/test_decision_single_authority.py
 - tests/specify_cli/cli/commands/test_safe_commit_cmd.py
+- tests/tasks/test_linked_worktree_planning_context.py
 role: implementer
 tags: []
 task_type: implement
@@ -111,10 +112,17 @@ spec-kitty agent action implement WP03 --agent codex
 **Steps**:
 
 1. Add focused slug and immutable-ID cases to existing decision single-authority tests.
+   Use WP01's verified harness and commit the behavioral acceptance RED before the
+   corresponding production fix; require the same success assertions GREEN at review.
 2. Add linked-worktree placement and containment cases to safe-commit tests.
 3. Assert cross-surface identity conflict refuses before any write.
 4. Assert primary HEAD/status remain unchanged on success and failure.
-5. Run WP01 decision/spec-commit selections to green.
+5. Run the preserved decision/spec-commit success contract to green.
+   Reconcile the existing mixed integration contract in the now WP03-owned
+   `tests/tasks/test_linked_worktree_planning_context.py`: consume the verified
+   harness without dropping or weakening any node's behavioral assertions. Record
+   old-to-new node mappings if tests move. No skipped/xfail tests or inverted success
+   conditions may substitute for repaired product behavior.
 
 ### T012 — Original-workflow canary and quality gate
 
@@ -128,11 +136,20 @@ spec-kitty agent action implement WP03 --agent codex
 4. Confirm `C:\Users\Ruslan\spec-kitty` remains clean and its HEAD unchanged.
 5. Run all focused suites, architectural guards, Ruff, strict mypy, compileall, and `git diff --check`.
 6. Record evidence in the Mission/Bead; do not resume ancestry implementation until this repair is reviewed and integrated through the governed delivery path.
+7. Enforce NFR-001 before WP03 approval and Mission acceptance: Windows and POSIX
+   CI must run the complete focused test inventory on the same candidate SHA.
+   Retain SHA, source/interpreter paths, exact commands, collected node IDs and
+   passed/failed/skipped counts; require zero new platform-specific skips.
+8. Check `.github/workflows/ci-quality.yml` / `integration-tests-core-misc` for
+   `tests/tasks` coverage and the relevant command-suite jobs. Record actual
+   run/job URLs and prove marker/shard selection did not omit the focused tests.
+   Missing, skipped or unexecuted CI is pending, not PASS. No CI dispatch, push,
+   workflow modification or environment installation is authorized by this WP.
 
 ## Test Strategy
 
 ```powershell
-uv run --extra test pytest -q tests/tasks/test_linked_worktree_planning_context.py -k "decision or spec_commit"
+uv run --extra test pytest -q tests/tasks/test_linked_worktree_harness.py tests/tasks/test_linked_worktree_planning_context.py
 uv run --extra test pytest -q tests/specify_cli/cli/commands/test_decision_single_authority.py tests/specify_cli/cli/commands/test_safe_commit_cmd.py
 uv run --extra test pytest -q tests/tasks/test_planning_workflow_integration.py tests/tasks/test_check_prerequisites_surface_agreement.py
 uv run --extra test ruff check src/specify_cli/cli/commands/decision.py src/specify_cli/cli/commands/spec_commit_cmd.py tests/specify_cli/cli/commands/test_decision_single_authority.py tests/specify_cli/cli/commands/test_safe_commit_cmd.py tests/tasks/test_linked_worktree_planning_context.py
@@ -147,6 +164,8 @@ git diff --check
 - All structured refusal and containment controls remain green.
 - The original tasks prerequisite canary succeeds against the candidate.
 - Primary checkout is unchanged.
+- Acceptance RED precedes the production fix and all focused suites are GREEN on the final WP03 commit; no filtered subset replaces the complete integrated contract.
+- Windows and POSIX CI evidence for the same candidate SHA and focused test inventory is retained, with zero new platform-specific skips (NFR-001). Unavailable CI blocks approval and Mission acceptance.
 - No runtime installation, push, PR, release, or deploy occurred within WP implementation.
 
 ## Risks and Mitigations

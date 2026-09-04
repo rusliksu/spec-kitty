@@ -11,11 +11,11 @@
         "WP01"
       ],
       "write_scope": [
-        "tests/tasks/test_linked_worktree_planning_context.py"
+        "tests/tasks/linked_worktree_harness.py",
+        "tests/tasks/test_linked_worktree_harness.py"
       ],
       "predicted_surfaces": [
         "api",
-        "artifact-rendering",
         "workspace"
       ],
       "depends_on_lanes": [],
@@ -52,7 +52,8 @@
         "src/specify_cli/cli/commands/decision.py",
         "src/specify_cli/cli/commands/spec_commit_cmd.py",
         "tests/specify_cli/cli/commands/test_decision_single_authority.py",
-        "tests/specify_cli/cli/commands/test_safe_commit_cmd.py"
+        "tests/specify_cli/cli/commands/test_safe_commit_cmd.py",
+        "tests/tasks/test_linked_worktree_planning_context.py"
       ],
       "predicted_surfaces": [
         "api",
@@ -65,8 +66,8 @@
       "parallel_group": 2
     }
   ],
-  "computed_at": "2026-09-04T06:28:25.125728+00:00",
+  "computed_at": "2026-09-04T20:38:44.368224+00:00",
   "computed_from": "dependency_graph+ownership",
   "planning_artifact_wps": [],
-  "planning_commit_sha": "10f6bf5fbeff64f2238e8fff4c02d07ce012d313"
+  "planning_commit_sha": "b60dcf0729d45f19d8acc399a581f334fa44a67c"
 }

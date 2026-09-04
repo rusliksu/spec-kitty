@@ -126,16 +126,16 @@ spec-kitty agent action implement WP02 --agent codex
 
 **Steps**:
 
-1. Run WP01 with only prerequisite/setup tests selected and require green.
+1. Use WP01's verified harness in the owned prerequisite/setup-plan modules. Commit their product-success acceptance RED before production edits, then require those same assertions GREEN. Do not claim the still-pending write-consumer contract is green.
 2. Run both complete consumer unit suites.
 3. Run operation-context and resolver architectural guards.
 4. Verify primary checkout snapshots remain identical.
-5. Commit the production/read-side tests separately from WP01 RED.
+5. Commit production changes separately from the read-side acceptance RED commit. Preserve exact historical evidence; neither xfail nor inverted success assertions satisfy the gate.
 
 ## Test Strategy
 
 ```powershell
-uv run --extra test pytest -q tests/tasks/test_linked_worktree_planning_context.py -k "prerequisite or setup_plan"
+uv run --extra test pytest -q tests/tasks/test_linked_worktree_harness.py
 uv run --extra test pytest -q tests/specify_cli/cli/commands/agent/test_mission_check_prerequisites.py tests/specify_cli/cli/commands/agent/test_mission_planning_entry.py
 uv run --extra test pytest -q tests/specify_cli/missions/test_operation_context.py tests/architectural/test_mission_resolver_walker_gate.py tests/specify_cli/cli/commands/agent/test_gate_read_chokepoint.py
 ```
@@ -147,6 +147,7 @@ uv run --extra test pytest -q tests/specify_cli/missions/test_operation_context.
 - No command-local scan or new resolver exists.
 - Primary HEAD and files are unchanged in real-Git cases.
 - Ruff, targeted strict mypy, compileall, and diff-check pass for owned files.
+- WP02 acceptance is RED on its planning base and GREEN on its final commit; the full owned consumer suites, not a filter that hides failures, are reviewed.
 
 ## Risks and Mitigations
 

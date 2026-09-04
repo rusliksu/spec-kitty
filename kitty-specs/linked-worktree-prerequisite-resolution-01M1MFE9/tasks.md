@@ -10,8 +10,8 @@
 | ID | Description | WP | Parallel |
 |---|---|---|---|
 | T001 | Build a registered linked-worktree Mission fixture with primary cleanliness probes | WP01 | No |
-| T002 | Add RED prerequisites and setup-plan contract cases for slug and immutable ID | WP01 | No |
-| T003 | Add RED decision and spec-commit contract cases on the same owned Mission | WP01 | No |
+| T002 | Drive harness invocation and snapshot acceptance RED-to-GREEN | WP01 | No |
+| T003 | Preserve historical product RED evidence and map unchanged success assertions to WP02/WP03 | WP01 | No |
 | T004 | Pin missing, ambiguous, unsafe, conflicting-identity, and primary-clean controls | WP01 | No |
 | T005 | Route check-prerequisites through the canonical Mission operation context | WP02 | No |
 | T006 | Route setup-plan through the same repository-root/mission-anchor split | WP02 | No |
@@ -25,26 +25,26 @@
 ## Dependency Graph
 
 ```text
-WP01 RED Contract Harness -> WP02 Read-Side Planning Consumers -> WP03 Decision and Commit Consumers
+WP01 Verified Harness -> WP02 Read-Side Planning Consumers -> WP03 Decision and Commit Consumers
 ```
 
 The packages are deliberately sequential. They share one authority contract and WP01's real-Git fixture; parallel implementation would risk divergent interpretations of caller-owned identity.
 
-## WP01 — Linked-Worktree RED Contract Harness
+## WP01 — Verified Linked-Worktree Harness
 
 **Prompt**: [tasks/WP01-linked-worktree-red-contract.md](tasks/WP01-linked-worktree-red-contract.md)
 **Priority**: P1
 **Dependencies**: None
 **Requirement refs**: FR-001, FR-002, FR-003, FR-004, FR-005, FR-006
-**Independent test**: On the planning base, the new exact-selector cases fail specifically because affected consumers re-anchor to primary, while existing operation-context controls remain green.
+**Independent test**: Harness acceptance is RED before harness implementation and GREEN on the final WP01 commit; it proves registration, exact invocation and primary snapshots independently of unrepaired product consumers. Historical product RED remains evidence, not approval.
 **Estimated prompt size**: ~240 lines
 
 - [ ] T001 Build a registered linked-worktree Mission fixture with primary cleanliness probes (WP01)
-- [ ] T002 Add RED prerequisites and setup-plan contract cases for slug and immutable ID (WP01)
-- [ ] T003 Add RED decision and spec-commit contract cases on the same owned Mission (WP01)
+- [ ] T002 Drive harness invocation and snapshot acceptance RED-to-GREEN (WP01)
+- [ ] T003 Preserve historical product RED evidence and map unchanged success assertions to WP02/WP03 (WP01)
 - [ ] T004 Pin missing, ambiguous, unsafe, conflicting-identity, and primary-clean controls (WP01)
 
-**Implementation sketch**: Create one integration contract file that invokes real command surfaces against a temporary primary repository and registered linked worktree. Capture exact RED reasons and commit them before production changes.
+**Implementation sketch**: Implement a reusable harness and its independently green acceptance suite in the two WP01-owned files. Preserve historical RED commits. Do not edit, suppress, or invert the existing mixed product contract; WP02 and WP03 close their own behavioral acceptance under the plan's reviewable test-ownership matrix.
 
 **Parallel opportunities**: None within the WP; fixture and assertions form one executable contract.
 
@@ -64,7 +64,7 @@ The packages are deliberately sequential. They share one authority contract and 
 - [ ] T007 Extend focused unit coverage for both read-side consumers (WP02)
 - [ ] T008 Make the shared RED contract green for prerequisite and plan setup paths (WP02)
 
-**Implementation sketch**: Consume `MissionOperationContext` at each command boundary, keep Git preflight on `repository_root`, and resolve artifact paths/identity through `mission_anchor_root`. Remove no guard and add no directory scan.
+**Implementation sketch**: First commit read-consumer acceptance RED in the owned consumer suites using WP01's harness. Consume `MissionOperationContext` at each command boundary, keep Git policy on `repository_root`, and resolve artifact paths/identity through `mission_anchor_root`. Require the complete WP02 suites GREEN before review; remove no guard and add no directory scan.
 
 **Parallel opportunities**: None; WP02 is the first production adoption and establishes the calling pattern for WP03.
 
@@ -84,7 +84,7 @@ The packages are deliberately sequential. They share one authority contract and 
 - [ ] T011 Extend decision and commit-router regression coverage (WP03)
 - [ ] T012 Run the original ancestry-Mission canary and the full quality gate (WP03)
 
-**Implementation sketch**: Apply WP02's authority split to the write-capable consumers, retain their existing routers and protection checks, then prove end-to-end recovery using the blocked Mission without installing the candidate globally.
+**Implementation sketch**: Commit write-consumer acceptance RED before fixes. Apply WP02's authority split, retain routers and protection checks, and reconcile the existing mixed integration contract without dropping any assertions. Require all focused suites GREEN, the original-workflow canary and same-SHA Windows/POSIX CI evidence before approval; no global candidate installation.
 
 **Parallel opportunities**: None; write-path work follows the read-side pattern and closes the same sequential lane.
 
@@ -92,4 +92,4 @@ The packages are deliberately sequential. They share one authority contract and 
 
 ## MVP Recommendation
 
-WP01 is the minimum reviewable checkpoint because it produces trustworthy RED evidence. The useful product fix requires WP01 and WP02; full user-confirmed scope and resumption of the original Mission require all three packages.
+WP01 is reviewable only when its harness acceptance is GREEN after committed RED evidence. It does not claim repaired planning consumers. The useful product fix requires WP01 and WP02; full scope and resumption require all three packages, complete green focused tests and NFR-001 evidence. No WP state changes are implied by this planning correction.
