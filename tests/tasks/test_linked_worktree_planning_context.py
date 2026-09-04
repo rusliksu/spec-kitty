@@ -160,6 +160,50 @@ def test_setup_plan_selects_the_same_linked_mission(
     _assert_primary_unchanged(linked_mission)
 
 
+@pytest.mark.parametrize("action", ["implement", "review"])
+@pytest.mark.parametrize("selector", [_SLUG, _MISSION_ID])
+def test_lifecycle_context_selects_linked_wp(
+    linked_mission: LinkedMission,
+    checked_cli: Callable[..., subprocess.CompletedProcess[str]],
+    action: str,
+    selector: str,
+) -> None:
+    """WP-bearing reads must keep the Mission selected by the CLI boundary."""
+    from specify_cli.lanes.models import ExecutionLane, LanesManifest
+    from specify_cli.lanes.persistence import write_lanes_json
+
+    mission_dir = linked_mission.mission_dir
+    wp_path = mission_dir / "tasks" / "WP01-recovery.md"
+    wp_path.write_text(
+        "---\nwork_package_id: WP01\ntitle: Lifecycle recovery\n"
+        "execution_mode: code_change\nowned_files:\n- src/recovery.py\n"
+        "dependencies: []\n---\n\n# Lifecycle recovery\n",
+        encoding="utf-8",
+    )
+    write_lanes_json(mission_dir, LanesManifest(
+        version=1, mission_slug=_SLUG, mission_id=_MISSION_ID,
+        mission_branch=f"kitty/mission-{_SLUG}", target_branch="codex/task",
+        lanes=[ExecutionLane("lane-a", ("WP01",), ("src/recovery.py",), (), (), 0)],
+        computed_at="2026-09-04T00:00:00+00:00", computed_from="dependency_graph+ownership",
+    ))
+    _git(linked_mission.linked, "add", ".")
+    _git(linked_mission.linked, "commit", "-q", "-m", "seed lifecycle contract")
+
+    result = checked_cli(
+        linked_mission.linked, "agent", "context", "resolve", "--action", action,
+        "--mission", selector, "--wp-id", "WP01", "--json",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["success"] is True
+    assert payload["wp_file"] == str(wp_path)
+    assert payload["wp_id"] == "WP01"
+    assert payload["lane_id"] == "lane-a"
+    assert payload["execution_mode"] == "code_change"
+    assert payload["resolution_kind"] == "lane_workspace"
+    _assert_primary_unchanged(linked_mission)
+
+
 def test_decision_open_uses_linked_identity(
     linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]]
 ) -> None:

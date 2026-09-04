@@ -112,4 +112,25 @@ tests/tasks/test_planning_workflow_integration.py
 
 ## Complexity Tracking
 
+### Approved lifecycle bootstrap recovery (2026-09-04)
+
+Ruslan approved extending the recovery scope after the implement-context canary
+returned WORK_PACKAGE_UNRESOLVED against the repository-root checkout. This is
+an explicit bootstrap exception, not approval of WP01 or permission to start WP02.
+
+- Recover the selected Mission context through WP lookup and workspace resolution
+  in `mission_runtime/resolution.py`, `task_utils/support.py`, and
+  `workspace/context.py`; restore explicit selection in `agent/workflow.py` and
+  `agent/tasks_shared.py` where required for the same lifecycle path.
+- Keep Git topology, lane allocation, checkout identity, dependency and review
+  gates intact. Reuse MissionOperationContext and the artifact placement seam;
+  do not substitute a raw path or copy Mission artifacts into the primary checkout.
+- First commit real-Git RED tests for implement/review context using slug and
+  immutable ID, with unchanged-primary assertions. Then repair the demonstrated
+  consumers, validate emitted commands and affected compatibility/ownership tests.
+- Complete WP01 evidence and obtain an independent review through the restored
+  lifecycle before WP02. No manual event/status edits, push, install or deploy.
+- Track this bootstrap package under Bead `spk-1m6`; no new parallel WP or lane
+  is introduced while the lifecycle itself cannot resolve the Mission.
+
 No constitution violation or new abstraction is planned. The existing operation-context seam is the intended consolidation point.
