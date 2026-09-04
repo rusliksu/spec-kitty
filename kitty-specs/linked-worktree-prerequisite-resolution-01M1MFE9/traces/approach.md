@@ -89,3 +89,31 @@
   not bypassing the gate. Post-analysis workspace allocation, claim persistence,
   tasks transitions and review are still unverified/unrecovered. All three WPs
   remain planned; primary is clean at 6befd9b43174b9f2c117f8bc02443001c9c25cb6.
+
+### 2026-09-04 — analysis persistence and freshness recovery
+
+- Audience: software-engineer / next Mission operator. Bead: `spk-1m6`.
+- Live blocker: explicit `record-analysis --mission` returned
+  `FEATURE_CONTEXT_UNRESOLVED` after primary re-anchoring; prerequisites already
+  resolved the linked Mission correctly. Ruslan approved this bounded repair.
+- RED `d51c7779b`: two actual CLI tests (slug and immutable ID) failed at
+  selection. RED `c2a1adea6`: a valid linked report failed the implement gate with
+  `path_relativization_failed`; refusal controls also pin pre-write safety.
+- Reused `MissionOperationContext` plus existing `mission_context_for` artifact
+  read/write/commit projections. Only recorder and its implement freshness caller
+  changed; no new resolver or manual report writer. The owned root now reaches
+  dirty preflight, report hash inputs, and the canonical commit router. Charter
+  hashes still use the canonical charter root.
+- Intermediate tests caught two further boundaries: hashing against primary and
+  checking primary dirt instead of selected-worktree dirt. Both were corrected.
+  Fixture `.gitignore` now mirrors the real repository's ignored sync-state file;
+  report tracking and all primary byte/index/HEAD assertions remain strict.
+- Final Windows tests: 9 linked persistence/freshness/refusal/implement-gate cases
+  passed (26 unrelated cases deselected), plus 52 recorder/implement/rehome
+  regressions passed. A post-record spec mutation invalidates freshness, proving
+  source input values affect the gate. Original re-anchor behavior was caught by
+  the committed RED tests. Ruff, strict mypy (5 explicit inputs), compileall and
+  diff-check passed. POSIX CI was not run.
+- No real Mission analysis verdict or WP transition was manufactured. Run fresh
+  analyze and persist its actual findings next; WP01 is not approved and WP02
+  must not start. No push, install, deployment or primary-checkout changes.

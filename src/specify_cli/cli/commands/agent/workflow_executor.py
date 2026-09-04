@@ -719,7 +719,7 @@ def implement_resolve_feedback_and_gate(
     # checkout where record-analysis writes it (see _analysis_report_gate_dir).
     w._require_current_analysis_report(
         w._analysis_report_gate_dir(main_repo_root, mission_slug, **anchor_options),
-        main_repo_root,
+        effective_root if effective_root is not None else main_repo_root,
         mission_slug,
     )
 

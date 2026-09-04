@@ -134,3 +134,19 @@ an explicit bootstrap exception, not approval of WP01 or permission to start WP0
   is introduced while the lifecycle itself cannot resolve the Mission.
 
 No constitution violation or new abstraction is planned. The existing operation-context seam is the intended consolidation point.
+
+### Analysis persistence recovery (2026-09-04)
+
+Ruslan approved the next bounded recovery package after `record-analysis` returned
+`FEATURE_CONTEXT_UNRESOLVED` despite the explicit linked Mission selector. Adopt
+`MissionOperationContext` and the existing `mission_context_for(..., effective_root=...)`
+artifact projection in that command; retain the legacy primary/coord path for other
+callers. The selected checkout must also govern dirty-tree preflight, input hash
+relativization and commit placement. The implement feedback/analysis gate must hash
+against that same validated root; charter hashing remains canonically anchored.
+
+Verification: separate real-Git RED commits, slug/immutable-ID persistence and commit
+checks, unchanged primary bytes/index/HEAD, stale-spec mutation, unsafe selector and
+dirty-checkout refusals, and focused recorder/implement regressions. This repairs
+the tool needed by analyze; it does not manufacture an analysis verdict, approve
+WP01, or authorize WP02, push, installation, or deployment.

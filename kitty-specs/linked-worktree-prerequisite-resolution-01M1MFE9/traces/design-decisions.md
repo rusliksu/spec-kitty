@@ -33,3 +33,14 @@ to use `repo_root`. Metadata caches include the selected checkout to prevent
 cross-checkout reuse. This is a read-context repair, not authorization to allocate
 a lane, transition a WP, or approve its implementation. Workflow/task command
 selection and the actual implement/review transitions remain a subsequent slice.
+
+## 2026-09-04 — retain artifact context through analysis persistence
+
+Use the existing Mission-level `mission_context_for` projection for a validated
+caller-owned Mission; it already supplies the analysis report's read directory,
+write directory and commit target. This avoids extending PlacementSeam or creating
+a recorder-specific path resolver. Legacy primary/coord callers keep their current
+seam. Hash relativization and the implement freshness check use the selected
+artifact root; charter resolution independently retains its canonical authority.
+The dirty preflight must inspect that same selected checkout because
+`locate_project_root()` intentionally returns the repository-root checkout.

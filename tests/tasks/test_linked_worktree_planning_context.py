@@ -63,6 +63,7 @@ def linked_mission(tmp_path: Path) -> Iterator[LinkedMission]:
     _git(primary, "config", "user.email", "test@example.invalid")
     _git(primary, "config", "user.name", "Test")
     (primary / "README.md").write_text("seed\n", encoding="utf-8")
+    (primary / ".gitignore").write_text(".kittify/sync-state.json\n", encoding="utf-8")
     (primary / ".kittify" / "templates").mkdir(parents=True)
     (primary / ".kittify" / "config.yaml").write_text("project:\n  name: linked-test\n", encoding="utf-8")
     (primary / ".kittify" / "templates" / "plan-template.md").write_text(
@@ -151,6 +152,12 @@ def test_record_analysis_persists_in_selected_worktree(
     assert _git(linked_mission.linked, "show", "--pretty=", "--name-only", "HEAD") == relative_report
     assert _git(linked_mission.linked, "status", "--porcelain") == ""
     _assert_primary_unchanged(linked_mission)
+    # A meaningful input mutation must invalidate the persisted acceptance result.
+    spec_path = linked_mission.mission_dir / "spec.md"
+    spec_path.write_text(spec_path.read_text(encoding="utf-8") + "\nNew requirement.\n", encoding="utf-8")
+    stale = check_analysis_report_current(linked_mission.mission_dir, linked_mission.linked)
+    assert not stale.ok
+    assert "spec.md" in stale.mismatches
 
 
 def test_linked_analysis_gate_uses_owned_hash_root(linked_mission: LinkedMission) -> None:
@@ -197,7 +204,7 @@ def test_record_analysis_refuses_unsafe_context(
     assert result.returncode != 0
     payload = _payload(result)
     if refusal == "dirty":
-        assert payload["error_code"] == "DIRTY_WORKTREE"
+        assert payload.get("error_code") == "DIRTY_WORKTREE", payload
     elif refusal == "conflict":
         assert "different identities" in str(payload["error"])
     else:
