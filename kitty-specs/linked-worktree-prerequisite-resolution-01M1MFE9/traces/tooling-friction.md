@@ -27,3 +27,14 @@
   used unique `C:/Windows/Temp/spk-workspace-*` basetemps.
 - This is bootstrap recovery, not the WP01 harness deliverable or approval.
   Allocation/claim and subsequent lifecycle consumers still require live proof.
+- Live canary on fix commit `9ad2345e0` passed the repaired lookup and reached
+  `ensure_workspace_materialized`'s blanket worktree-creation refusal:
+  `Workspace does not exist and cannot be created from a worktree.` This guard
+  was not removed or bypassed. The suggested primary invocation is not a valid
+  workaround for a Mission whose planning artifacts exist only in the owned
+  task checkout. A follow-up needs a governed owned-planning-checkout allocation
+  contract, preserving foreign-checkout, husk, ancestry and identity safeguards.
+- Live postconditions: lane-a path absent; task and primary checkouts clean;
+  primary HEAD `6befd9b43174b9f2c117f8bc02443001c9c25cb6` unchanged; status event
+  SHA256 `0BA37C340B47384093A1A6C29A3B674446BAA5DC72460294711DA6C93E2D5FDF`
+  unchanged. WP01 harness implementation has not started.
