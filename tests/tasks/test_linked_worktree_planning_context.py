@@ -205,6 +205,36 @@ def test_setup_plan_selects_the_same_linked_mission(
     _assert_primary_unchanged(linked_mission)
 
 
+def test_linked_implement_reaches_dependency_gate_without_mutation(
+    linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]],
+) -> None:
+    from specify_cli.status.models import Lane, StatusEvent
+    from specify_cli.status.store import append_event
+
+    mission_dir = linked_mission.mission_dir
+    (mission_dir / "tasks" / "WP01-blocked.md").write_text(
+        "---\nwork_package_id: WP01\ntitle: Blocked implementation\n"
+        "execution_mode: code_change\nowned_files:\n- src/recovery.py\n"
+        "dependencies:\n- WP00\n---\n\n# Blocked implementation\n", encoding="utf-8",
+    )
+    append_event(mission_dir, StatusEvent(
+        event_id="01M1MFE98JDK0S33WSYBQRPSDG", mission_slug=_SLUG, wp_id="WP01",
+        from_lane=Lane.PLANNED, to_lane=Lane.PLANNED, at="2026-09-04T00:00:00+00:00",
+        actor="fixture", force=False, execution_mode="worktree", mission_id=_MISSION_ID,
+    ))
+    _git(linked_mission.linked, "add", ".")
+    _git(linked_mission.linked, "commit", "-q", "-m", "seed dependency gate")
+    events_before = (mission_dir / "status.events.jsonl").read_bytes()
+    result = checked_cli(linked_mission.linked, "agent", "action", "implement", "WP01",
+                         "--mission", _MISSION_ID, "--agent", "codex")
+    assert result.returncode != 0
+    assert "dependencies_not_satisfied" in result.stdout + result.stderr
+    assert "Branch: codex/task (target for this mission)" in result.stdout
+    assert (mission_dir / "status.events.jsonl").read_bytes() == events_before
+    assert not (linked_mission.primary / ".worktrees").exists()
+    _assert_primary_unchanged(linked_mission)
+
+
 @pytest.mark.parametrize("action", ["implement", "review"])
 @pytest.mark.parametrize("selector", [_SLUG, _MISSION_ID])
 def test_lifecycle_context_selects_linked_wp(
