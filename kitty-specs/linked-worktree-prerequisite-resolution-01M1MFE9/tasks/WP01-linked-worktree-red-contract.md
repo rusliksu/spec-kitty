@@ -22,14 +22,14 @@ history:
 - at: '2026-09-03T20:41:12Z'
   actor: system
   action: Prompt generated via /spec-kitty.tasks
-agent_profile: python-pedro
+agent_profile: reviewer-renata
 authoritative_surface: tests/tasks/
 create_intent: []
 execution_mode: code_change
 model: ''
 owned_files:
 - tests/tasks/test_linked_worktree_planning_context.py
-role: implementer
+role: reviewer
 tags: []
 task_type: implement
 tracker_refs: []
