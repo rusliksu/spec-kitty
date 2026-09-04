@@ -852,6 +852,11 @@ def _find_mission_slug(
 
     raw_handle = explicit_mission.strip()
     if repo_root is not None:
+        from specify_cli.missions.operation_context import resolve_mission_operation_context
+
+        operation = resolve_mission_operation_context(repo_root, raw_handle, cwd=Path.cwd())
+        if operation.mission_anchor_root != operation.repository_root:
+            return resolve_mission_handle(raw_handle, operation.mission_anchor_root).mission_slug
         legacy_dir = _resolve_workflow_read_dir(
             repo_root=get_main_repo_root(repo_root),
             mission_slug=raw_handle,

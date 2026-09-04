@@ -164,6 +164,37 @@ def test_lifecycle_command_selector_keeps_linked_mission(
     _assert_primary_unchanged(linked_mission)
 
 
+@pytest.mark.parametrize("consumer", ["workflow", "tasks"])
+def test_lifecycle_command_selector_refuses_conflicting_identity(
+    linked_mission: LinkedMission, monkeypatch: pytest.MonkeyPatch, consumer: str,
+) -> None:
+    from specify_cli.cli.commands.agent import tasks_shared, workflow
+
+    _write_mission(linked_mission.primary / "kitty-specs" / _SLUG,
+                   mission_id="01M1MFE9ZZZZZZZZZZZZZZZZZZ")
+    monkeypatch.chdir(linked_mission.linked)
+    resolve = workflow._find_mission_slug if consumer == "workflow" else tasks_shared._find_mission_slug
+    with pytest.raises(MissionSurfaceConflictError):
+        resolve(explicit_mission=_SLUG, repo_root=linked_mission.primary)
+
+
+@pytest.mark.parametrize("consumer", ["workflow", "tasks"])
+@pytest.mark.parametrize("selector", ["missing-01M1NONE", "01M1MFE9"])
+def test_lifecycle_command_selector_refuses_missing_or_ambiguous(
+    linked_mission: LinkedMission, monkeypatch: pytest.MonkeyPatch, consumer: str, selector: str,
+) -> None:
+    from specify_cli.cli.commands.agent import tasks_shared, workflow
+
+    _write_mission(linked_mission.linked / "kitty-specs" / "other-01M1MFE9",
+                   mission_id="01M1MFE9ZZZZZZZZZZZZZZZZZZ")
+    monkeypatch.chdir(linked_mission.linked)
+    resolve = workflow._find_mission_slug if consumer == "workflow" else tasks_shared._find_mission_slug
+    with pytest.raises(SystemExit) as error:
+        resolve(explicit_mission=selector, repo_root=linked_mission.primary)
+    assert error.value.code == 2
+    _assert_primary_unchanged(linked_mission)
+
+
 def test_setup_plan_selects_the_same_linked_mission(
     linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]]
 ) -> None:

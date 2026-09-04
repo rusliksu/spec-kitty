@@ -47,3 +47,22 @@
   Total across the three focused runs: 98 passed. Primary checkout remains clean
   at `6befd9b43174b9f2c117f8bc02443001c9c25cb6`; no actual Mission transition,
   workspace allocation, push, installation or deployment was performed.
+- 2026-09-04 command-selector slice: the actual `agent action implement WP01
+  --mission linked-worktree-prerequisite-resolution-01M1MFE9 --agent codex`
+  initially refused the Mission handle. RED commit `2e8fc22e3` reproduces this
+  through both pre-existing workflow/tasks selector helpers (4 failed).
+  Both helpers now consult MissionOperationContext and pass a selected linked
+  anchor to the canonical handle resolver; primary/legacy paths remain unchanged.
+  Missing/ambiguous selectors and conflicting immutable identities are explicitly
+  tested for both consumers. Selector suite: 10 passed. Existing tasks helper and
+  move-task Git validation suites: 19 passed. Ruff, compileall and strict mypy
+  pass; the latter includes tasks.py and core/subtask_rows.py so the repository's
+  import-skip configuration does not erase existing helper return types.
+- Live implement now passes selector resolution but still stops at
+  `workflow_executor.implement_locate_wp`: its call has not yet adopted the
+  effective-root/status projection added in the previous slice. The preceding
+  branch banner still reports primary main. Thus this is NOT a restored workflow
+  or a review handoff. Three WPs remain planned. The next recovery slice must
+  propagate context through the executor and branch-context consumers while
+  retaining dependency, ownership and commit gates; do not replace repo_root
+  wholesale with the Mission anchor. No workspace or status transition occurred.
