@@ -259,6 +259,14 @@ def _commit_partition_group(
     does not re-validate it (single responsibility: resolve + commit one group).
     """
     placement: CommitTarget = resolve_placement_only(repo_root, mission_slug, kind=kind)
+    linked_primary_target: str | None = None
+    if is_primary_artifact_kind(kind) and target_branch is not None:
+        from specify_cli.missions.operation_context import resolve_mission_operation_context
+
+        operation = resolve_mission_operation_context(repo_root, mission_slug, cwd=repo_root)
+        if operation.mission_anchor_root != operation.repository_root:
+            linked_primary_target = target_branch
+            placement = CommitTarget(ref=target_branch)
 
     # FR-003 / C-005 / NFR-004: derive coord-vs-primary routing from the ONE
     # kind-aware ``placement`` (the single authority), not a second predicate.
@@ -270,7 +278,7 @@ def _commit_partition_group(
     # branch — i.e. only coordination kinds materialise the coord worktree (C-001).
     # A primary kind therefore NEVER routes to coordination even under coord
     # topology — this removes the planning→coord arm (write-surface-coherence WP02).
-    primary_target = _resolve_mission_target_branch(repo_root, mission_slug)
+    primary_target = linked_primary_target or _resolve_mission_target_branch(repo_root, mission_slug)
     use_coord = (
         routes_through_coordination(resolve_topology(repo_root, mission_slug))
         and placement.ref != primary_target
