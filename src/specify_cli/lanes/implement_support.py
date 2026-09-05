@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from kernel.clock import now_utc_iso
-from mission_runtime import MissionArtifactKind, placement_seam
+from mission_runtime import MissionArtifactKind
 from specify_cli.ownership.models import WorkProductKind
 from specify_cli.lanes.lane_env import lane_test_env
 from specify_cli.lanes.models import ExecutionLane, LanesManifest
@@ -62,6 +62,7 @@ def create_lane_workspace(
     declared_deps: list[str],
     vcs_backend_value: str,
     base: str | None = None,
+    *, effective_root: Path | None = None,
 ) -> LaneWorkspaceResult:
     """Create or reuse the execution workspace for the given WP.
 
@@ -123,12 +124,14 @@ def create_lane_workspace(
     )
     is_reuse = predicted_path.exists() or branch_exists(repo_root, predicted_branch)
 
+    anchor_options = {"effective_root": effective_root} if effective_root is not None else {}
     workspace_path, branch_name = allocate_lane_worktree(
         repo_root=repo_root,
         mission_slug=mission_slug,
         wp_id=wp_id,
         lanes_manifest=lanes_manifest,
         base=base,
+        **anchor_options,
     )
 
     # Install pre-commit ownership guard.
@@ -145,7 +148,7 @@ def create_lane_workspace(
     # allocator reads internally, so this can never diverge from what was
     # actually created). No-regression pin: a default no-``--base`` coord
     # lane still records ``coordination_branch`` exactly as before.
-    coordination_branch = _read_coordination_branch(repo_root, mission_slug)
+    coordination_branch = _read_coordination_branch(repo_root, mission_slug, **anchor_options)
     honored_base = (
         base
         if base is not None
@@ -243,7 +246,7 @@ def _rev_parse(repo_root: Path, ref: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _planning_dir(main_repo_root: Path, mission_slug: str) -> Path:
+def _planning_dir(main_repo_root: Path, mission_slug: str, *, effective_root: Path | None = None) -> Path:
     """PRIMARY-partition mission dir (where ``lanes.json`` lives) for *mission_slug*.
 
     Routes through the kind-aware placement seam -- the same seam
@@ -253,13 +256,14 @@ def _planning_dir(main_repo_root: Path, mission_slug: str) -> Path:
     topology (coord-topology missions carry a SEPARATE status/coord dir that
     does NOT hold ``lanes.json``, #2118).
     """
-    return placement_seam(main_repo_root, mission_slug).read_dir(
-        MissionArtifactKind.WORK_PACKAGE_TASK
-    )
+    from mission_runtime.resolution import read_dir_for
+
+    return read_dir_for(effective_root, main_repo_root, mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK)
 
 
 def reenter_lane_self_heal(
     main_repo_root: Path, mission_slug: str, wp_id: str,
+    *, effective_root: Path | None = None,
 ) -> Path | None:
     """Idempotent self-heal re-entry for a stale lane workspace (FR-005/#3281/C-006).
 
@@ -297,7 +301,7 @@ def reenter_lane_self_heal(
         _merge_recorded_planning_commit,
     )
 
-    manifest = read_lanes_json(_planning_dir(main_repo_root, mission_slug))
+    manifest = read_lanes_json(_planning_dir(main_repo_root, mission_slug, effective_root=effective_root))
     if manifest is None:
         return None
     lane = manifest.lane_for_wp(wp_id)
@@ -423,6 +427,7 @@ def check_claim_ancestry(
     mission_dir: Path,
     wp_id: str,
     workspace_path: Path,
+    *, effective_root: Path | None = None,
 ) -> AncestryCheckResult:
     """THE shared POST-materialize claim-ancestry predicate (C-WP03/FR-007/C-005).
 
@@ -439,7 +444,7 @@ def check_claim_ancestry(
     ``--to claimed``) -- so no caller independently re-derives (and
     potentially diverges on) this decision.
     """
-    manifest = read_lanes_json(_planning_dir(main_repo_root, mission_slug))
+    manifest = read_lanes_json(_planning_dir(main_repo_root, mission_slug, effective_root=effective_root))
     if manifest is None:
         return AncestryCheckResult(ok=True)
     lane = manifest.lane_for_wp(wp_id)
@@ -477,6 +482,7 @@ def resolve_claim_ancestry_gate(
     mission_dir: Path,
     wp_id: str,
     workspace_path: Path,
+    *, effective_root: Path | None = None,
 ) -> AncestryCheckResult:
     """Ancestry check with self-heal-coupled retry (C-005/FR-005+FR-007 land together).
 
@@ -487,8 +493,9 @@ def resolve_claim_ancestry_gate(
     spuriously blocks a legitimate claim (a gate without self-heal is a
     dead-end retry, FR-005+FR-007's explicit pairing).
     """
-    result = check_claim_ancestry(main_repo_root, mission_slug, mission_dir, wp_id, workspace_path)
+    anchor_options = {"effective_root": effective_root} if effective_root is not None else {}
+    result = check_claim_ancestry(main_repo_root, mission_slug, mission_dir, wp_id, workspace_path, **anchor_options)
     if result.ok:
         return result
-    reenter_lane_self_heal(main_repo_root, mission_slug, wp_id)
-    return check_claim_ancestry(main_repo_root, mission_slug, mission_dir, wp_id, workspace_path)
+    reenter_lane_self_heal(main_repo_root, mission_slug, wp_id, **anchor_options)
+    return check_claim_ancestry(main_repo_root, mission_slug, mission_dir, wp_id, workspace_path, **anchor_options)

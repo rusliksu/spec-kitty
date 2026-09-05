@@ -363,7 +363,7 @@ def _load_coord_branch_meta(feature_dir: Path) -> tuple[str | None, str | None, 
     return (coord, mid, mid8)
 
 
-def _canonical_status_feature_dir(main_repo_root: Path, mission_slug: str) -> Path:
+def _canonical_status_feature_dir(main_repo_root: Path, mission_slug: str, *, effective_root: Path | None = None) -> Path:
     """Resolve the canonical read-side mission directory for status state.
 
     Routes through the single guarded read-side seam
@@ -383,6 +383,11 @@ def _canonical_status_feature_dir(main_repo_root: Path, mission_slug: str) -> Pa
     """
     from specify_cli.missions._read_path_resolver import resolve_handle_to_read_path
 
+    if effective_root is not None:
+        from mission_runtime import resolve_action_context
+
+        context = resolve_action_context(main_repo_root, action="tasks", feature=mission_slug, effective_root=effective_root)
+        return context.status_surface.status_read_dir
     return resolve_handle_to_read_path(main_repo_root, mission_slug)
 
 
@@ -578,7 +583,7 @@ def _workflow_placement_seam(repo_root: Path, mission_slug: str) -> PlacementSea
 
 
 def _resolve_workflow_placement(
-    *, repo_root: Path, mission_slug: str, kind: MissionArtifactKind
+    *, repo_root: Path, mission_slug: str, kind: MissionArtifactKind, effective_root: Path | None = None,
 ) -> CommitTarget:
     """Resolve the write :class:`CommitTarget` for ``kind`` via the placement seam.
 
@@ -593,6 +598,13 @@ def _resolve_workflow_placement(
     mechanism) keep reading that separately — this helper answers only "where
     does a write of this kind land", the seam's one job.
     """
+    if effective_root is not None:
+        from mission_runtime import mission_context_for
+
+        target = mission_context_for(repo_root, mission_slug, effective_root=effective_root).artifact(kind).commit_target
+        if target is None:
+            raise ValueError(f"No commit placement for {mission_slug}: {kind}")
+        return target
     return _workflow_placement_seam(repo_root, mission_slug).write_target(kind)
 
 
@@ -1341,9 +1353,12 @@ def implement(
         from specify_cli.lanes.implement_support import reenter_lane_self_heal
 
         def _reenter_self_heal() -> None:
-            reenter_lane_self_heal(main_repo_root, mission_slug, normalized_wp_id)
+            reenter_lane_self_heal(main_repo_root, mission_slug, normalized_wp_id, **anchor_options)
 
-        _ensure_workspace_materialized(workspace, normalized_wp_id, _create_workspace, _reenter_self_heal)
+        materialize_options = {"planning_operation": operation} if anchor_options else {}
+        _ensure_workspace_materialized(
+            workspace, normalized_wp_id, _create_workspace, _reenter_self_heal, **materialize_options
+        )
         workspace_path = workspace.worktree_path
 
         # Seam C-005 (#3281/FR-007): the claim-ancestry gate runs HERE --
@@ -1360,9 +1375,9 @@ def implement(
         # which is a DIFFERENT surface than the PRIMARY ``feature_dir`` above
         # (WORK_PACKAGE_TASK) for coord-topology missions -- reuse the same
         # coord-aware resolver ``implement_claim_transition`` below consults.
-        status_feature_dir = _canonical_status_feature_dir(main_repo_root, mission_slug)
+        status_feature_dir = _canonical_status_feature_dir(main_repo_root, mission_slug, **anchor_options)
         ancestry = resolve_claim_ancestry_gate(
-            main_repo_root, mission_slug, status_feature_dir, normalized_wp_id, workspace_path
+            main_repo_root, mission_slug, status_feature_dir, normalized_wp_id, workspace_path, **anchor_options
         )
         if not ancestry.ok:
             print(
@@ -1401,6 +1416,7 @@ def implement(
             workspace_path=workspace_path,
             status_execution_mode=status_execution_mode,
             resolved_binding=resolved_binding,
+            **anchor_options,
         )
         wp = claim_result.wp
         wp_slug = claim_result.wp_slug
@@ -1424,7 +1440,7 @@ def implement(
             return
 
         # Detect mission type and get deliverables_path for research missions.
-        mission_type, deliverables_path = _executor.implement_resolve_mission_type(repo_root, mission_slug)
+        mission_type, deliverables_path = _executor.implement_resolve_mission_type(repo_root, mission_slug, **anchor_options)
 
         # Capture baseline test results (one-time, cached) before the agent starts coding
         _executor.implement_capture_baseline(

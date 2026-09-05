@@ -18,7 +18,7 @@ from rich.panel import Panel
 
 from specify_cli.cli import StepTracker
 from specify_cli.cli.selector_resolution import resolve_mission_handle
-from specify_cli.core.context_validation import require_main_repo
+from specify_cli.core.paths import is_worktree_context
 from kernel.clock import now_utc_iso
 from specify_cli.core.errors import PlacementResolutionRequired
 from specify_cli.core.git_ops import get_current_branch
@@ -86,6 +86,7 @@ if TYPE_CHECKING:
     # the module's existing deferred-import discipline; this gives mypy the
     # shapes without adding a runtime import edge to ``specify_cli.lanes``.
     from specify_cli.lanes.recovery import RecoveryReport, RecoveryState
+    from specify_cli.missions.operation_context import MissionOperationContext
 
 _WP_ID_RE = re.compile(r"^WP\d{2}$", re.IGNORECASE)
 # WP03 / S1192: the rich-markup error prefix, repeated across the
@@ -249,7 +250,7 @@ def detect_feature_context(
     return (match.group(1) if match else None), slug
 
 
-def find_wp_file(repo_root: Path, mission_slug: str, wp_id: str) -> Path:
+def find_wp_file(repo_root: Path, mission_slug: str, wp_id: str, *, effective_root: Path | None = None) -> Path:
     """Find the markdown file for a work package.
 
     WP05 / FR-003 (coord-topology regression fix): WP prompt files under
@@ -270,7 +271,9 @@ def find_wp_file(repo_root: Path, mission_slug: str, wp_id: str) -> Path:
     the kind-blind resolver above -- never lands on the coordination
     worktree).
     """
-    tasks_dir = placement_seam(repo_root, mission_slug).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK) / "tasks"
+    from mission_runtime.resolution import read_dir_for
+
+    tasks_dir = read_dir_for(effective_root, repo_root, mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK) / "tasks"
     if not tasks_dir.exists():
         raise FileNotFoundError(f"Tasks directory not found: {tasks_dir}")
 
@@ -337,7 +340,7 @@ def _feature_dir_status_paths(repo_root: Path, feature_dir: Path) -> list[str]:
     return [e.path for e in _feature_dir_status_entries(repo_root, feature_dir) if not e.is_structural]
 
 
-def _resolve_lanes_dir(repo_root: Path, mission_slug: str) -> Path:
+def _resolve_lanes_dir(repo_root: Path, mission_slug: str, *, effective_root: Path | None = None) -> Path:
     """Return the directory containing ``lanes.json`` for *mission_slug*.
 
     ``lanes.json`` is the ``LANE_STATE`` artifact, a member of
@@ -357,7 +360,9 @@ def _resolve_lanes_dir(repo_root: Path, mission_slug: str) -> Path:
     path-join helper (``feature_dir / lanes.json``); this function resolves
     the *feature_dir* itself from the artifact's canonical partition.
     """
-    return placement_seam(repo_root, mission_slug).read_dir(MissionArtifactKind.LANE_STATE)
+    from mission_runtime.resolution import read_dir_for
+
+    return read_dir_for(effective_root, repo_root, mission_slug, kind=MissionArtifactKind.LANE_STATE)
 
 
 def _print_uncommitted_planning_artifacts(files_to_commit: list[str]) -> None:
@@ -1251,7 +1256,9 @@ def _run_recover_mode(
 # ---------------------------------------------------------------------------
 
 
-def _detect_wp_context(mission: str, wp_id: str, repo_root: Path, auto_commit: bool | None) -> tuple[bool | None, str, Path, Path, Any]:
+def _detect_wp_context(
+    mission: str, wp_id: str, repo_root: Path, auto_commit: bool | None, *, effective_root: Path | None = None,
+) -> tuple[bool | None, str, Path, Path, Any]:
     """Resolve ``(auto_commit, mission_slug, feature_dir, wp_file,
     declared_deps)`` for the ``detect`` step. Exceptions propagate to the
     caller's tracker-aware ``except`` clause unchanged."""
@@ -1260,7 +1267,15 @@ def _detect_wp_context(mission: str, wp_id: str, repo_root: Path, auto_commit: b
 
     if auto_commit is None:
         auto_commit = get_auto_commit_default(repo_root)
-    _mission_number, mission_slug = detect_feature_context(mission, repo_root=repo_root)
+    from mission_runtime.resolution import read_dir_for
+
+    anchor_options = {"effective_root": effective_root} if effective_root is not None else {}
+    if effective_root is not None:
+        from specify_cli.context.mission_resolver import resolve_mission
+
+        mission_slug = resolve_mission(mission, effective_root).mission_slug
+    else:
+        _mission_number, mission_slug = detect_feature_context(mission, repo_root=repo_root)
     # read-surface-ssot-closeout WP05 / FR-001 / NFR-001: route through the
     # kind-aware placement seam instead of the kind-blind
     # ``resolve_feature_dir_for_mission`` (which could return the
@@ -1274,8 +1289,8 @@ def _detect_wp_context(mission: str, wp_id: str, repo_root: Path, auto_commit: b
     # fallback -> primary fallback), which existed ONLY to paper over the
     # kind-blind resolver's coord-husk shadowing -- the kind-correct seam
     # never returns a meta-less coord husk in the first place.
-    feature_dir = placement_seam(repo_root, mission_slug).read_dir(MissionArtifactKind.SPEC)
-    wp_file = find_wp_file(repo_root, mission_slug, wp_id)
+    feature_dir = read_dir_for(effective_root, repo_root, mission_slug, kind=MissionArtifactKind.SPEC)
+    wp_file = find_wp_file(repo_root, mission_slug, wp_id, **anchor_options)
     declared_deps = parse_wp_dependencies(wp_file)
     return auto_commit, mission_slug, feature_dir, wp_file, declared_deps
 
@@ -1707,8 +1722,27 @@ def _print_workspace_ready_banner(result: Any, workspace_path: Path) -> None:
         console.print("[dim]Two parallel SaaS / Django lanes will collide on a single shared test DB unless these are exported in the lane's test process.[/dim]")
 
 
+def _resolve_allocation_operation(mission: str, *, recover: bool) -> MissionOperationContext | None:
+    """Replace the blanket primary-only guard with verified planning ownership."""
+    if not is_worktree_context(Path.cwd()):
+        return None
+    if recover:
+        console.print("[red]Error:[/red] --recover must run from the main repository, not a worktree.")
+        raise typer.Exit(1)
+    from specify_cli.missions.operation_context import (
+        resolve_mission_operation_context, validate_owned_planning_checkout,
+    )
+
+    try:
+        operation = resolve_mission_operation_context(find_repo_root(), mission, cwd=Path.cwd())
+        validate_owned_planning_checkout(operation)
+        return operation
+    except Exception as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(1) from exc
+
+
 @_json_safe_output
-@require_main_repo
 def implement(
     wp_id: str = typer.Argument(..., help="Work package ID (for example, WP01)"),
     mission: Annotated[str | None, typer.Option("--mission", help="Mission slug (for example, 001-my-feature)")] = None,
@@ -1760,6 +1794,8 @@ def implement(
         console.print("[red]Error:[/red] --mission <slug> is required")
         raise typer.Exit(2)
 
+    operation = _resolve_allocation_operation(mission, recover=recover)
+
     if recover:
         _run_recover_mode(wp_id, mission, json_output)
         return
@@ -1773,13 +1809,17 @@ def implement(
     tracker.start("detect")
     try:
         repo_root = find_repo_root()
+        artifact_root = operation.mission_anchor_root if operation is not None else repo_root
+        anchor_options = {"effective_root": artifact_root} if operation is not None else {}
         # FR-006 caller contract (T024): charter preflight runs BEFORE
         # any worktree allocation or .kittify/ modification. On failure
         # we exit 1 with the blocked_reason — no state mutation.
         from specify_cli.charter_runtime.preflight.hook import run_preflight_or_abort
 
         run_preflight_or_abort(repo_root, consumer="implement")
-        auto_commit, mission_slug, feature_dir, wp_file, declared_deps = _detect_wp_context(mission, wp_id, repo_root, auto_commit)
+        auto_commit, mission_slug, feature_dir, wp_file, declared_deps = _detect_wp_context(
+            mission, wp_id, repo_root, auto_commit, **anchor_options
+        )
         tracker.complete("detect", f"Feature: {mission_slug}")
     except (TaskCliError, FileNotFoundError, FrontmatterError, ValidationError, typer.Exit) as exc:
         tracker.error("detect", str(exc))
@@ -1788,8 +1828,8 @@ def implement(
 
     tracker.start("validate")
     try:
-        planning_branch = resolve_feature_target_branch(mission_slug, repo_root)
-        _raise_if_status_commit_protected(repo_root, planning_branch, auto_commit)
+        planning_branch = resolve_feature_target_branch(mission_slug, artifact_root)
+        _raise_if_status_commit_protected(artifact_root, planning_branch, auto_commit)
 
         from specify_cli.coordination.surface_resolver import (
             resolve_status_surface_with_anchor as _resolve_status_surface,
@@ -1804,14 +1844,20 @@ def implement(
         # the write and saw genesis ("WP not finalized"). The anchor authority
         # derives mid8 from meta and carries the fail-closed coord semantics
         # (StatusReadPathNotFound) — one authority, C-STAT-1.
-        _status_feature_dir = _resolve_status_surface(repo_root, mission_slug).read_dir
+        if operation is not None:
+            from mission_runtime import resolve_action_context
+
+            status_context = resolve_action_context(repo_root, action="tasks", feature=mission_slug, **anchor_options)
+            _status_feature_dir = status_context.status_surface.status_read_dir
+        else:
+            _status_feature_dir = _resolve_status_surface(repo_root, mission_slug).read_dir
         # ``lanes.json`` (LANE_STATE) is a PRIMARY-partition artifact with INV-5
         # read/write symmetry, so its dir resolves through the kind-aware
         # placement seam (PRIMARY surface) — a DIFFERENT surface than the coord
         # STATUS read above. Resolving it on the coord surface (the pre-symmetry
         # C-LANES-1 read) mismatched the PRIMARY write and broke coord-mission
         # implement (#3371). See :func:`_resolve_lanes_dir`.
-        _lanes_feature_dir: Path = _resolve_lanes_dir(repo_root, mission_slug)
+        _lanes_feature_dir: Path = _resolve_lanes_dir(repo_root, mission_slug, **anchor_options)
 
         # T012 / Contract 3 + dependency gate: reject unseeded WPs and
         # not-yet-ready dependencies BEFORE any workspace allocation.
@@ -1823,10 +1869,10 @@ def implement(
         # SAME CommitTarget status events resolve to. Resolution is best-effort:
         # on a context-resolution error we pass ``None`` and the helper keeps the
         # legacy meta-derived path (C-004 strangler — never break the lifecycle).
-        _placement_ref = _resolve_placement_ref(repo_root, mission_slug=mission_slug, wp_id=wp_id)
+        _placement_ref = _resolve_placement_ref(repo_root, mission_slug=mission_slug, wp_id=wp_id, **anchor_options)
 
         _ensure_planning_artifacts_committed_git(
-            repo_root=repo_root,
+            repo_root=artifact_root,
             feature_dir=feature_dir,
             mission_slug=mission_slug,
             wp_id=wp_id,
@@ -1848,7 +1894,7 @@ def implement(
         from runtime.next.runtime_bridge import build_operational_context_for_claim
 
         operational_context = build_operational_context_for_claim(
-            repo_root=repo_root,
+            repo_root=artifact_root,
             feature_dir=feature_dir,
             mission_slug=mission_slug,
             wp_id=wp_id,
@@ -1864,7 +1910,7 @@ def implement(
         # another mission's lane worktree in the same registry). write_intent
         # gates the checkout-identity refusal; the ~20 pure read vehicles leave
         # it False, so reads/planning are never falsely refused.
-        resolved_workspace = resolve_workspace_for_wp(repo_root, mission_slug, wp_id, write_intent=True)
+        resolved_workspace = resolve_workspace_for_wp(repo_root, mission_slug, wp_id, write_intent=True, **anchor_options)
 
         lanes_manifest, _lane = _resolve_execution_lane(resolved_workspace, _lanes_feature_dir, wp_id, tracker)
     except Exception as exc:
@@ -1888,7 +1934,7 @@ def implement(
         # _start_wp_implementation_status below). The former frontmatter
         # dual-write mirror was removed in the #2816 unconditional cutover, so
         # `spec-kitty implement` writes 0 runtime bytes to the WP file.
-        vcs_backend = _ensure_vcs_in_meta(feature_dir, repo_root)
+        vcs_backend = _ensure_vcs_in_meta(feature_dir, artifact_root)
 
         # #3571: when --base is provided, validate the ref (planning-lane
         # "ignored" warning applied here, FR-007) and thread the EFFECTIVE
@@ -1908,6 +1954,7 @@ def implement(
             declared_deps=declared_deps,
             vcs_backend_value=vcs_backend.value,
             base=effective_base,
+            **anchor_options,
         )
         workspace_path = result.workspace_path
         branch_name = result.branch_name
@@ -1919,7 +1966,7 @@ def implement(
             effective_actor=effective_actor,
             workspace_path=workspace_path,
             status_execution_mode=status_execution_mode,
-            repo_root=repo_root,
+            repo_root=artifact_root,
         )
 
         _report_workspace_created(tracker, result, workspace_path, repo_root)
@@ -1943,12 +1990,12 @@ def implement(
         tracker.error("create", f"workspace allocation failed: {exc}")
         console.print(tracker.render())
         console.print(f"\n[red]Error:[/red] Workspace allocation failed: {exc}")
-        _emit_blocked_on_alloc_failure(feature_dir, mission_slug, wp_id, effective_actor, status_execution_mode, repo_root, exc)
+        _emit_blocked_on_alloc_failure(feature_dir, mission_slug, wp_id, effective_actor, status_execution_mode, artifact_root, exc)
         raise typer.Exit(1) from exc
 
     try:
         _commit_wp_claim_status(
-            repo_root=repo_root,
+            repo_root=artifact_root,
             feature_dir=feature_dir,
             mission_slug=mission_slug,
             wp_id=wp_id,

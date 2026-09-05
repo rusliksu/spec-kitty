@@ -15,6 +15,7 @@ different immutable identities, resolution fails closed instead of guessing.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import subprocess
 from pathlib import Path
 from typing import Final
 
@@ -121,4 +122,44 @@ __all__ = [
     "MissionOperationContext",
     "MissionSurfaceConflictError",
     "resolve_mission_operation_context",
+    "validate_owned_planning_checkout",
 ]
+
+
+def validate_owned_planning_checkout(operation: MissionOperationContext) -> None:
+    """Prove a clean registered planning checkout before lane allocation.
+
+    Read selection alone is not write authority. Keep Git's registration and the
+    Mission's declared target branch as independent proofs; never trust a copied
+    Mission directory or a caller-supplied path alone.
+    """
+    from mission_runtime import resolve_action_context
+    from specify_cli.core.git_ops import get_current_branch
+
+    root = operation.mission_anchor_root.resolve()
+    if root == operation.repository_root.resolve() or operation.identity is None:
+        raise ValueError("OWNED_PLANNING_CHECKOUT_REQUIRED: no caller-owned Mission")
+    caller = get_status_read_root(Path.cwd()).resolve()
+    if caller != root:
+        raise ValueError("OWNED_PLANNING_CHECKOUT_REQUIRED: caller does not own the planning checkout")
+    registry = subprocess.run(
+        ["git", "worktree", "list", "--porcelain", "-z"],
+        cwd=operation.repository_root, capture_output=True, text=True, check=True,
+    )
+    registered = {
+        Path(field.removeprefix("worktree ")).resolve()
+        for field in registry.stdout.split("\0") if field.startswith("worktree ")
+    }
+    if root not in registered or get_main_repo_root(root).resolve() != operation.repository_root.resolve():
+        raise ValueError("OWNED_PLANNING_CHECKOUT_REQUIRED: checkout is not registered in this repository")
+    context = resolve_action_context(
+        operation.repository_root, action="tasks", feature=operation.identity.mission_slug,
+        effective_root=root,
+    )
+    if get_current_branch(root) != context.target_branch:
+        raise ValueError("OWNED_PLANNING_BRANCH_MISMATCH: caller is not on the Mission planning branch")
+    dirty = subprocess.run(
+        ["git", "status", "--porcelain"], cwd=root, capture_output=True, text=True, check=True,
+    )
+    if dirty.stdout.strip():
+        raise ValueError("OWNED_PLANNING_CHECKOUT_DIRTY: commit planning changes before allocation")
