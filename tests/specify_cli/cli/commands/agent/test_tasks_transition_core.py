@@ -695,6 +695,23 @@ def test_code_change_done_with_ancestry_proceeds() -> None:
     assert isinstance(outcome, Emit)
 
 
+@pytest.mark.parametrize("force", [False, True])
+def test_completed_wp_keeps_explicit_force_semantics(force: bool) -> None:
+    # Arrange
+    request = _base_request(
+        old_lane="done", target_lane="done", force=force,
+        done_execution_mode="code_change", done_merged=True,
+    )
+    # Assumption check
+    assert request.old_lane == request.target_lane
+    # Act
+    outcome = decide_transition(request)
+    # Assert
+    assert isinstance(outcome, Emit)
+    assert outcome.plan.transition_targets == (["done"] if force else [])
+    assert outcome.plan.emit_force is force
+
+
 # ---------------------------------------------------------------------------
 # issue-matrix blocker
 # ---------------------------------------------------------------------------

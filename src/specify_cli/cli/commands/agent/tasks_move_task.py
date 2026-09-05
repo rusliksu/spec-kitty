@@ -1937,6 +1937,9 @@ def _mt_finalize_plan(st: _MoveTaskState, ports: TasksPorts) -> None:
     st.actor = st.agent or "user"
     st.canonical_lane = decision.plan.canonical_lane
 
+    if not decision.plan.transition_targets:
+        return
+
     if decision.planned_rollback and st.resolved_feedback_source is not None:
         # `persist_rejected_review_cycle_for_rollback` (tasks_verdict_persistence,
         # frozen boundary) writes the rejected artifact's ``reviewer_agent`` from
@@ -2508,6 +2511,9 @@ def _mt_reassignment_binding_fields(st: _MoveTaskState) -> dict[str, Any]:
     """Resolved actual for an off-transition agent reassignment."""
     if not st.agent or st.resolved_binding is None:
         return {}
+    if st.emit_plan is not None and not st.emit_plan.transition_targets:
+        # Correcting completed metadata is not another execution or review.
+        return {}
     role = _binding_role_for_lane(st.target_lane) or "implementer"
     delta = st.resolved_binding.to_delta(role=role)
     binding_fields: dict[str, Any] = delta.to_dict()
@@ -2755,7 +2761,7 @@ def _mt_output(st: _MoveTaskState) -> None:
     )
     result: dict[str, object] = {
         "result": "success",
-        "transition_applied": True,
+        "transition_applied": bool(st.emit_plan and st.emit_plan.transition_targets),
         "task_id": st.task_id,
         "old_lane": st.old_lane,
         "new_lane": st.target_lane,
@@ -2797,6 +2803,8 @@ def _mt_output(st: _MoveTaskState) -> None:
         if outcome.reason is not None:
             result["verdict_durability_skip_reason"] = outcome.reason
     message = f"[green]✓[/green] Moved {st.task_id} from {st.old_lane} to {st.target_lane}"
+    if not result["transition_applied"]:
+        message = f"[green]✓[/green] Updated {st.task_id} metadata; lane remains {st.old_lane}"
     # #3578: surface the rollback-to-``planned`` deltas that were previously
     # silent — the subtask reset count (+ work-state split, FR-003) and the two
     # sibling actions (claim release, review-override clear) — as BOTH JSON fields
