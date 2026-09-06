@@ -199,11 +199,10 @@ def _invoke_nag(ctx: typer.Context) -> None:
 def _invoke_upgrade_ux(ctx: typer.Context) -> None:
     """Run the hosted-mode upgrade-readiness UX (WS3, issue #1092).
 
-    Suppression is delegated to the canonical
-    ``cli.helpers._should_suppress_nag`` predicate; when that predicate
-    returns True this function passes ``suppressed=True`` into the UX
-    layer so the UX MUST NOT prompt, MUST NOT invoke a subprocess, and
-    MUST NOT mutate the cache.
+    Suppression combines the canonical ``cli.helpers._should_suppress_nag``
+    predicate with the context's output policy, including protocol commands.
+    A suppressed invocation MUST NOT prompt, invoke a subprocess, or mutate
+    the cache.
 
     Exceptions are swallowed — the coordinator must never raise out of
     the CLI startup path.
@@ -212,7 +211,8 @@ def _invoke_upgrade_ux(ctx: typer.Context) -> None:
         from specify_cli.cli.helpers import _should_suppress_nag  # noqa: PLC0415
         from specify_cli.readiness.upgrade_ux import run_upgrade_ux  # noqa: PLC0415
 
-        run_upgrade_ux(ctx, suppressed=_should_suppress_nag())
+        suppressed = _should_suppress_nag() or _derive_output_policy(ctx=ctx) != OutputPolicy.INTERACTIVE
+        run_upgrade_ux(ctx, suppressed=suppressed)
     except Exception:  # noqa: BLE001 — UX must never crash the CLI
         pass
 
