@@ -188,7 +188,7 @@ jobs:
     name: doctrine-charter-tests
     runs-on: ${{ github.repository == 'rusliksu/spec-kitty' && 'ubuntu-24.04' || 'blacksmith-4vcpu-ubuntu-2404' }}
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'pr:deferred') && !contains(github.event.pull_request.labels.*.name, 'pr:skip-ci') }}
-    timeout-minutes: 10
+    timeout-minutes: ${{ github.repository == 'rusliksu/spec-kitty' && 30 || 10 }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
