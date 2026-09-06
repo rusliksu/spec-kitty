@@ -15,7 +15,10 @@ from __future__ import annotations
 
 import subprocess
 import shutil
+import multiprocessing
 from pathlib import Path
+from typing import Any
+from unittest.mock import patch
 
 import pytest
 
@@ -110,6 +113,78 @@ def test_resolve_reuses_existing(repo_with_coord_branch: Path) -> None:
     assert first == second
     assert marker.exists()
     assert marker.read_text() == "preserved\n"
+
+
+def _resolve_in_process(
+    repo: Path, slug: str, ready: Any, entered: Any, release: Any, result: Any,
+) -> None:
+    """Pause at Git creation without substituting Git's effects."""
+    original_run = subprocess.run
+
+    def controlled_run(command: list[str], *args: Any, **kwargs: Any) -> Any:
+        if release is None and "worktree" in command and "list" in command:
+            entered.set()
+        if "worktree" in command and "add" in command:
+            entered.set()
+            if release is not None and not release.wait(30):
+                raise TimeoutError("Test did not release worktree creation")
+        return original_run(command, *args, **kwargs)
+
+    try:
+        with patch("specify_cli.coordination.workspace.subprocess.run", controlled_run):
+            ready.set()
+            path = CoordinationWorkspace.resolve(repo, slug, MID8)
+        result.send(("ok", str(path)))
+    except Exception as exc:
+        result.send(("error", repr(exc)))
+    finally:
+        result.close()
+
+
+def test_different_missions_serialize_shared_git_metadata(repo_with_coord_branch: Path) -> None:
+    """A sibling must not scan registrations while Git creates one."""
+    # Arrange
+    repo = repo_with_coord_branch
+    _git(repo, "branch", f"kitty/mission-other-mission-{MID8}")
+    linked = repo.parent / "linked"
+    _git(repo, "worktree", "add", "--detach", str(linked), "HEAD")
+    ctx = multiprocessing.get_context("spawn")
+    first_ready, second_ready = ctx.Event(), ctx.Event()
+    first_entered, second_entered, release = ctx.Event(), ctx.Event(), ctx.Event()
+    first_reader, first_writer = ctx.Pipe(duplex=False)
+    second_reader, second_writer = ctx.Pipe(duplex=False)
+    first = ctx.Process(target=_resolve_in_process, args=(repo, MISSION_SLUG, first_ready, first_entered, release, first_writer))
+    second = ctx.Process(target=_resolve_in_process, args=(linked, "other-mission", second_ready, second_entered, None, second_writer))
+    # Assumption check
+    assert repo != linked
+    assert "linked" in _worktree_list(repo)
+    try:
+        first.start()
+        assert first_entered.wait(30), "first process never reached Git creation"
+        second.start()
+        assert second_ready.wait(30), "second process never started resolve"
+        # Act: keep the first process inside the metadata mutation window.
+        overlapping_creation = second_entered.wait(2)
+    finally:
+        release.set()
+        for process in (first, second):
+            if process.pid is not None:
+                process.join(40)
+                if process.is_alive():
+                    process.terminate()
+                    process.join(10)
+        first_writer.close()
+        second_writer.close()
+    # Assert
+    assert not overlapping_creation, "different processes entered shared Git metadata creation together"
+    for process, reader in ((first, first_reader), (second, second_reader)):
+        assert process.exitcode == 0
+        assert reader.poll(1), "worker returned no result"
+        result = reader.recv()
+        reader.close()
+        assert result[0] == "ok", result
+        assert (Path(result[1]) / "seed.txt").read_text() == "seed\n"
+    assert second_entered.is_set()
 
 
 def test_resolve_recovers_stale_prunable_registration(
