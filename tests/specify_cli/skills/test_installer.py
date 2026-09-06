@@ -24,9 +24,9 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 RETIRED_UPSUN_SKILL = "spk-team-upsun-cli-sync"
 
 
-@pytest.mark.parametrize("agent_key,project_root", [("codex", ".agents/skills"), ("claude", ".claude/skills")])
+@pytest.mark.parametrize("agent_keys,project_root", [(["codex", "vibe"], ".agents/skills"), (["claude"], ".claude/skills")])
 def test_agent_metadata_is_projected_and_preserved_on_reinstall(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, agent_key: str, project_root: str
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, agent_keys: list[str], project_root: str
 ) -> None:
     """Host policy must reach both installation surfaces after every sync."""
     home = tmp_path / "home"
@@ -42,12 +42,13 @@ def test_agent_metadata_is_projected_and_preserved_on_reinstall(
     registry = SkillRegistry(source.parent)
 
     for _ in range(2):
-        manifest = install_all_skills(project, [agent_key], registry)
+        manifest = install_all_skills(project, agent_keys, registry)
         assert (home / project_root / "example/agents/openai.yaml").read_bytes() == policy
         assert (project / project_root / "example/agents/openai.yaml").read_bytes() == policy
-        assert {entry.installed_path for entry in manifest.entries} == {
-            f"{project_root}/example/SKILL.md",
-            f"{project_root}/example/agents/openai.yaml",
+        assert {(entry.installed_path, entry.agent_key) for entry in manifest.entries} == {
+            (f"{project_root}/example/{relative}", agent_key)
+            for relative in ("SKILL.md", "agents/openai.yaml")
+            for agent_key in agent_keys
         }
 
 

@@ -18,11 +18,12 @@ class CanonicalSkill:
     references: list[Path] = field(default_factory=list)
     scripts: list[Path] = field(default_factory=list)
     assets: list[Path] = field(default_factory=list)
+    agent_files: list[Path] = field(default_factory=list)
 
     @property
     def all_files(self) -> list[Path]:
-        """All installable files (SKILL.md + references + scripts + assets)."""
-        return [self.skill_md] + self.references + self.scripts + self.assets
+        """All installable content, including host metadata and invocation policy."""
+        return [self.skill_md] + self.references + self.scripts + self.assets + self.agent_files
 
 
 def _collect_files(directory: Path) -> list[Path]:
@@ -97,6 +98,7 @@ class SkillRegistry:
                     references=_collect_files(child / "references"),
                     scripts=_collect_files(child / "scripts"),
                     assets=_collect_files(child / "assets"),
+                    agent_files=_collect_files(child / "agents"),
                 )
             )
         return skills
