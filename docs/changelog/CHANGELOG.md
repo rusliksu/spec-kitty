@@ -44,6 +44,8 @@ _The 3.2.6rc4 candidate cycle is open. Entries land here as missions merge._
 
 ### 🐛 Fixed
 
+- Concurrent mission-step loads now use independent YAML parsers, preventing valid steps and their template mappings from disappearing during overlapping cold-cache reads.
+
 - Fixed: concurrent missions serialize coordination-worktree creation and removal across processes, preventing reads of partially initialized Git metadata.
 
 - Fixed: protocol commands no longer start interactive upgrade checks when their command identity is supplied by the CLI context.

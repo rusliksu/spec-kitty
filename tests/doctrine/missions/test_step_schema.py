@@ -56,6 +56,13 @@ def test_concurrent_loads_preserve_each_step_template(
 ) -> None:
     """Overlapping parser lifetimes must not lose or exchange valid steps."""
     # Arrange
+    init_yaml = YAML.__init__
+
+    def init_pure_yaml(loader: YAML, *args: Any, **kwargs: Any) -> None:
+        kwargs["pure"] = True
+        init_yaml(loader, *args, **kwargs)
+
+    monkeypatch.setattr(YAML, "__init__", init_pure_yaml)
     for step_id, artifact_key in (("specify", "spec"), ("plan", "plan")):
         _write_step_yaml(
             tmp_path, "software-dev", step_id,
