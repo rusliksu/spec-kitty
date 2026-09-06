@@ -22,6 +22,41 @@ from specify_cli.readiness import ReadinessResult, evaluate_readiness
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
+@pytest.mark.parametrize(
+    ("subcommand", "expected_calls"), [("next", []), ("do", []), ("status", ["planner"])]
+)
+def test_protocol_context_blocks_upgrade_planning(
+    subcommand: str, expected_calls: list[str], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Protocol output must not trigger interactive upgrade work."""
+    import specify_cli.compat as compat_mod
+    from specify_cli.readiness import AuthStatus, auth as auth_module
+
+    # Arrange
+    monkeypatch.setenv("SPEC_KITTY_ENABLE_SAAS_SYNC", "1")
+    for variable in ("CI", "GITHUB_ACTIONS", "CONTINUOUS_INTEGRATION", "SPEC_KITTY_NO_NAG", "SPEC_KITTY_UPGRADE_DISABLED"):
+        monkeypatch.delenv(variable, raising=False)
+    monkeypatch.setattr(sys, "argv", ["pytest"])
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+    monkeypatch.setattr(auth_module, "probe_auth_status", lambda **kwargs: (AuthStatus.UNKNOWN, None))
+    calls: list[str] = []
+
+    def planner_probe(inv: Any) -> Any:
+        calls.append("planner")
+        raise RuntimeError("Stop before external lookup or cache writes")
+
+    monkeypatch.setattr(compat_mod, "plan", planner_probe)
+    ctx = _make_ctx()
+    ctx.invoked_subcommand = subcommand
+    # Assumption check
+    assert sys.stdout.isatty()
+    assert ctx.invoked_subcommand == subcommand
+    # Act
+    evaluate_readiness(ctx)
+    # Assert
+    assert calls == expected_calls
+
+
 def _make_ctx() -> typer.Context:
     app = typer.Typer()
 
