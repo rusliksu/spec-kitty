@@ -5,7 +5,7 @@ WS2 (issue Priivacy-ai/spec-kitty#1094).
 Eight rows mirror Scenarios 1–8 in
 ``kitty-specs/auth-readiness-from-any-command-01KS7PQZ/spec.md``. Each row
 exercises ``evaluate_readiness(ctx)`` end-to-end through the coordinator
-with a stubbed probe verdict and a stubbed nag, and asserts the resulting
+with a stubbed probe verdict and isolated upgrade notifications, and asserts the resulting
 ``AuthStatus`` plus the stderr / stdout contract.
 """
 
@@ -28,6 +28,17 @@ from specify_cli.readiness import coordinator as coord_module
 
 
 pytestmark = [pytest.mark.integration]
+
+
+@pytest.fixture(autouse=True)
+def _isolate_upgrade_notifications(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Auth output must not depend on available CLI upgrades.
+
+    Real upgrade prompting and protocol suppression are covered through the
+    coordinator in test_upgrade_ux.py.
+    """
+    monkeypatch.setattr(coord_module, "_invoke_nag", lambda ctx: None)
+    monkeypatch.setattr(coord_module, "_invoke_upgrade_ux", lambda ctx: None)
 
 
 @dataclass(frozen=True)
@@ -250,9 +261,6 @@ def test_auth_matrix(
     monkeypatch.setattr(sys, "argv", ["spec-kitty", *row.argv])
     monkeypatch.setattr(sys.stdout, "isatty", lambda: row.isatty)
 
-    # Stub the nag so it never writes to stderr (covered by separate tests).
-    monkeypatch.setattr(coord_module, "_invoke_nag", lambda ctx: None)
-
     # Stub the probe to deterministically return the row's verdict.
     from specify_cli.readiness import auth as auth_module
 
@@ -302,7 +310,6 @@ def test_coordinator_swallows_probe_exception(
     monkeypatch.delenv("CI", raising=False)
     monkeypatch.setattr(sys, "argv", ["spec-kitty"])
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
-    monkeypatch.setattr(coord_module, "_invoke_nag", lambda ctx: None)
 
     from specify_cli.readiness import auth as auth_module
 
@@ -335,7 +342,6 @@ def test_protocol_subcommand_suppresses_logged_out_guidance(
     monkeypatch.delenv("CI", raising=False)
     monkeypatch.setattr(sys, "argv", ["pytest"])
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
-    monkeypatch.setattr(coord_module, "_invoke_nag", lambda ctx: None)
 
     from specify_cli.readiness import auth as auth_module
 
@@ -363,7 +369,6 @@ def test_coordinator_swallows_render_exception(
     monkeypatch.delenv("CI", raising=False)
     monkeypatch.setattr(sys, "argv", ["spec-kitty"])
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
-    monkeypatch.setattr(coord_module, "_invoke_nag", lambda ctx: None)
 
     from specify_cli.readiness import auth as auth_module
     from specify_cli.readiness import render as render_module
