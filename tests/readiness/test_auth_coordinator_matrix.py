@@ -30,6 +30,12 @@ from specify_cli.readiness import coordinator as coord_module
 pytestmark = [pytest.mark.integration]
 
 
+@pytest.fixture(autouse=True)
+def _isolate_upgrade_ux(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Auth output must not depend on a newly published CLI version."""
+    monkeypatch.setattr(coord_module, "_invoke_upgrade_ux", lambda ctx: None)
+
+
 @dataclass(frozen=True)
 class AuthMatrixRow:
     name: str

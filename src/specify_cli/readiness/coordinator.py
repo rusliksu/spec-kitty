@@ -205,6 +205,9 @@ def _invoke_upgrade_ux(ctx: typer.Context) -> None:
     layer so the UX MUST NOT prompt, MUST NOT invoke a subprocess, and
     MUST NOT mutate the cache.
 
+    The coordinator's machine-output policy also covers protocol commands
+    identified by the Typer context rather than raw argv.
+
     Exceptions are swallowed — the coordinator must never raise out of
     the CLI startup path.
     """
@@ -212,7 +215,11 @@ def _invoke_upgrade_ux(ctx: typer.Context) -> None:
         from specify_cli.cli.helpers import _should_suppress_nag  # noqa: PLC0415
         from specify_cli.readiness.upgrade_ux import run_upgrade_ux  # noqa: PLC0415
 
-        run_upgrade_ux(ctx, suppressed=_should_suppress_nag())
+        suppressed = (
+            _derive_output_policy(ctx=ctx) == OutputPolicy.MACHINE_OUTPUT
+            or _should_suppress_nag()
+        )
+        run_upgrade_ux(ctx, suppressed=suppressed)
     except Exception:  # noqa: BLE001 — UX must never crash the CLI
         pass
 
