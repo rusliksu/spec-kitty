@@ -24,6 +24,58 @@ pytestmark = [pytest.mark.unit, pytest.mark.fast]
 RETIRED_UPSUN_SKILL = "spk-team-upsun-cli-sync"
 
 
+@pytest.mark.parametrize("agent_key,project_root", [("codex", ".agents/skills"), ("claude", ".claude/skills")])
+def test_agent_metadata_is_projected_and_preserved_on_reinstall(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, agent_key: str, project_root: str
+) -> None:
+    """Host policy must reach both installation surfaces after every sync."""
+    home = tmp_path / "home"
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
+    source = tmp_path / "source" / "example"
+    (source / "agents").mkdir(parents=True)
+    (source / "SKILL.md").write_text("---\nname: example\ndescription: Example.\n---\n", encoding="utf-8")
+    policy = b"policy:\n  allow_implicit_invocation: false\n"
+    (source / "agents" / "openai.yaml").write_bytes(policy)
+    (source / "agents" / ".gitkeep").touch()
+    project = tmp_path / "project"
+    project.mkdir()
+    registry = SkillRegistry(source.parent)
+
+    for _ in range(2):
+        manifest = install_all_skills(project, [agent_key], registry)
+        assert (home / project_root / "example/agents/openai.yaml").read_bytes() == policy
+        assert (project / project_root / "example/agents/openai.yaml").read_bytes() == policy
+        assert {entry.installed_path for entry in manifest.entries} == {
+            f"{project_root}/example/SKILL.md",
+            f"{project_root}/example/agents/openai.yaml",
+        }
+
+
+def test_profile_alias_ships_explicit_invocation_policy_after_reinstall(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The legacy alias stays installed with its packaged explicit-only policy."""
+    from ruamel.yaml import YAML
+
+    home = tmp_path / "home"
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
+    registry = SkillRegistry.from_local_repo(Path(__file__).resolve().parents[3])
+    alias = registry.get_skill("ad-hoc-profile-load")
+    canonical = registry.get_skill("spk-doctrine-profile-load")
+    assert alias is not None and canonical is not None
+    project = tmp_path / "project"
+    project.mkdir()
+
+    for _ in range(2):
+        install_skills_for_agent(project, "codex", [alias, canonical])
+        for skills_root in (home / ".agents/skills", project / ".agents/skills"):
+            policy = YAML(typ="safe").load((skills_root / alias.name / "agents/openai.yaml").read_text(encoding="utf-8"))
+            assert policy["policy"]["allow_implicit_invocation"] is False
+            assert (skills_root / alias.name / "SKILL.md").read_bytes() == alias.skill_md.read_bytes()
+            assert (skills_root / canonical.name / "SKILL.md").read_bytes() == canonical.skill_md.read_bytes()
+            assert not (skills_root / canonical.name / "agents/openai.yaml").exists()
+
+
 def _make_skill(
     root: Path,
     name: str,
