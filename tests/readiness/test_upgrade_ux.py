@@ -23,6 +23,7 @@ from kernel.clock import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
+import typer
 
 from specify_cli.compat._detect.install_method import (
     InstallMethod,
@@ -403,8 +404,6 @@ class TestRunUpgradeUxKillSwitch:
 
 
 def _make_ctx() -> Any:
-    import typer
-
     app = typer.Typer()
 
     @app.callback()
@@ -872,3 +871,59 @@ class TestCoordinatorSuppressionMatrix:
             upgrade_runner=lambda: pytest.fail("subprocess fired on non-TTY"),
         )
         assert outcome.ran is False
+
+    @pytest.mark.parametrize(
+        "subcommand,should_prompt",
+        [("do", False), ("next", False), ("status", True)],
+    )
+    def test_protocol_command_keeps_upgrade_prompt_out_of_output(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        subcommand: str,
+        should_prompt: bool,
+    ) -> None:
+        from types import SimpleNamespace
+
+        from specify_cli.compat._detect import runtime as runtime_module
+        from specify_cli.readiness import AuthStatus, evaluate_readiness
+        from specify_cli.readiness import auth as auth_module
+
+        monkeypatch.setenv("SPEC_KITTY_ENABLE_SAAS_SYNC", "1")
+        for key in ("SPEC_KITTY_NO_NAG", ENV_UPGRADE_AUTO, ENV_UPGRADE_DISABLED, ENV_UPGRADE_NEVER_ASK):
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setattr(sys, "argv", ["spec-kitty", subcommand])
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+        monkeypatch.setattr(
+            auth_module,
+            "probe_auth_status",
+            lambda **_kw: (AuthStatus.AUTHENTICATED, None),
+        )
+        monkeypatch.setattr(
+            runtime_module,
+            "detect_runtime",
+            lambda: SimpleNamespace(install_method=InstallMethod.PIPX),
+        )
+        _patch_planner(monkeypatch, "ALLOW_WITH_NAG")
+        cache_state = _patch_cache_noop(monkeypatch)
+        input_calls: list[str] = []
+
+        def _not_now(prompt: str) -> str:
+            input_calls.append(prompt)
+            return "3"
+
+        monkeypatch.setattr("builtins.input", _not_now)
+        ctx = _make_ctx()
+        ctx.invoked_subcommand = subcommand
+
+        evaluate_readiness(ctx)
+
+        captured = capsys.readouterr()
+        assert bool(input_calls) is should_prompt
+        assert captured.out == ""
+        if should_prompt:
+            assert "A spec-kitty upgrade is available." in captured.err
+            assert cache_state["writes"][-1].snooze_step == "24h"
+        else:
+            assert captured.err == ""
+            assert cache_state["writes"] == []
