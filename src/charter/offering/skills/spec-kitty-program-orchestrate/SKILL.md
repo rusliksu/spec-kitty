@@ -4,8 +4,8 @@ description: >-
   Orchestrate a multi-repo, multi-mission Spec Kitty program end-to-end:
   run specify → plan → tasks → implement → review → merge → mission-review →
   post-merge fixes across several repositories in a defined dependency order,
-  using background sub-agents for parallel work and a pulse-heartbeat safety
-  net for long uninterrupted runs. Triggers: "ship this program across N
+  using background sub-agents for parallel work and an optional, explicitly
+  requested heartbeat for long runs. Triggers: "ship this program across N
   repos", "orchestrate a cross-repo release", "run the full mission workflow on
   repos A/B/C in program order", "drive Decision Moment V1 across all
   repos", "multi-repo spec-kitty sprint". Does NOT handle: single-mission
@@ -286,49 +286,28 @@ dispatch work in parallel wherever the dependency graph allows.
 
 ---
 
-## Step 4: Pulse Heartbeat (Mandatory for Uninterrupted Runs)
+## Step 4: Progress Checks and Optional Heartbeat
 
-When the user has authorized uninterrupted work ("keep pushing",
-"work without interruption", or equivalent), always keep a
-`ScheduleWakeup` armed at all times as a pulse-monitor safety net.
+For uninterrupted work, use the current harness's native completion
+notifications and bounded waits to check active work. Permission to keep
+working does not authorize a scheduled task or background monitor.
 
-### Why
+Create a scheduled heartbeat only when the user explicitly requests it.
+Use a scheduling capability available in the current environment. If none
+is available, explain the limitation and continue the authorized work in
+the current run without promising a later wakeup.
 
-Task notifications wake you on sub-agent completion, but:
+For an explicitly requested heartbeat:
 
-- A sub-agent can die silently (sandbox kill, OOM, hung tool call).
-- The notification can be delayed or lost (backend hiccup).
-- You yourself can silently hang — the only thing that will unstick
-  you is a scheduled wakeup.
-
-Silence is not success. A scheduled heartbeat is the difference between
-"I was working the whole time" and "I sat silent for two hours waiting
-for a dead agent".
-
-### How
-
-- Delay: 1200–1800s (20–30 min). Shorter than ~270s burns cache without
-  useful signal; longer than ~1800s risks the user noticing a stall
-  before you do.
-- Reason: one specific sentence (`"Checking in on repo 4 WP06 impl after
-  dispatch + 2 parallel reviews; expect for_review or approved state"`).
-- Prompt: pass the same `/loop ...` instruction verbatim each turn so
-  the wakeup re-enters this skill and continues the loop.
-
-On each heartbeat fire:
-
-1. Run `TaskList` to find running agents.
-2. For each running agent, peek output (via `TaskOutput` non-blocking).
-3. For each repo, run `spec-kitty agent tasks status --mission <slug>`
-   and check for stuck WPs (in_review >15min with no active reviewer,
-   for_review with no reviewer dispatched).
-4. If everything is green and still-working, report "all green" with the
-   specific signal you saw (N tool calls in last 5min from each agent),
-   then re-arm the wakeup.
-5. If anything is stuck, dispatch a repair or chase agent.
-
-Stop the pulse only when the entire program is closed (all repos merged,
-all mission reviews cleared, all remediations landed).
+- Preserve the requested target, cadence, stopping condition, and notification
+  intent. Do not silently expand the requested monitoring scope.
+- Inspect current agent and mission state through available tools; do not
+  treat silence as proof of completion or failure.
+- Stay quiet while the state is unchanged or non-actionable unless the user
+  requested periodic updates. Notify on meaningful changes, completion,
+  failure, or required user action.
+- Stop according to the requested stopping condition; do not automatically
+  extend the schedule beyond it.
 
 ---
 
@@ -402,8 +381,9 @@ future programs.
    run in parallel across repos; the serial constraint is on the
    dependency graph, not on your calendar.
 
-2. **Pulse heartbeat or it didn't happen.** If you run uninterrupted
-   without a ScheduleWakeup armed, you will eventually silently stall.
+2. **Schedule monitors only on explicit request.** Use native completion
+   notifications and bounded waits during the current run. Uninterrupted
+   work alone does not authorize a background monitor.
 
 3. **Mission review catches real bugs.** Never skip it. Budget for
    remediation.
