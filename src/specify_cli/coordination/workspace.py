@@ -32,9 +32,13 @@ real per-worktree gitdir path via
 from __future__ import annotations
 
 import subprocess
-import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
+from filelock import FileLock
+from kernel.git_topology import git_common_dir
+from specify_cli.core.checkout_file_lock import LOCK_DIRECTORY, acquire_or_raise
 from specify_cli.core.errors import StructuredError
 from specify_cli.lanes.branch_naming import (
     coord_dir_name as _seam_coord_dir_name,
@@ -47,28 +51,31 @@ from specify_cli.lanes.branch_naming import (
 _GIT_WORKTREE = "worktree"
 
 
-# #1357: serialize concurrent ``CoordinationWorkspace.resolve`` calls so two
-# callers cannot race the existence-check / ``git worktree add`` and materialize
-# divergent surfaces. The lock is keyed by the resolved worktree path so resolves
-# for *different* missions never contend, keeping the critical section minimal and
-# deadlock-free (each ``resolve`` acquires exactly one lock and never nests).
-_RESOLVE_LOCKS: dict[Path, threading.Lock] = {}
-_RESOLVE_LOCKS_GUARD = threading.Lock()
+_RESOLVE_LOCK_TIMEOUT_SECONDS = 30.0
 
 
-def _resolve_lock_for(path: Path) -> threading.Lock:
-    """Return the per-worktree-path lock, creating it on first use.
+@contextmanager
+def _resolve_lock_for(repo_root: Path) -> Iterator[None]:
+    """Serialize coordination-worktree metadata access across processes.
 
-    The registry guard is held only for the dict lookup/insert, never across the
-    git operations themselves, so distinct-mission resolves stay concurrent.
+    Different missions and linked checkouts share Git's registration directory.
+    Keep list/add/remove under one common-directory lock, so a sibling never
+    reads another coordination worktree's partially initialized commondir.
+    Independent repositories use independent locks. No caller nests this lock.
     """
-    key = path.resolve(strict=False)
-    with _RESOLVE_LOCKS_GUARD:
-        lock = _RESOLVE_LOCKS.get(key)
-        if lock is None:
-            lock = threading.Lock()
-            _RESOLVE_LOCKS[key] = lock
-        return lock
+    lock_path = git_common_dir(repo_root) / LOCK_DIRECTORY / "coord-worktrees.lock"
+    lock = FileLock(str(lock_path))
+    acquire_or_raise(
+        lock, lock_path,
+        timeout_seconds=_RESOLVE_LOCK_TIMEOUT_SECONDS,
+        build_timeout_error=lambda: TimeoutError(
+            f"Timed out waiting for coordination worktree metadata: {lock_path}"
+        ),
+    )
+    try:
+        yield
+    finally:
+        lock.release()
 
 
 class CoordinationWorkspaceBranchMismatch(Exception):
@@ -243,11 +250,8 @@ class CoordinationWorkspace:
         path = cls.worktree_path(repo_root, mission_slug, mid8)
         branch = cls.branch_name(mission_slug, mid8)
 
-        # #1357: serialize the check-then-create against this worktree path so
-        # concurrent resolves cannot both pass the ``not path.exists()`` guard and
-        # race ``git worktree add`` into divergent surfaces. The critical section
-        # holds exactly one path-keyed lock and never nests, so it is deadlock-free.
-        with _resolve_lock_for(path):
+        # Protect enumeration as well as creation from other coordination writers.
+        with _resolve_lock_for(repo_root):
             if path.exists():
                 # Verify HEAD points at the expected branch.
                 actual = subprocess.check_output(
@@ -291,15 +295,16 @@ class CoordinationWorkspace:
         has succeeded.
         """
         path = cls.worktree_path(repo_root, mission_slug, mid8)
-        if not path.exists():
-            if _has_stale_worktree_registration(repo_root, path):
-                _remove_worktree_registration(repo_root, path)
-            return
-        subprocess.run(
-            ["git", "-C", str(repo_root), _GIT_WORKTREE, "remove",
-             str(path), "--force"],
-            check=False,  # tolerate "already removed" races
-        )
+        with _resolve_lock_for(repo_root):
+            if not path.exists():
+                if _has_stale_worktree_registration(repo_root, path):
+                    _remove_worktree_registration(repo_root, path)
+                return
+            subprocess.run(
+                ["git", "-C", str(repo_root), _GIT_WORKTREE, "remove",
+                 str(path), "--force"],
+                check=False,  # tolerate "already removed" races
+            )
 
     @classmethod
     def is_present(

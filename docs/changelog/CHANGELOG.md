@@ -44,6 +44,8 @@ _The 3.2.6rc4 candidate cycle is open. Entries land here as missions merge._
 
 ### 🐛 Fixed
 
+- Fixed: concurrent missions serialize coordination-worktree creation and removal across processes, preventing reads of partially initialized Git metadata.
+
 - Fixed: protocol commands no longer start interactive upgrade checks when their command identity is supplied by the CLI context.
 
 - Fixed: updating the agent of an already completed work package no longer attempts another completion or creates a duplicate review record.

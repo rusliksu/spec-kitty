@@ -119,11 +119,20 @@ def _resolve_in_process(
     repo: Path, slug: str, ready: Any, entered: Any, release: Any, result: Any,
 ) -> None:
     """Pause at Git creation without substituting Git's effects."""
+    from filelock import FileLock
+
     original_run = subprocess.run
+    original_acquire = FileLock._acquire
+
+    def observed_acquire(lock: Any) -> None:
+        original_acquire(lock)
+        if release is None and not lock.is_locked:
+            ready.set()
 
     def controlled_run(command: list[str], *args: Any, **kwargs: Any) -> Any:
         if release is None and "worktree" in command and "list" in command:
             entered.set()
+            ready.set()
         if "worktree" in command and "add" in command:
             entered.set()
             if release is not None and not release.wait(30):
@@ -131,8 +140,10 @@ def _resolve_in_process(
         return original_run(command, *args, **kwargs)
 
     try:
-        with patch("specify_cli.coordination.workspace.subprocess.run", controlled_run):
-            ready.set()
+        with (
+            patch("specify_cli.coordination.workspace.subprocess.run", controlled_run),
+            patch.object(FileLock, "_acquire", observed_acquire),
+        ):
             path = CoordinationWorkspace.resolve(repo, slug, MID8)
         result.send(("ok", str(path)))
     except Exception as exc:
@@ -162,9 +173,9 @@ def test_different_missions_serialize_shared_git_metadata(repo_with_coord_branch
         first.start()
         assert first_entered.wait(30), "first process never reached Git creation"
         second.start()
-        assert second_ready.wait(30), "second process never started resolve"
-        # Act: keep the first process inside the metadata mutation window.
-        overlapping_creation = second_entered.wait(2)
+        assert second_ready.wait(30), "second process neither contended nor entered Git"
+        # Act: observe actual lock contention while the first creation is paused.
+        overlapping_creation = second_entered.is_set()
     finally:
         release.set()
         for process in (first, second):
@@ -206,6 +217,28 @@ def test_resolve_recovers_stale_prunable_registration(
     assert "prunable" not in _worktree_list(repo_with_coord_branch)
 
 
+def test_busy_metadata_lock_fails_without_creating_worktree(
+    repo_with_coord_branch: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from filelock import FileLock
+    from specify_cli.coordination import workspace
+
+    # Arrange
+    repo = repo_with_coord_branch
+    lock_path = repo / ".git" / "spec-kitty-locks" / "coord-worktrees.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(workspace, "_RESOLVE_LOCK_TIMEOUT_SECONDS", 0.05)
+    target = repo / ".worktrees" / f"{MISSION_SLUG}-{MID8}-coord"
+    # Assumption check
+    assert not target.exists()
+    # Act / Assert
+    with FileLock(str(lock_path)):
+        with pytest.raises(TimeoutError, match="coordination worktree metadata"):
+            CoordinationWorkspace.resolve(repo, MISSION_SLUG, MID8)
+        assert not target.exists()
+    assert CoordinationWorkspace.resolve(repo, MISSION_SLUG, MID8) == target
+
+
 def test_resolve_branch_mismatch_raises(repo_with_coord_branch: Path) -> None:
     path = CoordinationWorkspace.resolve(
         repo_with_coord_branch, MISSION_SLUG, MID8,
@@ -223,6 +256,8 @@ def test_resolve_branch_mismatch_raises(repo_with_coord_branch: Path) -> None:
     assert err.expected_ref == COORD_BRANCH
     assert "interloper" in err.actual_ref
     assert err.worktree_path == path
+    _git(path, "checkout", "-q", COORD_BRANCH)
+    assert CoordinationWorkspace.resolve(repo_with_coord_branch, MISSION_SLUG, MID8) == path
 
 
 def test_teardown_idempotent(repo_with_coord_branch: Path) -> None:
