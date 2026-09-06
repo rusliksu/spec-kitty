@@ -17,10 +17,14 @@ FR-001, FR-006, FR-007, FR-014 (S-B, mission-step-authority-01KXNZMT WP01).
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Event
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
+from ruamel.yaml import YAML
 
 from charter.offering.missions.mission_step_repository import MissionStepRepository
 from charter.offering.missions.models import MissionStep, MissionStepTemplateRef, MissionType
@@ -45,6 +49,64 @@ def _write_step_yaml(root: Path, mission_type_id: str, step_id: str, body: str) 
 # ---------------------------------------------------------------------------
 # T004 — MissionStep field-round-trip (extra="forbid" strip guard)
 # ---------------------------------------------------------------------------
+
+
+def test_concurrent_loads_preserve_each_step_template(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Overlapping parser lifetimes must not lose or exchange valid steps."""
+    # Arrange
+    for step_id, artifact_key in (("specify", "spec"), ("plan", "plan")):
+        _write_step_yaml(
+            tmp_path, "software-dev", step_id,
+            f"id: {step_id}\ndisplay_name: {step_id}\nstep_type: agent\nprompt_template: prompt.md\n"
+            f"template:\n  artifact_key: {artifact_key}\n"
+            f"  template_file: {artifact_key}-template.md\n",
+        )
+    repo = MissionStepRepository(tmp_path)
+    first_ready, second_ready, first_done = Event(), Event(), Event()
+    scheduling_errors: list[str] = []
+    prepare = YAML.get_constructor_parser
+
+    def interleaved_prepare(loader: YAML, stream: Any) -> Any:
+        constructor_parser = prepare(loader, stream)
+        if stream.startswith("id: specify\n"):
+            first_ready.set()
+            if not second_ready.wait(10):
+                scheduling_errors.append("second parser was not prepared")
+        else:
+            second_ready.set()
+            if not first_done.wait(10):
+                scheduling_errors.append("first parse did not finish")
+        return constructor_parser
+
+    def load_first() -> MissionStep | None:
+        try:
+            return repo.resolve("software-dev", "specify")
+        finally:
+            first_done.set()
+
+    # Assumption check: the same documents load correctly without overlap.
+    assert repo.resolve("software-dev", "specify") is not None
+    assert repo.resolve("software-dev", "plan") is not None
+    monkeypatch.setattr(YAML, "get_constructor_parser", interleaved_prepare)
+    # Act: prepare the second parser before consuming the first document.
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(load_first)
+        assert first_ready.wait(10), "first parser was not prepared"
+        second = pool.submit(repo.resolve, "software-dev", "plan")
+        spec_step = first.result(timeout=20)
+        plan_step = second.result(timeout=20)
+    # Assert
+    assert not scheduling_errors, scheduling_errors
+    assert spec_step is not None
+    assert plan_step is not None
+    assert (spec_step.id, spec_step.template) == (
+        "specify", MissionStepTemplateRef(artifact_key="spec", template_file="spec-template.md"),
+    )
+    assert (plan_step.id, plan_step.template) == (
+        "plan", MissionStepTemplateRef(artifact_key="plan", template_file="plan-template.md"),
+    )
 
 
 class TestMissionStepFieldRoundTrip:
