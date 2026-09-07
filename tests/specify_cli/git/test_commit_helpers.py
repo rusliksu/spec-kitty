@@ -26,6 +26,7 @@ from specify_cli.git.commit_helpers import (
     SafeCommitEmptyChangeset,
     SafeCommitHeadMismatch,
     SafeCommitNotAWorktree,
+    SafeCommitRecoveryFailed,
     safe_commit,
 )
 
@@ -136,6 +137,66 @@ def test_safe_commit_local_capture_uses_explicit_store_without_losing_frame(
     assert not (other_root / ".kittify/sync-state.json").exists()
     if store == "worktree":
         assert snapshot_primary(ctx.primary) == primary_before
+
+
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("linked", [False, True])
+@pytest.mark.parametrize("requested_staged", [False, True])
+@pytest.mark.parametrize("failure", ["hook", "stage"])
+def test_failed_commit_restores_staging_and_working_bytes(
+    tmp_path: Path, linked: bool, requested_staged: bool, failure: str,
+) -> None:
+    """A failed commit must preserve both the caller's index and unstaged edits."""
+    from tests.tasks.linked_worktree_harness import create_linked_mission, git, snapshot_primary
+
+    if linked:
+        ctx = create_linked_mission(tmp_path)
+        primary, checkout, branch = ctx.primary, ctx.linked, "codex/task"
+    else:
+        primary = checkout = tmp_path / "repo"
+        branch = "codex/task"
+        _init_repo(primary, initial_branch=branch)
+    requested = checkout / "requested.txt"
+    unrelated = checkout / "unrelated.txt"
+    requested.write_text("requested baseline\n", encoding="utf-8")
+    unrelated.write_text("unrelated baseline\n", encoding="utf-8")
+    git(checkout, "add", "requested.txt", "unrelated.txt")
+    git(checkout, "commit", "-q", "-m", "recovery baseline")
+    if requested_staged:
+        requested.write_text("requested staged\n", encoding="utf-8")
+        git(checkout, "add", "requested.txt")
+    requested.write_text("requested working\n", encoding="utf-8")
+    unrelated.write_text("unrelated staged\n", encoding="utf-8")
+    git(checkout, "add", "unrelated.txt")
+    untracked = checkout / "untracked.txt"
+    untracked.write_text("keep untracked\n", encoding="utf-8")
+    paths = (requested,)
+    if failure == "hook":
+        hook = primary / ".git/hooks/pre-commit"
+        hook.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+        hook.chmod(0o755)
+    else:
+        paths = (requested, checkout / "missing.txt")
+    staged_before = git(checkout, "diff", "--cached", "--binary")
+    head_before = git(checkout, "rev-parse", "HEAD")
+    primary_before = snapshot_primary(primary)
+
+    with pytest.raises(RuntimeError) as error:
+        safe_commit(
+            repo_root=primary, worktree_root=checkout, destination_ref=branch,
+            message="must not commit", paths=paths,
+        )
+
+    assert not isinstance(error.value, SafeCommitRecoveryFailed), error.value
+    assert git(checkout, "rev-parse", "HEAD") == head_before
+    assert git(checkout, "diff", "--cached", "--binary") == staged_before
+    assert requested.read_bytes() == b"requested working\n"
+    assert unrelated.read_bytes() == b"unrelated staged\n"
+    assert untracked.read_bytes() == b"keep untracked\n"
+    assert git(checkout, "stash", "list") == ""
+    if linked:
+        assert snapshot_primary(primary) == primary_before
 
 
 def _install_warn_mode_guard_hook(repo: Path, warning_text: str) -> None:
