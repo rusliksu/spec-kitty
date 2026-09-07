@@ -49,6 +49,11 @@ def test_owned_setup_plan_scaffolds_selected_mission_without_primary_writes(
     from tests.tasks.linked_worktree_harness import create_linked_mission, git
 
     ctx = create_linked_mission(tmp_path)
+    for checkout in (ctx.primary, ctx.linked):
+        config = checkout / ".kittify/config.yaml"
+        config.write_text(config.read_text(encoding="utf-8") + "mission_type_activations:\n  - software-dev\n", encoding="utf-8")
+        git(checkout, "add", ".kittify/config.yaml")
+        git(checkout, "commit", "-q", "-m", "activate fixture Mission type")
     git(ctx.linked, "rm", str((ctx.mission_dir / "plan.md").relative_to(ctx.linked)))
     git(ctx.linked, "commit", "-q", "-m", "prepare first plan scaffold")
     result = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", "agent", "mission",

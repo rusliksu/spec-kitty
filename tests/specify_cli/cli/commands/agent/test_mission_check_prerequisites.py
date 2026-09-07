@@ -43,6 +43,48 @@ def test_owned_prerequisites_preserves_exact_identity_and_primary(
     assert payload["target_branch"] == "codex/task"
 
 
+@pytest.mark.git_repo
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("consumer", ["check-prerequisites", "setup-plan"])
+@pytest.mark.parametrize("case", ["missing", "ambiguous", "omitted", "conflict"])
+def test_owned_planning_refuses_invalid_selection_before_writes(
+    tmp_path: Path, isolated_env: dict[str, str], consumer: str, case: str,
+) -> None:
+    """Read consumers must never recover an invalid selector by choosing a Mission."""
+    from tests.tasks.linked_worktree_harness import create_linked_mission, git, write_mission
+
+    ctx = create_linked_mission(tmp_path)
+    selector = "missing-mission"
+    if case in {"ambiguous", "omitted"}:
+        write_mission(ctx.linked / "kitty-specs" / "other-01M1MFE9", "01M1MFE9ZZZZZZZZZZZZZZZZZZ")
+        git(ctx.linked, "add", "kitty-specs")
+        git(ctx.linked, "commit", "-q", "-m", "seed ambiguous linked Missions")
+        selector = "01M1MFE9"
+    elif case == "conflict":
+        write_mission(ctx.primary / "kitty-specs" / ctx.mission_dir.name, "01M1MFE9ZZZZZZZZZZZZZZZZZZ")
+        git(ctx.primary, "add", "kitty-specs")
+        git(ctx.primary, "commit", "-q", "-m", "seed different primary identity")
+        selector = ctx.mission_dir.name
+    before_head = git(ctx.linked, "rev-parse", "HEAD")
+    before_files = {p.relative_to(ctx.mission_dir): p.read_bytes() for p in ctx.mission_dir.rglob("*") if p.is_file()}
+    args = ["agent", "mission", consumer, "--json"]
+    if case != "omitted":
+        args.extend(["--mission", selector])
+    result = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", *args, env=isolated_env)
+    assert result.returncode != 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload.get("error_code"), payload
+    if case == "conflict":
+        assert payload["error_code"] == (
+            "FEATURE_CONTEXT_UNRESOLVED" if consumer == "check-prerequisites" else "PLAN_CONTEXT_UNRESOLVED"
+        )
+        assert "different identities" in payload["error"]
+    assert "feature_dir" not in payload
+    assert git(ctx.linked, "rev-parse", "HEAD") == before_head
+    assert {p.relative_to(ctx.mission_dir): p.read_bytes() for p in ctx.mission_dir.rglob("*") if p.is_file()} == before_files
+
+
 # ---------------------------------------------------------------------------
 # _paths_only_payload
 # ---------------------------------------------------------------------------
