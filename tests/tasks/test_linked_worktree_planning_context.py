@@ -429,6 +429,51 @@ def test_decision_verify_reads_linked_mission_independently(
     _assert_primary_unchanged(linked_mission)
 
 
+@pytest.mark.parametrize("selector", [_SLUG, _MISSION_ID])
+def test_mark_status_records_subtasks_on_selected_planning_surface(
+    linked_mission: LinkedMission,
+    checked_cli: Callable[..., subprocess.CompletedProcess[str]],
+    selector: str,
+) -> None:
+    """Lifecycle bookkeeping must use the same selected Mission as planning."""
+    from specify_cli.status import Lane
+    from specify_cli.status.store import read_event_stream
+
+    tasks_md = linked_mission.mission_dir / "tasks.md"
+    tasks_md.write_text(
+        "# Tasks\n\n"
+        "- [ ] T009 (WP03) Adopt decision context.\n"
+        "- [ ] T010 (WP03) Adopt commit context.\n"
+        "- [ ] T011 (WP03) Verify regressions.\n",
+        encoding="utf-8",
+    )
+    wp = linked_mission.mission_dir / "tasks" / "WP03.md"
+    wp.write_text(
+        "---\nwork_package_id: WP03\nlane: in_progress\n"
+        "subtasks: [T009, T010, T011]\n---\n# WP03\n",
+        encoding="utf-8",
+    )
+    _git(linked_mission.linked, "add", ".")
+    _git(linked_mission.linked, "commit", "-q", "-m", "seed mark-status acceptance")
+    tasks_before = tasks_md.read_bytes()
+
+    result = checked_cli(
+        linked_mission.linked,
+        "agent", "tasks", "mark-status", "T009", "T010", "T011",
+        "--status", "done", "--mission", selector, "--no-auto-commit", "--json",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert _payload(result)["summary"] == {"updated": 3, "already_satisfied": 0, "not_found": 0}
+    assert tasks_md.read_bytes() == tasks_before
+    stream = read_event_stream(linked_mission.mission_dir)
+    assert len(stream.annotations) == 1
+    annotation = stream.annotations[0]
+    assert annotation.wp_id == "WP03"
+    assert annotation.delta.subtasks == {"T009": Lane.DONE, "T010": Lane.DONE, "T011": Lane.DONE}
+    _assert_primary_unchanged(linked_mission)
+
+
 def test_spec_commit_never_selects_protected_primary(
     linked_mission: LinkedMission, checked_cli: Callable[..., subprocess.CompletedProcess[str]]
 ) -> None:
