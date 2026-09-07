@@ -70,6 +70,15 @@ def test_owned_setup_plan_scaffolds_selected_mission_without_primary_writes(
     assert payload["target_branch"] == "codex/task"
     assert payload["branch_matches_target"] is True
     assert (ctx.mission_dir / "plan.md").read_bytes() == (ctx.linked / ".kittify/templates/plan-template.md").read_bytes()
+    lifecycle = {
+        entry["event_type"]: entry["payload"]
+        for line in (ctx.mission_dir / "status.events.jsonl").read_text(encoding="utf-8").splitlines()
+        if (entry := json.loads(line)).get("event_type") in {"SpecifyCompleted", "PlanStarted"}
+    }
+    assert set(lifecycle) == {"SpecifyCompleted", "PlanStarted"}
+    assert Path(lifecycle["SpecifyCompleted"]["artifact_path"]).as_posix() == (
+        "kitty-specs/linked-worktree-prerequisite-resolution-01M1MFE9/spec.md"
+    )
 
 
 # ---------------------------------------------------------------------------
