@@ -258,30 +258,8 @@ def _commit_partition_group(
     ``kind`` — :func:`_group_files_by_partition` guarantees this; this helper
     does not re-validate it (single responsibility: resolve + commit one group).
     """
-    placement: CommitTarget = resolve_placement_only(repo_root, mission_slug, kind=kind)
-    linked_primary_target: str | None = None
-    if is_primary_artifact_kind(kind) and target_branch is not None:
-        from specify_cli.missions.operation_context import resolve_mission_operation_context
-
-        operation = resolve_mission_operation_context(repo_root, mission_slug, cwd=repo_root)
-        if operation.mission_anchor_root != operation.repository_root:
-            linked_primary_target = target_branch
-            placement = CommitTarget(ref=target_branch)
-
-    # FR-003 / C-005 / NFR-004: derive coord-vs-primary routing from the ONE
-    # kind-aware ``placement`` (the single authority), not a second predicate.
-    # The placement already encodes the partition: a ``_PRIMARY_ARTIFACT_KINDS``
-    # member resolves to the primary ``target_branch`` for EVERY topology shape,
-    # so it is a direct primary commit; every other kind keeps the topology-routed
-    # destination ref. ``use_coord`` is True iff the mission routes through
-    # coordination AND the kind-aware placement did NOT land on the primary target
-    # branch — i.e. only coordination kinds materialise the coord worktree (C-001).
-    # A primary kind therefore NEVER routes to coordination even under coord
-    # topology — this removes the planning→coord arm (write-surface-coherence WP02).
-    primary_target = linked_primary_target or _resolve_mission_target_branch(repo_root, mission_slug)
-    use_coord = (
-        routes_through_coordination(resolve_topology(repo_root, mission_slug))
-        and placement.ref != primary_target
+    placement, use_coord, direct_root = _resolve_commit_surface(
+        repo_root, mission_slug, kind=kind, target_branch=target_branch,
     )
 
     if not use_coord and policy.is_protected(placement.ref):
@@ -315,7 +293,7 @@ def _commit_partition_group(
         )
     else:
         # Flattened or unprotected primary: commit directly.
-        worktree_root, commit_paths = repo_root, files
+        worktree_root, commit_paths = direct_root, files
 
     if not commit_paths:
         # All artifacts already committed (or none present) — genuine no-op.
@@ -402,6 +380,28 @@ def _commit_partition_group(
 #  still supplied defensively so the helper never raises on a malformed input.
 _FALLBACK_PRIMARY_KIND: Final = MissionArtifactKind.SPEC
 _FALLBACK_COORD_KIND: Final = MissionArtifactKind.STATUS_STATE
+
+
+def _resolve_commit_surface(
+    repo_root: Path, mission_slug: str, *, kind: MissionArtifactKind,
+    target_branch: str | None,
+) -> tuple[CommitTarget, bool, Path]:
+    """Resolve destination and direct checkout before the shared commit effects."""
+    placement = resolve_placement_only(repo_root, mission_slug, kind=kind)
+    linked_primary_target: str | None = None
+    if is_primary_artifact_kind(kind) and target_branch is not None:
+        from specify_cli.missions.operation_context import resolve_mission_operation_context
+
+        operation = resolve_mission_operation_context(repo_root, mission_slug, cwd=repo_root)
+        if operation.mission_anchor_root != operation.repository_root:
+            linked_primary_target = target_branch
+            placement = CommitTarget(ref=target_branch)
+    primary_target = linked_primary_target or _resolve_mission_target_branch(repo_root, mission_slug)
+    use_coord = (
+        routes_through_coordination(resolve_topology(repo_root, mission_slug))
+        and placement.ref != primary_target
+    )
+    return placement, use_coord, repo_root
 
 
 def _representative_kind_for_bucket(
