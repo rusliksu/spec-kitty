@@ -810,7 +810,7 @@ def _pre_mission_replay(tmp_path_factory: pytest.TempPathFactory) -> dict[str, o
         text=True,
     )
     document = json.loads(replay.stdout)
-    assert document["loaded_module"] == (
+    assert Path(document["loaded_module"]).as_posix() == (
         "src/specify_cli/cli/commands/agent/mission_setup_plan.py"
     )
     assert set(document["cases"]) == set(_LOCAL_OUTCOME_CASES)
