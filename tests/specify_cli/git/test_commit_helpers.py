@@ -11,7 +11,9 @@ specifically about the protected-branch refusal.
 from __future__ import annotations
 
 import subprocess
+import json
 from pathlib import Path
+from typing import Literal
 
 import pytest
 
@@ -98,6 +100,42 @@ def test_safe_commit_happy_path(lane_repo: Path) -> None:
     ).stdout.strip()
     assert result.sha in log
     assert "WP01: add alpha" in log
+
+
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("store", ["repository", "worktree"])
+def test_safe_commit_local_capture_uses_explicit_store_without_losing_frame(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, store: Literal["repository", "worktree"],
+) -> None:
+    from specify_cli.git import commit_helpers
+    from tests.tasks.linked_worktree_harness import create_linked_mission, snapshot_primary
+
+    ctx = create_linked_mission(tmp_path)
+    plan = ctx.mission_dir / "plan.md"
+    plan.write_text("# Changed plan\n", encoding="utf-8")
+    capture_root = ctx.primary if store == "repository" else ctx.linked
+    build_roots: list[Path] = []
+    def build_id(root: Path) -> str:
+        build_roots.append(root)
+        return "test-build"
+    monkeypatch.setattr(commit_helpers, "_get_current_build_id", build_id)
+    primary_before = snapshot_primary(ctx.primary)
+    result = safe_commit(
+        repo_root=ctx.primary, worktree_root=ctx.linked, destination_ref="codex/task",
+        message="capture store contract", paths=(plan,),
+        **({"local_commit_store": store} if store == "worktree" else {}),
+    )
+    assert build_roots == [capture_root]
+    pending = json.loads((capture_root / ".kittify/sync-state.json").read_text(encoding="utf-8"))["pending_local_commits"]
+    assert len(pending) == 1
+    assert pending[0]["git_hash"] == result.sha
+    assert pending[0]["build_id"] == "test-build"
+    assert [Path(path).as_posix() for path in pending[0]["changed_files"]] == [plan.relative_to(ctx.linked).as_posix()]
+    other_root = ctx.linked if store == "repository" else ctx.primary
+    assert not (other_root / ".kittify/sync-state.json").exists()
+    if store == "worktree":
+        assert snapshot_primary(ctx.primary) == primary_before
 
 
 def _install_warn_mode_guard_hook(repo: Path, warning_text: str) -> None:

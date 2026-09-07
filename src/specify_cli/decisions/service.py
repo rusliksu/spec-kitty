@@ -17,7 +17,7 @@ mission_id resolution:
 
 from __future__ import annotations
 
-from mission_runtime import MissionArtifactKind, placement_seam
+from mission_runtime import MissionArtifactKind, MissionContext, placement_seam
 import json
 from collections.abc import Callable
 from pathlib import Path
@@ -104,7 +104,7 @@ def _is_allowed_terminal_reopen(
     )
 
 
-def _resolve_mission_id(repo_root: Path, mission_slug: str) -> str:
+def _resolve_mission_id(repo_root: Path, mission_slug: str, context: MissionContext | None = None) -> str:
     """Read mission_id from kitty-specs/<slug>/meta.json.
 
     Raises:
@@ -121,7 +121,7 @@ def _resolve_mission_id(repo_root: Path, mission_slug: str) -> str:
     # separate PRIMARY-only resolution here could disagree with where the
     # ledger itself resolves under coord topology (C-001: no over-claiming a
     # funnel beyond what each site's own contract needs).
-    feature_dir = _mission_dir(repo_root, mission_slug)
+    feature_dir = _mission_dir(repo_root, mission_slug, context)
     # FR-005 / post-#2091: this site hard-fails on a missing meta.json
     # (DecisionError(MISSION_NOT_FOUND)) -- allow_missing=True would MASK
     # that guard and silently re-introduce the removed legacy tolerance.
@@ -152,7 +152,7 @@ def _resolve_mission_id(repo_root: Path, mission_slug: str) -> str:
     return str(mission_id)
 
 
-def _mission_dir(repo_root: Path, mission_slug: str) -> Path:
+def _mission_dir(repo_root: Path, mission_slug: str, context: MissionContext | None = None) -> Path:
     """Return kitty-specs/<mission_slug>/.
 
     The decisions ledger (``decisions/index.json`` / ``DM-<id>.md``) and its
@@ -164,20 +164,26 @@ def _mission_dir(repo_root: Path, mission_slug: str) -> Path:
     topology-aware and agrees with where emit.py writes; splitting reads onto
     PRIMARY here would read/write split-brain the ledger under coord topology.
     """
+    if context is not None:
+        if context.mission_slug != mission_slug:
+            raise ValueError("Decision context does not match the selected Mission")
+        return context.artifact(MissionArtifactKind.STATUS_STATE).write_dir
     mission_dir: Path = placement_seam(repo_root, mission_slug).read_dir(
         MissionArtifactKind.STATUS_STATE
     )
     return mission_dir
 
 
-def _events_path(repo_root: Path, mission_slug: str) -> Path:
+def _events_path(repo_root: Path, mission_slug: str, context: MissionContext | None = None) -> Path:
     """Return kitty-specs/<mission_slug>/status.events.jsonl."""
-    return _mission_dir(repo_root, mission_slug) / "status.events.jsonl"
+    return _mission_dir(repo_root, mission_slug, context) / "status.events.jsonl"
 
 
-def _opened_event_exists(repo_root: Path, mission_slug: str, decision_id: str) -> bool:
+def _opened_event_exists(
+    repo_root: Path, mission_slug: str, decision_id: str, context: MissionContext | None = None,
+) -> bool:
     """Return True when the canonical opened event already exists."""
-    path = _events_path(repo_root, mission_slug)
+    path = _events_path(repo_root, mission_slug, context)
     if not path.exists():
         return False
     try:
@@ -223,9 +229,10 @@ def _repair_missing_opened_event(
     mission_slug: str,
     *,
     entry: IndexEntry,
+    context: MissionContext | None = None,
 ) -> int | None:
     """Re-emit a missing opened event for an already-persisted open decision."""
-    if _opened_event_exists(repo_root, mission_slug, entry.decision_id):
+    if _opened_event_exists(repo_root, mission_slug, entry.decision_id, context):
         return None
     if entry.opened_by is None:
         raise DecisionError(
@@ -243,6 +250,7 @@ def _repair_missing_opened_event(
             decision_id=entry.decision_id,
             entry=entry,
             actor=entry.opened_by,
+            **({"context": context} if context is not None else {}),
         )
     except Exception as exc:
         raise DecisionError(
@@ -271,6 +279,7 @@ def open_decision(
     dry_run: bool = False,
     decision_id: str | None = None,
     on_minted: Callable[[str], None] | None = None,
+    context: MissionContext | None = None,
 ) -> DecisionOpenResponse:
     """Open a new decision or return idempotently if already open.
 
@@ -308,8 +317,8 @@ def open_decision(
             message="Either step_id or slot_key must be provided",
         )
 
-    mission_id = _resolve_mission_id(repo_root, mission_slug)
-    mission_dir = _mission_dir(repo_root, mission_slug)
+    mission_id = _resolve_mission_id(repo_root, mission_slug, context)
+    mission_dir = _mission_dir(repo_root, mission_slug, context)
 
     if dry_run:
         if on_minted is not None:
@@ -339,6 +348,7 @@ def open_decision(
                 repo_root,
                 mission_slug,
                 entry=existing,
+                context=context,
             )
             if on_minted is not None:
                 on_minted(existing.decision_id)
@@ -389,6 +399,7 @@ def open_decision(
         decision_id=decision_id,
         entry=entry,
         actor=actor,
+        **({"context": context} if context is not None else {}),
     )
     if on_minted is not None:
         on_minted(decision_id)
@@ -421,6 +432,7 @@ def _terminal_command(
     resolved_by: str | None = None,
     actor: str,
     dry_run: bool = False,
+    context: MissionContext | None = None,
 ) -> DecisionTerminalResponse:
     """Shared implementation for resolve, defer, and cancel.
 
@@ -437,7 +449,7 @@ def _terminal_command(
             event_lamport=None,
         )
 
-    mission_dir = _mission_dir(repo_root, mission_slug)
+    mission_dir = _mission_dir(repo_root, mission_slug, context)
     index = _store.load_index(mission_dir)
     entry = next(
         (e for e in index.entries if e.decision_id == decision_id),
@@ -509,6 +521,7 @@ def _terminal_command(
         decision_id=decision_id,
         entry=updated_entry,
         actor=actor,
+        **({"context": context} if context is not None else {}),
     )
 
     return DecisionTerminalResponse(
@@ -537,6 +550,7 @@ def resolve_decision(
     resolved_by: str | None = None,
     actor: str,
     dry_run: bool = False,
+    context: MissionContext | None = None,
 ) -> DecisionTerminalResponse:
     """Resolve a decision with a concrete answer.
 
@@ -569,6 +583,7 @@ def resolve_decision(
         resolved_by=resolved_by,
         actor=actor,
         dry_run=dry_run,
+        context=context,
     )
 
 
@@ -581,6 +596,7 @@ def defer_decision(
     resolved_by: str | None = None,
     actor: str,
     dry_run: bool = False,
+    context: MissionContext | None = None,
 ) -> DecisionTerminalResponse:
     """Defer a decision for later resolution.
 
@@ -606,6 +622,7 @@ def defer_decision(
         resolved_by=resolved_by,
         actor=actor,
         dry_run=dry_run,
+        context=context,
     )
 
 
@@ -618,6 +635,7 @@ def cancel_decision(
     resolved_by: str | None = None,
     actor: str,
     dry_run: bool = False,
+    context: MissionContext | None = None,
 ) -> DecisionTerminalResponse:
     """Cancel a decision (deemed no longer relevant).
 
@@ -643,4 +661,5 @@ def cancel_decision(
         resolved_by=resolved_by,
         actor=actor,
         dry_run=dry_run,
+        context=context,
     )

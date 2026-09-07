@@ -7,10 +7,10 @@ command (which is mission-blind), this command derives the mission slug from a
 boundary, and routes the commit through
 :func:`~specify_cli.coordination.commit_router.commit_for_mission`.
 
-On a protected primary the coordination worktree is materialised on demand
-(the same canonical ``CoordinationWorkspace.resolve()`` path used by the
-planning loop), so the spec commit lands on the coordination branch instead of
-tripping the guard (materialize-then-retry).
+Planning artifacts commit directly to the Mission's planning branch, never
+through coordination. Protected-primary writes are refused. An explicitly
+selected caller-owned Mission keeps its artifact paths and committing checkout,
+while protection policy remains anchored at the canonical repository root.
 
 Design basis: WP02 / IC-02 / ADR ``2026-06-21-1``.
 
@@ -27,11 +27,12 @@ from pathlib import Path
 import typer
 from specify_cli.cli.console import console
 
-from mission_runtime import MissionArtifactKind
+from mission_runtime import ActionContextError, MissionArtifactKind, mission_context_for
 from specify_cli.coordination.commit_router import CommitRouterResult, commit_for_mission
 from specify_cli.core.constants import KITTY_SPECS_DIR
 from specify_cli.git.protection_policy import ProtectionPolicy
 from specify_cli.task_utils import find_repo_root
+from specify_cli.missions.operation_context import MissionOperationContext, resolve_mission_operation_context
 
 
 # ---------------------------------------------------------------------------
@@ -64,6 +65,30 @@ def _derive_mission_slug(path_arg: str | None, mission_opt: str | None) -> str |
         # Otherwise treat the final component as the slug.
         return p.name or None
     return None
+
+
+def _normalize_commit_files(
+    files: list[Path], operation: MissionOperationContext, mission_slug: str,
+) -> tuple[Path, ...]:
+    """Interpret selected-Mission paths and refuse resolved escapes before staging."""
+    if operation.mission_anchor_root == operation.repository_root:
+        return tuple((operation.repository_root / file).resolve() for file in files)
+    context = mission_context_for(
+        operation.repository_root, mission_slug, effective_root=operation.mission_anchor_root,
+    )
+    mission_dir = context.artifact(MissionArtifactKind.SPEC).write_dir.resolve()
+    resolved_files: list[Path] = []
+    for file in files:
+        if file.is_absolute():
+            resolved = file.resolve()
+        elif file.parts and file.parts[0] == KITTY_SPECS_DIR:
+            resolved = (operation.mission_anchor_root / file).resolve()
+        else:
+            resolved = (mission_dir / file).resolve()
+        if not resolved.is_relative_to(mission_dir):
+            raise ValueError(f"Artifact outside selected Mission: {file}")
+        resolved_files.append(resolved)
+    return tuple(resolved_files)
 
 
 def _payload(
@@ -126,17 +151,11 @@ def spec_commit_command(
 ) -> None:
     """Commit spec artifacts to the mission's resolved placement.
 
-    On a protected primary the coordination worktree is materialised on demand
-    so the commit lands on the coordination branch (materialize-then-retry).
-    On an unprotected or flattened primary the commit is direct.
+    Planning writes use the Mission's direct planning surface. A protected
+    destination is refused; coordination is not a bypass for that protection.
     """
     try:
         repo_root = _current_repo_root()
-
-        # Normalise file paths.
-        abs_files: list[Path] = []
-        for f in files:
-            abs_files.append((repo_root / f).resolve() if not f.is_absolute() else f.resolve())
 
         # Derive mission slug.
         first_path_arg = str(files[0]) if files else None
@@ -149,13 +168,19 @@ def spec_commit_command(
             )
             raise typer.Exit(1)
 
+        operation = resolve_mission_operation_context(repo_root, mission_slug, cwd=Path.cwd())
+        owned = operation.mission_anchor_root != operation.repository_root
+        if operation.identity is not None:
+            mission_slug = operation.identity.mission_slug
+        abs_files = _normalize_commit_files(files, operation, mission_slug)
+
         # Boundary-resolve the protection policy (FR-007, NFR-003).
         policy = ProtectionPolicy.resolve(repo_root)
 
         result: CommitRouterResult = commit_for_mission(
             repo_root=repo_root,
             mission_slug=mission_slug,
-            files=tuple(abs_files),
+            files=abs_files,
             message=message,
             policy=policy,
             # The operator-facing ``spec-commit`` entry point commits the SPEC
@@ -164,6 +189,7 @@ def spec_commit_command(
             # topology — no planning→coord transit.
             kind=MissionArtifactKind.SPEC,
             target_branch=target_branch,
+            **({"operation": operation} if owned else {}),
         )
 
         if result.status == "committed":
@@ -198,7 +224,7 @@ def spec_commit_command(
             diag = result.diagnostic or "Artifact absent at resolved placement."
             actionable = (
                 f"{diag}\n"
-                f"To retry after materialising the coordination worktree, run:\n"
+                f"After correcting the branch or artifact location above, retry:\n"
                 f"  {recovery_cmd}"
             )
             payload = _payload(
@@ -227,7 +253,7 @@ def spec_commit_command(
 
     except typer.Exit:
         raise
-    except (RuntimeError, ValueError, subprocess.CalledProcessError) as exc:
+    except (ActionContextError, RuntimeError, ValueError, subprocess.CalledProcessError) as exc:
         payload = _payload(success=False, error=str(exc))
         if json_output:
             print(json.dumps(payload, indent=2))

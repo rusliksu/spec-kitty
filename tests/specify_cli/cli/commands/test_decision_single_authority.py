@@ -83,6 +83,44 @@ def test_owned_decision_open_repair_and_verify_keep_identity_and_surface(
                        "verify", "--mission", selector, "--json", env=isolated_env)
     assert verified.returncode == 0, verified.stdout + verified.stderr
     assert json.loads(verified.stdout)["findings"] == []
+    canceled = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", "agent", "decision",
+                       "cancel", payload["decision_id"], "--mission", selector,
+                       "--rationale", "Test completed", "--json", env=isolated_env)
+    assert canceled.returncode == 0, canceled.stdout + canceled.stderr
+    assert json.loads(canceled.stdout)["status"] == "canceled"
+    final_events = [json.loads(line) for line in event_log.read_text(encoding="utf-8").splitlines()]
+    terminal = [row for row in final_events if row.get("event_type") == "DecisionPointResolved"]
+    assert len(terminal) == 1
+    assert terminal[0]["payload"]["mission_id"] == payload["mission_id"]
+    assert terminal[0]["payload"]["decision_point_id"] == payload["decision_id"]
+
+
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("command", ["open", "verify"])
+@pytest.mark.parametrize("refusal", ["conflict", "ambiguous", "missing"])
+def test_owned_decision_refuses_unresolved_identity_before_writing(
+    tmp_path: Path, isolated_env: dict[str, str], command: str, refusal: str,
+) -> None:
+    from tests.tasks.linked_worktree_harness import create_linked_mission, snapshot_primary, write_mission
+
+    ctx = create_linked_mission(tmp_path)
+    selector = ctx.mission_dir.name
+    if refusal == "conflict":
+        write_mission(ctx.primary / "kitty-specs" / selector, "01M1MFE9ZZZZZZZZZZZZZZZZZZ")
+    elif refusal == "ambiguous":
+        write_mission(ctx.linked / "kitty-specs/other-01M1MFE9", "01M1MFE9ZZZZZZZZZZZZZZZZZZ")
+        selector = "01M1MFE9"
+    else:
+        selector = "missing-01M1NONE"
+    before = snapshot_primary(ctx.linked)
+    args = ("--flow", "plan", "--input-key", "choice", "--slot-key", "choice", "--question", "Choose?") if command == "open" else ()
+    result = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", "agent", "decision",
+                     command, "--mission", selector, *args, "--json", env=isolated_env)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "Traceback" not in result.stdout + result.stderr
+    assert json.loads(result.stdout or result.stderr)["code"]
+    assert snapshot_primary(ctx.linked) == before
 
 # Production-shaped identity: a real 26-char Crockford-base32 ULID and the
 # matching human slug embedding its mid8, mirroring the debbie-coord repro.

@@ -12,6 +12,12 @@ from typing import cast
 import pytest
 
 from specify_cli.missions.operation_context import MissionSurfaceConflictError, resolve_mission_operation_context
+from tests.tasks.linked_worktree_harness import (
+    LinkedMission as VerifiedLinkedMission,
+    create_linked_mission,
+    git as _git,
+    snapshot_primary,
+)
 
 pytestmark = [pytest.mark.git_repo, pytest.mark.non_sandbox, pytest.mark.real_worktree_detection]
 
@@ -20,17 +26,10 @@ _MISSION_ID = "01M1MFE98JDK0S33WSYBQRPSDF"
 
 
 @dataclass(frozen=True)
-class LinkedMission:
-    primary: Path
-    linked: Path
-    mission_dir: Path
+class LinkedMission(VerifiedLinkedMission):
+    """Preserve the exported mixed-contract fixture fields for allocation tests."""
     primary_head: str
     primary_status: str
-
-
-def _git(repo: Path, *args: str) -> str:
-    result = subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True, text=True)
-    return result.stdout.strip()
 
 
 def _write_mission(mission_dir: Path, mission_id: str = _MISSION_ID) -> None:
@@ -57,26 +56,19 @@ def _write_mission(mission_dir: Path, mission_id: str = _MISSION_ID) -> None:
 
 @pytest.fixture
 def linked_mission(tmp_path: Path) -> Iterator[LinkedMission]:
-    primary = tmp_path / "repo"
-    primary.mkdir()
-    _git(primary, "init", "-q", "-b", "main")
-    _git(primary, "config", "user.email", "test@example.invalid")
-    _git(primary, "config", "user.name", "Test")
-    (primary / "README.md").write_text("seed\n", encoding="utf-8")
-    (primary / ".gitignore").write_text(".kittify/sync-state.json\n", encoding="utf-8")
-    (primary / ".kittify" / "templates").mkdir(parents=True)
-    (primary / ".kittify" / "config.yaml").write_text("project:\n  name: linked-test\n", encoding="utf-8")
-    (primary / ".kittify" / "templates" / "plan-template.md").write_text(
-        "# Implementation Plan\n\n## Technical Context\n\n**Language/Version**: Python 3.12\n",
-        encoding="utf-8",
-    )
-    _git(primary, "add", ".")
-    _git(primary, "commit", "-q", "-m", "init")
-
-    linked = tmp_path / "linked"
-    _git(primary, "worktree", "add", "-q", "-b", "codex/task", str(linked), "main")
-    mission_dir = linked / "kitty-specs" / _SLUG
+    verified = create_linked_mission(tmp_path)
+    primary, linked, mission_dir = verified.primary, verified.linked, verified.mission_dir
+    # Keep this older integration contract's pre-WP state: its individual nodes
+    # seed their own WPs, event history, and branch gates.
+    (mission_dir / "tasks" / "WP01.md").unlink()
+    (mission_dir / "status.json").unlink(missing_ok=True)
     _write_mission(mission_dir)
+    for checkout in (primary, linked):
+        (checkout / ".kittify/templates/plan-template.md").write_bytes((mission_dir / "plan.md").read_bytes())
+        config = checkout / ".kittify/config.yaml"
+        config.write_text(config.read_text(encoding="utf-8") + "mission_type_activations:\n  - software-dev\n", encoding="utf-8")
+        _git(checkout, "add", ".kittify")
+        _git(checkout, "commit", "-q", "-m", "prepare mixed-contract templates and activation")
     _git(linked, "add", ".")
     _git(linked, "commit", "-q", "-m", "add linked mission")
 
@@ -102,21 +94,12 @@ def checked_cli(
     run_cli: Callable[..., subprocess.CompletedProcess[str]],
 ) -> Callable[..., subprocess.CompletedProcess[str]]:
     """Check primary bytes, index, and HEAD for every command, including failures."""
-    def snapshot() -> tuple[str, str, dict[str, bytes]]:
-        root = linked_mission.primary
-        files = {
-            str(path.relative_to(root)): path.read_bytes()
-            for path in root.rglob("*")
-            if path.is_file() and ".git" not in path.relative_to(root).parts
-        }
-        return _git(root, "rev-parse", "HEAD"), _git(root, "status", "--porcelain"), files
-
     def invoke(project: Path, *args: str) -> subprocess.CompletedProcess[str]:
-        before = snapshot()
+        before = snapshot_primary(linked_mission.primary)
         try:
             return run_cli(project, *args)
         finally:
-            assert snapshot() == before, "Command mutated the primary checkout"
+            assert snapshot_primary(linked_mission.primary) == before, "Command mutated the primary checkout"
 
     return invoke
 

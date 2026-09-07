@@ -30,17 +30,21 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Final, Literal, Protocol, runtime_checkable
 
+from kernel.git_topology import git_toplevel
 from mission_runtime import (
     CommitTarget,
     MissionArtifactKind,
+    MissionContext,
     is_primary_artifact_kind,
     kind_for_mission_file,
+    mission_context_for,
     resolve_placement_only,
     resolve_topology,
     routes_through_coordination,
 )
 from specify_cli.coordination.coherence import is_coord_residue_churn
 from specify_cli.git import safe_commit
+from specify_cli.missions.operation_context import MissionOperationContext
 
 
 class PrimaryKindReachedCoordStagingError(RuntimeError):
@@ -160,6 +164,7 @@ def commit_for_mission(
     kind: MissionArtifactKind,
     primary_paths_created_this_invocation: frozenset[Path] | None = None,
     target_branch: str | None = None,
+    operation: MissionOperationContext | None = None,
 ) -> CommitRouterResult:
     """Commit a mission artifact to its kind-aware resolved placement.
 
@@ -191,6 +196,10 @@ def commit_for_mission(
         target_branch: Short primary branch name for the post-commit ff-advance
                      (WP09 / FR-010 / #1878). Optional; advance is skipped when
                      ``None``.
+        operation: Explicit repository/selected-Mission binding. An owned
+                     checkout uses its kind projections and local capture store;
+                     policy remains repository-rooted. Omission preserves the
+                     existing primary/coordination routing and call shapes.
 
     Returns:
         :class:`CommitRouterResult` with the typed outcome.
@@ -204,7 +213,19 @@ def commit_for_mission(
     single-partition batch (the common case) still resolves placement exactly
     once and issues exactly one commit (INV: no fast-path regression).
     """
-    groups = _group_files_by_partition(repo_root, files, mission_slug, kind=kind)
+    context = None
+    if operation is not None:
+        if (
+            operation.repository_root.resolve() != repo_root.resolve()
+            or operation.identity is None
+            or operation.identity.mission_slug != mission_slug
+        ):
+            raise ValueError("Commit operation does not match the repository and Mission identity")
+        if operation.mission_anchor_root != operation.repository_root:
+            context = mission_context_for(
+                repo_root, mission_slug, effective_root=operation.mission_anchor_root,
+            )
+    groups = _group_files_by_partition(repo_root, files, mission_slug, kind=kind, context=context)
 
     if len(groups) <= 1:
         effective_kind, effective_files = groups[0] if groups else (kind, files)
@@ -217,6 +238,7 @@ def commit_for_mission(
             kind=effective_kind,
             primary_paths_created_this_invocation=primary_paths_created_this_invocation,
             target_branch=target_branch,
+            context=context,
         )
 
     # Split-and-commit (contract (a), pinned by T004): a mixed-partition batch
@@ -233,6 +255,7 @@ def commit_for_mission(
             kind=group_kind,
             primary_paths_created_this_invocation=primary_paths_created_this_invocation,
             target_branch=target_branch,
+            context=context,
         )
         for group_kind, group_files in groups
     ]
@@ -249,6 +272,7 @@ def _commit_partition_group(
     kind: MissionArtifactKind,
     primary_paths_created_this_invocation: frozenset[Path] | None = None,
     target_branch: str | None = None,
+    context: MissionContext | None = None,
 ) -> CommitRouterResult:
     """Commit ONE single-partition file group to its resolved placement.
 
@@ -259,7 +283,7 @@ def _commit_partition_group(
     does not re-validate it (single responsibility: resolve + commit one group).
     """
     placement, use_coord, direct_root = _resolve_commit_surface(
-        repo_root, mission_slug, kind=kind, target_branch=target_branch,
+        repo_root, mission_slug, kind=kind, target_branch=target_branch, context=context,
     )
 
     if not use_coord and policy.is_protected(placement.ref):
@@ -319,6 +343,8 @@ def _commit_partition_group(
             target=placement,
             message=message,
             paths=commit_paths,
+            **({"local_commit_store": "worktree"} if context is not None and not use_coord
+               and worktree_root.resolve() != repo_root.resolve() else {}),
         )
     except subprocess.CalledProcessError as exc:
         stderr = getattr(exc, "stderr", "") or ""
@@ -385,8 +411,19 @@ _FALLBACK_COORD_KIND: Final = MissionArtifactKind.STATUS_STATE
 def _resolve_commit_surface(
     repo_root: Path, mission_slug: str, *, kind: MissionArtifactKind,
     target_branch: str | None,
+    context: MissionContext | None = None,
 ) -> tuple[CommitTarget, bool, Path]:
     """Resolve destination and direct checkout before the shared commit effects."""
+    if context is not None:
+        artifact = context.artifact(kind)
+        primary_placement = context.artifact(MissionArtifactKind.SPEC).commit_target
+        if artifact.commit_target is None or primary_placement is None:
+            raise ValueError("Selected Mission artifact has no commit target")
+        use_coord = (
+            routes_through_coordination(context.topology)
+            and artifact.commit_target != primary_placement
+        )
+        return artifact.commit_target, use_coord, git_toplevel(artifact.write_dir)
     placement = resolve_placement_only(repo_root, mission_slug, kind=kind)
     linked_primary_target: str | None = None
     if is_primary_artifact_kind(kind) and target_branch is not None:
@@ -442,6 +479,7 @@ def _group_files_by_partition(
     mission_slug: str,
     *,
     kind: MissionArtifactKind,
+    context: MissionContext | None = None,
 ) -> list[tuple[MissionArtifactKind, tuple[Path, ...]]]:
     """Group ``files`` by PARTITION (PRIMARY vs COORD), not by exact kind (T023).
 
@@ -531,9 +569,15 @@ def _group_files_by_partition(
     )
 
     if primary_files and coord_files:
-        primary_ref = resolve_placement_only(repo_root, mission_slug, kind=primary_kind).ref
-        coord_ref = resolve_placement_only(repo_root, mission_slug, kind=coord_kind).ref
-        if primary_ref == coord_ref:
+        primary_target = (
+            context.artifact(primary_kind).commit_target if context is not None
+            else resolve_placement_only(repo_root, mission_slug, kind=primary_kind)
+        )
+        coord_target = (
+            context.artifact(coord_kind).commit_target if context is not None
+            else resolve_placement_only(repo_root, mission_slug, kind=coord_kind)
+        )
+        if primary_target == coord_target:
             # No real routing divergence (coordless topology) — keep the
             # historical single-commit fast path instead of a gratuitous
             # second commit.

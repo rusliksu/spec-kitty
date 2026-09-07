@@ -21,7 +21,10 @@ from pathlib import Path
 
 import typer
 
-from mission_runtime import ActionContextError
+from mission_runtime import ActionContextError, MissionArtifactKind, MissionContext, mission_context_for
+from specify_cli.missions.operation_context import (
+    MissionSurfaceConflictError, resolve_mission_operation_context,
+)
 
 from specify_cli.decisions.models import (
     DecisionErrorCode,
@@ -56,8 +59,8 @@ _SAFE_SLUG_RE = _re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]*$")
 # ---------------------------------------------------------------------------
 
 
-def _resolve_repo_root_and_slug(mission_handle: str) -> tuple[Path, str]:
-    """Return ``(repo_root, mission_slug)`` for a mission handle.
+def _resolve_repo_root_and_slug(mission_handle: str) -> tuple[Path, str, MissionContext | None]:
+    """Return canonical root/slug and an optional selected-owned artifact context.
 
     The mission handle may be a full slug, a bare ``mid8``, a full ULID, or a
     numeric prefix; it is canonicalized to the resolved mission directory's
@@ -105,6 +108,15 @@ def _resolve_repo_root_and_slug(mission_handle: str) -> tuple[Path, str]:
     # Canonical root authority — agrees with the resolver's own anchor (C-001:
     # adopt the existing root authority, never re-derive via a private walk).
     repo_root = locate_project_root() or Path.cwd()
+    try:
+        operation = resolve_mission_operation_context(repo_root, mission_handle, cwd=Path.cwd())
+    except MissionSurfaceConflictError as exc:
+        raise ActionContextError("MISSION_SURFACE_CONFLICT", str(exc)) from exc
+    if operation.mission_anchor_root != operation.repository_root:
+        context = mission_context_for(
+            operation.repository_root, mission_handle, effective_root=operation.mission_anchor_root,
+        )
+        return operation.repository_root, context.mission_slug, context
 
     # Single authority: resolve the mission directory through the one
     # coord-aware resolver. F-001: the resolved directory's NAME (not the raw
@@ -129,8 +141,8 @@ def _resolve_repo_root_and_slug(mission_handle: str) -> tuple[Path, str]:
     # calling the richer resolver directly.
     resolved = resolve_feature_dir_for_mission(repo_root, mission_handle).resolve()
     if resolved.is_dir():
-        return repo_root, resolved.name
-    return repo_root, mission_handle
+        return repo_root, resolved.name, None
+    return repo_root, mission_handle, None
 
 
 def _open_response_to_dict(
@@ -261,7 +273,7 @@ def cmd_open(  # noqa: PLR0913
         parsed_options = tuple(str(item) for item in raw)
 
     try:
-        repo_root, mission_slug = _resolve_repo_root_and_slug(mission)
+        repo_root, mission_slug, context = _resolve_repo_root_and_slug(mission)
     except ActionContextError as exc:
         _handle_action_context_error(exc)
         return  # unreachable — _handle_action_context_error raises
@@ -278,6 +290,7 @@ def cmd_open(  # noqa: PLR0913
             slot_key=slot_key,
             actor=actor,
             dry_run=dry_run,
+            context=context,
         )
     except DecisionError as exc:
         _handle_decision_error(exc)
@@ -317,7 +330,7 @@ def cmd_resolve(  # noqa: PLR0913
 ) -> None:
     """Resolve a decision with a concrete final answer."""
     try:
-        repo_root, mission_slug = _resolve_repo_root_and_slug(mission)
+        repo_root, mission_slug, context = _resolve_repo_root_and_slug(mission)
     except ActionContextError as exc:
         _handle_action_context_error(exc)
         return  # unreachable — _handle_action_context_error raises
@@ -333,6 +346,7 @@ def cmd_resolve(  # noqa: PLR0913
             resolved_by=resolved_by,
             actor=actor,
             dry_run=dry_run,
+            context=context,
         )
     except DecisionError as exc:
         _handle_decision_error(exc)
@@ -367,7 +381,7 @@ def cmd_defer(
         return
 
     try:
-        repo_root, mission_slug = _resolve_repo_root_and_slug(mission)
+        repo_root, mission_slug, context = _resolve_repo_root_and_slug(mission)
     except ActionContextError as exc:
         _handle_action_context_error(exc)
         return  # unreachable — _handle_action_context_error raises
@@ -381,6 +395,7 @@ def cmd_defer(
             resolved_by=resolved_by,
             actor=actor,
             dry_run=dry_run,
+            context=context,
         )
     except DecisionError as exc:
         _handle_decision_error(exc)
@@ -415,7 +430,7 @@ def cmd_cancel(
         return
 
     try:
-        repo_root, mission_slug = _resolve_repo_root_and_slug(mission)
+        repo_root, mission_slug, context = _resolve_repo_root_and_slug(mission)
     except ActionContextError as exc:
         _handle_action_context_error(exc)
         return  # unreachable — _handle_action_context_error raises
@@ -429,6 +444,7 @@ def cmd_cancel(
             resolved_by=resolved_by,
             actor=actor,
             dry_run=dry_run,
+            context=context,
         )
     except DecisionError as exc:
         _handle_decision_error(exc)
@@ -454,7 +470,7 @@ def cmd_verify(
 ) -> None:
     """Cross-check deferred decisions against inline sentinel markers."""
     try:
-        repo_root, mission_slug = _resolve_repo_root_and_slug(mission)
+        repo_root, mission_slug, context = _resolve_repo_root_and_slug(mission)
     except ActionContextError as exc:
         _handle_action_context_error(exc)
         return  # unreachable — _handle_action_context_error raises
@@ -483,7 +499,10 @@ def cmd_verify(
     # (``MissionSelectorAmbiguous``) as structured typed diagnostics carrying the
     # real ``error_code`` — never an uncaught traceback.
     try:
-        mission_dir = resolve_handle_to_read_path(repo_root, mission_slug)
+        mission_dir = (
+            context.artifact(MissionArtifactKind.STATUS_STATE).read_dir
+            if context is not None else resolve_handle_to_read_path(repo_root, mission_slug)
+        )
     except (StatusReadPathNotFound, MissionSelectorAmbiguous) as exc:
         _handle_action_context_error(
             ActionContextError(exc.error_code, str(exc))

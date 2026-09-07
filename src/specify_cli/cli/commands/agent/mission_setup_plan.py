@@ -310,6 +310,8 @@ def _commit_to_branch(
     repo_root: Path,
     _target_branch: str,
     json_output: bool = False,
+    *,
+    operation: MissionOperationContext | None = None,
 ) -> CommitToBranchResult:
     """Commit a planning artifact to its single resolved placement.
 
@@ -358,6 +360,7 @@ def _commit_to_branch(
         policy=policy,
         kind=_kind_for_artifact(artifact_type),
         target_branch=_target_branch,
+        **({"operation": operation} if operation is not None else {}),
     )
 
     if router_result.status == "committed":
@@ -813,6 +816,7 @@ def _commit_plan_if_substantive(
     json_output: bool,
     plan_template: ResolutionResult,
     lifecycle_intents: list[LifecycleEventIntent] | None = None,
+    operation: MissionOperationContext | None = None,
 ) -> tuple[CommitToBranchResult | None, str | None, bool]:
     """Commit plan.md when substantive; otherwise resolve blocked vs. scaffold_only.
 
@@ -828,8 +832,12 @@ def _commit_plan_if_substantive(
     from specify_cli.cli.commands.agent import mission as _mission
     from specify_cli.missions._substantive import is_committed, is_substantive
 
+    artifact_root = operation.mission_anchor_root if operation is not None else repo_root
     if is_substantive(plan_file, "plan"):
-        commit_result = _mission._commit_to_branch(plan_file, mission_slug, "plan", repo_root, target_branch, json_output)
+        commit_result = _mission._commit_to_branch(
+            plan_file, mission_slug, "plan", repo_root, target_branch, json_output,
+            **({"operation": operation} if operation is not None else {}),
+        )
         try:
             from specify_cli.status.lifecycle_events import (
                 emit_artifact_phase_local,
@@ -842,7 +850,7 @@ def _commit_plan_if_substantive(
                 event_type=PLAN_COMPLETED,
                 mission_slug=mission_slug,
                 actor=SETUP_PLAN_COMMAND_NAME,
-                artifact_path=_mission._branch_tree_relative_path(plan_file, repo_root),
+                artifact_path=_mission._branch_tree_relative_path(plan_file, artifact_root),
             )
             if lifecycle_intents is not None and envelope is not None:
                 lifecycle_intents.append(
@@ -855,7 +863,7 @@ def _commit_plan_if_substantive(
     _, scaffold_only = _resolve_plan_result_state(
         is_substantive=False,
         is_pristine=_is_plan_pristine(plan_file, plan_template),
-        committed=is_committed(plan_file, repo_root),
+        committed=is_committed(plan_file, artifact_root),
     )
     if scaffold_only:
         if not json_output:
@@ -1291,6 +1299,7 @@ def setup_plan(
             json_output=json_output,
             plan_template=plan_template,
             lifecycle_intents=lifecycle_intents,
+            **({"operation": operation} if operation is not None else {}),
         )
 
         gap_analysis_path, generators_detected = _run_documentation_wiring(
