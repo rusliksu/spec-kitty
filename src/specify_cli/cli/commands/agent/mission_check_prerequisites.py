@@ -30,6 +30,7 @@ from specify_cli.cli.console import console
 import typer
 
 from mission_runtime import ActionContextError
+from specify_cli.missions.operation_context import MissionSurfaceConflictError
 
 from specify_cli.cli.commands.agent.mission_branch_context import (
     _inject_branch_contract,
@@ -388,7 +389,8 @@ def _read_meta_for_pr_bound(feature_dir: Path) -> dict[str, Any]:
     """
     from specify_cli.mission_metadata import load_meta_or_empty
 
-    return load_meta_or_empty(feature_dir)
+    metadata: dict[str, Any] = load_meta_or_empty(feature_dir)
+    return metadata
 
 
 def _read_meta_for_emission(feature_dir: Path) -> dict[str, Any] | None:
@@ -401,13 +403,14 @@ def _read_meta_for_emission(feature_dir: Path) -> dict[str, Any] | None:
     """
     from specify_cli.mission_metadata import load_meta
 
-    return load_meta(feature_dir, allow_missing=True, on_malformed="none")
+    metadata: dict[str, Any] | None = load_meta(feature_dir, allow_missing=True, on_malformed="none")
+    return metadata
 
 
 def _emit_check_prerequisites_detection_error(
     *,
     repo_root: Path,
-    detection_error: ValueError | ActionContextError,
+    detection_error: ValueError | ActionContextError | MissionSurfaceConflictError,
     feature: str | None,
     json_output: bool,
     paths_only: bool,
@@ -422,13 +425,17 @@ def _emit_check_prerequisites_detection_error(
     if include_tasks:
         command_args.append("--include-tasks")
 
-    payload = _build_setup_plan_detection_error(
-        repo_root,
-        str(detection_error),
-        feature,
-        error_code="FEATURE_CONTEXT_UNRESOLVED",
-        command_name="check-prerequisites",
-        command_args=command_args,
+    payload = (
+        {"error_code": "FEATURE_CONTEXT_UNRESOLVED", "mission_flag": feature, "error": str(detection_error)}
+        if isinstance(detection_error, MissionSurfaceConflictError)
+        else _build_setup_plan_detection_error(
+            repo_root,
+            str(detection_error),
+            feature,
+            error_code="FEATURE_CONTEXT_UNRESOLVED",
+            command_name="check-prerequisites",
+            command_args=command_args,
+        )
     )
     if json_output:
         _emit_json(payload)
@@ -612,7 +619,7 @@ def check_prerequisites(
                     cwd,
                     explicit_feature=feature,
                 )
-        except (ValueError, ActionContextError) as detection_error:
+        except (ValueError, ActionContextError, MissionSurfaceConflictError) as detection_error:
             _emit_check_prerequisites_detection_error(
                 repo_root=repo_root,
                 detection_error=detection_error,

@@ -23,6 +23,13 @@ from specify_cli.cli.commands.agent import mission_check_prerequisites as seam
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
+def _list_field(payload: dict[str, object], key: str) -> list[Any]:
+    """Assert the wire field is an array before checking its contents or length."""
+    value = payload[key]
+    assert isinstance(value, list), (key, value)
+    return value
+
+
 @pytest.mark.git_repo
 @pytest.mark.non_sandbox
 @pytest.mark.real_worktree_detection
@@ -256,7 +263,7 @@ def test_resume_probe_reports_merged_mission_as_valid_existing_history(tmp_path:
     assert payload["error_code"] == "MISSION_RESUME_EXISTING"
     assert payload["mission_number"] == 254
     assert "do not repair or remove" in str(payload["remediation"])
-    assert "topology" in " ".join(payload["integrity_warnings"])
+    assert "topology" in " ".join(_list_field(payload, "integrity_warnings"))
 
 
 def test_resume_probe_matches_bare_slug_to_legacy_numbered_history(tmp_path: Path) -> None:
@@ -283,7 +290,7 @@ def test_resume_probe_matches_bare_slug_to_legacy_numbered_history(tmp_path: Pat
     assert payload["resume_state"] == "existing"
     assert payload["mission_slug"] == "001-foo"
     assert payload["mission_number"] == 1
-    assert "mission_id" in " ".join(payload["integrity_warnings"])
+    assert "mission_id" in " ".join(_list_field(payload, "integrity_warnings"))
 
 
 def test_resume_probe_reports_ambiguous_duplicate_human_slug(tmp_path: Path) -> None:
@@ -294,7 +301,7 @@ def test_resume_probe_reports_ambiguous_duplicate_human_slug(tmp_path: Path) -> 
 
     assert payload["resume_state"] == "ambiguous"
     assert payload["error_code"] == "MISSION_RESUME_AMBIGUOUS"
-    assert len(payload["candidates"]) == 2
+    assert len(_list_field(payload, "candidates")) == 2
 
 
 def test_resume_probe_reports_malformed_partial_scaffold(tmp_path: Path) -> None:
@@ -306,7 +313,7 @@ def test_resume_probe_reports_malformed_partial_scaffold(tmp_path: Path) -> None
 
     assert payload["resume_state"] == "malformed"
     assert payload["error_code"] == "MISSION_RESUME_MALFORMED"
-    assert "meta.json is missing" in " ".join(payload["problems"])
+    assert "meta.json is missing" in " ".join(_list_field(payload, "problems"))
 
 
 @pytest.mark.parametrize(
@@ -331,7 +338,7 @@ def test_resume_probe_rejects_invalid_mission_created_envelope(
     payload = seam._build_resume_probe_payload(tmp_path, "bad-envelope")
 
     assert payload["resume_state"] == "malformed"
-    assert expected_problem in " ".join(payload["problems"])
+    assert expected_problem in " ".join(_list_field(payload, "problems"))
 
 
 @pytest.mark.parametrize(
@@ -362,7 +369,7 @@ def test_resume_probe_rejects_coherent_but_invalid_creation_metadata(
     payload = seam._build_resume_probe_payload(tmp_path, "bad-meta")
 
     assert payload["resume_state"] == "malformed"
-    assert expected_problem in " ".join(payload["problems"])
+    assert expected_problem in " ".join(_list_field(payload, "problems"))
 
 
 def test_resume_probe_rejects_premerge_directory_with_wrong_identity_mid8(tmp_path: Path) -> None:
@@ -379,7 +386,7 @@ def test_resume_probe_rejects_premerge_directory_with_wrong_identity_mid8(tmp_pa
     payload = seam._build_resume_probe_payload(tmp_path, "wrong-mid8")
 
     assert payload["resume_state"] == "malformed"
-    assert "directory mid8" in " ".join(payload["problems"])
+    assert "directory mid8" in " ".join(_list_field(payload, "problems"))
 
 
 @pytest.mark.parametrize("drift", ["empty", "corrupt", "mismatch", "schema"])
@@ -406,7 +413,8 @@ def test_resume_probe_rejects_missing_or_drifted_mission_created_snapshot(
 
     assert payload["resume_state"] == "malformed"
     assert payload["error_code"] == "MISSION_RESUME_MALFORMED"
-    assert "MissionCreated" in " ".join(payload["problems"]) or "status.events" in " ".join(payload["problems"])
+    problems = " ".join(_list_field(payload, "problems"))
+    assert "MissionCreated" in problems or "status.events" in problems
 
 
 # ---------------------------------------------------------------------------
