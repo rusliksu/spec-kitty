@@ -30,12 +30,41 @@ from __future__ import annotations
 import contextlib
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 import typer
 
 pytestmark = [pytest.mark.unit, pytest.mark.git_repo]
+
+
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("selector", ["linked-worktree-prerequisite-resolution-01M1MFE9", "01M1MFE98JDK0S33WSYBQRPSDF"])
+def test_owned_setup_plan_scaffolds_selected_mission_without_primary_writes(
+    tmp_path: Path, isolated_env: dict[str, str], selector: str,
+) -> None:
+    """The real command must scaffold from a committed spec in the linked checkout."""
+    from tests.tasks.linked_worktree_harness import create_linked_mission, git
+
+    ctx = create_linked_mission(tmp_path)
+    git(ctx.linked, "rm", str((ctx.mission_dir / "plan.md").relative_to(ctx.linked)))
+    git(ctx.linked, "commit", "-q", "-m", "prepare first plan scaffold")
+    result = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", "agent", "mission",
+                     "setup-plan", "--mission", selector, "--json", env=isolated_env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["result"] == "success"
+    assert payload["scaffold_only"] is True
+    assert payload["phase_complete"] is False
+    assert Path(payload["feature_dir"]) == ctx.mission_dir
+    assert Path(payload["spec_file"]) == ctx.mission_dir / "spec.md"
+    assert Path(payload["plan_file"]) == ctx.mission_dir / "plan.md"
+    assert payload["current_branch"] == "codex/task"
+    assert payload["target_branch"] == "codex/task"
+    assert payload["branch_matches_target"] is True
+    assert (ctx.mission_dir / "plan.md").read_bytes() == (ctx.linked / ".kittify/templates/plan-template.md").read_bytes()
 
 
 # ---------------------------------------------------------------------------

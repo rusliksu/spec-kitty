@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,26 @@ import pytest
 from specify_cli.cli.commands.agent import mission_check_prerequisites as seam
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
+
+
+@pytest.mark.git_repo
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("selector", ["linked-worktree-prerequisite-resolution-01M1MFE9", "01M1MFE98JDK0S33WSYBQRPSDF"])
+def test_owned_prerequisites_preserves_exact_identity_and_primary(
+    tmp_path: Path, isolated_env: dict[str, str], selector: str,
+) -> None:
+    """A caller-owned exact hit must report its own directory and task branch."""
+    from tests.tasks.linked_worktree_harness import create_linked_mission
+
+    ctx = create_linked_mission(tmp_path)
+    result = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", "agent", "mission",
+                     "check-prerequisites", "--mission", selector, "--paths-only", "--json", env=isolated_env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert Path(payload["feature_dir"]) == ctx.mission_dir
+    assert payload["current_branch"] == "codex/task"
+    assert payload["target_branch"] == "codex/task"
 
 
 # ---------------------------------------------------------------------------
