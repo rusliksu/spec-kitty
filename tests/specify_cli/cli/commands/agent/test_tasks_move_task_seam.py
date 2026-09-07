@@ -50,6 +50,7 @@ from specify_cli.cli.commands.agent.tasks_move_task import (
     _mt_approval_policy_metadata,
     _mt_hop_policy_metadata,
 )
+from specify_cli.cli.commands.agent.tasks_transition_core import TransitionPlan
 from specify_cli.status import Lane, ReviewResult, ReviewResultLookup, StatusEvent, append_event
 from specify_cli.status.resolved_binding import ResolvedBinding
 
@@ -730,7 +731,13 @@ def test_finalize_plan_delegates_approved_persist() -> None:
     st.decision = cast(
         Any,
         SimpleNamespace(
-            plan=SimpleNamespace(canonical_lane="approved"),
+            plan=TransitionPlan(
+                canonical_lane="approved",
+                transition_targets=["for_review", "in_review", "approved"],
+                emit_force=False,
+                emit_reason=None,
+                emit_review_ref=None,
+            ),
             evidence_dict=None,
             note_text=None,
             planned_rollback=False,
@@ -777,7 +784,13 @@ def test_finalize_plan_never_rebuilds_plan_for_forward_approve() -> None:
     st.decision = cast(
         Any,
         SimpleNamespace(
-            plan=SimpleNamespace(canonical_lane="approved"),
+            plan=TransitionPlan(
+                canonical_lane="approved",
+                transition_targets=["approved"],
+                emit_force=False,
+                emit_reason=None,
+                emit_review_ref=None,
+            ),
             evidence_dict=None,
             note_text=None,
             planned_rollback=False,
@@ -915,7 +928,13 @@ def test_finalize_plan_delegates_rollback_persist(tmp_path: Path) -> None:
     st.decision = cast(
         Any,
         SimpleNamespace(
-            plan=SimpleNamespace(canonical_lane="planned"),
+            plan=TransitionPlan(
+                canonical_lane="planned",
+                transition_targets=["planned"],
+                emit_force=True,
+                emit_reason="Review requested changes",
+                emit_review_ref=None,
+            ),
             evidence_dict=None,
             note_text=None,
             planned_rollback=True,

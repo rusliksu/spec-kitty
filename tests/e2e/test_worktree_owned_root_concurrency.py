@@ -494,7 +494,13 @@ def test_installed_cli_keeps_two_owned_worktrees_isolated(
             _payload(run)
 
     _assert_runtime_isolated(project, slug_a, slug_b)
-    assert _common_lock_files(project.primary) == []
+    # The reusable metadata lock must be released; mission locks remain local.
+    from filelock import FileLock
+
+    metadata_lock = project.primary / ".git" / "spec-kitty-locks" / "coord-worktrees.lock"
+    assert _common_lock_files(project.primary) in ([], [metadata_lock])
+    with FileLock(str(metadata_lock), timeout=0):
+        pass
     for root in (project.primary, project.agent_a, project.agent_b):
         _assert_tree_clean(root)
 

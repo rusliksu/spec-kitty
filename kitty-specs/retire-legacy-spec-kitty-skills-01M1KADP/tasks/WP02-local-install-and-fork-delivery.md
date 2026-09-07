@@ -8,7 +8,7 @@ execution_mode: "delivery"
 owned_files:
   - "kitty-specs/retire-legacy-spec-kitty-skills-01M1KADP/**"
 authoritative_surface: "kitty-specs/retire-legacy-spec-kitty-skills-01M1KADP/"
-beads_id: "spk-8zh"
+tracker_refs: ["spk-8zh"]
 agent_profile: "implementer-ivan"
 role: "implementer"
 agent: "codex"

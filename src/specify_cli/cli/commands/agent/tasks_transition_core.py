@@ -356,6 +356,8 @@ def build_transition_plan(
     transition_targets = [canonical_lane]
     if not emit_force:
         transition_targets = _lane_targets_for_emit(old_lane, canonical_lane)
+        if old_lane == Lane.DONE and canonical_lane == Lane.DONE:
+            transition_targets = []
 
     return TransitionPlan(
         canonical_lane=canonical_lane,

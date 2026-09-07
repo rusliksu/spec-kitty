@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -40,7 +41,7 @@ from specify_cli.missions._read_path_resolver import (
     resolve_feature_dir_for_mission,
     resolve_planning_read_dir,
 )
-from specify_cli.status.models import Lane, StatusEvent
+from specify_cli.status.models import Lane, StatusEvent, WPInnerStateDelta
 from specify_cli.status.store import append_event
 from tests.mocked_env import setup_mocked_env
 from tests.specify_cli.cli.commands.agent.test_tasks_ports import (
@@ -124,6 +125,7 @@ def _run_move(
     json_output: bool = True,
     review_feedback_file: Path | None = None,
     extra_patches: dict[str, object] | None = None,
+    agent: str | None = None,
 ) -> None:
     with setup_mocked_env(
         tmp_path,
@@ -140,7 +142,7 @@ def _run_move(
                 task_id="WP01",
                 to=to,
                 mission=_MISSION,
-                agent=None,
+                agent=agent,
                 assignee=None,
                 shell_pid=None,
                 note=None,
@@ -159,6 +161,53 @@ def _run_move(
             ),
             ports=ports,
         )
+
+
+def test_completed_wp_agent_update_preserves_lane_and_review(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Metadata correction must not emit another completion or approval."""
+    from specify_cli.status.reducer import materialize
+    from specify_cli.status.emit import emit_inner_state_changed
+
+    # Arrange
+    mission_dir, wp_file = _build_wp_file(tmp_path, _MISSION, "WP01")
+    _seed_wp_event(mission_dir, "WP01", "done")
+    binding = {
+        "role": "implementer", "model": "recorded-model", "provider": "recorded-provider",
+        "agent_profile": "recorded-profile", "agent_profile_version": "1",
+    }
+    emit_inner_state_changed(
+        mission_dir, "WP01", WPInnerStateDelta(**binding),
+        actor="test", mission_slug=_MISSION, repo_root=tmp_path,
+    )
+    ports, coord = _fake_ports(mission_dir)
+    definition = wp_file.read_bytes()
+
+    # Assumption check
+    before = materialize(mission_dir).work_packages["WP01"]
+    assert before["lane"] == "done"
+    assert not before.get("agent")
+
+    # Act
+    _run_move(
+        tmp_path, to="done", ports=ports, auto_commit=False, agent="codex",
+        extra_patches={
+            "_wp_branch_merged_into_target": (True, "merged"),
+            "resolve_workspace_for_wp": SimpleNamespace(execution_mode="code_change"),
+        },
+    )
+
+    # Assert
+    after = materialize(mission_dir).work_packages["WP01"]
+    assert coord.status_calls == []
+    assert after["lane"] == "done"
+    assert after["agent"] == "codex"
+    assert after.get("review_result") == before.get("review_result")
+    assert {key: after[key] for key in binding} == binding
+    assert wp_file.read_bytes() == definition
+    assert not list((mission_dir / "tasks").glob("*/review-cycle-*.md"))
+    assert json.loads(capsys.readouterr().out)["transition_applied"] is False
 
 
 def test_no_auto_commit_move_uses_commit_status_only(tmp_path: Path) -> None:

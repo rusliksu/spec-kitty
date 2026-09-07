@@ -75,11 +75,6 @@ __all__ = [
     "MissionStepRepository",
 ]
 
-# ---------------------------------------------------------------------------
-# YAML loader (module-level singleton — thread-safe for reads)
-# ---------------------------------------------------------------------------
-
-_YAML = YAML(typ="safe")
 _STEP_FILENAME = "step.yaml"
 
 # ---------------------------------------------------------------------------
@@ -140,7 +135,8 @@ def _load_step_yaml(step_file: Path) -> MissionStep | None:
     if not step_file.exists():
         return None
     try:
-        raw: Any = _YAML.load(step_file.read_text(encoding="utf-8"))
+        # Parser state belongs to one load, including concurrent cache misses.
+        raw: Any = YAML(typ="safe").load(step_file.read_text(encoding="utf-8"))
     except Exception:  # noqa: BLE001
         return None
     if not isinstance(raw, dict):
