@@ -700,14 +700,12 @@ def _staged_patch_for_paths(repo_path: Path, normalized_files: list[str]) -> str
         ["git", "diff", "--cached", "--binary", "--no-ext-diff", "--no-renames", "--", *normalized_files],
         cwd=repo_path,
         capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
         check=False,
     )
     if result.returncode != 0:
         return None
-    return result.stdout
+    # Preserve patch bytes, including CRLF content, through the string carrier.
+    return result.stdout.decode("utf-8", errors="surrogateescape")
 
 
 def _unstage_requested_files(repo_path: Path, normalized_files: list[str]) -> None:
@@ -775,15 +773,13 @@ def _restore_staged_patch(
     result = subprocess.run(
         ["git", "apply", "--cached", "--whitespace=nowarn", "-"],
         cwd=repo_path,
-        input=patch,
+        # Text-mode stdin rewrites LF to CRLF on Windows and corrupts context.
+        input=patch.encode("utf-8", errors="surrogateescape"),
         capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
         check=False,
     )
     if result.returncode != 0:
-        detail = (result.stderr or result.stdout).strip()
+        detail = (result.stderr or result.stdout).decode("utf-8", errors="replace").strip()
         suffix = f": {detail}" if detail else "."
         raise SafeCommitRecoveryFailed(
             f"safe_commit: failed to restore caller staging in {repo_path}; git apply --cached rejected the requested-file patch{suffix}",
@@ -1202,6 +1198,11 @@ def safe_commit(  # noqa: C901 -- sequential validation gates; splitting harms r
         orphan_stash_ref: str | None = None
         unrecovered_paths: Sequence[str] = ()
         if created_stash:
+            if not commit_created:
+                # Git cannot restore the unrelated stash over our failed
+                # requested staging. Restore its original patch only AFTER
+                # the stash, so partially staged caller content stays intact.
+                _unstage_requested_files(worktree_root, normalized_files)
             stash_ref = _find_stash_ref(worktree_root, stash_message)
             if stash_ref is not None:
                 pop_result = subprocess.run(
