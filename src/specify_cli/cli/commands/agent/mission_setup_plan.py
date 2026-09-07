@@ -390,6 +390,25 @@ def _commit_to_branch(
 # ---------------------------------------------------------------------------
 
 
+def _report_setup_plan_detection_error(
+    repo_root: Path, feature: str | None, detection_error: Exception, *,
+    json_output: bool, diagnostics: tuple[HostedSyncDiagnostic, ...] = (),
+) -> None:
+    """Render one selection failure without owning Mission resolution."""
+    payload = _build_setup_plan_detection_error(repo_root, str(detection_error), feature)
+    human_lines = [f"[red]Error:[/red] {payload['error']}"]
+    if not json_output:
+        for slug in cast(list[str], payload.get("available_missions", []))[:10]:
+            human_lines.append(f"  - {slug}")
+        if "example_command" in payload:
+            human_lines.append(f"  {payload['example_command']}")
+    _report_setup_plan_outcome(
+        SetupPlanLocalOutcome(payload, 1, "error"),
+        diagnostics=diagnostics, json_output=json_output,
+        human_message="\n".join(human_lines),
+    )
+
+
 def _resolve_setup_plan_feature_dir(
     repo_root: Path,
     feature: str | None,
@@ -420,18 +439,9 @@ def _resolve_setup_plan_feature_dir(
         )
         return feature_dir
     except (ValueError, ActionContextError) as detection_error:
-        payload = _build_setup_plan_detection_error(repo_root, str(detection_error), feature)
-        human_lines = [f"[red]Error:[/red] {payload['error']}"]
-        if not json_output:
-            for slug in cast(list[str], payload.get("available_missions", []))[:10]:
-                human_lines.append(f"  - {slug}")
-            if "example_command" in payload:
-                human_lines.append(f"  {payload['example_command']}")
-        _report_setup_plan_outcome(
-            SetupPlanLocalOutcome(payload, 1, "error"),
-            diagnostics=diagnostics,
-            json_output=json_output,
-            human_message="\n".join(human_lines),
+        _report_setup_plan_detection_error(
+            repo_root, feature, detection_error,
+            json_output=json_output, diagnostics=diagnostics,
         )
         raise typer.Exit(1) from None
 
