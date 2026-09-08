@@ -14,7 +14,7 @@ owned_files:
   - "docs/changelog/CHANGELOG.md"
   - "kitty-specs/retire-legacy-spec-kitty-skills-01M1KADP/**"
 authoritative_surface: "src/specify_cli/skills/"
-beads_id: "spk-8zh"
+tracker_refs: ["spk-8zh"]
 agent_profile: "implementer-ivan"
 role: "implementer"
 agent: "codex"
