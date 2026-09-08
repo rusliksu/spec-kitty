@@ -111,4 +111,3 @@ flowchart LR
 - Merge выполняет оператор по правилам репозитория.
 - GitHub/PyPI release не выполняется.
 - HOSTKEY install, cleanup и scheduler остаются вне этой Mission.
-
