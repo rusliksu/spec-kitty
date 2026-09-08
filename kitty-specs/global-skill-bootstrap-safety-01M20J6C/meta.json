@@ -10,6 +10,7 @@
   "purpose_context": "Исправить разрушительную стартовую синхронизацию, сохранить пользовательские файлы внутри skill-каталогов и закрепить metadata legacy program skill в дистрибутиве.",
   "purpose_tldr": "Обычные команды CLI не должны перезаписывать пользовательские глобальные навыки.",
   "slug": "global-skill-bootstrap-safety-01M20J6C",
+  "status_phase": "1",
   "target_branch": "codex/global-skill-bootstrap-safety",
   "topology": "single_branch"
 }
