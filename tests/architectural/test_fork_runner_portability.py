@@ -86,3 +86,35 @@ def test_ci_quality_uses_a_fork_specific_concurrency_namespace() -> None:
         "github.ref || format('fork-{0}', github.ref) }}"
     )
     assert workflow["concurrency"]["cancel-in-progress"] is True
+
+
+def test_ci_windows_supports_an_exact_head_candidate_inventory() -> None:
+    """Manual Windows evidence must pin both checkout identity and inventory."""
+    workflow = yaml.safe_load(
+        (WORKFLOW_ROOT / "ci-windows.yml").read_text(encoding="utf-8")
+    )
+    workflow_on = workflow.get("on", workflow.get(True))
+    inputs = workflow_on["workflow_dispatch"]["inputs"]
+
+    assert inputs["expected_sha"]["required"] is True
+    assert inputs["test_paths_json"]["required"] is True
+    assert inputs["expected_count"]["required"] is True
+
+    job = workflow["jobs"]["exact-head-candidate"]
+    assert job["runs-on"] == WINDOWS_RUNNER
+    assert job["if"] == "${{ github.event_name == 'workflow_dispatch' }}"
+
+    checkout = next(
+        step for step in job["steps"] if step.get("uses") == "actions/checkout@v6"
+    )
+    assert checkout["with"]["ref"] == "${{ inputs.expected_sha }}"
+
+    runner = next(
+        step
+        for step in job["steps"]
+        if "scripts/ci/run_selected_tests.py" in step.get("run", "")
+    )
+    assert runner["env"] == {
+        "SPEC_KITTY_TEST_PATHS_JSON": "${{ inputs.test_paths_json }}",
+        "SPEC_KITTY_EXPECTED_TEST_COUNT": "${{ inputs.expected_count }}",
+    }

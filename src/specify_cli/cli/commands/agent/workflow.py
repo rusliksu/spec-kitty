@@ -584,6 +584,8 @@ def _workflow_placement_seam(
     """
     from mission_runtime import placement_seam
 
+    if effective_root is None:
+        return placement_seam(repo_root, mission_slug)
     return placement_seam(
         repo_root,
         mission_slug,
