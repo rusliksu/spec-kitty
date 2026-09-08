@@ -1,0 +1,214 @@
+{
+  "artifact": {
+    "local_source": "C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-4e08d93cdc5c/spec_kitty_cli-3.2.6rc5-py3-none-any.whl",
+    "name": "spec_kitty_cli-3.2.6rc5-py3-none-any.whl",
+    "sha256": "77c9aeb2b61b50e346edefd6ed7f13554fabf7990862c204b92b84e452d23ab6",
+    "size": 8295622
+  },
+  "distribution_metadata": {
+    "entry_crc32": "7b359070",
+    "entry_sha256": "3bf863a8856d04a6a1c4f23b3aae6cbf5388544129662c55cc733c2d9c23bbbf",
+    "entry_size": 45,
+    "matching_entries": [
+      "charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml"
+    ],
+    "mutation_oracle_rejected": [
+      "boolean_true",
+      "string_false",
+      "integer_zero",
+      "null"
+    ],
+    "package_layout_observation": "Стандартный src-layout wheel удаляет префикс src/ из import path.",
+    "parsed_policy": {
+      "allow_implicit_invocation": false,
+      "python_type": "bool"
+    },
+    "source_path": "src/charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml",
+    "source_prefixed_entry_present": false,
+    "status": "blocked_pending_planning_path_correction",
+    "wheel_entry_path": "charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml"
+  },
+  "hostkey": {
+    "observed_snapshot": {
+      "hostname": "hostkey-codex",
+      "installed_package": {
+        "metadata_path": "/home/openclaw/.local/share/uv/tools/spec-kitty-cli/lib/python3.12/site-packages/spec_kitty_cli-3.2.5.dist-info/METADATA",
+        "metadata_size": 14889,
+        "status": "observed",
+        "version": "3.2.5"
+      },
+      "mutations": [],
+      "observed_at": "2026-09-08T15:13:19.996982+00:00",
+      "skill_root": {
+        "gid": 1000,
+        "mode": "0o775",
+        "path": "/home/openclaw/.agents/skills",
+        "type": "directory",
+        "uid": 1000
+      },
+      "targets": [
+        {
+          "entries": [
+            {
+              "mode": "0o444",
+              "path": "SKILL.md",
+              "sha256": "70ce9ee1982fcfbe79d2c0e5c556baeeebf656c36917e0afb039145cf85b875a",
+              "size": 18063,
+              "type": "file"
+            }
+          ],
+          "entry_count": 1,
+          "gid": 1000,
+          "mode": "0o775",
+          "path": "/home/openclaw/.agents/skills/spec-kitty-program-orchestrate",
+          "tree_sha256": "33ee3053a13faa5d8be77174d6c9c7079316eb2128d75170c32340462538a5af",
+          "type": "directory",
+          "uid": 1000
+        },
+        {
+          "entries": [
+            {
+              "mode": "0o444",
+              "path": "SKILL.md",
+              "sha256": "d2a3eb9cffa38e4e3dde914da448b13d27813b05845b1d274efdfd8629211d7a",
+              "size": 834,
+              "type": "file"
+            }
+          ],
+          "entry_count": 1,
+          "gid": 1000,
+          "mode": "0o775",
+          "path": "/home/openclaw/.agents/skills/spk-run-program-orchestrate",
+          "tree_sha256": "eeb5528e5f07f0da6bdb2082ea42709c1f9f181deac2a1252a9db1e518d832a4",
+          "type": "directory",
+          "uid": 1000
+        },
+        {
+          "path": "/home/openclaw/.codex/skills/spec-kitty-program-orchestrate",
+          "type": "missing"
+        },
+        {
+          "path": "/home/openclaw/.codex/skills/spk-run-program-orchestrate",
+          "type": "missing"
+        }
+      ]
+    },
+    "proposed_dry_plan": {
+      "abort_on": [
+        "artifact sha256 mismatch",
+        "source commit or package version mismatch",
+        "installed package version drift",
+        "destination type, owner, mode, entry or tree fingerprint mismatch",
+        "unexpected symlink or file collision",
+        "unknown drift or incomplete verification"
+      ],
+      "apply": false,
+      "cas_guards": {
+        "artifact_sha256": "77c9aeb2b61b50e346edefd6ed7f13554fabf7990862c204b92b84e452d23ab6",
+        "destination_skill_root": {
+          "gid": 1000,
+          "mode": "0o775",
+          "type": "directory",
+          "uid": 1000
+        },
+        "installed_package_version": "3.2.5",
+        "package_version": "3.2.6rc5",
+        "source_commit": "4e08d93cdc5c4fb16749c8424444e8d2a6c5f5f5",
+        "target_tree_sha256": {
+          "/home/openclaw/.agents/skills/spec-kitty-program-orchestrate": "33ee3053a13faa5d8be77174d6c9c7079316eb2128d75170c32340462538a5af",
+          "/home/openclaw/.agents/skills/spk-run-program-orchestrate": "eeb5528e5f07f0da6bdb2082ea42709c1f9f181deac2a1252a9db1e518d832a4"
+        }
+      },
+      "cleanup": false,
+      "install": false,
+      "scheduler": false,
+      "steps": [
+        "Повторно вычислить SHA-256 локального immutable wheel и сравнить с artifact_sha256.",
+        "Снять новый read-only HOSTKEY snapshot тем же bounded helper и сравнить package version, root metadata и четыре target records.",
+        "Проверить standard wheel entry path и boolean false до любой передачи артефакта.",
+        "При полном совпадении guards подготовить отдельный explicit install/refresh proposal; этот plan его не выполняет."
+      ]
+    },
+    "snapshot_source": {
+      "command": "C:/Users/Ruslan/gurra/vps-config/bin/codex-hostkey-run.ps1 -Sandbox read-only -Model gpt-5.6-sol -Timeout 180 -PromptFile C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-4e08d93cdc5c/hostkey-snapshot-prompt.txt",
+      "hostkey_prompt_sha256": "eeacd5d513d5d030c27e44ed0e140d5cb8d8615b9543cd2628a94a5482210f3b",
+      "runner_session_id": 34451,
+      "status": "passed"
+    }
+  },
+  "package_version": "3.2.6rc5",
+  "pr": {
+    "checks": [],
+    "head_sha": null,
+    "merge_status": "not_merged",
+    "number": null,
+    "ready_at": null,
+    "state": "draft_pending_creation",
+    "url": null
+  },
+  "schema_version": 1,
+  "scope_guard": {
+    "cleanup": false,
+    "credential_content_read": false,
+    "hostkey_upload": false,
+    "install": false,
+    "live_mutation": false,
+    "owned_file": "kitty-specs/global-skill-bootstrap-safety-01M20J6C/delivery-evidence.json",
+    "publish": false,
+    "release": false,
+    "restart": false,
+    "scheduler": false
+  },
+  "source_commit": "4e08d93cdc5c4fb16749c8424444e8d2a6c5f5f5",
+  "subtasks": {
+    "T010": {
+      "commands": [
+        {
+          "command": "uv build --wheel --out-dir C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-4e08d93cdc5c",
+          "cwd": "C:/Users/Ruslan/.codex-worktrees/spec-kitty-global-skill-bootstrap-safety",
+          "observed_at": "2026-09-08T15:09:25.314889+00:00",
+          "result": "one wheel built; no upload or publish step",
+          "status": "passed"
+        }
+      ],
+      "status": "passed"
+    },
+    "T011": {
+      "commands": [
+        {
+          "command": "uv run --with pyyaml python verify-wheel.py spec_kitty_cli-3.2.6rc5-py3-none-any.whl",
+          "cwd": "C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-4e08d93cdc5c",
+          "observed_at": "2026-09-08T15:14:40+00:00",
+          "result": "wheel path, policy bool, entry hash, four policy mutations and repeated artifact hash verified; approved plan used an impossible src/ prefix for the wheel entry",
+          "status": "blocked"
+        }
+      ],
+      "status": "blocked_pending_planning_path_correction",
+      "verification_script_sha256": "186f6e7dbf55d7ef9f5806567ec7ba31d2cc5f4422c2556a78eb016d87f1e962"
+    },
+    "T012": {
+      "commands": [],
+      "status": "pending_pr_creation"
+    },
+    "T013": {
+      "commands": [
+        {
+          "command": "C:/Users/Ruslan/gurra/vps-config/bin/codex-hostkey-run.ps1 -Status",
+          "cwd": "C:/Users/Ruslan",
+          "observed_at": "2026-09-08T15:10:28+00:00",
+          "result": "hostkey-codex reachable; target snapshot routed to read-only executor",
+          "status": "passed"
+        },
+        {
+          "command": "C:/Users/Ruslan/gurra/vps-config/bin/codex-hostkey-run.ps1 -Sandbox read-only -Model gpt-5.6-sol -Timeout 180 -PromptFile hostkey-snapshot-prompt.txt",
+          "cwd": "C:/Users/Ruslan",
+          "observed_at": "2026-09-08T15:13:19.996982+00:00",
+          "result": "package and four target records observed; mutations empty",
+          "status": "passed"
+        }
+      ],
+      "status": "passed"
+    }
+  },
+  "work_package_id": "WP03"
+}
