@@ -1,0 +1,15 @@
+{
+  "created_at": "2026-09-08T13:09:22.573189+00:00",
+  "flattened": false,
+  "friendly_name": "Безопасный глобальный bootstrap навыков",
+  "mission_id": "01M20J6CG8566ANNKHA0WH3H51",
+  "mission_number": null,
+  "mission_slug": "global-skill-bootstrap-safety-01M20J6C",
+  "mission_type": "software-dev",
+  "pr_bound": true,
+  "purpose_context": "Исправить разрушительную стартовую синхронизацию, сохранить пользовательские файлы внутри skill-каталогов и закрепить metadata legacy program skill в дистрибутиве.",
+  "purpose_tldr": "Обычные команды CLI не должны перезаписывать пользовательские глобальные навыки.",
+  "slug": "global-skill-bootstrap-safety-01M20J6C",
+  "target_branch": "codex/global-skill-bootstrap-safety",
+  "topology": "single_branch"
+}
