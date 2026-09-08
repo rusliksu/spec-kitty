@@ -29,7 +29,8 @@
       "model": "__resolved_model_absent__",
       "notes": [
         "RED evidence: startup 2 failures, overlay preservation 2 failures; exact metadata oracle and three mutations pass. Test-only commits 4ef4cfefd and 66825316b; git diff --check passed.",
-        "Проверка scope и oracle: только три owned test paths; RED воспроизводит оба дефекта, metadata mutations не вакуозны, HOME изолирован."
+        "Проверка scope и oracle: только три owned test paths; RED воспроизводит оба дефекта, metadata mutations не вакуозны, HOME изолирован.",
+        "Self-review: acceptance tests match WP01 ownership and fail for the intended base behaviors; metadata oracle rejects true, missing key, and missing file."
       ],
       "provider": "__resolved_provider_absent__",
       "review_result": {
