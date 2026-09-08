@@ -37,6 +37,7 @@ owned_files:
 - src/specify_cli/skills/installer.py
 - pyproject.toml
 - docs/changelog/CHANGELOG.md
+- docs/development/3-2-docs-retrieval-index.yaml
 - docs/adr/3.x/2026-09-08-1-explicit-global-skill-refresh.md
 role: implementer
 tags: []

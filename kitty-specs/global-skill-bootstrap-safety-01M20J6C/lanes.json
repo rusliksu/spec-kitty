@@ -31,6 +31,7 @@
       "write_scope": [
         "docs/adr/3.x/2026-09-08-1-explicit-global-skill-refresh.md",
         "docs/changelog/CHANGELOG.md",
+        "docs/development/3-2-docs-retrieval-index.yaml",
         "pyproject.toml",
         "src/specify_cli/__init__.py",
         "src/specify_cli/runtime/agent_skills.py",
@@ -65,7 +66,7 @@
       "parallel_group": 2
     }
   ],
-  "computed_at": "2026-09-08T14:23:16.951377+00:00",
+  "computed_at": "2026-09-08T14:40:24.953716+00:00",
   "computed_from": "dependency_graph+ownership",
   "planning_artifact_wps": [
     "WP03"
