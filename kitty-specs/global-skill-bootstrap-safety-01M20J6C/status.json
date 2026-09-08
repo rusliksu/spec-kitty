@@ -94,7 +94,8 @@
       "notes": [
         "WP02 approved at 7343d8eeb; build immutable wheel, verify distribution metadata, open draft PR, and prepare read-only HOSTKEY dry plan.",
         "Wheel 3.2.6rc5 SHA-256 77c9aeb2... verified; exact wheel metadata bool false; HOSTKEY snapshot read-only and dry flags false; PR #21 has 15 green checks on c304e150 and one queued Blacksmith runner blocker, so it remains draft.",
-        "Self-review scope: immutable wheel identity and exact entry verified; evidence JSON parses and rehashes; no credential content; hostkey mutations empty; PR is draft and not merged."
+        "Self-review scope: immutable wheel identity and exact entry verified; evidence JSON parses and rehashes; no credential content; hostkey mutations empty; PR is draft and not merged.",
+        "Self-review approved with declared external CI blocker: artifact, metadata, source mapping, HOSTKEY snapshot and CAS dry plan pass; 15 checks succeeded on c304e150, Blacksmith-only metadata job has no assigned fork runner; PR correctly remains draft and unmerged."
       ],
       "provider": "__resolved_provider_absent__",
       "review_result": {
