@@ -58,11 +58,11 @@
       "criterion_id": "FR-006",
       "description": "\u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442 \u0438\u043c\u0435\u0435\u0442 immutable artifact identity, \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c\u044b\u0439 PR \u0438 CAS-gated HOSTKEY dry plan \u0431\u0435\u0437 live mutation.",
       "proof_type": "artifact_and_external_checks",
-      "evidence": "Wheel 3.2.6rc5 \u0438\u0437 4e08d93c..., SHA-256 77c9aeb2...; HOSTKEY snapshot mutations=[]; PR #21 \u0438\u043c\u0435\u0435\u0442 15 successful checks \u043d\u0430 c304e150 \u0438 \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f draft \u0438\u0437-\u0437\u0430 queued Blacksmith-only job.",
+      "evidence": "Wheel 3.2.6rc5 \u0438\u0437 3b547c751296, SHA-256 e702d7b8...; \u0443\u0434\u0430\u043b\u0451\u043d\u043d\u044b\u0439 runtime module \u0432 wheel \u043e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442; accept commit 21427f3bce5; HOSTKEY snapshot mutations=[]; PR #21 \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f draft \u0434\u043e fresh CI \u0438 \u0432\u043d\u0435\u0448\u043d\u0435\u0433\u043e runner blocker.",
       "pass_fail": "pass",
       "verified_by": "codex",
-      "verified_at": "2026-09-08T16:10:30.441932+00:00",
-      "notes": "External runner blocker \u0447\u0435\u0441\u0442\u043d\u043e \u0437\u0430\u0444\u0438\u043a\u0441\u0438\u0440\u043e\u0432\u0430\u043d; ready, merge, release, upload, install, cleanup, restart \u0438 scheduler \u043d\u0435 \u0432\u044b\u043f\u043e\u043b\u043d\u044f\u043b\u0438\u0441\u044c."
+      "verified_at": "2026-09-08T17:44:41.601865+00:00",
+      "notes": "Artifact \u0438 CAS dry plan \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u044b \u043d\u0430 \u043e\u0434\u0438\u043d source commit; ready, merge, release, upload, install, cleanup, restart \u0438 scheduler \u043d\u0435 \u0432\u044b\u043f\u043e\u043b\u043d\u044f\u043b\u0438\u0441\u044c."
     }
   ],
   "negative_invariants": []

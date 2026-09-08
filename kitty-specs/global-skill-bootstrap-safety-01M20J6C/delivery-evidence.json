@@ -1,9 +1,9 @@
 {
   "artifact": {
-    "local_source": "C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-4e08d93cdc5c/spec_kitty_cli-3.2.6rc5-py3-none-any.whl",
+    "local_source": "C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-3b547c751296/spec_kitty_cli-3.2.6rc5-py3-none-any.whl",
     "name": "spec_kitty_cli-3.2.6rc5-py3-none-any.whl",
-    "sha256": "77c9aeb2b61b50e346edefd6ed7f13554fabf7990862c204b92b84e452d23ab6",
-    "size": 8295622
+    "sha256": "e702d7b8da1d9fb60404d5cdfa6cce7336b39c7d4efe64c0ad52a5af90c4642e",
+    "size": 8294005
   },
   "distribution_metadata": {
     "entry_crc32": "7b359070",
@@ -18,7 +18,7 @@
       "integer_zero",
       "null"
     ],
-    "package_layout_observation": "Стандартный src-layout wheel удаляет префикс src/ из import path.",
+    "package_layout_observation": "\u0421\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u043d\u044b\u0439 src-layout wheel \u0443\u0434\u0430\u043b\u044f\u0435\u0442 \u043f\u0440\u0435\u0444\u0438\u043a\u0441 src/ \u0438\u0437 import path.",
     "parsed_policy": {
       "allow_implicit_invocation": false,
       "python_type": "bool"
@@ -26,7 +26,12 @@
     "source_path": "src/charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml",
     "source_prefixed_entry_present": false,
     "status": "passed",
-    "wheel_entry_path": "charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml"
+    "wheel_entry_path": "charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml",
+    "runtime_inventory": {
+      "removed_entry": "specify_cli/runtime/agent_skills.py",
+      "present": false,
+      "status": "passed"
+    }
   },
   "hostkey": {
     "observed_snapshot": {
@@ -104,7 +109,7 @@
       ],
       "apply": false,
       "cas_guards": {
-        "artifact_sha256": "77c9aeb2b61b50e346edefd6ed7f13554fabf7990862c204b92b84e452d23ab6",
+        "artifact_sha256": "e702d7b8da1d9fb60404d5cdfa6cce7336b39c7d4efe64c0ad52a5af90c4642e",
         "destination_skill_root": {
           "gid": 1000,
           "mode": "0o775",
@@ -113,7 +118,7 @@
         },
         "installed_package_version": "3.2.5",
         "package_version": "3.2.6rc5",
-        "source_commit": "4e08d93cdc5c4fb16749c8424444e8d2a6c5f5f5",
+        "source_commit": "3b547c751296469da457e343346f4680a4d7b2b5",
         "target_tree_sha256": {
           "/home/openclaw/.agents/skills/spec-kitty-program-orchestrate": "33ee3053a13faa5d8be77174d6c9c7079316eb2128d75170c32340462538a5af",
           "/home/openclaw/.agents/skills/spk-run-program-orchestrate": "eeb5528e5f07f0da6bdb2082ea42709c1f9f181deac2a1252a9db1e518d832a4"
@@ -123,126 +128,129 @@
       "install": false,
       "scheduler": false,
       "steps": [
-        "Повторно вычислить SHA-256 локального immutable wheel и сравнить с artifact_sha256.",
-        "Снять новый read-only HOSTKEY snapshot тем же bounded helper и сравнить package version, root metadata и четыре target records.",
-        "Проверить standard wheel entry path и boolean false до любой передачи артефакта.",
-        "При полном совпадении guards подготовить отдельный explicit install/refresh proposal; этот plan его не выполняет."
+        "\u041f\u043e\u0432\u0442\u043e\u0440\u043d\u043e \u0432\u044b\u0447\u0438\u0441\u043b\u0438\u0442\u044c SHA-256 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u043e\u0433\u043e immutable wheel \u0438 \u0441\u0440\u0430\u0432\u043d\u0438\u0442\u044c \u0441 artifact_sha256.",
+        "\u0421\u043d\u044f\u0442\u044c \u043d\u043e\u0432\u044b\u0439 read-only HOSTKEY snapshot \u0442\u0435\u043c \u0436\u0435 bounded helper \u0438 \u0441\u0440\u0430\u0432\u043d\u0438\u0442\u044c package version, root metadata \u0438 \u0447\u0435\u0442\u044b\u0440\u0435 target records.",
+        "\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c standard wheel entry path \u0438 boolean false \u0434\u043e \u043b\u044e\u0431\u043e\u0439 \u043f\u0435\u0440\u0435\u0434\u0430\u0447\u0438 \u0430\u0440\u0442\u0435\u0444\u0430\u043a\u0442\u0430.",
+        "\u041f\u0440\u0438 \u043f\u043e\u043b\u043d\u043e\u043c \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0438 guards \u043f\u043e\u0434\u0433\u043e\u0442\u043e\u0432\u0438\u0442\u044c \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u044b\u0439 explicit install/refresh proposal; \u044d\u0442\u043e\u0442 plan \u0435\u0433\u043e \u043d\u0435 \u0432\u044b\u043f\u043e\u043b\u043d\u044f\u0435\u0442."
       ]
     },
     "snapshot_source": {
       "command": "C:/Users/Ruslan/gurra/vps-config/bin/codex-hostkey-run.ps1 -Sandbox read-only -Model gpt-5.6-sol -Timeout 180 -PromptFile C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-4e08d93cdc5c/hostkey-snapshot-prompt.txt",
       "hostkey_prompt_sha256": "eeacd5d513d5d030c27e44ed0e140d5cb8d8615b9543cd2628a94a5482210f3b",
       "runner_session_id": 34451,
-      "status": "passed"
+      "status": "passed",
+      "replay_prompt_copy": "C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-3b547c751296/hostkey-snapshot-prompt.txt"
     }
   },
   "package_version": "3.2.6rc5",
   "pr": {
-    "artifact_source_delta": [
-      "kitty-specs/global-skill-bootstrap-safety-01M20J6C/delivery-evidence.json",
-      "kitty-specs/global-skill-bootstrap-safety-01M20J6C/meta.json",
-      "kitty-specs/global-skill-bootstrap-safety-01M20J6C/plan.md",
-      "kitty-specs/global-skill-bootstrap-safety-01M20J6C/tasks/WP03-immutable-artifact-dry-plan.md"
-    ],
-    "checked_at": "2026-09-08T16:01:31.512291+00:00",
-    "checks": [
-      {
-        "conclusion": "queued",
-        "name": "Prepare candidate package metadata",
-        "workflow": "Check Shared Package Drift"
-      },
-      {
-        "conclusion": "success",
-        "name": "Build and validate Claude Code plugin bundle",
-        "workflow": "Plugin Validate"
-      },
-      {
-        "conclusion": "success",
-        "name": "Build and validate Codex plugin bundle",
-        "workflow": "Plugin Validate"
-      },
-      {
-        "conclusion": "success",
-        "name": "check-readiness",
-        "workflow": "Release Readiness Check"
-      },
-      {
-        "conclusion": "success",
-        "name": "cutover-guard",
-        "workflow": "Release Readiness Check"
-      },
-      {
-        "conclusion": "success",
-        "name": "Review verdict durability (macos-latest, Python 3.11)",
-        "workflow": "Review verdict durability"
-      },
-      {
-        "conclusion": "success",
-        "name": "Review verdict durability (ubuntu-latest, Python 3.11)",
-        "workflow": "Review verdict durability"
-      },
-      {
-        "conclusion": "success",
-        "name": "Review verdict durability (windows-latest, Python 3.11)",
-        "workflow": "Review verdict durability"
-      },
-      {
-        "conclusion": "success",
-        "name": "AST lint -- canonical producers",
-        "workflow": "canonical-producer-lint"
-      },
-      {
-        "conclusion": "success",
-        "name": "Detect Windows-critical changes",
-        "workflow": "ci-windows"
-      },
-      {
-        "conclusion": "success",
-        "name": "Windows critical (pipx, pytest -m windows_ci)",
-        "workflow": "ci-windows"
-      },
-      {
-        "conclusion": "success",
-        "name": "build",
-        "workflow": "docs-build-pr"
-      },
-      {
-        "conclusion": "success",
-        "name": "docs-freshness",
-        "workflow": "docs-freshness"
-      },
-      {
-        "conclusion": "success",
-        "name": "doctrine-charter-tests",
-        "workflow": "doctrine-charter-tests"
-      },
-      {
-        "conclusion": "success",
-        "name": "drift-detector",
-        "workflow": "drift-detector"
-      },
-      {
-        "conclusion": "success",
-        "name": "ui-e2e",
-        "workflow": "ui-e2e"
-      }
-    ],
-    "head_sha": "c304e150da82a0d0ee79e09b83ed6d9c3231e82f",
-    "merge_state_status": "UNSTABLE",
-    "merge_status": "not_merged",
-    "mergeable": true,
     "number": 21,
+    "url": "https://github.com/rusliksu/spec-kitty/pull/21",
+    "state": "draft_fresh_ci_pending",
+    "merge_status": "not_merged",
+    "mergeable_at_prior_snapshot": true,
     "ready_at": null,
+    "artifact_source_commit": "3b547c751296469da457e343346f4680a4d7b2b5",
+    "acceptance_commit": "21427f3bce5d98126f010854aede3d1cfa11982f",
+    "fresh_ci": {
+      "status": "not_started_at_evidence_capture",
+      "captured_at": "2026-09-08T17:44:41.601865+00:00",
+      "reason": "Source, acceptance and evidence commits had not yet been pushed; final status is reported outside this immutable source-bound evidence record."
+    },
+    "prior_ci_snapshot": {
+      "head_sha": "c304e150da82a0d0ee79e09b83ed6d9c3231e82f",
+      "checked_at": "2026-09-08T16:01:31.512291+00:00",
+      "successful_check_count": 15,
+      "checks": [
+        {
+          "conclusion": "queued",
+          "name": "Prepare candidate package metadata",
+          "workflow": "Check Shared Package Drift"
+        },
+        {
+          "conclusion": "success",
+          "name": "Build and validate Claude Code plugin bundle",
+          "workflow": "Plugin Validate"
+        },
+        {
+          "conclusion": "success",
+          "name": "Build and validate Codex plugin bundle",
+          "workflow": "Plugin Validate"
+        },
+        {
+          "conclusion": "success",
+          "name": "check-readiness",
+          "workflow": "Release Readiness Check"
+        },
+        {
+          "conclusion": "success",
+          "name": "cutover-guard",
+          "workflow": "Release Readiness Check"
+        },
+        {
+          "conclusion": "success",
+          "name": "Review verdict durability (macos-latest, Python 3.11)",
+          "workflow": "Review verdict durability"
+        },
+        {
+          "conclusion": "success",
+          "name": "Review verdict durability (ubuntu-latest, Python 3.11)",
+          "workflow": "Review verdict durability"
+        },
+        {
+          "conclusion": "success",
+          "name": "Review verdict durability (windows-latest, Python 3.11)",
+          "workflow": "Review verdict durability"
+        },
+        {
+          "conclusion": "success",
+          "name": "AST lint -- canonical producers",
+          "workflow": "canonical-producer-lint"
+        },
+        {
+          "conclusion": "success",
+          "name": "Detect Windows-critical changes",
+          "workflow": "ci-windows"
+        },
+        {
+          "conclusion": "success",
+          "name": "Windows critical (pipx, pytest -m windows_ci)",
+          "workflow": "ci-windows"
+        },
+        {
+          "conclusion": "success",
+          "name": "build",
+          "workflow": "docs-build-pr"
+        },
+        {
+          "conclusion": "success",
+          "name": "docs-freshness",
+          "workflow": "docs-freshness"
+        },
+        {
+          "conclusion": "success",
+          "name": "doctrine-charter-tests",
+          "workflow": "doctrine-charter-tests"
+        },
+        {
+          "conclusion": "success",
+          "name": "drift-detector",
+          "workflow": "drift-detector"
+        },
+        {
+          "conclusion": "success",
+          "name": "ui-e2e",
+          "workflow": "ui-e2e"
+        }
+      ]
+    },
     "ready_blocker": {
       "details_url": "https://github.com/rusliksu/spec-kitty/actions/runs/34246436140/job/102129512367",
       "evidence": "Job remained queued with runner_name empty; the fork schedule run 34198182995 has also been queued since 2026-09-08T07:12:22Z, while earlier daily runs were cancelled after about 24 hours.",
       "job": "Prepare candidate package metadata",
       "required_runner_label": "blacksmith-4vcpu-ubuntu-2404",
       "workflow": "Check Shared Package Drift"
-    },
-    "state": "draft_blocked_external_runner",
-    "successful_check_count": 15,
-    "url": "https://github.com/rusliksu/spec-kitty/pull/21"
+    }
   },
   "schema_version": 1,
   "scope_guard": {
@@ -257,15 +265,15 @@
     "restart": false,
     "scheduler": false
   },
-  "source_commit": "4e08d93cdc5c4fb16749c8424444e8d2a6c5f5f5",
+  "source_commit": "3b547c751296469da457e343346f4680a4d7b2b5",
   "subtasks": {
     "T010": {
       "commands": [
         {
-          "command": "uv build --wheel --out-dir C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-4e08d93cdc5c",
+          "command": "uv build --wheel --out-dir C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-3b547c751296",
           "cwd": "C:/Users/Ruslan/.codex-worktrees/spec-kitty-global-skill-bootstrap-safety",
-          "observed_at": "2026-09-08T15:09:25.314889+00:00",
-          "result": "one wheel built; no upload or publish step",
+          "observed_at": "2026-09-08T17:44:41.601865+00:00",
+          "result": "one source-bound wheel built from 3b547c751296; no upload or publish step",
           "status": "passed"
         }
       ],
@@ -274,10 +282,10 @@
     "T011": {
       "commands": [
         {
-          "command": "uv run --with pyyaml python verify-wheel.py spec_kitty_cli-3.2.6rc5-py3-none-any.whl",
-          "cwd": "C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-4e08d93cdc5c",
-          "observed_at": "2026-09-08T15:14:40+00:00",
-          "result": "exact wheel import path, source mapping, policy bool, entry hash, four policy mutations and repeated artifact hash verified",
+          "command": "uv run --frozen --all-extras python verify-wheel.py spec_kitty_cli-3.2.6rc5-py3-none-any.whl",
+          "cwd": "C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-3b547c751296",
+          "observed_at": "2026-09-08T17:44:41.601865+00:00",
+          "result": "exact wheel import path, source mapping, strict bool policy, entry hash, four policy mutations, stable artifact hash and absent removed runtime module verified",
           "status": "passed"
         }
       ],
@@ -306,9 +314,16 @@
           "observed_at": "2026-09-08T16:01:31.512291+00:00",
           "result": "Prepare candidate package metadata remained queued without a runner; ready transition not performed",
           "status": "blocked"
+        },
+        {
+          "command": "spec-kitty accept --mission global-skill-bootstrap-safety-01M20J6C --mode pr --lenient --actor codex --owned-checkout <exact-task-worktree> --json",
+          "cwd": "C:/Users/Ruslan/.codex-worktrees/spec-kitty-global-skill-bootstrap-safety",
+          "observed_at": "2026-09-08T17:42:00+00:00",
+          "result": "acceptance commit 21427f3bce5 from source parent 3b547c751296; all three work packages approved; no blockers",
+          "status": "passed"
         }
       ],
-      "status": "blocked_external_runner"
+      "status": "pending_fresh_ci_external_runner"
     },
     "T013": {
       "commands": [
