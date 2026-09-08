@@ -123,7 +123,7 @@ class TestInstallSharedRootAgent:
     def test_reinstall_preserves_unknown_files_inside_global_skill(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Only source paths are replaced; user-authored siblings remain byte-stable."""
+        """Scenario 2 replaces owned paths and preserves unknown paths and modes."""
         monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path / "home"))
         skills_root = tmp_path / "skills_src"
         project = tmp_path / "project"
@@ -140,12 +140,22 @@ class TestInstallSharedRootAgent:
         metadata = global_skill / "agents" / "openai.yaml"
         metadata.parent.mkdir()
         metadata.write_bytes(b"policy:\n  allow_implicit_invocation: false\n")
+        metadata.chmod(metadata.stat().st_mode & ~stat.S_IWRITE)
         nested = global_skill / "user" / "notes.txt"
         nested.parent.mkdir()
         nested.write_bytes(b"keep me\n")
+        nested.chmod(nested.stat().st_mode | stat.S_IWRITE)
         unrelated = tmp_path / "home" / ".agents" / "skills" / "custom-skill" / "SKILL.md"
         unrelated.parent.mkdir(parents=True)
         unrelated.write_bytes(b"# custom\n")
+
+        unknown_before = {
+            metadata: (metadata.read_bytes(), metadata.stat().st_mode),
+            nested: (nested.read_bytes(), nested.stat().st_mode),
+            unrelated: (unrelated.read_bytes(), unrelated.stat().st_mode),
+        }
+        installed_body = global_skill / "SKILL.md"
+        assert not installed_body.stat().st_mode & stat.S_IWRITE
 
         skill.skill_md.chmod(skill.skill_md.stat().st_mode | stat.S_IWRITE)
         skill.skill_md.write_text(
@@ -154,13 +164,45 @@ class TestInstallSharedRootAgent:
         )
         install_skills_for_agent(project, "codex", [skill])
 
-        assert (global_skill / "SKILL.md").read_text(encoding="utf-8").endswith(
-            "# Version two\n"
-        )
-        assert metadata.read_bytes() == b"policy:\n  allow_implicit_invocation: false\n"
-        assert nested.read_bytes() == b"keep me\n"
-        assert unrelated.read_bytes() == b"# custom\n"
-        assert not (global_skill / "SKILL.md").stat().st_mode & stat.S_IWRITE
+        assert installed_body.read_text(encoding="utf-8").endswith("# Version two\n")
+        assert not installed_body.stat().st_mode & stat.S_IWRITE
+        for path, expected in unknown_before.items():
+            assert (path.read_bytes(), path.stat().st_mode) == expected
+
+    def test_reinstall_replaces_owned_symlink_without_following_targets(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Owned link collisions are replaced while unknown links and targets survive."""
+        monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path / "home"))
+        skills_root = tmp_path / "skills_src"
+        project = tmp_path / "project"
+        project.mkdir()
+        skill = _make_skill(skills_root, "my-skill")
+        install_skills_for_agent(project, "codex", [skill])
+
+        global_skill = tmp_path / "home" / ".agents" / "skills" / "my-skill"
+        installed_body = global_skill / "SKILL.md"
+        installed_body.chmod(installed_body.stat().st_mode | stat.S_IWRITE)
+        installed_body.unlink()
+        owned_target = tmp_path / "owned-target.txt"
+        owned_target.write_bytes(b"do not overwrite\n")
+        unknown_target = tmp_path / "unknown-target.txt"
+        unknown_target.write_bytes(b"keep unknown target\n")
+        unknown_link = global_skill / "custom.link"
+        try:
+            installed_body.symlink_to(owned_target)
+            unknown_link.symlink_to(unknown_target)
+        except OSError as exc:
+            pytest.skip(f"symlinks unavailable: {exc}")
+
+        install_skills_for_agent(project, "codex", [skill])
+
+        assert installed_body.is_file()
+        assert not installed_body.is_symlink()
+        assert owned_target.read_bytes() == b"do not overwrite\n"
+        assert unknown_link.is_symlink()
+        assert unknown_link.read_bytes() == b"keep unknown target\n"
+        assert unknown_target.read_bytes() == b"keep unknown target\n"
 
     def test_codex_spec_kitty_generation_adds_missing_frontmatter(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("HOME", str(tmp_path / "home"))
