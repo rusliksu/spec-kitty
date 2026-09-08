@@ -271,9 +271,9 @@ def find_wp_file(repo_root: Path, mission_slug: str, wp_id: str, *, effective_ro
     the kind-blind resolver above -- never lands on the coordination
     worktree).
     """
-    from mission_runtime.resolution import read_dir_for
-
-    tasks_dir = read_dir_for(effective_root, repo_root, mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK) / "tasks"
+    tasks_dir = placement_seam(
+        repo_root, mission_slug, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK) / "tasks"
     if not tasks_dir.exists():
         raise FileNotFoundError(f"Tasks directory not found: {tasks_dir}")
 
@@ -360,9 +360,9 @@ def _resolve_lanes_dir(repo_root: Path, mission_slug: str, *, effective_root: Pa
     path-join helper (``feature_dir / lanes.json``); this function resolves
     the *feature_dir* itself from the artifact's canonical partition.
     """
-    from mission_runtime.resolution import read_dir_for
-
-    return read_dir_for(effective_root, repo_root, mission_slug, kind=MissionArtifactKind.LANE_STATE)
+    return placement_seam(
+        repo_root, mission_slug, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.LANE_STATE)
 
 
 def _print_uncommitted_planning_artifacts(files_to_commit: list[str]) -> None:
@@ -1267,8 +1267,6 @@ def _detect_wp_context(
 
     if auto_commit is None:
         auto_commit = get_auto_commit_default(repo_root)
-    from mission_runtime.resolution import read_dir_for
-
     anchor_options = {"effective_root": effective_root} if effective_root is not None else {}
     if effective_root is not None:
         from specify_cli.context.mission_resolver import resolve_mission
@@ -1289,7 +1287,9 @@ def _detect_wp_context(
     # fallback -> primary fallback), which existed ONLY to paper over the
     # kind-blind resolver's coord-husk shadowing -- the kind-correct seam
     # never returns a meta-less coord husk in the first place.
-    feature_dir = read_dir_for(effective_root, repo_root, mission_slug, kind=MissionArtifactKind.SPEC)
+    feature_dir = placement_seam(
+        repo_root, mission_slug, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.SPEC)
     wp_file = find_wp_file(repo_root, mission_slug, wp_id, **anchor_options)
     declared_deps = parse_wp_dependencies(wp_file)
     return auto_commit, mission_slug, feature_dir, wp_file, declared_deps
@@ -1786,6 +1786,16 @@ def implement(
     This command remains available as a compatibility surface for direct callers.
     See FR-503 and D-4 in the 3.1.1 spec.
     """
+    # Preserve the historical nested-worktree refusal when a direct caller
+    # omits the selector. A caller-owned planning worktree can be validated
+    # only after it names the Mission it claims to own.
+    if mission is None and is_worktree_context(Path.cwd()):
+        console.print(
+            "[red]Error:[/red] --mission is required to validate a caller-owned "
+            "planning worktree."
+        )
+        raise typer.Exit(1)
+
     # SC-003 no-selector guard: exit 2 when --mission is omitted (mirrors
     # all other commands and aligns with the no-selector-error-contract).
     # Guard runs BEFORE --recover so that `implement --recover` with no
@@ -1910,7 +1920,16 @@ def implement(
         # another mission's lane worktree in the same registry). write_intent
         # gates the checkout-identity refusal; the ~20 pure read vehicles leave
         # it False, so reads/planning are never falsely refused.
-        resolved_workspace = resolve_workspace_for_wp(repo_root, mission_slug, wp_id, write_intent=True, **anchor_options)
+        if operation is None:
+            resolved_workspace = resolve_workspace_for_wp(repo_root, mission_slug, wp_id, write_intent=True)
+        else:
+            resolved_workspace = resolve_workspace_for_wp(
+                repo_root,
+                mission_slug,
+                wp_id,
+                write_intent=True,
+                effective_root=artifact_root,
+            )
 
         lanes_manifest, _lane = _resolve_execution_lane(resolved_workspace, _lanes_feature_dir, wp_id, tracker)
     except Exception as exc:
@@ -2026,4 +2045,4 @@ def implement(
     _print_workspace_ready_banner(result, workspace_path)
 
 
-__all__ = ["_ensure_vcs_in_meta", "detect_feature_context", "find_wp_file", "implement"]
+__all__ = ["_ensure_vcs_in_meta", "detect_feature_context", "implement"]

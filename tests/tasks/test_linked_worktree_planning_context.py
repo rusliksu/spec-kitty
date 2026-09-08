@@ -467,7 +467,14 @@ def test_mark_status_records_subtasks_on_selected_planning_surface(
     assert _payload(result)["summary"] == {"updated": 3, "already_satisfied": 0, "not_found": 0}
     assert tasks_md.read_bytes() == tasks_before
     stream = read_event_stream(linked_mission.mission_dir)
-    assert len(stream.annotations) == 1
+    assert [
+        (entry.wp_id, entry.delta.subtasks) for entry in stream.annotations
+    ] == [
+        (
+            "WP03",
+            {"T009": Lane.DONE, "T010": Lane.DONE, "T011": Lane.DONE},
+        )
+    ]
     annotation = stream.annotations[0]
     assert annotation.wp_id == "WP03"
     assert annotation.delta.subtasks == {"T009": Lane.DONE, "T010": Lane.DONE, "T011": Lane.DONE}

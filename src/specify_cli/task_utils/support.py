@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from kernel.clock import UTC_SECOND_TIMESTAMP_FORMAT as TIMESTAMP_FORMAT
 from kernel.clock import now_utc_stamp
+from mission_runtime import MissionArtifactKind, placement_seam
 from specify_cli.core.paths import get_main_repo_root, locate_project_root
 from specify_cli.mission_metadata import load_meta as _load_meta_canonical
 
@@ -559,11 +560,9 @@ def locate_work_package(
     Legacy format: WP files in tasks/{lane}/ subdirectories
     New format: WP files in flat tasks/ directory with lane in frontmatter
     """
-    from mission_runtime import MissionArtifactKind, placement_seam
     from specify_cli.coordination import resolve_status_surface
     from specify_cli.core.paths import get_main_repo_root
     from specify_cli.status import reconstruct_wp_view
-    from mission_runtime.resolution import read_dir_for
 
     if effective_root is not None and status_read_dir is None:
         raise ValueError("An explicit Mission anchor requires its resolved status directory.")
@@ -576,12 +575,9 @@ def locate_work_package(
     # ``placement_seam`` (fail-loud on a deleted-coord mismatch, NFR-002)
     # instead of the kind-blind ``resolve_planning_read_dir``.
     main_root = get_main_repo_root(repo_root)
-    feature_path = (
-        placement_seam(main_root, feature).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
-        if effective_root is None else read_dir_for(
-            effective_root, main_root, feature, kind=MissionArtifactKind.WORK_PACKAGE_TASK
-        )
-    )
+    feature_path = placement_seam(
+        main_root, feature, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
     status_dir = status_read_dir if status_read_dir is not None else resolve_status_surface(main_root, feature).parent
 
     tasks_root = feature_path / "tasks"

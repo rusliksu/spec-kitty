@@ -26,7 +26,6 @@ from specify_cli.core.atomic import atomic_write
 from kernel.git_topology import GitTopologyError, git_toplevel
 from specify_cli.lanes.branch_naming import worktree_dir_name, worktree_path as _seam_worktree_path
 from mission_runtime import MissionArtifactKind, placement_seam
-from mission_runtime.resolution import read_dir_for
 from specify_cli.ownership.inference import infer_execution_mode, score_execution_mode_signals
 from specify_cli.ownership.models import WorkProductKind
 from specify_cli.ownership.workspace_strategy import create_planning_workspace
@@ -679,12 +678,9 @@ def build_normalized_wp_index(
     # the seam authority instead of the kind-blind ``resolve_planning_read_dir``.
     # WORK_PACKAGE_TASK is PRIMARY-partition, so this is behavior-identical to
     # the prior resolver — no fail-loud arm is reachable here.
-    tasks_dir = (
-        placement_seam(repo_root, mission_slug).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
-        if effective_root is None else read_dir_for(
-            effective_root, repo_root, mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK
-        )
-    ) / "tasks"
+    tasks_dir = placement_seam(
+        repo_root, mission_slug, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK) / "tasks"
     snapshot = _normalized_feature_snapshot(tasks_dir)
     cached = _FEATURE_WP_METADATA_CACHE.get(cache_key)
     if cached is not None and _FEATURE_WP_METADATA_SNAPSHOT_CACHE.get(cache_key) == snapshot:
@@ -732,12 +728,9 @@ def get_normalized_wp(
         error = _FEATURE_WP_METADATA_ERROR_CACHE.get(cache_key, {}).get(wp_id)
         if error is not None:
             raise error
-        tasks_dir = (
-            placement_seam(repo_root, mission_slug).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
-            if effective_root is None else read_dir_for(
-                effective_root, repo_root, mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK
-            )
-        ) / "tasks"
+        tasks_dir = placement_seam(
+            repo_root, mission_slug, effective_root=effective_root
+        ).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK) / "tasks"
         raise ValueError(
             f"Work package {wp_id} was not found under "
             # read-side-placement-seam-migration WP07: named via the seam
@@ -837,12 +830,9 @@ def _resolve_workspace_for_wp_impl(
         # behavior-identical since LANE_STATE is PRIMARY-partition (no
         # fail-loud arm reachable here).
         lane_wp_ids: list[str] = []
-        lanes_read_dir = (
-            placement_seam(repo_root, mission_slug).read_dir(MissionArtifactKind.LANE_STATE)
-            if effective_root is None else read_dir_for(
-                effective_root, repo_root, mission_slug, kind=MissionArtifactKind.LANE_STATE
-            )
-        )
+        lanes_read_dir = placement_seam(
+            repo_root, mission_slug, effective_root=effective_root
+        ).read_dir(MissionArtifactKind.LANE_STATE)
         lanes_manifest = read_lanes_json(lanes_read_dir)
         if lanes_manifest is not None:
             planning_lane = lanes_manifest.lane_for_wp(wp_id)
@@ -885,12 +875,9 @@ def _resolve_workspace_for_wp_impl(
     # instead of the kind-blind ``resolve_planning_read_dir``; behavior-
     # identical since LANE_STATE is PRIMARY-partition (no fail-loud arm
     # reachable here).
-    lanes_read_dir = (
-        placement_seam(repo_root, mission_slug).read_dir(MissionArtifactKind.LANE_STATE)
-        if effective_root is None else read_dir_for(
-            effective_root, repo_root, mission_slug, kind=MissionArtifactKind.LANE_STATE
-        )
-    )
+    lanes_read_dir = placement_seam(
+        repo_root, mission_slug, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.LANE_STATE)
     from specify_cli.lanes.branch_naming import lane_branch_name
     from specify_cli.lanes.compute import PLANNING_LANE_ID, is_planning_lane
     from specify_cli.lanes.persistence import require_lanes_json, resolve_lanes_dir

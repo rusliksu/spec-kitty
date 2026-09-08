@@ -747,9 +747,9 @@ def implement_resolve_mission_type(repo_root: Path, mission_slug: str, *, effect
     instead — PRIMARY_METADATA is a PRIMARY-partition kind, so it resolves
     PRIMARY for every topology without ever consulting that husk.
     """
-    from mission_runtime.resolution import read_dir_for
-
-    mission_type_dir = read_dir_for(effective_root, repo_root, mission_slug, kind=MissionArtifactKind.PRIMARY_METADATA)
+    mission_type_dir = placement_seam(
+        repo_root, mission_slug, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.PRIMARY_METADATA)
     mission_type = get_mission_type(mission_type_dir)
     deliverables_path = None
     if mission_type == MISSION_TYPE_RESEARCH:

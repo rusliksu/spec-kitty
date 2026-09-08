@@ -168,11 +168,17 @@ def test_negative_selector_inputs_have_real_distinct_identities(linked_mission: 
         assert not (ctx.linked / "kitty-specs" / selector).exists()
     elif scenario == "omitted":
         selector = None
-        assert len(list((ctx.linked / "kitty-specs").glob("*/meta.json"))) == 2
+        assert {
+            path.parent.name
+            for path in (ctx.linked / "kitty-specs").glob("*/meta.json")
+        } == {ctx.mission_dir.name, "other-01M1MFE9"}
     elif scenario == "ambiguous":
         selector = "01M1MFE9"
         ids = [json.loads(p.read_text())["mission_id"] for p in (ctx.linked / "kitty-specs").glob("*/meta.json")]
-        assert len(set(ids)) == 2 and all(value.startswith(selector) for value in ids)
+        assert set(ids) == {
+            "01M1MFE98JDK0S33WSYBQRPSDF",
+            "01M1MFE9ZZZZZZZZZZZZZZZZZZ",
+        }
     elif scenario == "unsafe":
         selector = "../outside"
         assert not (ctx.linked / "outside").exists()

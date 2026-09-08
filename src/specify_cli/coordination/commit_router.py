@@ -38,6 +38,7 @@ from mission_runtime import (
     is_primary_artifact_kind,
     kind_for_mission_file,
     mission_context_for,
+    placement_seam,
     resolve_placement_only,
     resolve_topology,
     routes_through_coordination,
@@ -431,8 +432,15 @@ def _resolve_commit_surface(
 
         operation = resolve_mission_operation_context(repo_root, mission_slug, cwd=repo_root)
         if operation.mission_anchor_root != operation.repository_root:
-            linked_primary_target = target_branch
-            placement = CommitTarget(ref=target_branch)
+            owned_seam = placement_seam(
+                operation.repository_root,
+                mission_slug,
+                effective_root=operation.mission_anchor_root,
+            )
+            placement = owned_seam.write_target(kind)
+            linked_primary_target = owned_seam.write_target(
+                MissionArtifactKind.SPEC
+            ).ref
     primary_target = linked_primary_target or _resolve_mission_target_branch(repo_root, mission_slug)
     use_coord = (
         routes_through_coordination(resolve_topology(repo_root, mission_slug))

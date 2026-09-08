@@ -563,7 +563,12 @@ def _revert_coordination_commit(receipt: CommitReceipt) -> None:
         )
 
 
-def _workflow_placement_seam(repo_root: Path, mission_slug: str) -> PlacementSeam:
+def _workflow_placement_seam(
+    repo_root: Path,
+    mission_slug: str,
+    *,
+    effective_root: Path | None = None,
+) -> PlacementSeam:
     """Construct the ONE placement-seam instance every workflow.py wrapper shares.
 
     read-surface-ssot-closeout WP04 (T017/T018): the pre-existing
@@ -579,7 +584,11 @@ def _workflow_placement_seam(repo_root: Path, mission_slug: str) -> PlacementSea
     """
     from mission_runtime import placement_seam
 
-    return placement_seam(repo_root, mission_slug)
+    return placement_seam(
+        repo_root,
+        mission_slug,
+        effective_root=effective_root,
+    )
 
 
 def _resolve_workflow_placement(
@@ -598,14 +607,11 @@ def _resolve_workflow_placement(
     mechanism) keep reading that separately — this helper answers only "where
     does a write of this kind land", the seam's one job.
     """
-    if effective_root is not None:
-        from mission_runtime import mission_context_for
-
-        target = mission_context_for(repo_root, mission_slug, effective_root=effective_root).artifact(kind).commit_target
-        if target is None:
-            raise ValueError(f"No commit placement for {mission_slug}: {kind}")
-        return target
-    return _workflow_placement_seam(repo_root, mission_slug).write_target(kind)
+    return _workflow_placement_seam(
+        repo_root,
+        mission_slug,
+        effective_root=effective_root,
+    ).write_target(kind)
 
 
 def _resolve_workflow_read_dir(
@@ -620,17 +626,15 @@ def _resolve_workflow_read_dir(
     Directive-041 — do not pin the old kind-blind coord husk) now routes
     through this ONE wrapper over :func:`_workflow_placement_seam`
     ``.read_dir(kind)`` instead of re-deriving the seam call inline at each
-    read site. A validated ``effective_root`` may override only PRIMARY-partition
-    reads through the existing owned-checkout authority.
+    read site. A validated ``effective_root`` binds the seam to the selected
+    Mission checkout; the canonical artifact context still decides the
+    partition-specific read surface.
     """
-    if effective_root is not None:
-        from mission_runtime.resolution import read_dir_for
-        from mission_runtime import is_primary_artifact_kind
-
-        if not is_primary_artifact_kind(kind):
-            raise ValueError("Explicit Mission anchors require a primary-partition artifact kind.")
-        return read_dir_for(effective_root, repo_root, mission_slug, kind=kind)
-    read_dir: Path = _workflow_placement_seam(repo_root, mission_slug).read_dir(kind)
+    read_dir: Path = _workflow_placement_seam(
+        repo_root,
+        mission_slug,
+        effective_root=effective_root,
+    ).read_dir(kind)
     return read_dir
 
 
@@ -1332,9 +1336,16 @@ def implement(
         # implement` WP-execution write site — refuse a claim invoked from a
         # checkout the mission does not own. write_intent gates the
         # checkout-identity refusal (pure reads leave it False).
-        workspace = resolve_workspace_for_wp(
-            main_repo_root, mission_slug, normalized_wp_id, write_intent=True, **anchor_options
-        )
+        if not anchor_options:
+            workspace = resolve_workspace_for_wp(main_repo_root, mission_slug, normalized_wp_id, write_intent=True)
+        else:
+            workspace = resolve_workspace_for_wp(
+                main_repo_root,
+                mission_slug,
+                normalized_wp_id,
+                write_intent=True,
+                effective_root=operation.mission_anchor_root,
+            )
         status_execution_mode = "direct_repo" if workspace.resolution_kind == "repo_root" else "worktree"
 
         def _create_workspace() -> None:

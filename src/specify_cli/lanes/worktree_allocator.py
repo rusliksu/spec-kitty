@@ -919,10 +919,11 @@ def _read_coordination_branch(
     # STATUS-only one) — never the coord-aware resolver (which would need the very
     # answer this read produces).
     if effective_root is not None:
-        from mission_runtime.resolution import read_dir_for
         from specify_cli.core.paths import load_meta_fail_closed
 
-        meta_dir = read_dir_for(effective_root, repo_root, mission_slug, kind=MissionArtifactKind.PRIMARY_METADATA)
+        meta_dir = placement_seam(
+            repo_root, mission_slug, effective_root=effective_root
+        ).read_dir(MissionArtifactKind.PRIMARY_METADATA)
         data = load_meta_fail_closed(meta_dir)
         if data is None:
             raise ValueError(f"Owned planning metadata is missing: {meta_dir}")

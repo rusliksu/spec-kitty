@@ -345,9 +345,6 @@ _CATEGORY_B_GRANDFATHERED_LEGACY: frozenset[SymbolKey] = frozenset(
         # specify_cli.cli.commands.implement::detect_feature_context
         SymbolKey("detect_feature_context", "03ce3f732e5db8d5a02fbfdcae55ae3acdaf00bdbbd3370b400b37e57fb66b81", source_module="specify_cli.cli.commands.implement"),
         SymbolKey(
-            "find_wp_file", "d320a28d54f0ac514cfe9f87a85a5aad28916e7ce651934b3336f33ad6dc5283", source_module="specify_cli.cli.commands.implement"
-        ),  # specify_cli.cli.commands.implement::find_wp_file
-        SymbolKey(
             "CurrentContext", "49c03fb8a6af76f87fbae0133fd35d4c9ee8a4c5a0b7e5b49a812409af871bc7", source_module="specify_cli.core.context_validation"
         ),  # specify_cli.core.context_validation::CurrentContext
         SymbolKey(

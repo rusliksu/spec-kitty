@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from kernel.clock import now_utc_iso
-from mission_runtime import MissionArtifactKind
+from mission_runtime import MissionArtifactKind, placement_seam
 from specify_cli.ownership.models import WorkProductKind
 from specify_cli.lanes.lane_env import lane_test_env
 from specify_cli.lanes.models import ExecutionLane, LanesManifest
@@ -256,9 +256,9 @@ def _planning_dir(main_repo_root: Path, mission_slug: str, *, effective_root: Pa
     topology (coord-topology missions carry a SEPARATE status/coord dir that
     does NOT hold ``lanes.json``, #2118).
     """
-    from mission_runtime.resolution import read_dir_for
-
-    return read_dir_for(effective_root, main_repo_root, mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK)
+    return placement_seam(
+        main_repo_root, mission_slug, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
 
 
 def reenter_lane_self_heal(
