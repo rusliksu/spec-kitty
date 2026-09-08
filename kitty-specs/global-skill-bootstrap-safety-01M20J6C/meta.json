@@ -1,0 +1,44 @@
+{
+  "accept_commit": "bf41490739501d97a93109bd8c985a74c3fdb9e2",
+  "acceptance_history": [
+    {
+      "accept_commit": "99389e28f61df98e2179dc3aaf3545521548c5f8",
+      "acceptance_mode": "pr",
+      "accepted_at": "2026-09-08T16:13:16.502942+00:00",
+      "accepted_by": "codex",
+      "accepted_from_commit": "a413fe18eadb7ec24c06fb693d0b5edbf291c21f"
+    },
+    {
+      "accept_commit": "21427f3bce5d98126f010854aede3d1cfa11982f",
+      "acceptance_mode": "pr",
+      "accepted_at": "2026-09-08T17:42:01.689825+00:00",
+      "accepted_by": "codex",
+      "accepted_from_commit": "3b547c751296469da457e343346f4680a4d7b2b5"
+    },
+    {
+      "accept_commit": "bf41490739501d97a93109bd8c985a74c3fdb9e2",
+      "acceptance_mode": "pr",
+      "accepted_at": "2026-09-08T19:13:44.525956+00:00",
+      "accepted_by": "codex",
+      "accepted_from_commit": "51293ffdcc018668291dbbe6a7b0b1896da1d698"
+    }
+  ],
+  "acceptance_mode": "pr",
+  "accepted_at": "2026-09-08T19:13:44.525956+00:00",
+  "accepted_by": "codex",
+  "accepted_from_commit": "51293ffdcc018668291dbbe6a7b0b1896da1d698",
+  "created_at": "2026-09-08T13:09:22.573189+00:00",
+  "flattened": false,
+  "friendly_name": "Безопасный глобальный bootstrap навыков",
+  "mission_id": "01M20J6CG8566ANNKHA0WH3H51",
+  "mission_number": null,
+  "mission_slug": "global-skill-bootstrap-safety-01M20J6C",
+  "mission_type": "software-dev",
+  "pr_bound": true,
+  "purpose_context": "Исправить разрушительную стартовую синхронизацию, сохранить пользовательские файлы внутри skill-каталогов и закрепить metadata legacy program skill в дистрибутиве.",
+  "purpose_tldr": "Обычные команды CLI не должны перезаписывать пользовательские глобальные навыки.",
+  "slug": "global-skill-bootstrap-safety-01M20J6C",
+  "status_phase": "1",
+  "target_branch": "codex/global-skill-bootstrap-safety",
+  "topology": "single_branch"
+}

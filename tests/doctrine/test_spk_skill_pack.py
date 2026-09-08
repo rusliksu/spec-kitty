@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 import pytest
+import yaml
 
 from specify_cli.skills.registry import SkillRegistry
 
@@ -132,6 +133,42 @@ def test_legacy_alias_skills_remain_installed() -> None:
     }
 
     assert actual >= LEGACY_ALIAS_SKILLS
+
+
+def _assert_legacy_program_orchestrator_is_explicit_only(metadata: Path) -> None:
+    assert metadata.is_file(), metadata
+    document = yaml.safe_load(metadata.read_text(encoding="utf-8"))
+    assert document == {"policy": {"allow_implicit_invocation": False}}
+
+
+def test_legacy_program_orchestrator_metadata_is_explicit_only() -> None:
+    metadata = (
+        SKILLS_ROOT
+        / "spec-kitty-program-orchestrate"
+        / "agents"
+        / "openai.yaml"
+    )
+    _assert_legacy_program_orchestrator_is_explicit_only(metadata)
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "policy:\n  allow_implicit_invocation: true\n",
+        "policy: {}\n",
+        None,
+    ],
+)
+def test_legacy_program_orchestrator_metadata_oracle_rejects_mutations(
+    tmp_path: Path, content: str | None
+) -> None:
+    metadata = tmp_path / "agents" / "openai.yaml"
+    if content is not None:
+        metadata.parent.mkdir(parents=True)
+        metadata.write_text(content, encoding="utf-8")
+
+    with pytest.raises(AssertionError):
+        _assert_legacy_program_orchestrator_is_explicit_only(metadata)
 
 
 def test_profile_load_skill_owns_and_installs_detailed_mechanics() -> None:

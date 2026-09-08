@@ -68,11 +68,9 @@ def _remove_retired_skill_dirs(root: Path, canonical_names: set[str]) -> None:
             _safe_rmtree(dest)
 
 
-def _make_tree_read_only(root: Path) -> None:
-    """Remove write bits from all files in a managed canonical skill tree."""
-    for file_path in root.rglob("*"):
-        if not file_path.is_file():
-            continue
+def _make_files_read_only(file_paths: list[Path]) -> None:
+    """Remove write bits only from files written from the packaged source tree."""
+    for file_path in file_paths:
         mode = file_path.stat().st_mode
         file_path.chmod(mode & ~0o222)
 
@@ -88,18 +86,48 @@ def _normalize_skill_md(skill: CanonicalSkill, dest_dir: Path) -> None:
         skill_md.write_text(normalized, encoding="utf-8")
 
 
+def _remove_exact_collision(path: Path) -> None:
+    """Remove one source-owned destination collision without following symlinks."""
+    if path.is_symlink() or path.is_file():
+        _safe_unlink(path)
+    elif path.exists():
+        _safe_rmtree(path)
+
+
+def _overlay_skill_tree(source_dir: Path, dest_dir: Path) -> list[Path]:
+    """Copy source-owned paths into *dest_dir* while preserving unknown siblings."""
+    written_files: list[Path] = []
+
+    for source_path in sorted(source_dir.iterdir()):
+        dest_path = dest_dir / source_path.name
+        if source_path.is_dir():
+            if dest_path.is_symlink() or (dest_path.exists() and not dest_path.is_dir()):
+                _remove_exact_collision(dest_path)
+            dest_path.mkdir(parents=True, exist_ok=True)
+            written_files.extend(_overlay_skill_tree(source_path, dest_path))
+            continue
+
+        if not source_path.is_file():
+            continue
+        if dest_path.exists() or dest_path.is_symlink():
+            _remove_exact_collision(dest_path)
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_path, dest_path)
+        written_files.append(dest_path)
+
+    return written_files
+
+
 def _sync_global_skill(skill: CanonicalSkill, target_root: Path) -> Path:
-    """Install one canonical skill into the user-global root."""
+    """Overlay one canonical skill without deleting unknown destination paths."""
     target_root.mkdir(parents=True, exist_ok=True)
     dest_dir: Path = target_root / str(skill.name)
-    if dest_dir.exists() or dest_dir.is_symlink():
-        if dest_dir.is_symlink() or dest_dir.is_file():
-            _safe_unlink(dest_dir)
-        else:
-            _safe_rmtree(dest_dir)
-    shutil.copytree(skill.skill_dir, dest_dir)
+    if dest_dir.is_symlink() or (dest_dir.exists() and not dest_dir.is_dir()):
+        _remove_exact_collision(dest_dir)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    written_files = _overlay_skill_tree(skill.skill_dir, dest_dir)
     _normalize_skill_md(skill, dest_dir)
-    _make_tree_read_only(dest_dir)
+    _make_files_read_only(written_files)
     return dest_dir
 
 
@@ -246,7 +274,7 @@ def install_skills_for_agent(
     if config is None:
         raise ValueError(f"Unknown agent key: {agent_key!r}")
 
-    installation_class: str = config["class"]  # type: ignore[assignment]
+    installation_class: str = config["class"]
     if installation_class == SKILL_CLASS_WRAPPER:
         return []
 

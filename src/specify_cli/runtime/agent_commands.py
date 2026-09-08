@@ -9,8 +9,9 @@ user-global agent command roots:
     ~/.github/prompts/
     ... (one directory per configured agent)
 
-This mirrors ``ensure_global_agent_skills()`` exactly — same version-lock
-mechanism, same exclusive-lock concurrency guard, same read-only output files.
+This command-only bootstrap keeps its version lock, exclusive-lock concurrency
+guard, and read-only output files. Skill refresh is owned by explicit
+``init``, ``upgrade``, and ``repair`` installer flows.
 
 See ADR ``docs/adr/3.x/2026-04-07-1-global-slash-command-installation.md``
 for the design rationale.

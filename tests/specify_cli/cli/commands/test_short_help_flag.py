@@ -17,7 +17,6 @@ def _bypass_startup_side_effects(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("specify_cli.root_callback", lambda _ctx: None)
     monkeypatch.setattr("specify_cli._run_startup_project_gates", lambda _ctx: None)
     monkeypatch.setattr("specify_cli.runtime.agent_commands.ensure_global_agent_commands", lambda: None)
-    monkeypatch.setattr("specify_cli.runtime.agent_skills.ensure_global_agent_skills", lambda: None)
     monkeypatch.setattr("specify_cli.runtime.bootstrap.ensure_runtime", lambda: None)
 
 

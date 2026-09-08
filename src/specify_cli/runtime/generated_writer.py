@@ -20,11 +20,9 @@ This module owns that lifecycle for those consumers, so it cannot be
 forgotten again at their call sites.
 
 Not every generated-file writer in the codebase routes through here.
-:mod:`specify_cli.runtime.agent_skills` and :mod:`specify_cli.skills.installer`
-manage their own read-only regime independently: both delete and recreate
-their whole target tree on every run rather than overwriting an existing
-read-only file in place, so the restore-before-write hazard this module
-guards against does not apply to them. That is a deliberate, separate
+:mod:`specify_cli.skills.installer` owns the skill-file read-only regime and
+overlays package-owned paths directly, so the restore-before-write hazard this
+module guards against does not apply to it. That is a deliberate, separate
 design, not a gap in this module's coverage.
 
 Only stdlib is used here: :mod:`specify_cli.upgrade` depends on
@@ -39,7 +37,7 @@ from pathlib import Path
 
 # The write bit for owner/group/other. Stripping it makes a file read-only
 # in the same sense the generation layer already uses elsewhere
-# (``agent_commands.py``, ``agent_skills.py``, ``skills/installer.py``).
+# (``agent_commands.py`` and ``skills/installer.py``).
 _WRITE_BITS = 0o222
 
 

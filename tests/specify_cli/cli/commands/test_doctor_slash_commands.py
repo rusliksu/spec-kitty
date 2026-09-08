@@ -342,10 +342,6 @@ class TestDoctorSkillsJson:
             lambda: None,
         )
         monkeypatch.setattr(
-            "specify_cli.runtime.agent_skills.ensure_global_agent_skills",
-            lambda: None,
-        )
-        monkeypatch.setattr(
             "specify_cli.runtime.agent_commands.ensure_global_agent_commands",
             lambda: calls.append("agent_commands"),
         )
