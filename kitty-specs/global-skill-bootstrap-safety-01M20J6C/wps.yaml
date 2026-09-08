@@ -1,0 +1,71 @@
+work_packages:
+  - id: WP01
+    title: "Acceptance-контракты безопасного global skill refresh"
+    dependencies: []
+    owned_files:
+      - "tests/runtime/test_bootstrap_unit.py"
+      - "tests/specify_cli/skills/test_installer.py"
+      - "tests/doctrine/test_spk_skill_pack.py"
+    requirement_refs:
+      - FR-001
+      - FR-003
+      - FR-004
+      - FR-005
+      - NFR-001
+      - NFR-002
+      - NFR-003
+      - NFR-004
+    subtasks:
+      - T001
+      - T002
+      - T003
+      - T004
+
+  - id: WP02
+    title: "Явный и ownership-aware global skill refresh"
+    dependencies:
+      - WP01
+    owned_files:
+      - "src/specify_cli/__init__.py"
+      - "src/specify_cli/runtime/agent_skills.py"
+      - "src/specify_cli/skills/installer.py"
+      - "pyproject.toml"
+      - "docs/changelog/CHANGELOG.md"
+      - "docs/adr/3.x/2026-09-08-1-explicit-global-skill-refresh.md"
+    requirement_refs:
+      - FR-001
+      - FR-002
+      - FR-003
+      - FR-004
+      - FR-006
+      - NFR-001
+      - NFR-002
+      - NFR-003
+      - C-003
+      - C-004
+      - C-005
+    subtasks:
+      - T005
+      - T006
+      - T007
+      - T008
+      - T009
+
+  - id: WP03
+    title: "Неизменяемый артефакт и dry delivery plan"
+    dependencies:
+      - WP02
+    owned_files:
+      - "kitty-specs/global-skill-bootstrap-safety-01M20J6C/delivery-evidence.json"
+    requirement_refs:
+      - FR-005
+      - FR-006
+      - NFR-004
+      - C-001
+      - C-002
+    subtasks:
+      - T010
+      - T011
+      - T012
+      - T013
+
