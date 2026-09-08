@@ -761,6 +761,64 @@ class TestVersionPinWiredIntoCallback:
 
         mock_pin.assert_not_called()
 
+    def test_normal_command_does_not_refresh_user_global_skills(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A normal CLI command must leave an existing global skill tree byte-stable."""
+        from specify_cli.skills.registry import SkillRegistry
+
+        home = tmp_path / "home"
+        kittify_home = home / ".kittify"
+        monkeypatch.setattr(Path, "home", lambda: home)
+        monkeypatch.setenv("SPEC_KITTY_HOME", str(kittify_home))
+        monkeypatch.setattr(sys, "argv", ["spec-kitty", "status", "--json"])
+
+        source = tmp_path / "source" / "spk-start-here"
+        source.mkdir(parents=True)
+        (source / "SKILL.md").write_text(
+            "---\nname: spk-start-here\ndescription: packaged\n---\n# Packaged\n",
+            encoding="utf-8",
+        )
+        registry = SkillRegistry(source.parent)
+        monkeypatch.setattr(
+            "specify_cli.runtime.agent_skills._discover_registry",
+            lambda: registry,
+        )
+
+        installed = home / ".agents" / "skills" / "spk-start-here"
+        installed.mkdir(parents=True)
+        installed_body = installed / "SKILL.md"
+        installed_body.write_text("# user-visible preimage\n", encoding="utf-8")
+        metadata = installed / "agents" / "openai.yaml"
+        metadata.parent.mkdir()
+        metadata.write_text(
+            "policy:\n  allow_implicit_invocation: false\n",
+            encoding="utf-8",
+        )
+        marker = kittify_home / "cache" / "agent-skills.lock"
+        marker.parent.mkdir(parents=True)
+        marker.write_text("older-runtime", encoding="utf-8")
+
+        before = {
+            "body": installed_body.read_bytes(),
+            "metadata": metadata.read_bytes(),
+            "marker": marker.read_bytes(),
+        }
+
+        with (
+            patch("specify_cli.runtime.bootstrap.ensure_runtime"),
+            patch("specify_cli.runtime.agent_commands.ensure_global_agent_commands"),
+            patch("specify_cli.locate_project_root", return_value=None),
+            patch("specify_cli.root_callback"),
+        ):
+            from specify_cli import main_callback
+
+            main_callback(MagicMock(invoked_subcommand="status"), version=False)
+
+        assert installed_body.read_bytes() == before["body"]
+        assert metadata.read_bytes() == before["metadata"]
+        assert marker.read_bytes() == before["marker"]
+
     def test_main_callback_skips_runtime_bootstrap_for_restart_daemon(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:

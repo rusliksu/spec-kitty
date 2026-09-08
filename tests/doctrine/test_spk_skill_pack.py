@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 import pytest
+import yaml
 
 from specify_cli.skills.registry import SkillRegistry
 
@@ -132,6 +133,19 @@ def test_legacy_alias_skills_remain_installed() -> None:
     }
 
     assert actual >= LEGACY_ALIAS_SKILLS
+
+
+def test_legacy_program_orchestrator_metadata_is_explicit_only() -> None:
+    metadata = (
+        SKILLS_ROOT
+        / "spec-kitty-program-orchestrate"
+        / "agents"
+        / "openai.yaml"
+    )
+
+    assert metadata.is_file()
+    document = yaml.safe_load(metadata.read_text(encoding="utf-8"))
+    assert document == {"policy": {"allow_implicit_invocation": False}}
 
 
 def test_profile_load_skill_owns_and_installs_detailed_mechanics() -> None:

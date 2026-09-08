@@ -120,6 +120,48 @@ class TestInstallSharedRootAgent:
         assert entries[0].installation_class == SKILL_CLASS_SHARED
         assert entries[0].agent_key == "codex"
 
+    def test_reinstall_preserves_unknown_files_inside_global_skill(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Only source paths are replaced; user-authored siblings remain byte-stable."""
+        monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path / "home"))
+        skills_root = tmp_path / "skills_src"
+        project = tmp_path / "project"
+        project.mkdir()
+
+        skill = _make_skill(
+            skills_root,
+            "my-skill",
+            skill_md_content="---\nname: my-skill\n---\n# Version one\n",
+        )
+        install_skills_for_agent(project, "codex", [skill])
+
+        global_skill = tmp_path / "home" / ".agents" / "skills" / "my-skill"
+        metadata = global_skill / "agents" / "openai.yaml"
+        metadata.parent.mkdir()
+        metadata.write_bytes(b"policy:\n  allow_implicit_invocation: false\n")
+        nested = global_skill / "user" / "notes.txt"
+        nested.parent.mkdir()
+        nested.write_bytes(b"keep me\n")
+        unrelated = tmp_path / "home" / ".agents" / "skills" / "custom-skill" / "SKILL.md"
+        unrelated.parent.mkdir(parents=True)
+        unrelated.write_bytes(b"# custom\n")
+
+        skill.skill_md.chmod(skill.skill_md.stat().st_mode | stat.S_IWRITE)
+        skill.skill_md.write_text(
+            "---\nname: my-skill\n---\n# Version two\n",
+            encoding="utf-8",
+        )
+        install_skills_for_agent(project, "codex", [skill])
+
+        assert (global_skill / "SKILL.md").read_text(encoding="utf-8").endswith(
+            "# Version two\n"
+        )
+        assert metadata.read_bytes() == b"policy:\n  allow_implicit_invocation: false\n"
+        assert nested.read_bytes() == b"keep me\n"
+        assert unrelated.read_bytes() == b"# custom\n"
+        assert not (global_skill / "SKILL.md").stat().st_mode & stat.S_IWRITE
+
     def test_codex_spec_kitty_generation_adds_missing_frontmatter(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("HOME", str(tmp_path / "home"))
         skills_root = tmp_path / "skills_src"
