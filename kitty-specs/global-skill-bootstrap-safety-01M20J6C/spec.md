@@ -1,130 +1,103 @@
-# Mission Specification: [MISSION NAME]
-<!-- Replace [MISSION NAME] with the confirmed friendly title generated during /spec-kitty.specify. -->
+# Спецификация Mission: Безопасный глобальный bootstrap навыков
 
-**Mission Branch**: `[###-mission-name]`  
-**Created**: [DATE]  
-**Status**: Draft  
-**Input**: User description: "$ARGUMENTS"
+**Ветка Mission**: `codex/global-skill-bootstrap-safety`
+**Создано**: 2026-09-08
+**Статус**: Одобрено к реализации
+**Входной запрос**: обычные команды CLI не должны перезаписывать пользовательские глобальные навыки; явная синхронизация должна сохранять пользовательские файлы, а legacy program skill должен поставляться с explicit-only metadata.
 
-## User Scenarios & Testing *(mandatory)*
+## Пользовательские сценарии и проверка
 
-<!--
-  IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
-  Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
-  you should still have a viable MVP (Minimum Viable Product) that delivers value.
-  
-  Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
-  Think of each story as a standalone slice of functionality that can be:
-  - Developed independently
-  - Tested independently
-  - Deployed independently
-  - Demonstrated to users independently
--->
+### Сценарий 1 - Обычная команда не меняет глобальные навыки (P1)
 
-### User Story 1 - [Brief Title] (Priority: P1)
+Пользователь запускает обычную команду Spec Kitty для чтения состояния или работы с Mission. Команда не меняет файлы в user-global skill roots, даже если номер установленного runtime отличается от значения старого version marker.
 
-[Describe this user journey in plain language]
+**Почему P1**: именно скрытая запись при старте уничтожила ранее проверенную policy metadata.
 
-**Why this priority**: [Explain the value and why it has this priority level]
+**Независимая проверка**: в изолированном `HOME` подготовить global skill с sentinel и устаревшим marker, выполнить обычный CLI entrypoint и доказать неизменность содержимого, metadata и времён записи.
 
-**Independent Test**: [Describe how this can be tested independently - e.g., "Can be fully tested by [specific action] and delivers [specific value]"]
+**Критерии приёмки**:
 
-**Acceptance Scenarios**:
+1. **Дано** существующее дерево глобальных навыков и marker другой версии, **когда** запускается обычная команда CLI, **тогда** skill tree и marker не меняются.
+2. **Дано** отсутствующее глобальное дерево, **когда** запускается обычная команда CLI, **тогда** дерево автоматически не создаётся.
 
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
-2. **Given** [initial state], **When** [action], **Then** [expected outcome]
+### Сценарий 2 - Явная синхронизация сохраняет пользовательские файлы (P1)
 
----
+Пользователь явно запускает разрешённый install, upgrade или repair. Package-owned файлы обновляются из дистрибутива, а неизвестные файлы внутри существующего skill-каталога сохраняются.
 
-### User Story 2 - [Brief Title] (Priority: P2)
+**Почему P1**: удаление всего каталога нарушает установленную границу владения пользовательскими настройками.
 
-[Describe this user journey in plain language]
+**Независимая проверка**: создать skill-каталог с устаревшим package-owned `SKILL.md` и дополнительным `agents/openai.yaml`, выполнить штатную синхронизацию и проверить обновление первого файла при сохранении второго.
 
-**Why this priority**: [Explain the value and why it has this priority level]
+**Критерии приёмки**:
 
-**Independent Test**: [Describe how this can be tested independently]
+1. **Дано** совпадающее имя canonical skill и неизвестный дополнительный файл, **когда** выполняется явная синхронизация, **тогда** дополнительный файл сохраняется побайтно.
+2. **Дано** read-only package-owned файл, **когда** выполняется явная синхронизация, **тогда** он безопасно обновляется и снова становится read-only.
+3. **Дано** посторонний skill-каталог, **когда** выполняется синхронизация, **тогда** он не меняется.
 
-**Acceptance Scenarios**:
+### Сценарий 3 - Policy metadata входит в дистрибутив (P2)
 
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
+Собранный артефакт содержит `agents/openai.yaml` для сохраняемого legacy program skill с `allow_implicit_invocation: false`.
 
----
+**Почему P2**: это предотвращает возврат старого маршрута при явной установке совместимого пакета.
 
-### User Story 3 - [Brief Title] (Priority: P3)
+**Независимая проверка**: собрать wheel, открыть его как архив и проверить точный путь и разобранное значение policy.
 
-[Describe this user journey in plain language]
+**Критерии приёмки**:
 
-**Why this priority**: [Explain the value and why it has this priority level]
+1. **Дано** собранный wheel, **когда** проверяется его inventory, **тогда** metadata присутствует по точному пути.
+2. **Дано** metadata из wheel, **когда** она разбирается YAML parser, **тогда** значение `allow_implicit_invocation` равно `false`.
 
-**Independent Test**: [Describe how this can be tested independently]
+### Граничные случаи
 
-**Acceptance Scenarios**:
+- Existing destination является symlink или обычным файлом вместо каталога.
+- Package-owned destination file имеет read-only mode.
+- Неизвестный файл находится во вложенном подкаталоге, которого нет в новом source tree.
+- Legacy skill объявлен retired для обычного registry discovery, но его compatibility metadata всё равно должна входить в дистрибутив.
+- Два runtime последовательно работают с одним `HOME`; обычные команды обоих runtime не должны менять skill tree.
 
-1. **Given** [initial state], **When** [action], **Then** [expected outcome]
+## Требования
 
----
+### Функциональные требования
 
-[Add more user stories as needed, each with an assigned priority]
+| ID | Название | Требование | Приоритет | Статус |
+|----|----------|------------|-----------|--------|
+| FR-001 | Read-only startup | Обычный CLI startup не вызывает синхронизацию user-global skill roots. | High | Open |
+| FR-002 | Явный владелец записи | Запись global skills выполняют только явные install, upgrade или repair flows. | High | Open |
+| FR-003 | Сохранение неизвестных файлов | Синхронизация обновляет source-файлы без удаления неизвестных файлов внутри существующего skill-каталога. | High | Open |
+| FR-004 | Безопасное обновление | Существующий read-only source-owned файл обновляется без изменения соседних неизвестных файлов. | High | Open |
+| FR-005 | Дистрибутивная policy | Wheel содержит exact explicit-only metadata для legacy program skill. | Medium | Open |
+| FR-006 | Неизменяемая идентичность | Подготовленный артефакт имеет отдельную версию, source commit и SHA-256. | Medium | Open |
 
-### Edge Cases
+### Нефункциональные требования
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right edge cases.
--->
+| ID | Название | Требование | Категория | Приоритет | Статус |
+|----|----------|------------|-----------|-----------|--------|
+| NFR-001 | Отсутствие скрытых записей | В acceptance-сценарии число изменённых файлов после обычного startup равно нулю. | Reliability | High | Open |
+| NFR-002 | Полная защита пользовательских файлов | Все неизвестные fixture-файлы сохраняют исходные bytes и mode. | Data integrity | High | Open |
+| NFR-003 | Изолированная проверка | Все тесты мутаций используют temporary `HOME`; настоящий user-global root не читается и не меняется. | Safety | High | Open |
+| NFR-004 | Статический контроль поставки | Отсутствие либо неверное значение metadata делает distribution-test красным. | Quality | High | Open |
 
-- What happens when [boundary condition]?
-- How does system handle [error scenario]?
+### Ограничения
 
-## Requirements *(mandatory)*
+| ID | Название | Ограничение | Категория | Приоритет | Статус |
+|----|----------|-------------|-----------|-----------|--------|
+| C-001 | Без live-применения | Mission не устанавливает артефакт на HOSTKEY и не меняет live skill roots. | Delivery | High | Open |
+| C-002 | Без release | Публикация PyPI/GitHub Release не выполняется. | Delivery | High | Open |
+| C-003 | Slash commands вне scope | Поведение user-global slash-command roots не меняется. | Technical | High | Open |
+| C-004 | Retired cleanup отдельно | Удаление exact retired skill-каталогов остаётся отдельным явно управляемым контрактом. | Technical | Medium | Open |
+| C-005 | Существующая чужая ветка | Непубликованная ветка `codex/spec-kitty-global-bootstrap-scope` используется только как read-only справка. | Collaboration | High | Open |
 
-<!--
-  ACTION REQUIRED:
-  1) Keep requirement types separated (Functional / Non-Functional / Constraints)
-  2) Use unique IDs per type (FR-###, NFR-###, C-###)
-  3) Keep Status populated for every row
-  4) Non-functional requirements must include measurable thresholds
--->
+## Ключевые сущности
 
-### Functional Requirements
+- **Global skill root**: machine-level каталог навыков конкретного agent host.
+- **Package-owned path**: файл, присутствующий в source tree синхронизируемого canonical skill.
+- **Unknown path**: существующий файл внутри destination skill, отсутствующий в source tree текущего пакета.
+- **Runtime identity**: версия пакета, source commit и hash собранного артефакта.
 
-| ID | Title | User Story | Priority | Status |
-|----|-------|------------|----------|--------|
-| FR-001 | [Short title] | As a [role], I want [goal] so that [benefit]. | High | Open |
-| FR-002 | [Short title] | As a [role], I want [goal] so that [benefit]. | Medium | Open |
-| FR-003 | [Short title] | As a [role], I want [goal] so that [benefit]. | Low | Open |
+## Измеримые результаты
 
-### Non-Functional Requirements
-
-| ID | Title | Requirement | Category | Priority | Status |
-|----|-------|-------------|----------|----------|--------|
-| NFR-001 | [Short title] | [Measurable threshold, e.g., p95 latency under 300ms] | Performance | High | Open |
-| NFR-002 | [Short title] | [Measurable threshold] | Security | High | Open |
-| NFR-003 | [Short title] | [Measurable threshold] | Reliability | Medium | Open |
-
-### Constraints
-
-| ID | Title | Constraint | Category | Priority | Status |
-|----|-------|------------|----------|----------|--------|
-| C-001 | [Short title] | [Required boundary or limitation] | Technical | High | Open |
-| C-002 | [Short title] | [Required boundary or limitation] | Business | Medium | Open |
-| C-003 | [Short title] | [Required boundary or limitation] | Regulatory | Medium | Open |
-
-### Key Entities *(include if feature involves data)*
-
-- **[Entity 1]**: [What it represents, key attributes without implementation]
-- **[Entity 2]**: [What it represents, relationships to other entities]
-
-## Success Criteria *(mandatory)*
-
-<!--
-  ACTION REQUIRED: Define measurable success criteria.
-  These must be technology-agnostic and measurable.
--->
-
-### Measurable Outcomes
-
-- **SC-001**: [Measurable metric, e.g., "Users can complete account creation in under 2 minutes"]
-- **SC-002**: [Measurable metric, e.g., "System handles 1000 concurrent users without degradation"]
-- **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
-- **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
+- **SC-001**: ordinary-startup acceptance test подтверждает 0 изменений в подготовленном global skill tree.
+- **SC-002**: explicit-sync acceptance test обновляет package-owned body и сохраняет 100% unknown fixture-файлов.
+- **SC-003**: wheel inventory содержит exact metadata, а mutation проверки policy заставляет тест падать.
+- **SC-004**: релевантные unit, integration, architecture, type и lint checks проходят либо baseline-различия задокументированы отдельно.
+- **SC-005**: dry server plan содержит immutable artifact SHA, expected current state, CAS guards и не выполняет ни одной server mutation.
