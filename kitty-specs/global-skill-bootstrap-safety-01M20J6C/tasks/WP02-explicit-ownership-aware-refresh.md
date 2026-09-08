@@ -35,8 +35,11 @@ owned_files:
 - src/specify_cli/__init__.py
 - src/specify_cli/runtime/agent_skills.py
 - src/specify_cli/skills/installer.py
+- .kittify/metadata.yaml
 - pyproject.toml
+- uv.lock
 - docs/changelog/CHANGELOG.md
+- docs/development/3-2-page-inventory.yaml
 - docs/development/3-2-docs-retrieval-index.yaml
 - docs/adr/3.x/2026-09-08-1-explicit-global-skill-refresh.md
 role: implementer
