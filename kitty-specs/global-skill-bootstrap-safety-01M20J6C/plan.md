@@ -59,9 +59,9 @@ flowchart LR
 ### Контракт дистрибутива
 
 - `tests/doctrine/test_spk_skill_pack.py`
-  - проверить exact path `src/charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml`;
+  - проверить source path `src/charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml`;
   - разобрать YAML и потребовать `allow_implicit_invocation: false`;
-  - отдельная wheel verification после build проверяет тот же путь внутри архива.
+  - отдельная wheel verification после build проверяет соответствующий import path без src-layout prefix: `charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml`.
 - `pyproject.toml`
   - выполнить обязательный version bump для изменения `src/specify_cli/__init__.py`.
 - `docs/changelog/CHANGELOG.md`

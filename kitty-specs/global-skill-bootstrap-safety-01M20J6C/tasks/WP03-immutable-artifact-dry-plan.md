@@ -64,8 +64,10 @@ overlay и добавить explicit-only metadata для legacy program skill.
 редактируются. Единственный разрешённый создаваемый файл -
 `kitty-specs/global-skill-bootstrap-safety-01M20J6C/delivery-evidence.json`.
 
-Критическая metadata в wheel должна находиться по точному пути
-`src/charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml`.
+Критическая metadata имеет source path
+`src/charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml` и
+находится в стандартном src-layout wheel по точному import path
+`charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml`.
 Разобранное значение `allow_implicit_invocation` обязано быть boolean `false`.
 Артефакт должен иметь отдельную runtime identity: версию пакета, commit, из
 которого он собран, и SHA-256 самого wheel. Данные нельзя подменять значением
@@ -136,8 +138,9 @@ oracle для explicit-only distribution metadata.
 1. Открыть wheel через стандартный ZIP reader в read-only режиме и получить
    детерминированный отсортированный inventory с path, размером и CRC либо
    SHA-256 каждого relevant entry.
-2. Проверить точное наличие
-   `src/charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml`.
+2. Проверить точное наличие wheel entry
+   `charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml` и
+   его соответствие source path с префиксом `src/`.
    Сходное имя, путь с другой раскладкой или файл из source tree вне архива не
    засчитываются.
 3. Извлечь только байты exact metadata entry в память или временный файл и
@@ -265,7 +268,7 @@ private host inventory или credential paths. Значения статуса 
 - [ ] Создан ровно `kitty-specs/global-skill-bootstrap-safety-01M20J6C/delivery-evidence.json`.
 - [ ] T010 подтверждает wheel из текущего task head без публикации.
 - [ ] Evidence содержит package version, полный source commit и SHA-256 wheel.
-- [ ] T011 подтверждает exact metadata path и boolean `allow_implicit_invocation: false`.
+- [ ] T011 подтверждает exact wheel metadata path, его source mapping и boolean `allow_implicit_invocation: false`.
 - [ ] Zip inventory и hash checks воспроизводимы по сохранённым командам.
 - [ ] T012 содержит draft PR, CI conclusions и self-review; ready выставлен
       только при зелёных обязательных checks или честно записан blocker.
