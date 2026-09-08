@@ -61,7 +61,8 @@
       "notes": [
         "WP01 approved at 66825316b; implement explicit startup boundary and ownership-aware overlay.",
         "Implementation 7343d8eeb plus aligned release metadata f8c344cfc. Targeted tests and mutation checks complete; ruff/mypy scoped green; release/docs consistency green; four installer path-separator failures reproduced unchanged on origin/main.",
-        "Review scope: startup call removed without changing runtime/commands gates; installer overlays only source paths; runtime delegates; release/docs metadata aligned."
+        "Review scope: startup call removed without changing runtime/commands gates; installer overlays only source paths; runtime delegates; release/docs metadata aligned.",
+        "Self-review approved: red-to-green and two counterfactual mutations verified; source-owned collisions update read-only, unknown bytes/modes/symlinks survive; 28 architecture checks pass; baseline-only Windows separator failures reproduced on origin/main."
       ],
       "provider": "__resolved_provider_absent__",
       "review_result": {
