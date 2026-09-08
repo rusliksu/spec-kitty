@@ -99,6 +99,15 @@ flowchart LR
 
 - Targeted pytest для runtime bootstrap, skill installer и packaged policy.
 - Counterfactual mutation: удалить вызов-защиту либо инвертировать policy и убедиться, что соответствующий тест падает.
+
+## Согласованная post-accept delta: fork runner fallback
+
+После полного product CI единственный `Check Shared Package Drift` оставался в очереди без runner: оба job были жёстко привязаны к `blacksmith-4vcpu-ubuntu-2404`, недоступному в fork. Руслан отдельно разрешил исправить этот blocker и после зелёного CI завершить merge-пакет.
+
+- В `.github/workflows/check-spec-kitty-events-alignment.yml` оба `runs-on` используют тот же repository-aware выбор, что и соседние PR workflows: Blacksmith в `Priivacy-ai/spec-kitty`, `ubuntu-latest` в fork.
+- Проверка включает YAML parse, точное наличие двух fallback expressions и реальный PR run обоих jobs.
+- После полного green допустимы draft → ready, merge PR #21 и безопасный cleanup только task-owned worktree/ветки.
+- Release publication, live install, HOSTKEY upload, restart и scheduler mutation остаются вне scope.
 - `ruff check` для изменённых Python-файлов.
 - `mypy --strict` для изменённых модулей через проектную конфигурацию.
 - `pytest tests/architectural/test_no_legacy_terminology.py`.
