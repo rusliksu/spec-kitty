@@ -120,9 +120,7 @@ class TestInstallSharedRootAgent:
         assert entries[0].installation_class == SKILL_CLASS_SHARED
         assert entries[0].agent_key == "codex"
 
-    def test_reinstall_preserves_unknown_files_inside_global_skill(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_reinstall_preserves_unknown_files_inside_global_skill(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Scenario 2 replaces owned paths and preserves unknown paths and modes."""
         monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path / "home"))
         skills_root = tmp_path / "skills_src"
@@ -169,9 +167,7 @@ class TestInstallSharedRootAgent:
         for path, expected in unknown_before.items():
             assert (path.read_bytes(), path.stat().st_mode) == expected
 
-    def test_reinstall_replaces_owned_symlink_without_following_targets(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_reinstall_replaces_owned_symlink_without_following_targets(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Owned link collisions are replaced while unknown links and targets survive."""
         monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path / "home"))
         skills_root = tmp_path / "skills_src"
@@ -761,9 +757,7 @@ class TestCopyDelivery:
         dest.write_text("user edited\n", encoding="utf-8")
 
         archived: list[Path] = []
-        mode, backup_root = _project_skill_file(
-            source, dest, project, archived_paths=archived
-        )
+        mode, backup_root = _project_skill_file(source, dest, project, archived_paths=archived)
 
         assert mode == "copy"
         assert dest.read_text(encoding="utf-8") == "canonical\n"
