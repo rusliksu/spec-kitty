@@ -99,6 +99,12 @@ flowchart LR
 
 - Targeted pytest для runtime bootstrap, skill installer и packaged policy.
 - Counterfactual mutation: удалить вызов-защиту либо инвертировать policy и убедиться, что соответствующий тест падает.
+- `ruff check` для изменённых Python-файлов.
+- `mypy --strict` для изменённых модулей через проектную конфигурацию.
+- `pytest tests/architectural/test_no_legacy_terminology.py`.
+- `git diff --check`.
+- Wheel build и zip-level проверка exact metadata.
+- HOSTKEY read-only snapshot и локальная валидация dry plan.
 
 ## Согласованная post-accept delta: fork runner fallback
 
@@ -108,16 +114,10 @@ flowchart LR
 - Проверка включает YAML parse, точное наличие двух fallback expressions и реальный PR run обоих jobs.
 - После полного green допустимы draft → ready, merge PR #21 и безопасный cleanup только task-owned worktree/ветки.
 - Release publication, live install, HOSTKEY upload, restart и scheduler mutation остаются вне scope.
-- `ruff check` для изменённых Python-файлов.
-- `mypy --strict` для изменённых модулей через проектную конфигурацию.
-- `pytest tests/architectural/test_no_legacy_terminology.py`.
-- `git diff --check`.
-- Wheel build и zip-level проверка exact metadata.
-- HOSTKEY read-only snapshot и локальная валидация dry plan.
 
 ## Delivery gates
 
 - Source PR можно открыть и довести до ready после зелёных проверок.
-- Merge выполняет оператор по правилам репозитория.
+- После полного CI green разрешены ready и merge PR #21 с последующим безопасным cleanup task-owned worktree/ветки.
 - GitHub/PyPI release не выполняется.
 - HOSTKEY install, cleanup и scheduler остаются вне этой Mission.
