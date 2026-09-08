@@ -1,7 +1,7 @@
 {
-  "event_count": 11,
-  "last_event_id": "01M20R58BEYJFS93D8KQWTV34M",
-  "materialized_at": "2026-09-08T14:53:37.006483+00:00",
+  "event_count": 12,
+  "last_event_id": "01M20RFK3QEW930R38KND85389",
+  "materialized_at": "2026-09-08T14:59:15.703842+00:00",
   "mission_number": "",
   "mission_slug": "global-skill-bootstrap-safety-01M20J6C",
   "mission_type": "software-dev",
@@ -11,9 +11,9 @@
     "canceled": 0,
     "claimed": 0,
     "done": 0,
-    "for_review": 1,
+    "for_review": 0,
     "in_progress": 0,
-    "in_review": 0,
+    "in_review": 1,
     "planned": 1
   },
   "work_packages": {
@@ -54,16 +54,16 @@
       "agent_profile_version": "__resolved_profile_version_absent__",
       "assignee": "codex",
       "force_count": 0,
-      "lane": "for_review",
-      "last_event_id": "01M20R58BEYJFS93D8KQWTV34M",
-      "last_transition_at": "2026-09-08T14:53:37.006483+00:00",
+      "lane": "in_review",
+      "last_event_id": "01M20RFK3QEW930R38KND85389",
+      "last_transition_at": "2026-09-08T14:59:15.703842+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "WP01 approved at 66825316b; implement explicit startup boundary and ownership-aware overlay.",
         "Implementation 7343d8eeb plus aligned release metadata f8c344cfc. Targeted tests and mutation checks complete; ruff/mypy scoped green; release/docs consistency green; four installer path-separator failures reproduced unchanged on origin/main."
       ],
       "provider": "__resolved_provider_absent__",
-      "role": "implementer",
+      "role": "reviewer",
       "subtasks": {
         "T005": "done",
         "T006": "done",
