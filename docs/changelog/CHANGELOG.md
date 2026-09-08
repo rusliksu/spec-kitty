@@ -13,9 +13,9 @@ All notable changes to the Spec Kitty CLI and templates are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 3.2.6rc4
+## [Unreleased] - 3.2.6rc5
 
-_The 3.2.6rc4 candidate cycle is open. Entries land here as missions merge._
+_The 3.2.6rc5 candidate cycle is open. Entries land here as missions merge._
 
 ### 💥 Breaking
 
@@ -43,6 +43,8 @@ _The 3.2.6rc4 candidate cycle is open. Entries land here as missions merge._
 - **Wall-clock performance tests no longer run on the PR path — a dedicated, statistical performance pipeline runs them off-band instead, so a slow shared runner can never again turn `main` red or block an unrelated PR (contributor/maintainer DevEx; ADR `2026-08-22-1`).** A false-red audit found **58.6% of CI failures were inactionable flake**, dominated by single-shot wall-clock budget asserts (`assert elapsed < N`) that trip on cold-start, not on real regressions. **Before:** ~60 budget tests ran in contended parallel PR shards and a single-shot `timing-nfr-serial` gate blocked merge on them — the largest false-red source. **After:** every wall-clock/CPU-budget test carries `@pytest.mark.performance` and is held out of every PR/blocking run (env-gated via `SPEC_KITTY_RUN_PERFORMANCE`); a new scheduled + `workflow_dispatch` **`performance.yml`** runs them **per-domain** (mirroring `CI Quality`'s split) through **`pytest-benchmark`** — calibrated rounds with warmup discard, percentile reporting, and `--benchmark-compare-fail` against a committed per-domain baseline, so a regression is caught **statistically off-band** and alerts on the scheduled run only, never a single-shot ceiling on a PR. The on-PR `timing-nfr-serial` gate is retired; the separate daemon-health `restart-daemon-nfr-timing` gate and genuine behavioral non-hang/timeout guards (ReDoS bounds, "didn't block on the network" checks) deliberately **stay** on the PR path — they assert correctness, not a budget. Never retry-to-green. This closes the long-term half of #3595 (the interim `performance` marker landed in #3593).
 
 ### 🐛 Fixed
+
+- **Обычный запуск CLI больше не обновляет user-global skills и не может удалить пользовательские файлы внутри canonical skill roots.** Явный `init`, `upgrade` или `repair` по-прежнему обновляет package-owned paths из дистрибутива, но теперь делает ownership-aware overlay: exact source collisions заменяются безопасно, включая read-only файлы и symlink, а отсутствующие в source пользовательские metadata, вложенные каталоги, symlink и соседние skills сохраняются. Startup-обновление user-global slash commands остаётся без изменений. Этот change-set не устанавливает пакет в live environment и не публикует release.
 
 - Concurrent mission-step loads now use independent YAML parsers, preventing valid steps and their template mappings from disappearing during overlapping cold-cache reads.
 

@@ -10,10 +10,10 @@ from pathlib import Path
 
 from specify_cli.runtime.bootstrap import _get_cli_version, _lock_exclusive
 from specify_cli.runtime.home import get_kittify_home
-from specify_cli.skills.command_renderer import ensure_skill_frontmatter
 from specify_cli.skills.paths import get_primary_global_skill_root, iter_installable_agents
 from specify_cli.skills.registry import SkillRegistry
 from specify_cli.skills.retired import RETIRED_CANONICAL_SKILL_NAMES
+from specify_cli.skills.installer import _sync_global_skill
 from specify_cli.template import get_local_repo_root
 
 logger = logging.getLogger(__name__)
@@ -102,24 +102,7 @@ def _sync_skill_root(root: Path, registry: SkillRegistry) -> None:
                 _safe_rmtree(existing)
 
     for skill in skills:
-        dest = root / skill.name
-        if dest.exists() or dest.is_symlink():
-            if dest.is_symlink() or dest.is_file():
-                _safe_unlink(dest)
-            else:
-                _safe_rmtree(dest)
-        shutil.copytree(skill.skill_dir, dest)
-        skill_md = dest / "SKILL.md"
-        if skill_md.is_file():
-            content = skill_md.read_text(encoding="utf-8")
-            normalized = ensure_skill_frontmatter(content, skill.name)
-            if normalized != content:
-                skill_md.write_text(normalized, encoding="utf-8")
-        for file_path in dest.rglob("*"):
-            if not file_path.is_file():
-                continue
-            mode = file_path.stat().st_mode
-            file_path.chmod(mode & ~0o222)
+        _sync_global_skill(skill, root)
 
 
 def ensure_global_agent_skills() -> None:
