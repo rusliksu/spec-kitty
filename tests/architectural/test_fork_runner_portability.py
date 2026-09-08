@@ -108,6 +108,7 @@ def test_ci_windows_supports_an_exact_head_candidate_inventory() -> None:
         step for step in job["steps"] if step.get("uses") == "actions/checkout@v6"
     )
     assert checkout["with"]["ref"] == "${{ inputs.expected_sha }}"
+    assert checkout["with"]["fetch-depth"] == 0
 
     runner = next(
         step
