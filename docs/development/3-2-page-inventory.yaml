@@ -1052,6 +1052,18 @@
   owning_workstream: none
   current_target: true
   notes: null
+- path: docs/adr/3.x/2026-08-31-1-expected-artifacts-loader-relocation.md
+  tag: current
+  divio_type: none
+  owning_workstream: none
+  current_target: true
+  notes: null
+- path: docs/adr/3.x/2026-09-03-1-explicit-owned-checkout-single-branch-lifecycle.md
+  tag: current
+  divio_type: none
+  owning_workstream: none
+  current_target: true
+  notes: null
 - path: docs/adr/3.x/README.md
   tag: current
   divio_type: none
@@ -1871,6 +1883,12 @@
 - path: docs/changelog/release-goals.md
   tag: current
   divio_type: explanation
+  owning_workstream: none
+  current_target: true
+  notes: null
+- path: docs/changelog/release-notes-3.2.6.md
+  tag: current
+  divio_type: reference
   owning_workstream: none
   current_target: true
   notes: null

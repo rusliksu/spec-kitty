@@ -40,6 +40,7 @@ from mission_runtime import (
     routes_through_coordination,
 )
 from specify_cli.coordination.coherence import is_coord_residue_churn
+from specify_cli.core.owned_mission import effective_root_kwargs
 from specify_cli.git import safe_commit
 
 
@@ -89,6 +90,16 @@ _ANALYSIS_REPORT_FILENAME: Final = "analysis-report.md"
 _STATUS_NO_OP_WRONG_SURFACE: Final = "no_op_wrong_surface"
 _STATUS_ERROR: Final = "error"
 
+# #2739 B03: machine-readable ``reason`` strings for the two ``unchanged``
+# no-op flavours, so a caller can tell "nothing to do" from "silently wrong".
+# Named once (S1192) — every ``_STATUS_UNCHANGED`` construction site carries one.
+_REASON_ALREADY_COMMITTED: Final = "no_op_already_committed"
+_REASON_NO_CHANGES: Final = "no_op_no_changes"
+
+# #2739 B01: the operator hatch that permits a commit on a protected branch.
+# Named once and reused by the protected-refusal diagnostic below (S1192).
+_ENV_HATCH: Final = "SPEC_KITTY_ALLOW_PROTECTED_BRANCH_COMMITS"
+
 
 @dataclass(frozen=True)
 class CommitRouterResult:
@@ -117,6 +128,11 @@ class CommitRouterResult:
     commit_hash: str | None = None
     commit_hashes: tuple[tuple[str, str], ...] = ()
     diagnostic: str | None = None
+    #: Machine-readable disambiguator for an ``unchanged`` no-op (#2739 B03):
+    #: ``no_op_already_committed`` (artifact present + already committed) vs
+    #: ``no_op_no_changes`` (nothing to commit / empty changeset). ``None`` for
+    #: every non-``unchanged`` status.
+    reason: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -160,6 +176,7 @@ def commit_for_mission(
     kind: MissionArtifactKind,
     primary_paths_created_this_invocation: frozenset[Path] | None = None,
     target_branch: str | None = None,
+    effective_root: Path | None = None,
 ) -> CommitRouterResult:
     """Commit a mission artifact to its kind-aware resolved placement.
 
@@ -204,7 +221,7 @@ def commit_for_mission(
     single-partition batch (the common case) still resolves placement exactly
     once and issues exactly one commit (INV: no fast-path regression).
     """
-    groups = _group_files_by_partition(repo_root, files, mission_slug, kind=kind)
+    groups = [(kind, files)] if effective_root is not None else _group_files_by_partition(repo_root, files, mission_slug, kind=kind)
 
     if len(groups) <= 1:
         effective_kind, effective_files = groups[0] if groups else (kind, files)
@@ -217,6 +234,7 @@ def commit_for_mission(
             kind=effective_kind,
             primary_paths_created_this_invocation=primary_paths_created_this_invocation,
             target_branch=target_branch,
+            **effective_root_kwargs(effective_root),
         )
 
     # Split-and-commit (contract (a), pinned by T004): a mixed-partition batch
@@ -249,6 +267,7 @@ def _commit_partition_group(
     kind: MissionArtifactKind,
     primary_paths_created_this_invocation: frozenset[Path] | None = None,
     target_branch: str | None = None,
+    effective_root: Path | None = None,
 ) -> CommitRouterResult:
     """Commit ONE single-partition file group to its resolved placement.
 
@@ -258,7 +277,10 @@ def _commit_partition_group(
     ``kind`` — :func:`_group_files_by_partition` guarantees this; this helper
     does not re-validate it (single responsibility: resolve + commit one group).
     """
-    placement: CommitTarget = resolve_placement_only(repo_root, mission_slug, kind=kind)
+    if effective_root is None:
+        placement = resolve_placement_only(repo_root, mission_slug, kind=kind)
+    else:
+        placement = resolve_placement_only(repo_root, mission_slug, kind=kind, effective_root=effective_root)
 
     # FR-003 / C-005 / NFR-004: derive coord-vs-primary routing from the ONE
     # kind-aware ``placement`` (the single authority), not a second predicate.
@@ -270,9 +292,10 @@ def _commit_partition_group(
     # branch — i.e. only coordination kinds materialise the coord worktree (C-001).
     # A primary kind therefore NEVER routes to coordination even under coord
     # topology — this removes the planning→coord arm (write-surface-coherence WP02).
-    primary_target = _resolve_mission_target_branch(repo_root, mission_slug)
+    primary_target = placement.ref if effective_root is not None else _resolve_mission_target_branch(repo_root, mission_slug)
     use_coord = (
-        routes_through_coordination(resolve_topology(repo_root, mission_slug))
+        effective_root is None
+        and routes_through_coordination(resolve_topology(repo_root, mission_slug))
         and placement.ref != primary_target
     )
 
@@ -292,7 +315,9 @@ def _commit_partition_group(
                 f"'{placement.ref}'. Start a non-protected feature branch and "
                 f"commit there: 'spec-kitty agent mission create --start-branch "
                 f"<feature-branch>' (or check out an existing feature branch). "
-                f"Planning artifacts must land on a feature branch."
+                f"Planning artifacts must land on a feature branch. To commit on "
+                f"the current protected branch anyway, set "
+                f"{_ENV_HATCH}=1."
             ),
         )
 
@@ -307,11 +332,36 @@ def _commit_partition_group(
         )
     else:
         # Flattened or unprotected primary: commit directly.
-        worktree_root, commit_paths = repo_root, files
+        worktree_root, commit_paths = effective_root or repo_root, files
 
     if not commit_paths:
+        # #2739 B16 / #2694: distinguish a genuine no-op (artifact present +
+        # already committed) from a WRONG-SURFACE no-op. When the mission routes
+        # through coordination and coord staging skipped every artifact (e.g. a
+        # STATUS-partition file that ``_stage_artifacts_in_coord_worktree`` never
+        # copies), but the SOURCE artifact is still present-and-uncommitted in the
+        # primary checkout, the commit landed nowhere — the write would falsely
+        # report a benign no-op against the coord branch while the primary tree
+        # stays dirty. Mirror the ``_any_path_absent`` wrong-surface detection and
+        # refuse instead (T008 surfaces the actionable error).
+        if use_coord and _paths_uncommitted_in_primary(repo_root, files):
+            return CommitRouterResult(
+                status=_STATUS_NO_OP_WRONG_SURFACE,
+                placement_ref=placement.ref,
+                diagnostic=(
+                    f"Artifact(s) written to the primary checkout routed to the "
+                    f"coordination placement ({placement.ref}) where nothing was "
+                    f"staged; the commit would no-op against the wrong surface and "
+                    f"the artifact remains uncommitted in the primary tree. Commit "
+                    f"it to its own (primary) surface instead."
+                ),
+            )
         # All artifacts already committed (or none present) — genuine no-op.
-        return CommitRouterResult(status=_STATUS_UNCHANGED, placement_ref=placement.ref)
+        return CommitRouterResult(
+            status=_STATUS_UNCHANGED,
+            placement_ref=placement.ref,
+            reason=_REASON_ALREADY_COMMITTED,
+        )
 
     # FR-006 / D-5: detect no-op against the wrong surface.
     if _any_path_absent(commit_paths):
@@ -333,11 +383,16 @@ def _commit_partition_group(
             target=placement,
             message=message,
             paths=commit_paths,
+            **effective_root_kwargs(effective_root),
         )
     except subprocess.CalledProcessError as exc:
         stderr = getattr(exc, "stderr", "") or ""
         if "nothing to commit" in stderr or "nothing added to commit" in stderr:
-            return CommitRouterResult(status=_STATUS_UNCHANGED, placement_ref=placement.ref)
+            return CommitRouterResult(
+                status=_STATUS_UNCHANGED,
+                placement_ref=placement.ref,
+                reason=_REASON_NO_CHANGES,
+            )
         return CommitRouterResult(
             status=_STATUS_ERROR,
             placement_ref=placement.ref,
@@ -345,7 +400,11 @@ def _commit_partition_group(
         )
     except RuntimeError as exc:
         if _is_empty_changeset_error(exc):
-            return CommitRouterResult(status=_STATUS_UNCHANGED, placement_ref=placement.ref)
+            return CommitRouterResult(
+                status=_STATUS_UNCHANGED,
+                placement_ref=placement.ref,
+                reason=_REASON_NO_CHANGES,
+            )
         return CommitRouterResult(
             status=_STATUS_ERROR,
             placement_ref=placement.ref,
@@ -934,6 +993,37 @@ _stage_finalize_artifacts_in_coord_worktree = _stage_artifacts_in_coord_worktree
 def _any_path_absent(paths: tuple[Path, ...]) -> bool:
     """Return True iff any path in *paths* does not exist on disk."""
     return any(not path.exists() for path in paths)
+
+
+def _paths_uncommitted_in_primary(repo_root: Path, files: tuple[Path, ...]) -> bool:
+    """Return True iff any source path is present on disk under *repo_root* AND
+    carries uncommitted content (untracked or modified) in the primary checkout.
+
+    #2739 B16: the wrong-surface discriminator for an empty coord commit. A file
+    the operator wrote into the PRIMARY tree that then routed to the coordination
+    partition (where staging skipped it) leaves the primary tree dirty and lands
+    nowhere — ``git status --porcelain`` on the path is non-empty. A file that was
+    already committed (genuine no-op) reports clean, and a coord-authored artifact
+    living in a linked worktree is not tracked by the primary checkout, so both
+    correctly return ``False``.
+    """
+    for path in files:
+        if not path.exists():
+            continue
+        try:
+            rel = path.resolve().relative_to(repo_root.resolve())
+        except ValueError:
+            continue
+        proc = subprocess.run(
+            ["git", "status", "--porcelain", "--", str(rel)],
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if proc.stdout.strip():
+            return True
+    return False
 
 
 def _is_empty_changeset_error(exc: RuntimeError) -> bool:

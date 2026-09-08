@@ -85,6 +85,10 @@ For non-obvious runtime behaviour an operator may encounter:
 │                                                        validating.           │
 │                                                        [default:             │
 │                                                        no-normalize-encodin… │
+│ --owned-checkout                                 PATH  Explicit owned        │
+│                                                        checkout for a        │
+│                                                        single-branch         │
+│                                                        mission.              │
 │ --help                -h                               Show this message and │
 │                                                        exit.                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -540,6 +544,14 @@ _List activated doctrine artifacts by kind._
 │                             the built-in, org, and project layers (annotated │
 │                             by source layer), including the template kind.   │
 │                             Supersedes --show-available.                     │
+│ --json                      Output JSON. Every kind row always carries an    │
+│                             'available' key and the payload always carries a │
+│                             top-level 'templates' key — both are null unless │
+│                             requested (available: null without               │
+│                             --show-available/--all; templates: null without  │
+│                             --all) rather than absent, so callers can rely   │
+│                             on key presence and branch on the value instead  │
+│                             of on which flags were passed.                   │
 │ --help            -h        Show this message and exit.                      │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -1111,6 +1123,8 @@ _Dispatch a request to a governed Op (canonical surface)._
 │ --profile          TEXT  Optional profile ID. Bypasses the router — use when │
 │                          the request is ambiguous.                           │
 │ --json                   Output JSON payload                                 │
+│ --dry-run                Route the request and return the routing signal     │
+│                          without opening an Op or writing anything.          │
 │ --help     -h            Show this message and exit.                         │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -2583,14 +2597,34 @@ _Search tracker issues via the hosted read path_
 │                                                            squash.           │
 │ --delete-branch        --keep-branch                       Delete lane       │
 │                                                            branches after    │
-│                                                            merge             │
-│                                                            [default:         │
-│                                                            delete-branch]    │
+│                                                            merge. Unset (the │
+│                                                            default) defers   │
+│                                                            to the mission's  │
+│                                                            meta.json         │
+│                                                            retention policy  │
+│                                                            (#3131), falling  │
+│                                                            back to delete    │
+│                                                            when no policy is │
+│                                                            recorded. Passing │
+│                                                            either flag       │
+│                                                            explicitly always │
+│                                                            wins over the     │
+│                                                            mission's policy. │
 │ --remove-worktree      --keep-worktree                     Remove lane       │
 │                                                            worktrees after   │
-│                                                            merge             │
-│                                                            [default:         │
-│                                                            remove-worktree]  │
+│                                                            merge. Unset (the │
+│                                                            default) defers   │
+│                                                            to the mission's  │
+│                                                            meta.json         │
+│                                                            retention policy  │
+│                                                            (#3131), falling  │
+│                                                            back to remove    │
+│                                                            when no policy is │
+│                                                            recorded. Passing │
+│                                                            either flag       │
+│                                                            explicitly always │
+│                                                            wins over the     │
+│                                                            mission's policy. │
 │ --push                                                     Publish to origin │
 │                                                            after the local   │
 │                                                            merge (the        │
@@ -3764,6 +3798,42 @@ _Machine-contract API for external orchestrators (JSON-first)_
 │                       ``note`` annotation.                                   │
 │ accept-mission        Accept a mission after all WPs are approved or done.   │
 │ merge-mission         Merge a lane-based mission into target.                │
+│ specify               Create a mission scaffold, matching the host CLI's     │
+│                       enriched ``specify --json`` contract.                  │
+│ plan                  Scaffold plan.md for a mission -- an unenriched        │
+│                       pass-through of ``setup_plan``.                        │
+│ tasks                 Finalize WP task metadata -- an unenriched             │
+│                       pass-through of ``finalize_tasks``.                    │
+│ check-prerequisites   Read-only mission-prerequisite context for             │
+│                       ``/spec-kitty.analyze`` (FR-004).                      │
+│ record-analysis       Persist an ``/spec-kitty.analyze`` report, verified    │
+│                       against disk (FR-005).                                 │
+│ open-decision         Open a new Decision Moment ledger entry, or return     │
+│                       idempotently if one                                    │
+│                       already exists (FR-006). Wraps                         │
+│                       ``decisions/service.py.open_decision`` 1:1.            │
+│ resolve-decision      Resolve a decision with a concrete final answer        │
+│                       (FR-007). Wraps                                        │
+│                       ``decisions/service.py.resolve_decision`` 1:1.         │
+│ defer-decision        Defer a decision for later resolution (FR-008). Wraps  │
+│                       ``decisions/service.py.defer_decision`` 1:1.           │
+│ cancel-decision       Cancel a decision (deemed no longer relevant)          │
+│                       (FR-009). Wraps                                        │
+│                       ``decisions/service.py.cancel_decision`` 1:1.          │
+│ answer-decision       Resolve a ``spec-kitty next`` ``decision_required``    │
+│                       moment (FR-013,                                        │
+│                       Mechanism B) with full CLI event/lifecycle-log parity  │
+│                       (FR-014, operator                                      │
+│                       ruling SPEC-FRESH2-001). See the module comment block  │
+│                       above this                                             │
+│                       function for the full five-step composite and the      │
+│                       response-shape                                         │
+│                       contract.                                              │
+│ design-status         Read-only design-phase status query (FR-010) --        │
+│                       mirrors ``list-ready``'s                               │
+│                       no-state-transition, no-event-emission,                │
+│                       no-``--policy`` contract for the                       │
+│                       design pipeline instead of the WP loop.                │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -3778,6 +3848,35 @@ _Machine-contract API for external orchestrators (JSON-first)_
 │ *  --mission          TEXT  Mission slug [required]                          │
 │ *  --actor            TEXT  Actor identity [required]                        │
 │    --help     -h            Show this message and exit.                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+## spec-kitty orchestrator-api answer-decision
+
+```
+ Usage: spec-kitty orchestrator-api answer-decision [OPTIONS]
+
+ Resolve a ``spec-kitty next`` ``decision_required`` moment (FR-013, Mechanism
+ B) with full CLI event/lifecycle-log parity (FR-014, operator ruling
+ SPEC-FRESH2-001). See the module comment block above this function for the
+ full five-step composite and the response-shape contract.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ *  --mission              TEXT  Mission slug [required]                      │
+│ *  --agent                TEXT  Agent/actor identity performing this call    │
+│                                 (required)                                   │
+│                                 [required]                                   │
+│ *  --answer               TEXT  The answer value to persist for the pending  │
+│                                 decision                                     │
+│                                 [required]                                   │
+│    --result               TEXT  Outcome of the current issuance: success |   │
+│                                 failed | blocked (required alongside         │
+│                                 --answer)                                    │
+│    --decision-id          TEXT  Run-snapshot pending decision id to answer   │
+│                                 (auto-resolved when omitted and exactly one  │
+│                                 decision is pending)                         │
+│    --policy               TEXT  Policy metadata JSON (required)              │
+│    --help         -h            Show this message and exit.                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -3806,6 +3905,59 @@ _Machine-contract API for external orchestrators (JSON-first)_
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
+## spec-kitty orchestrator-api cancel-decision
+
+```
+ Usage: spec-kitty orchestrator-api cancel-decision [OPTIONS]
+
+ Cancel a decision (deemed no longer relevant) (FR-009). Wraps
+ ``decisions/service.py.cancel_decision`` 1:1.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ *  --mission              TEXT  Mission slug [required]                      │
+│ *  --decision-id          TEXT  Decision ledger entry ID (ULID) [required]   │
+│ *  --rationale            TEXT  Explanation of why (required) [required]     │
+│    --resolved-by          TEXT  Identity of the                              │
+│                                 resolving/deferring/canceling party (falls   │
+│                                 back to --actor)                             │
+│ *  --actor                TEXT  Actor identity [required]                    │
+│    --policy               TEXT  Policy metadata JSON (required)              │
+│    --help         -h            Show this message and exit.                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+## spec-kitty orchestrator-api check-prerequisites
+
+```
+ Usage: spec-kitty orchestrator-api check-prerequisites [OPTIONS]
+
+ Read-only mission-prerequisite context for ``/spec-kitty.analyze`` (FR-004).
+
+ C-002: this verb supplies context ONLY -- it never performs `analyze`'s
+ cross-artifact reasoning itself (mirrors ``start-review``'s "cannot
+ perform WP implementation itself" pattern). No ``--policy`` is required
+ (read-only, per spec Edge Cases: "Read-only verbs (check-prerequisites,
+ design-status) do not require --policy").
+
+ In-process only (FR-001-style parity): calls the host CLI's OWN
+ ``check_prerequisites`` Typer command function
+ (``mission_check_prerequisites.py:498``) directly -- the exact
+ established pattern WP03's ``plan``/``tasks`` verbs already use for a
+ registered ``agent mission`` Typer command (``setup_plan``/
+ ``finalize_tasks`` are registered identically:
+ ``app.command(...)(func)`` in ``mission.py``), so field-parity with
+ ``agent mission check-prerequisites --json --include-tasks`` is
+ guaranteed by construction rather than by re-deriving
+ ``validate_feature_structure``'s shaping logic a second time.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ *  --mission                TEXT  Mission slug [required]                    │
+│    --include-tasks                Include tasks.md validation (matches the   │
+│                                   host CLI's own --include-tasks default)    │
+│    --help           -h            Show this message and exit.                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
 ## spec-kitty orchestrator-api contract-version
 
 ```
@@ -3820,6 +3972,46 @@ _Machine-contract API for external orchestrators (JSON-first)_
 │ --provider-version          TEXT  Caller's provider version; returns         │
 │                                   CONTRACT_VERSION_MISMATCH if below minimum │
 │ --help              -h            Show this message and exit.                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+## spec-kitty orchestrator-api defer-decision
+
+```
+ Usage: spec-kitty orchestrator-api defer-decision [OPTIONS]
+
+ Defer a decision for later resolution (FR-008). Wraps
+ ``decisions/service.py.defer_decision`` 1:1.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ *  --mission              TEXT  Mission slug [required]                      │
+│ *  --decision-id          TEXT  Decision ledger entry ID (ULID) [required]   │
+│ *  --rationale            TEXT  Explanation of why (required) [required]     │
+│    --resolved-by          TEXT  Identity of the                              │
+│                                 resolving/deferring/canceling party (falls   │
+│                                 back to --actor)                             │
+│ *  --actor                TEXT  Actor identity [required]                    │
+│    --policy               TEXT  Policy metadata JSON (required)              │
+│    --help         -h            Show this message and exit.                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+## spec-kitty orchestrator-api design-status
+
+```
+ Usage: spec-kitty orchestrator-api design-status [OPTIONS]
+
+ Read-only design-phase status query (FR-010) -- mirrors ``list-ready``'s
+ no-state-transition, no-event-emission, no-``--policy`` contract for the
+ design pipeline instead of the WP loop.
+
+ Never delegates to ``resolve_next_workflow_action`` or
+ ``decide_next``/``query_current_state`` -- see the Clarification-6
+ module comment above ``_tasks_are_finalized``.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ *  --mission          TEXT  Mission slug [required]                          │
+│    --help     -h            Show this message and exit.                      │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -3867,6 +4059,124 @@ _Machine-contract API for external orchestrators (JSON-first)_
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
+## spec-kitty orchestrator-api open-decision
+
+```
+ Usage: spec-kitty orchestrator-api open-decision [OPTIONS]
+
+ Open a new Decision Moment ledger entry, or return idempotently if one already
+ exists (FR-006). Wraps ``decisions/service.py.open_decision`` 1:1.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ *  --mission            TEXT  Mission slug [required]                        │
+│ *  --origin             TEXT  Origin flow: charter | specify | plan          │
+│                               [required]                                     │
+│ *  --input-key          TEXT  The input key this decision governs [required] │
+│ *  --question           TEXT  Human-readable question text [required]        │
+│    --step-id            TEXT  Interview step identifier                      │
+│    --slot-key           TEXT  Slot key (use when step_id unavailable)        │
+│    --options            TEXT  Candidate answers as a JSON array string       │
+│ *  --actor              TEXT  Actor identity [required]                      │
+│    --policy             TEXT  Policy metadata JSON (required)                │
+│    --help       -h            Show this message and exit.                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+## spec-kitty orchestrator-api plan
+
+```
+ Usage: spec-kitty orchestrator-api plan [OPTIONS]
+
+ Scaffold plan.md for a mission -- an unenriched pass-through of
+ ``setup_plan``.
+
+ FR-002 / Clarification 1: deliberately asymmetric with ``specify`` -- the
+ host CLI's own ``--json`` path returns ``agent_feature.setup_plan``'s raw
+ dict verbatim (``lifecycle.py`` adds no enrichment here), so this verb
+ does the same. Do not add fields ``setup_plan`` does not already return.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ *  --mission          TEXT  Mission slug [required]                          │
+│    --policy           TEXT  Policy metadata JSON (required)                  │
+│    --help     -h            Show this message and exit.                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+## spec-kitty orchestrator-api record-analysis
+
+```
+ Usage: spec-kitty orchestrator-api record-analysis [OPTIONS]
+
+ Persist an ``/spec-kitty.analyze`` report, verified against disk (FR-005).
+
+ NFR-004 / SK-93 (verified): a subprocess/call-level success signal
+ (return code, "did not raise") is UNTRUSTWORTHY -- SK-93 documented
+ ``record-analysis`` reporting a false timeout FAILURE after a write had
+ already genuinely succeeded. This verb instead:
+
+ 1. Captures ``now_utc_iso()`` immediately before invoking the write path.
+ 2. Calls ``write_analysis_report``/``commit_for_mission`` directly
+    (bypassing ``record_analysis``'s own unbounded dossier-sync trigger
+    entirely -- option (a), plan.md § (j)), under an enforced
+    :func:`_run_write_with_timeout` bound as defense-in-depth.
+ 3. Re-reads ``analysis-report.md`` off disk unconditionally afterward.
+    ``success: true`` ONLY if BOTH (a) the re-read ``verdict`` matches
+    what THIS call submitted, AND (b) the re-read ``generated_at`` is
+    STRICTLY LATER than the call-start timestamp -- a verdict-string
+    match alone is never sufficient (distinguishes a genuine fresh write
+    from a stale, coincidentally-matching pre-existing artifact).
+
+ SK-06 / #3133: an ``unknown`` verdict (no valid ``analysis-findings/v1``
+ carrier in the submitted body) is NEVER reported as ``success: true``,
+ even when the write genuinely, freshly succeeds -- silently writing
+ ``verdict: unknown`` for an explicitly-intended report is this repo's
+ dominant failure mode and this verb refuses to propagate it as success.
+
+ A mutating verb: ``--policy`` is required (``POLICY_METADATA_REQUIRED``
+ pattern, matching ``specify``/``plan``/``tasks``).
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ *  --mission             TEXT  Mission slug [required]                       │
+│    --input-file          TEXT  Markdown report path, or '-' to read the      │
+│                                report body from stdin                        │
+│                                [default: -]                                  │
+│    --agent               TEXT  Agent name that produced the analysis report  │
+│    --policy              TEXT  Policy metadata JSON (required)               │
+│    --help        -h            Show this message and exit.                   │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+## spec-kitty orchestrator-api resolve-decision
+
+```
+ Usage: spec-kitty orchestrator-api resolve-decision [OPTIONS]
+
+ Resolve a decision with a concrete final answer (FR-007). Wraps
+ ``decisions/service.py.resolve_decision`` 1:1.
+
+ Terminal-transition rejection (Edge Cases, spec.md): resolving an
+ already-terminal decision with a DIFFERENT outcome/payload is NOT
+ pre-checked here -- it is the service layer's own
+ ``DecisionError(TERMINAL_CONFLICT)``, propagated verbatim, matching the
+ host-CLI ``decision_app resolve`` subcommand's own error code. A
+ redundant pre-check here could drift from the service layer's own
+ validation.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ *  --mission               TEXT  Mission slug [required]                     │
+│ *  --decision-id           TEXT  Decision ledger entry ID (ULID) [required]  │
+│ *  --final-answer          TEXT  The chosen answer (non-empty) [required]    │
+│    --other-answer                True if answer is a write-in                │
+│    --rationale             TEXT  Explanation of the choice                   │
+│    --resolved-by           TEXT  Identity of the                             │
+│                                  resolving/deferring/canceling party (falls  │
+│                                  back to --actor)                            │
+│ *  --actor                 TEXT  Actor identity [required]                   │
+│    --policy                TEXT  Policy metadata JSON (required)             │
+│    --help          -h            Show this message and exit.                 │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
 ## spec-kitty orchestrator-api resolve-workspace
 
 ```
@@ -3884,6 +4194,40 @@ _Machine-contract API for external orchestrators (JSON-first)_
 │ *  --mission          TEXT  Mission slug [required]                          │
 │ *  --wp               TEXT  Work package ID [required]                       │
 │    --help     -h            Show this message and exit.                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+## spec-kitty orchestrator-api specify
+
+```
+ Usage: spec-kitty orchestrator-api specify [OPTIONS]
+
+ Create a mission scaffold, matching the host CLI's enriched ``specify --json``
+ contract.
+
+ In-process only (FR-001): calls
+ ``specify_cli.cli.commands.lifecycle._create_mission_for_specify_json``,
+ the SAME enrichment step the host CLI's ``--json`` path runs (adds
+ ``scaffold_only``/``spec_state``/``next_action``/``next_step`` on top of
+ ``agent_feature.create_mission``'s raw payload) -- never the unenriched
+ payload one layer beneath it.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ *  --mission               TEXT                     Mission slug [required]  │
+│ *  --mission-type          TEXT                     Mission type (e.g.,      │
+│                                                     software-dev)            │
+│                                                     [required]               │
+│    --topology              [single_branch|lanes|co  Create-time mission      │
+│                            ord|lanes_with_coord]    shape: single_branch |   │
+│                                                     lanes | coord |          │
+│                                                     lanes_with_coord.        │
+│                                                     Default: context-derived │
+│                                                     (matches the host CLI's  │
+│                                                     own --topology default). │
+│    --policy                TEXT                     Policy metadata JSON     │
+│                                                     (required)               │
+│    --help          -h                               Show this message and    │
+│                                                     exit.                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -3918,6 +4262,24 @@ _Machine-contract API for external orchestrators (JSON-first)_
 │    --review-ref          TEXT  Review feedback reference (optional, not      │
 │                                required for for_review→in_review)            │
 │    --help        -h            Show this message and exit.                   │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+## spec-kitty orchestrator-api tasks
+
+```
+ Usage: spec-kitty orchestrator-api tasks [OPTIONS]
+
+ Finalize WP task metadata -- an unenriched pass-through of ``finalize_tasks``.
+
+ FR-003 / Clarification 1: same deliberate asymmetry as ``plan`` -- the
+ host CLI's own ``--json`` path returns ``agent_feature.finalize_tasks``'s
+ raw dict verbatim, so this verb does the same.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ *  --mission          TEXT  Mission slug [required]                          │
+│    --policy           TEXT  Policy metadata JSON (required)                  │
+│    --help     -h            Show this message and exit.                      │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -4383,9 +4745,15 @@ _Emit the open-Ops reminder for the Claude Code Stop hook._
 
  Commit spec artifacts to the mission's resolved placement.
 
- On a protected primary the coordination worktree is materialised on demand
- so the commit lands on the coordination branch (materialize-then-retry).
- On an unprotected or flattened primary the commit is direct.
+ SPEC is a primary/planning artifact: it lands on the mission's primary target
+ branch for every topology. On an unprotected or flattened primary the commit
+ is direct. On a PROTECTED primary the commit is refused (there is no fallback
+ surface); recover by either creating/checking out a non-protected feature
+ branch ('spec-kitty agent mission create --start-branch <feature-branch>') or
+ setting SPEC_KITTY_ALLOW_PROTECTED_BRANCH_COMMITS=1 to commit on the current
+ branch.
+
+ Pass individual FILES, not directories.
 
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    files      FILES...  Spec artifacts to commit (absolute or relative     │
@@ -4394,16 +4762,17 @@ _Emit the open-Ops reminder for the Claude Code Stop hook._
 │                           [required]                                         │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ *  --message        -m      TEXT  Commit message. [required]                 │
-│    --mission                TEXT  Mission slug (e.g. '001-my-mission'). When │
-│                                   omitted, the slug is derived from the      │
-│                                   first file argument's kitty-specs/<slug>/  │
-│                                   path.                                      │
-│    --target-branch          TEXT  Short primary branch name used for the     │
-│                                   post-commit ff-advance (WP09 / FR-010).    │
-│                                   Optional.                                  │
-│    --json                         Output JSON.                               │
-│    --help           -h            Show this message and exit.                │
+│ *  --message         -m      TEXT  Commit message. [required]                │
+│    --mission                 TEXT  Mission slug (e.g. '001-my-mission').     │
+│                                    When omitted, the slug is derived from    │
+│                                    the first file argument's                 │
+│                                    kitty-specs/<slug>/ path.                 │
+│    --target-branch           TEXT  Short primary branch name used for the    │
+│                                    post-commit ff-advance (WP09 / FR-010).   │
+│                                    Optional.                                 │
+│    --json                          Output JSON.                              │
+│    --owned-checkout          PATH  Explicit single-branch checkout root.     │
+│    --help            -h            Show this message and exit.               │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -4446,16 +4815,6 @@ _Emit the open-Ops reminder for the Claude Code Stop hook._
 ## spec-kitty sync
 
 _Synchronization commands_
-
-> **Inactive by default (opt-in).** As of the `sync-deactivate-by-default`
-> mission the legacy local-sync surface is **inactive on a bare install** — no
-> sync daemon is spawned and no events are emitted. The `sync` command group
-> stays registered, but when sync is not armed the subcommands report inactive
-> / no-op rather than doing work. Opt in by setting
-> `SPEC_KITTY_ENABLE_SAAS_SYNC=1` (and give per-project consent with
-> `spec-kitty sync opt-in`). `SPEC_KITTY_SYNC_DISABLE` /
-> `SPEC_KITTY_SYNC_MINIMAL_IMPORT` force it back off (disable wins). See
-> [Environment Variables § Sync activation precedence](environment-variables.md#sync-activation-precedence).
 
 ```
  Usage: spec-kitty sync [OPTIONS] COMMAND [ARGS]...
