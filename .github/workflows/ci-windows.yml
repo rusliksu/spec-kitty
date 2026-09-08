@@ -191,6 +191,13 @@ jobs:
       - name: Install test dependencies
         run: uv sync --frozen --all-extras
 
+      - name: Run portable transport lease contract
+        env:
+          SPEC_KITTY_ENABLE_SAAS_SYNC: "1"
+          SPEC_KITTY_TEST_PATHS_JSON: '["tests/sync/test_transport_result_lease.py"]'
+          SPEC_KITTY_EXPECTED_TEST_COUNT: "20"
+        run: uv run python scripts/ci/run_selected_tests.py
+
       - name: Run exact candidate inventory
         env:
           SPEC_KITTY_TEST_PATHS_JSON: ${{ inputs.test_paths_json }}

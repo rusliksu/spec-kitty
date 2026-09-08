@@ -110,11 +110,24 @@ def test_ci_windows_supports_an_exact_head_candidate_inventory() -> None:
     assert checkout["with"]["ref"] == "${{ inputs.expected_sha }}"
     assert checkout["with"]["fetch-depth"] == 0
 
+    transport = next(
+        step
+        for step in job["steps"]
+        if step.get("name") == "Run portable transport lease contract"
+    )
+    assert transport["run"] == "uv run python scripts/ci/run_selected_tests.py"
+    assert transport["env"] == {
+        "SPEC_KITTY_ENABLE_SAAS_SYNC": "1",
+        "SPEC_KITTY_TEST_PATHS_JSON": '["tests/sync/test_transport_result_lease.py"]',
+        "SPEC_KITTY_EXPECTED_TEST_COUNT": "20",
+    }
+
     runner = next(
         step
         for step in job["steps"]
-        if "scripts/ci/run_selected_tests.py" in step.get("run", "")
+        if step.get("name") == "Run exact candidate inventory"
     )
+    assert runner["run"] == "uv run python scripts/ci/run_selected_tests.py"
     assert runner["env"] == {
         "SPEC_KITTY_TEST_PATHS_JSON": "${{ inputs.test_paths_json }}",
         "SPEC_KITTY_EXPECTED_TEST_COUNT": "${{ inputs.expected_count }}",
