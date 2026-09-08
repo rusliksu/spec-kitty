@@ -127,14 +127,12 @@ def main_callback(
     if not next_fast_path:
         root_callback(ctx)
 
-        # FR-002: Ensure global runtime (~/.kittify/) is populated and current.
-        # Must run BEFORE check_version_pin() so global assets are available.
+        # Keep runtime and global slash commands current before project gates.
+        # Global skills are refreshed only by explicit init/upgrade/repair flows.
         from specify_cli.runtime.agent_commands import ensure_global_agent_commands
-        from specify_cli.runtime.agent_skills import ensure_global_agent_skills
         from specify_cli.runtime.bootstrap import ensure_runtime
 
         ensure_runtime()
-        ensure_global_agent_skills()
         if not _is_doctor_skills_invocation(sys.argv):
             ensure_global_agent_commands()
 

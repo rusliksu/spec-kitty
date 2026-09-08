@@ -761,12 +761,101 @@ class TestVersionPinWiredIntoCallback:
 
         mock_pin.assert_not_called()
 
+    def test_normal_command_does_not_refresh_user_global_skills(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """FR-001/NFR-001: Scenario 1 leaves a global skill tree byte-stable."""
+        home = tmp_path / "home"
+        kittify_home = home / ".kittify"
+        monkeypatch.setattr(Path, "home", lambda: home)
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.setenv("USERPROFILE", str(home))
+        monkeypatch.setenv("SPEC_KITTY_HOME", str(kittify_home))
+        monkeypatch.setattr(sys, "argv", ["spec-kitty", "status", "--json"])
+
+        installed = home / ".agents" / "skills" / "spk-start-here"
+        installed.mkdir(parents=True)
+        installed_body = installed / "SKILL.md"
+        installed_body.write_text("# user-visible preimage\n", encoding="utf-8")
+        metadata = installed / "agents" / "openai.yaml"
+        metadata.parent.mkdir()
+        metadata.write_text(
+            "policy:\n  allow_implicit_invocation: false\n",
+            encoding="utf-8",
+        )
+        marker = kittify_home / "cache" / "agent-skills.lock"
+        marker.parent.mkdir(parents=True)
+        marker.write_text("older-runtime", encoding="utf-8")
+
+        def snapshot_tree(root: Path) -> dict[str, tuple[bytes | None, int, int]]:
+            paths = [root, *sorted(root.rglob("*"))]
+            return {
+                path.relative_to(root).as_posix() or ".": (
+                    path.read_bytes() if path.is_file() else None,
+                    path.stat().st_mode,
+                    path.stat().st_mtime_ns,
+                )
+                for path in paths
+            }
+
+        before_tree = snapshot_tree(installed)
+        before_marker = (marker.read_bytes(), marker.stat().st_mode, marker.stat().st_mtime_ns)
+        runtime_mock = MagicMock()
+        commands_mock = MagicMock()
+
+        with (
+            patch("specify_cli.runtime.bootstrap.ensure_runtime", runtime_mock),
+            patch(
+                "specify_cli.runtime.agent_commands.ensure_global_agent_commands",
+                commands_mock,
+            ),
+            patch("specify_cli.locate_project_root", return_value=None),
+            patch("specify_cli.root_callback"),
+        ):
+            from specify_cli import main_callback
+
+            main_callback(MagicMock(invoked_subcommand="status"), version=False)
+
+        runtime_mock.assert_called_once_with()
+        commands_mock.assert_called_once_with()
+        assert snapshot_tree(installed) == before_tree
+        assert (marker.read_bytes(), marker.stat().st_mode, marker.stat().st_mtime_ns) == before_marker
+
+    def test_normal_command_does_not_create_missing_global_skill_root(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """FR-001/NFR-001: Scenario 1 does not create a missing global tree."""
+        home = tmp_path / "home"
+        kittify_home = home / ".kittify"
+        monkeypatch.setattr(Path, "home", lambda: home)
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.setenv("USERPROFILE", str(home))
+        monkeypatch.setenv("SPEC_KITTY_HOME", str(kittify_home))
+        monkeypatch.setattr(sys, "argv", ["spec-kitty", "status", "--json"])
+
+        marker = kittify_home / "cache" / "agent-skills.lock"
+        marker.parent.mkdir(parents=True)
+        marker.write_text("older-runtime", encoding="utf-8")
+        before_marker = (marker.read_bytes(), marker.stat().st_mode, marker.stat().st_mtime_ns)
+        global_root = home / ".agents" / "skills"
+        with (
+            patch("specify_cli.runtime.bootstrap.ensure_runtime"),
+            patch("specify_cli.runtime.agent_commands.ensure_global_agent_commands"),
+            patch("specify_cli.locate_project_root", return_value=None),
+            patch("specify_cli.root_callback"),
+        ):
+            from specify_cli import main_callback
+
+            main_callback(MagicMock(invoked_subcommand="status"), version=False)
+
+        assert not global_root.exists()
+        assert (marker.read_bytes(), marker.stat().st_mode, marker.stat().st_mtime_ns) == before_marker
+
     def test_main_callback_skips_runtime_bootstrap_for_restart_daemon(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """restart-daemon is machine-global and must not pay project bootstrap cost."""
         ensure_runtime_mock = MagicMock()
-        ensure_skills_mock = MagicMock()
         ensure_commands_mock = MagicMock()
         root_callback_mock = MagicMock()
 
@@ -778,7 +867,6 @@ class TestVersionPinWiredIntoCallback:
 
         with (
             patch("specify_cli.runtime.bootstrap.ensure_runtime", ensure_runtime_mock),
-            patch("specify_cli.runtime.agent_skills.ensure_global_agent_skills", ensure_skills_mock),
             patch("specify_cli.runtime.agent_commands.ensure_global_agent_commands", ensure_commands_mock),
             patch("specify_cli.root_callback", root_callback_mock),
         ):
@@ -788,7 +876,6 @@ class TestVersionPinWiredIntoCallback:
 
         root_callback_mock.assert_not_called()
         ensure_runtime_mock.assert_not_called()
-        ensure_skills_mock.assert_not_called()
         ensure_commands_mock.assert_not_called()
 
     def test_main_callback_skips_runtime_bootstrap_for_next(
@@ -796,7 +883,6 @@ class TestVersionPinWiredIntoCallback:
     ) -> None:
         """next is startup-sensitive but still runs project safety gates."""
         ensure_runtime_mock = MagicMock()
-        ensure_skills_mock = MagicMock()
         ensure_commands_mock = MagicMock()
         root_callback_mock = MagicMock()
         check_schema_mock = MagicMock()
@@ -811,7 +897,6 @@ class TestVersionPinWiredIntoCallback:
 
         with (
             patch("specify_cli.runtime.bootstrap.ensure_runtime", ensure_runtime_mock),
-            patch("specify_cli.runtime.agent_skills.ensure_global_agent_skills", ensure_skills_mock),
             patch("specify_cli.runtime.agent_commands.ensure_global_agent_commands", ensure_commands_mock),
             patch("specify_cli.runtime.bootstrap.check_version_pin", check_pin_mock),
             patch("specify_cli.migration.gate.check_schema_version", check_schema_mock),
@@ -824,7 +909,6 @@ class TestVersionPinWiredIntoCallback:
 
         root_callback_mock.assert_not_called()
         ensure_runtime_mock.assert_not_called()
-        ensure_skills_mock.assert_not_called()
         ensure_commands_mock.assert_not_called()
         check_pin_mock.assert_called_once_with(project_root)
         check_schema_mock.assert_called_once_with(project_root, invoked_subcommand="next")

@@ -1,0 +1,69 @@
+{
+  "mission_slug": "global-skill-bootstrap-safety-01M20J6C",
+  "mission_number": "",
+  "mission_type": "software-dev",
+  "overall_verdict": "pass",
+  "criteria": [
+    {
+      "criterion_id": "FR-001",
+      "description": "\u041e\u0431\u044b\u0447\u043d\u0430\u044f \u043a\u043e\u043c\u0430\u043d\u0434\u0430 CLI \u043d\u0435 \u0437\u0430\u043f\u0443\u0441\u043a\u0430\u0435\u0442 global skill refresh \u0438 \u043d\u0435 \u043c\u0435\u043d\u044f\u0435\u0442 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0439 \u043b\u0438\u0431\u043e \u043e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0439 global skill root.",
+      "proof_type": "automated_test",
+      "evidence": "tests/runtime/test_bootstrap_unit.py: \u0434\u0432\u0430 observable acceptance nodes \u043f\u0440\u043e\u0448\u043b\u0438; \u0432\u0440\u0435\u043c\u0435\u043d\u043d\u044b\u0439 \u0432\u043e\u0437\u0432\u0440\u0430\u0442 startup-\u0437\u0430\u043f\u0438\u0441\u0438 \u0447\u0435\u0440\u0435\u0437 \u0440\u0435\u0430\u043b\u044c\u043d\u044b\u0439 installer seam \u0434\u0430\u043b 2 expected failures.",
+      "pass_fail": "pass",
+      "verified_by": "codex",
+      "verified_at": "2026-09-08T17:33:34.837873+00:00",
+      "notes": "\u041a\u043e\u043d\u0442\u0440\u0430\u043a\u0442 \u043d\u0435 \u0437\u0430\u0432\u0438\u0441\u0438\u0442 \u043e\u0442 mock \u0443\u0434\u0430\u043b\u0451\u043d\u043d\u043e\u0433\u043e helper: \u043e\u043d \u0441\u0440\u0430\u0432\u043d\u0438\u0432\u0430\u0435\u0442 paths, bytes, mode, mtime, marker \u0438 \u043e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0438\u0435 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f global root; ensure_runtime \u0438 ensure_global_agent_commands \u043e\u0441\u0442\u0430\u044e\u0442\u0441\u044f \u0432\u044b\u0437\u0432\u0430\u043d\u043d\u044b\u043c\u0438."
+    },
+    {
+      "criterion_id": "FR-002",
+      "description": "\u042f\u0432\u043d\u044b\u0435 init, upgrade \u0438 repair flows \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0430\u044e\u0442 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u0435\u0434\u0438\u043d\u044b\u0439 installer seam \u0434\u043b\u044f \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f packaged skills.",
+      "proof_type": "automated_test",
+      "evidence": "14 targeted installer/package tests \u043f\u0440\u043e\u0448\u043b\u0438; static call map \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0430\u0435\u0442 install_skills_for_agent/install_all_skills \u0432 init, upgrade migrations \u0438 managed-skills repair; no-dead-modules gate \u043f\u0440\u043e\u0448\u0451\u043b.",
+      "pass_fail": "pass",
+      "verified_by": "codex",
+      "verified_at": "2026-09-08T17:30:09.545248+00:00",
+      "notes": "\u041d\u0435\u0434\u043e\u0441\u0442\u0438\u0436\u0438\u043c\u044b\u0439 runtime.agent_skills \u0438 \u0435\u0433\u043e \u043f\u0440\u044f\u043c\u044b\u0435 \u0442\u0435\u0441\u0442\u044b \u0443\u0434\u0430\u043b\u0435\u043d\u044b; explicit flows \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u044e\u0442 \u0435\u0434\u0438\u043d\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0439 installer seam, \u0433\u0434\u0435 \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d exact retired cleanup."
+    },
+    {
+      "criterion_id": "FR-003",
+      "description": "\u042f\u0432\u043d\u044b\u0439 refresh \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u0435\u0442 \u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u044b\u0435 \u0444\u0430\u0439\u043b\u044b, \u0432\u043b\u043e\u0436\u0435\u043d\u043d\u044b\u0435 \u043a\u0430\u0442\u0430\u043b\u043e\u0433\u0438, mode \u0438 \u0441\u043e\u0441\u0435\u0434\u043d\u0438\u0435 skills.",
+      "proof_type": "automated_test",
+      "evidence": "tests/specify_cli/skills/test_installer.py::TestInstallSharedRootAgent::test_reinstall_preserves_unknown_files_inside_global_skill \u043f\u0440\u043e\u0448\u0451\u043b; whole-directory mutation \u0443\u0434\u0430\u043b\u0438\u043b metadata \u0438 \u0441\u0434\u0435\u043b\u0430\u043b \u0442\u0435\u0441\u0442 \u043a\u0440\u0430\u0441\u043d\u044b\u043c.",
+      "pass_fail": "pass",
+      "verified_by": "codex",
+      "verified_at": "2026-09-08T16:10:30.441932+00:00",
+      "notes": "\u041d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u044b\u0435 paths \u0441\u0440\u0430\u0432\u043d\u0438\u0432\u0430\u044e\u0442\u0441\u044f \u043f\u043e bytes \u0438 st_mode \u0434\u043e \u0438 \u043f\u043e\u0441\u043b\u0435 refresh."
+    },
+    {
+      "criterion_id": "FR-004",
+      "description": "Package-owned collisions \u043e\u0431\u043d\u043e\u0432\u043b\u044f\u044e\u0442\u0441\u044f \u043f\u043e\u0432\u0435\u0440\u0445 read-only destination \u0438 symlink \u0431\u0435\u0437 \u043f\u0435\u0440\u0435\u0445\u043e\u0434\u0430 \u043a symlink target.",
+      "proof_type": "automated_test",
+      "evidence": "\u0414\u0432\u0430 installer acceptance nodes \u043f\u0440\u043e\u0448\u043b\u0438; owned symlink \u0437\u0430\u043c\u0435\u043d\u0451\u043d regular file, unknown symlink \u0438 \u043e\u0431\u0430 external targets \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u043b\u0438\u0441\u044c; destructive mutation \u0434\u0430\u043b 2 expected failures.",
+      "pass_fail": "pass",
+      "verified_by": "codex",
+      "verified_at": "2026-09-08T16:10:30.441932+00:00",
+      "notes": "Write bits \u0441\u043d\u0438\u043c\u0430\u044e\u0442\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u0441 \u0444\u0430\u0439\u043b\u043e\u0432, \u0440\u0435\u0430\u043b\u044c\u043d\u043e \u0437\u0430\u043f\u0438\u0441\u0430\u043d\u043d\u044b\u0445 \u0438\u0437 packaged source tree."
+    },
+    {
+      "criterion_id": "FR-005",
+      "description": "Wheel \u0441\u043e\u0434\u0435\u0440\u0436\u0438\u0442 \u0435\u0434\u0438\u043d\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0439 exact metadata entry \u0434\u043b\u044f legacy program skill \u0441\u043e \u0441\u0442\u0440\u043e\u0433\u0438\u043c boolean false.",
+      "proof_type": "artifact_inspection",
+      "evidence": "delivery-evidence.json: wheel entry charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml, entry SHA-256 3bf863a8..., policy bool false; 4 invalid mutations rejected.",
+      "pass_fail": "pass",
+      "verified_by": "codex",
+      "verified_at": "2026-09-08T16:10:30.441932+00:00",
+      "notes": "Source path \u0441 src/ \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u043e \u043e\u0442\u043e\u0431\u0440\u0430\u0436\u0451\u043d \u0432 \u0441\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u043d\u044b\u0439 wheel import path \u0431\u0435\u0437 src-layout prefix."
+    },
+    {
+      "criterion_id": "FR-006",
+      "description": "\u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442 \u0438\u043c\u0435\u0435\u0442 immutable artifact identity, \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c\u044b\u0439 PR \u0438 CAS-gated HOSTKEY dry plan \u0431\u0435\u0437 live mutation.",
+      "proof_type": "artifact_and_external_checks",
+      "evidence": "Wheel 3.2.6rc5 \u0438\u0437 3b547c751296, SHA-256 e702d7b8...; \u0443\u0434\u0430\u043b\u0451\u043d\u043d\u044b\u0439 runtime module \u0432 wheel \u043e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442; accept commit 21427f3bce5; HOSTKEY snapshot mutations=[]; PR #21 \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f draft \u0434\u043e fresh CI \u0438 \u0432\u043d\u0435\u0448\u043d\u0435\u0433\u043e runner blocker.",
+      "pass_fail": "pass",
+      "verified_by": "codex",
+      "verified_at": "2026-09-08T17:44:41.601865+00:00",
+      "notes": "Artifact \u0438 CAS dry plan \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u044b \u043d\u0430 \u043e\u0434\u0438\u043d source commit; ready, merge, release, upload, install, cleanup, restart \u0438 scheduler \u043d\u0435 \u0432\u044b\u043f\u043e\u043b\u043d\u044f\u043b\u0438\u0441\u044c."
+    }
+  ],
+  "negative_invariants": []
+}
