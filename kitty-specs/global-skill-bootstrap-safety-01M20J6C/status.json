@@ -1,0 +1,28 @@
+{
+  "event_count": 1,
+  "last_event_id": "01M20M006YB21KADBPF8ATXYGC",
+  "materialized_at": "2026-09-08T13:40:50.526561+00:00",
+  "mission_number": "",
+  "mission_slug": "global-skill-bootstrap-safety-01M20J6C",
+  "mission_type": "software-dev",
+  "summary": {
+    "approved": 0,
+    "blocked": 0,
+    "canceled": 0,
+    "claimed": 0,
+    "done": 0,
+    "for_review": 0,
+    "in_progress": 0,
+    "in_review": 0,
+    "planned": 1
+  },
+  "work_packages": {
+    "WP01": {
+      "actor": "finalize-tasks",
+      "force_count": 0,
+      "lane": "planned",
+      "last_event_id": "01M20M006YB21KADBPF8ATXYGC",
+      "last_transition_at": "2026-09-08T13:40:50.526561+00:00"
+    }
+  }
+}
