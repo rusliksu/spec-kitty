@@ -62,7 +62,14 @@
         "WP01 approved at 66825316b; implement explicit startup boundary and ownership-aware overlay."
       ],
       "provider": "__resolved_provider_absent__",
-      "role": "implementer"
+      "role": "implementer",
+      "subtasks": {
+        "T005": "done",
+        "T006": "done",
+        "T007": "done",
+        "T008": "done",
+        "T009": "done"
+      }
     },
     "WP03": {
       "actor": "finalize-tasks",
