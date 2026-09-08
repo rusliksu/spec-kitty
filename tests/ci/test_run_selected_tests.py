@@ -13,6 +13,8 @@ import pytest
 from scripts.ci.run_selected_tests import COUNT_ENV, PATHS_ENV, load_test_paths
 
 
+pytestmark = pytest.mark.architectural
+
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "ci" / "run_selected_tests.py"
 
 
