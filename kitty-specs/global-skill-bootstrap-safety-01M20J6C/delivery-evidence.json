@@ -25,7 +25,7 @@
     },
     "source_path": "src/charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml",
     "source_prefixed_entry_present": false,
-    "status": "blocked_pending_planning_path_correction",
+    "status": "passed",
     "wheel_entry_path": "charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml"
   },
   "hostkey": {
@@ -138,13 +138,111 @@
   },
   "package_version": "3.2.6rc5",
   "pr": {
-    "checks": [],
-    "head_sha": null,
+    "artifact_source_delta": [
+      "kitty-specs/global-skill-bootstrap-safety-01M20J6C/delivery-evidence.json",
+      "kitty-specs/global-skill-bootstrap-safety-01M20J6C/meta.json",
+      "kitty-specs/global-skill-bootstrap-safety-01M20J6C/plan.md",
+      "kitty-specs/global-skill-bootstrap-safety-01M20J6C/tasks/WP03-immutable-artifact-dry-plan.md"
+    ],
+    "checked_at": "2026-09-08T16:01:31.512291+00:00",
+    "checks": [
+      {
+        "conclusion": "queued",
+        "name": "Prepare candidate package metadata",
+        "workflow": "Check Shared Package Drift"
+      },
+      {
+        "conclusion": "success",
+        "name": "Build and validate Claude Code plugin bundle",
+        "workflow": "Plugin Validate"
+      },
+      {
+        "conclusion": "success",
+        "name": "Build and validate Codex plugin bundle",
+        "workflow": "Plugin Validate"
+      },
+      {
+        "conclusion": "success",
+        "name": "check-readiness",
+        "workflow": "Release Readiness Check"
+      },
+      {
+        "conclusion": "success",
+        "name": "cutover-guard",
+        "workflow": "Release Readiness Check"
+      },
+      {
+        "conclusion": "success",
+        "name": "Review verdict durability (macos-latest, Python 3.11)",
+        "workflow": "Review verdict durability"
+      },
+      {
+        "conclusion": "success",
+        "name": "Review verdict durability (ubuntu-latest, Python 3.11)",
+        "workflow": "Review verdict durability"
+      },
+      {
+        "conclusion": "success",
+        "name": "Review verdict durability (windows-latest, Python 3.11)",
+        "workflow": "Review verdict durability"
+      },
+      {
+        "conclusion": "success",
+        "name": "AST lint -- canonical producers",
+        "workflow": "canonical-producer-lint"
+      },
+      {
+        "conclusion": "success",
+        "name": "Detect Windows-critical changes",
+        "workflow": "ci-windows"
+      },
+      {
+        "conclusion": "success",
+        "name": "Windows critical (pipx, pytest -m windows_ci)",
+        "workflow": "ci-windows"
+      },
+      {
+        "conclusion": "success",
+        "name": "build",
+        "workflow": "docs-build-pr"
+      },
+      {
+        "conclusion": "success",
+        "name": "docs-freshness",
+        "workflow": "docs-freshness"
+      },
+      {
+        "conclusion": "success",
+        "name": "doctrine-charter-tests",
+        "workflow": "doctrine-charter-tests"
+      },
+      {
+        "conclusion": "success",
+        "name": "drift-detector",
+        "workflow": "drift-detector"
+      },
+      {
+        "conclusion": "success",
+        "name": "ui-e2e",
+        "workflow": "ui-e2e"
+      }
+    ],
+    "head_sha": "c304e150da82a0d0ee79e09b83ed6d9c3231e82f",
+    "merge_state_status": "UNSTABLE",
     "merge_status": "not_merged",
-    "number": null,
+    "mergeable": true,
+    "number": 21,
     "ready_at": null,
-    "state": "draft_pending_creation",
-    "url": null
+    "ready_blocker": {
+      "details_url": "https://github.com/rusliksu/spec-kitty/actions/runs/34246436140/job/102129512367",
+      "evidence": "Job remained queued with runner_name empty; the fork schedule run 34198182995 has also been queued since 2026-09-08T07:12:22Z, while earlier daily runs were cancelled after about 24 hours.",
+      "job": "Prepare candidate package metadata",
+      "required_runner_label": "blacksmith-4vcpu-ubuntu-2404",
+      "workflow": "Check Shared Package Drift"
+    },
+    "state": "draft_blocked_external_runner",
+    "successful_check_count": 15,
+    "url": "https://github.com/rusliksu/spec-kitty/pull/21"
   },
   "schema_version": 1,
   "scope_guard": {
@@ -179,16 +277,38 @@
           "command": "uv run --with pyyaml python verify-wheel.py spec_kitty_cli-3.2.6rc5-py3-none-any.whl",
           "cwd": "C:/Users/Ruslan/.codex/reports/instructions-audit-20260906/program-explicit-proposal/artifacts/spec-kitty-cli-3.2.6rc5-4e08d93cdc5c",
           "observed_at": "2026-09-08T15:14:40+00:00",
-          "result": "wheel path, policy bool, entry hash, four policy mutations and repeated artifact hash verified; approved plan used an impossible src/ prefix for the wheel entry",
-          "status": "blocked"
+          "result": "exact wheel import path, source mapping, policy bool, entry hash, four policy mutations and repeated artifact hash verified",
+          "status": "passed"
         }
       ],
-      "status": "blocked_pending_planning_path_correction",
+      "status": "passed",
       "verification_script_sha256": "186f6e7dbf55d7ef9f5806567ec7ba31d2cc5f4422c2556a78eb016d87f1e962"
     },
     "T012": {
-      "commands": [],
-      "status": "pending_pr_creation"
+      "commands": [
+        {
+          "command": "gh pr create --repo rusliksu/spec-kitty --draft --base main --head codex/global-skill-bootstrap-safety --title <title> --body-file pr-body.md",
+          "cwd": "C:/Users/Ruslan/.codex-worktrees/spec-kitty-global-skill-bootstrap-safety",
+          "observed_at": "2026-09-08T15:21:52+00:00",
+          "result": "draft PR #21 created",
+          "status": "passed"
+        },
+        {
+          "command": "git diff --check origin/main...HEAD and self-review of product, tests, metadata, docs and Mission evidence",
+          "cwd": "C:/Users/Ruslan/.codex-worktrees/spec-kitty-global-skill-bootstrap-safety",
+          "observed_at": "2026-09-08T16:01:31.512291+00:00",
+          "result": "no blocking diff finding; 15 reported checks succeeded on c304e150da82a0d0ee79e09b83ed6d9c3231e82f",
+          "status": "passed"
+        },
+        {
+          "command": "gh pr checks 21 --repo rusliksu/spec-kitty",
+          "cwd": "C:/Users/Ruslan/.codex-worktrees/spec-kitty-global-skill-bootstrap-safety",
+          "observed_at": "2026-09-08T16:01:31.512291+00:00",
+          "result": "Prepare candidate package metadata remained queued without a runner; ready transition not performed",
+          "status": "blocked"
+        }
+      ],
+      "status": "blocked_external_runner"
     },
     "T013": {
       "commands": [
