@@ -28,7 +28,8 @@
       "last_transition_at": "2026-09-08T14:21:43.791560+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
-        "RED evidence: startup 2 failures, overlay preservation 2 failures; exact metadata oracle and three mutations pass. Test-only commits 4ef4cfefd and 66825316b; git diff --check passed."
+        "RED evidence: startup 2 failures, overlay preservation 2 failures; exact metadata oracle and three mutations pass. Test-only commits 4ef4cfefd and 66825316b; git diff --check passed.",
+        "Проверка scope и oracle: только три owned test paths; RED воспроизводит оба дефекта, metadata mutations не вакуозны, HOME изолирован."
       ],
       "provider": "__resolved_provider_absent__",
       "role": "reviewer",
