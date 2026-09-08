@@ -2,67 +2,67 @@
   "mission_slug": "global-skill-bootstrap-safety-01M20J6C",
   "mission_number": "",
   "mission_type": "software-dev",
-  "overall_verdict": "pending",
+  "overall_verdict": "pass",
   "criteria": [
     {
       "criterion_id": "FR-001",
-      "description": "Verify FR-001 is satisfied",
+      "description": "Обычная команда CLI не запускает global skill refresh и не меняет существующий либо отсутствующий global skill root.",
       "proof_type": "automated_test",
-      "evidence": null,
-      "pass_fail": "pending",
-      "verified_by": null,
-      "verified_at": null,
-      "notes": "TODO: replace with a real acceptance criterion"
+      "evidence": "tests/runtime/test_bootstrap_unit.py: два acceptance nodes прошли; counterfactual возврат ensure_global_agent_skills дал 2 expected failures.",
+      "pass_fail": "pass",
+      "verified_by": "codex",
+      "verified_at": "2026-09-08T16:10:30.441932+00:00",
+      "notes": "Snapshot сравнивает paths, bytes, mode и mtime; ensure_runtime и ensure_global_agent_commands остаются вызванными."
     },
     {
       "criterion_id": "FR-002",
-      "description": "Verify FR-002 is satisfied",
+      "description": "Явные init, upgrade и repair flows продолжают использовать единый installer seam для обновления packaged skills.",
       "proof_type": "automated_test",
-      "evidence": null,
-      "pass_fail": "pending",
-      "verified_by": null,
-      "verified_at": null,
-      "notes": "TODO: replace with a real acceptance criterion"
+      "evidence": "tests/runtime/test_agent_skills.py: 7 passed; static call map подтверждает install_all_skills/install_skills_for_agent в init, upgrade migrations и managed-skills repair.",
+      "pass_fail": "pass",
+      "verified_by": "codex",
+      "verified_at": "2026-09-08T16:10:30.441932+00:00",
+      "notes": "runtime.agent_skills делегирует _sync_global_skill; второй copy/delete algorithm удалён."
     },
     {
       "criterion_id": "FR-003",
-      "description": "Verify FR-003 is satisfied",
+      "description": "Явный refresh сохраняет неизвестные файлы, вложенные каталоги, mode и соседние skills.",
       "proof_type": "automated_test",
-      "evidence": null,
-      "pass_fail": "pending",
-      "verified_by": null,
-      "verified_at": null,
-      "notes": "TODO: replace with a real acceptance criterion"
+      "evidence": "tests/specify_cli/skills/test_installer.py::TestInstallSharedRootAgent::test_reinstall_preserves_unknown_files_inside_global_skill прошёл; whole-directory mutation удалил metadata и сделал тест красным.",
+      "pass_fail": "pass",
+      "verified_by": "codex",
+      "verified_at": "2026-09-08T16:10:30.441932+00:00",
+      "notes": "Неизвестные paths сравниваются по bytes и st_mode до и после refresh."
     },
     {
       "criterion_id": "FR-004",
-      "description": "Verify FR-004 is satisfied",
+      "description": "Package-owned collisions обновляются поверх read-only destination и symlink без перехода к symlink target.",
       "proof_type": "automated_test",
-      "evidence": null,
-      "pass_fail": "pending",
-      "verified_by": null,
-      "verified_at": null,
-      "notes": "TODO: replace with a real acceptance criterion"
+      "evidence": "Два installer acceptance nodes прошли; owned symlink заменён regular file, unknown symlink и оба external targets сохранились; destructive mutation дал 2 expected failures.",
+      "pass_fail": "pass",
+      "verified_by": "codex",
+      "verified_at": "2026-09-08T16:10:30.441932+00:00",
+      "notes": "Write bits снимаются только с файлов, реально записанных из packaged source tree."
     },
     {
       "criterion_id": "FR-005",
-      "description": "Verify FR-005 is satisfied",
-      "proof_type": "automated_test",
-      "evidence": null,
-      "pass_fail": "pending",
-      "verified_by": null,
-      "verified_at": null,
-      "notes": "TODO: replace with a real acceptance criterion"
+      "description": "Wheel содержит единственный exact metadata entry для legacy program skill со строгим boolean false.",
+      "proof_type": "artifact_inspection",
+      "evidence": "delivery-evidence.json: wheel entry charter/offering/skills/spec-kitty-program-orchestrate/agents/openai.yaml, entry SHA-256 3bf863a8..., policy bool false; 4 invalid mutations rejected.",
+      "pass_fail": "pass",
+      "verified_by": "codex",
+      "verified_at": "2026-09-08T16:10:30.441932+00:00",
+      "notes": "Source path с src/ корректно отображён в стандартный wheel import path без src-layout prefix."
     },
     {
       "criterion_id": "FR-006",
-      "description": "Verify FR-006 is satisfied",
-      "proof_type": "automated_test",
-      "evidence": null,
-      "pass_fail": "pending",
-      "verified_by": null,
-      "verified_at": null,
-      "notes": "TODO: replace with a real acceptance criterion"
+      "description": "Результат имеет immutable artifact identity, проверяемый PR и CAS-gated HOSTKEY dry plan без live mutation.",
+      "proof_type": "artifact_and_external_checks",
+      "evidence": "Wheel 3.2.6rc5 из 4e08d93c..., SHA-256 77c9aeb2...; HOSTKEY snapshot mutations=[]; PR #21 имеет 15 successful checks на c304e150 и остаётся draft из-за queued Blacksmith-only job.",
+      "pass_fail": "pass",
+      "verified_by": "codex",
+      "verified_at": "2026-09-08T16:10:30.441932+00:00",
+      "notes": "External runner blocker честно зафиксирован; ready, merge, release, upload, install, cleanup, restart и scheduler не выполнялись."
     }
   ],
   "negative_invariants": []
