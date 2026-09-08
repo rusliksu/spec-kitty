@@ -26,7 +26,7 @@ Whole-directory replacement считал package-owned весь каталог �
 
 Очистка retired skills остаётся отдельной exact-name политикой на основании `RETIRED_CANONICAL_SKILL_NAMES`. Она не расширяется до эвристического удаления неизвестных каталогов.
 
-`runtime.agent_skills` сохраняет lock, version marker и orchestration явного refresh, но делегирует overlay единому installer seam. Вторая destructive copy/delete implementation удаляется.
+Недостижимый после удаления startup-вызова модуль `runtime.agent_skills` удалён. Явные `init`, `upgrade` и `repair` flows уже вызывают `install_skills_for_agent()` или `install_all_skills()`; они используют единый installer seam для overlay и exact-name cleanup retired skills. Отдельные version marker и lock прежнего скрытого bootstrap больше не нужны.
 
 ## Границы
 

@@ -4,7 +4,7 @@ PR #3679 introduced ``write_generated_file`` (the canonical restore→write→
 strip-permission-bit writer) and routed 16 migrations through it, but left 5
 sibling migrations writing bare ``Path.write_text(...)`` to the same
 read-only-destined agent command/skill surfaces (``runtime/agent_commands.py``
-and ``runtime/agent_skills.py`` chmod these trees ``& ~0o222``). Two of those
+and ``skills/installer.py`` chmod these trees ``& ~0o222``). Two of those
 five have no ``try/except`` around the write at all, so a re-run against an
 already-generated (and therefore read-only) target raises ``PermissionError``
 and aborts the whole upgrade — #3651 verbatim:

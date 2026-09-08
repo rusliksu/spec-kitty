@@ -159,31 +159,31 @@ Mission: `global-skill-bootstrap-safety-01M20J6C`.
 - Подтверди замену read-only package-owned destination и итоговый read-only mode обновлённого файла.
 - Подтверди безопасное поведение для destination symlink/file collision без traversal в неизвестный target.
 
-### Subtask T007: Делегировать runtime обновление в единый seam
+### Subtask T007: Удалить недостижимый runtime bootstrap
 
-**Purpose**: Устранить вторую destructive реализацию в `runtime.agent_skills` и оставить один ownership-aware механизм обновления canonical skill.
+**Purpose**: Устранить вторую destructive реализацию и не оставить после удаления startup-вызова модуль без production caller.
 
 **Steps**:
 
-1. В `src/specify_cli/runtime/agent_skills.py` оставь registry discovery, определение installable roots, lock и version-marker orchestration в пределах существующего explicit refresh contract.
-2. Замени локальный `copytree` и удаление canonical destination в `_sync_skill_root` делегированием в installer seam `_sync_global_skill` либо в минимальный публичный wrapper над ним.
-3. Не дублируй в runtime source-path iteration, read-only chmod, normalization или collision deletion. Эти правила должны иметь один owner в installer.
-4. Проверь import direction и циклы. Runtime может использовать canonical installer seam, но не должен импортировать CLI callback для запуска refresh.
-5. Сохрани отдельную очистку только exact retired names из `RETIRED_CANONICAL_SKILL_NAMES`. Не удаляй unknown skill paths, не вводи name-based cleanup для обычных canonical directories и не расширяй C-004.
-6. После делегирования каждый canonical skill, переданный из registry, должен получить те же overlay semantics, что и explicit installer: source-owned paths обновляются, unknown paths сохраняются, read-only обновление безопасно.
-7. Убедись, что version marker и lock не превращаются в новый startup write path. Их orchestration должна выполняться только вызывающим явным flow после T005.
-8. Не меняй `ensure_global_agent_commands()` и user-global slash-command roots. Это отдельная surface и acceptance boundary.
+1. Проверь static call map после удаления вызова из `main_callback`: `runtime.agent_skills` не имеет production caller, а прямые тесты не являются доказательством wiring.
+2. Удали `src/specify_cli/runtime/agent_skills.py` и его прямые тесты вместо allowlist или фиктивного импорта.
+3. Сохрани observable startup acceptance в `tests/runtime/test_bootstrap_unit.py`: bytes, mode, mtime и отсутствующий root не меняются без зависимости от удалённого helper.
+4. Сохрани явный refresh через существующие production callers `install_skills_for_agent()` и `install_all_skills()` в init, upgrade migrations и managed-skills repair.
+5. Сохрани отдельную очистку только exact retired names из `RETIRED_CANONICAL_SKILL_NAMES` в installer. Не удаляй unknown skill paths и не расширяй C-004.
+6. Обнови устаревшие docstrings и test shard map, которые ссылались на удалённый модуль.
+7. Не меняй `ensure_global_agent_commands()` и user-global slash-command roots. Это отдельная surface и acceptance boundary.
 
 **Files**:
 
-- `src/specify_cli/runtime/agent_skills.py` - runtime orchestration и точечный retired cleanup; без второй реализации overlay.
-- `src/specify_cli/skills/installer.py` - canonical owner seam из T006, если для совместной делегации нужен минимальный внутренний интерфейс.
+- `src/specify_cli/runtime/agent_skills.py` - удаляемый orphan legacy bootstrap.
+- `tests/runtime/test_agent_skills.py` - удаляемые прямые тесты недостижимого helper.
+- `src/specify_cli/skills/installer.py` - canonical owner seam из T006 и production path явных flows.
 
 **Validation**:
 
-- Запусти `tests/runtime/test_agent_skills.py` с version-marker fixture и изолированным HOME.
-- Проверь, что повторный explicit refresh не стирает unknown files при смене marker или runtime package version.
-- Проверь static search по runtime module: отсутствие `copytree` и whole-directory removal для обычного canonical skill обновления.
+- Запусти startup и installer acceptance tests с изолированным HOME.
+- Проверь static call map явных flows и отсутствие ссылок на удалённый helper в production code.
+- Запусти `tests/architectural/test_no_dead_modules.py::test_no_new_dead_modules_under_src`.
 - Проверь, что exact retired cleanup сохраняет прежний scope и не удаляет посторонний skill.
 
 ### Subtask T008: Зафиксировать ADR, changelog и observable migration expectation
@@ -219,7 +219,7 @@ Mission: `global-skill-bootstrap-safety-01M20J6C`.
 **Steps**:
 
 1. Проверь dependency gate: WP01 должен быть `approved` или `done`; зафиксируй в handoff, какой acceptance surface использован.
-2. Запусти targeted tests `tests/runtime/test_bootstrap_unit.py`, `tests/specify_cli/skills/test_installer.py`, `tests/runtime/test_agent_skills.py` и `tests/doctrine/test_spk_skill_pack.py` в окружении с temporary `HOME`, `USERPROFILE` и `SPEC_KITTY_HOME`.
+2. Запусти targeted tests `tests/runtime/test_bootstrap_unit.py`, `tests/specify_cli/skills/test_installer.py`, `tests/doctrine/test_spk_skill_pack.py` и no-dead-modules architectural node в окружении с temporary `HOME`, `USERPROFILE` и `SPEC_KITTY_HOME`.
 3. Убедись, что ordinary-startup acceptance фиксирует ноль изменённых файлов, marker и metadata, а отсутствующее global tree не создаётся.
 4. Убедись, что explicit-sync acceptance обновляет все exact source collisions и сохраняет 100 процентов unknown fixture files и modes.
 5. Выполни counterfactual mutation checks: возврат startup call должен сделать ordinary-startup test красным, а возврат destructive replace должен сделать unknown-preservation test красным. После каждой проверки восстанови рабочее состояние.
@@ -249,7 +249,7 @@ Mission: `global-skill-bootstrap-safety-01M20J6C`.
 - [ ] `_sync_global_skill` выполняет overlay только source-owned paths и не удаляет destination skill directory целиком.
 - [ ] Exact source path collisions обновляются, в том числе поверх read-only file, после чего source-owned files получают read-only mode.
 - [ ] Unknown files, nested unknown directories, symlink targets и посторонние skill directories сохраняются с исходными bytes и mode.
-- [ ] Runtime использует единый installer seam; второй destructive copy/delete algorithm удалён.
+- [ ] Явные production flows используют единый installer seam; недостижимый runtime bootstrap и второй destructive copy/delete algorithm удалены.
 - [ ] Retired cleanup ограничен exact именами из `RETIRED_CANONICAL_SKILL_NAMES` и не превращён в общий cleanup.
 - [ ] ADR и changelog описывают фактический startup boundary, ownership policy и migration expectation на русском языке.
 - [ ] Targeted pytest, mutation checks, ruff, mypy, architecture test и `git diff --check` выполнены на изолированных fixtures.

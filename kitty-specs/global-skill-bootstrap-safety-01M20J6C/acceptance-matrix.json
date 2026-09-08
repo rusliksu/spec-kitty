@@ -8,21 +8,21 @@
       "criterion_id": "FR-001",
       "description": "\u041e\u0431\u044b\u0447\u043d\u0430\u044f \u043a\u043e\u043c\u0430\u043d\u0434\u0430 CLI \u043d\u0435 \u0437\u0430\u043f\u0443\u0441\u043a\u0430\u0435\u0442 global skill refresh \u0438 \u043d\u0435 \u043c\u0435\u043d\u044f\u0435\u0442 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0439 \u043b\u0438\u0431\u043e \u043e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0439 global skill root.",
       "proof_type": "automated_test",
-      "evidence": "tests/runtime/test_bootstrap_unit.py: \u0434\u0432\u0430 acceptance nodes \u043f\u0440\u043e\u0448\u043b\u0438; counterfactual \u0432\u043e\u0437\u0432\u0440\u0430\u0442 ensure_global_agent_skills \u0434\u0430\u043b 2 expected failures.",
+      "evidence": "tests/runtime/test_bootstrap_unit.py: \u0434\u0432\u0430 observable acceptance nodes \u043f\u0440\u043e\u0448\u043b\u0438; \u0432\u0440\u0435\u043c\u0435\u043d\u043d\u044b\u0439 \u0432\u043e\u0437\u0432\u0440\u0430\u0442 startup-\u0437\u0430\u043f\u0438\u0441\u0438 \u0447\u0435\u0440\u0435\u0437 \u0440\u0435\u0430\u043b\u044c\u043d\u044b\u0439 installer seam \u0434\u0430\u043b 2 expected failures.",
       "pass_fail": "pass",
       "verified_by": "codex",
-      "verified_at": "2026-09-08T16:10:30.441932+00:00",
-      "notes": "Snapshot \u0441\u0440\u0430\u0432\u043d\u0438\u0432\u0430\u0435\u0442 paths, bytes, mode \u0438 mtime; ensure_runtime \u0438 ensure_global_agent_commands \u043e\u0441\u0442\u0430\u044e\u0442\u0441\u044f \u0432\u044b\u0437\u0432\u0430\u043d\u043d\u044b\u043c\u0438."
+      "verified_at": "2026-09-08T17:33:34.837873+00:00",
+      "notes": "\u041a\u043e\u043d\u0442\u0440\u0430\u043a\u0442 \u043d\u0435 \u0437\u0430\u0432\u0438\u0441\u0438\u0442 \u043e\u0442 mock \u0443\u0434\u0430\u043b\u0451\u043d\u043d\u043e\u0433\u043e helper: \u043e\u043d \u0441\u0440\u0430\u0432\u043d\u0438\u0432\u0430\u0435\u0442 paths, bytes, mode, mtime, marker \u0438 \u043e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0438\u0435 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f global root; ensure_runtime \u0438 ensure_global_agent_commands \u043e\u0441\u0442\u0430\u044e\u0442\u0441\u044f \u0432\u044b\u0437\u0432\u0430\u043d\u043d\u044b\u043c\u0438."
     },
     {
       "criterion_id": "FR-002",
       "description": "\u042f\u0432\u043d\u044b\u0435 init, upgrade \u0438 repair flows \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0430\u044e\u0442 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u0435\u0434\u0438\u043d\u044b\u0439 installer seam \u0434\u043b\u044f \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f packaged skills.",
       "proof_type": "automated_test",
-      "evidence": "tests/runtime/test_agent_skills.py: 7 passed; static call map \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0430\u0435\u0442 install_all_skills/install_skills_for_agent \u0432 init, upgrade migrations \u0438 managed-skills repair.",
+      "evidence": "14 targeted installer/package tests \u043f\u0440\u043e\u0448\u043b\u0438; static call map \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0430\u0435\u0442 install_skills_for_agent/install_all_skills \u0432 init, upgrade migrations \u0438 managed-skills repair; no-dead-modules gate \u043f\u0440\u043e\u0448\u0451\u043b.",
       "pass_fail": "pass",
       "verified_by": "codex",
-      "verified_at": "2026-09-08T16:10:30.441932+00:00",
-      "notes": "runtime.agent_skills \u0434\u0435\u043b\u0435\u0433\u0438\u0440\u0443\u0435\u0442 _sync_global_skill; \u0432\u0442\u043e\u0440\u043e\u0439 copy/delete algorithm \u0443\u0434\u0430\u043b\u0451\u043d."
+      "verified_at": "2026-09-08T17:30:09.545248+00:00",
+      "notes": "\u041d\u0435\u0434\u043e\u0441\u0442\u0438\u0436\u0438\u043c\u044b\u0439 runtime.agent_skills \u0438 \u0435\u0433\u043e \u043f\u0440\u044f\u043c\u044b\u0435 \u0442\u0435\u0441\u0442\u044b \u0443\u0434\u0430\u043b\u0435\u043d\u044b; explicit flows \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u044e\u0442 \u0435\u0434\u0438\u043d\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0439 installer seam, \u0433\u0434\u0435 \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d exact retired cleanup."
     },
     {
       "criterion_id": "FR-003",

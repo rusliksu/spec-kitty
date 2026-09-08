@@ -26,7 +26,8 @@ flowchart LR
 
 - `main_callback` владеет только безопасными startup checks и больше не запускает global skill refresh.
 - `_sync_global_skill` становится единственным низкоуровневым владельцем обновления одного canonical skill.
-- `runtime.agent_skills._sync_skill_root` делегирует обновление каждого навыка этому владельцу и сохраняет отдельный exact-name cleanup retired skills.
+- Явные `init`, `upgrade` и `repair` flows достигают этого владельца через `install_skills_for_agent()` или `install_all_skills()`; недостижимый после удаления startup-вызова `runtime.agent_skills` удаляется.
+- Exact-name cleanup retired skills остаётся в installer и не расширяется до неизвестных каталогов.
 - Package source владеет файлами, присутствующими в source tree текущего skill.
 - Existing destination paths, отсутствующие в source tree, считаются неизвестными и сохраняются.
 - Exact collision по пути source-owned файла разрешается в пользу source: read-only файл временно делается writable, обновляется и снова защищается.
@@ -49,12 +50,12 @@ flowchart LR
   - безопасно обработать destination symlink/file collisions;
   - повторно сделать скопированные source-owned файлы read-only;
   - сохранить неизвестные файлы и каталоги.
-- `src/specify_cli/runtime/agent_skills.py`
-  - использовать общий installer seam вместо второй destructive реализации.
 - `tests/specify_cli/skills/test_installer.py`
   - red-first tests для неизвестной metadata, read-only replacement, вложенного unknown path и постороннего skill.
-- `tests/runtime/test_agent_skills.py`
-  - интеграционная проверка version-marker refresh через общий seam.
+- `src/specify_cli/runtime/agent_skills.py` и `tests/runtime/test_agent_skills.py`
+  - удалить недостижимый legacy bootstrap и его прямые тесты после переноса observable контрактов на startup и installer surfaces.
+- `tests/architectural/test_no_dead_modules.py`
+  - подтвердить отсутствие нового orphan module после удаления startup-вызова.
 
 ### Контракт дистрибутива
 
