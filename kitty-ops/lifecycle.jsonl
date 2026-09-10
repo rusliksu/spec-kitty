@@ -66,3 +66,5 @@
 {"agent": "codex", "at": "2026-09-10T15:10:48.519976+00:00", "canonical_action_id": "tasks_outline::tasks-outline", "mission_id": "01M25WZFGH0W3EA3F8C17WQ4QD", "phase": "started", "reason": null, "wp_id": null}
 {"agent": "codex", "at": "2026-09-10T15:12:08.293614+00:00", "canonical_action_id": "tasks_outline::tasks-outline", "mission_id": "01M25WZFGH0W3EA3F8C17WQ4QD", "phase": "completed", "reason": null, "wp_id": null}
 {"agent": "codex", "at": "2026-09-10T15:13:40.914052+00:00", "canonical_action_id": "tasks_packages::tasks-packages", "mission_id": "01M25WZFGH0W3EA3F8C17WQ4QD", "phase": "started", "reason": null, "wp_id": null}
+{"agent": "codex", "at": "2026-09-10T18:08:53.071568+00:00", "canonical_action_id": "tasks_packages::tasks-packages", "mission_id": "01M25WZFGH0W3EA3F8C17WQ4QD", "phase": "completed", "reason": null, "wp_id": null}
+{"agent": "codex", "at": "2026-09-10T18:10:22.725313+00:00", "canonical_action_id": "tasks_finalize::tasks-finalize", "mission_id": "01M25WZFGH0W3EA3F8C17WQ4QD", "phase": "started", "reason": null, "wp_id": null}
