@@ -24,6 +24,7 @@ work_packages:
       - T004
       - T005
       - T006
+    prompt_file: "tasks/WP01-capture-fold-integrity.md"
 
   - id: WP02
     title: "Both-platform evidence closure"
@@ -45,3 +46,4 @@ work_packages:
       - T008
       - T009
       - T010
+    prompt_file: "tasks/WP02-both-platform-evidence-closure.md"
