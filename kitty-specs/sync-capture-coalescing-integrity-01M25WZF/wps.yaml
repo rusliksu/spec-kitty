@@ -1,0 +1,42 @@
+work_packages:
+  - id: WP01
+    title: "Capture fold integrity"
+    dependencies: []
+    owned_files:
+      - "src/specify_cli/sync/queue.py"
+      - "tests/sync/test_queue_resilience.py"
+      - "tests/sync/test_offline_queue_counter.py"
+    requirement_refs:
+      - FR-001
+      - FR-002
+      - FR-003
+      - FR-005
+      - NFR-003
+      - C-002
+      - C-004
+    subtasks:
+      - T001
+      - T002
+      - T003
+      - T004
+      - T005
+      - T006
+
+  - id: WP02
+    title: "Both-platform evidence closure"
+    dependencies:
+      - WP01
+    owned_files:
+      - "kitty-specs/sync-capture-coalescing-integrity-01M25WZF/traces/**"
+    requirement_refs:
+      - FR-004
+      - FR-006
+      - NFR-001
+      - NFR-002
+      - C-001
+      - C-003
+    subtasks:
+      - T007
+      - T008
+      - T009
+      - T010
