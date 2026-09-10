@@ -90,6 +90,17 @@ def _admit_project(project_uuid: str) -> ProjectSyncStore:
     return store
 
 
+def _posix_path(value: object) -> str:
+    """Render a reported path with POSIX separators for the scope-shape contract.
+
+    ``queue_db_path`` is a real filesystem path, so its separator is whatever the
+    running platform uses. The contract under test is the
+    ``queues/queue-<scope>.db`` SHAPE, not the separator of the machine that
+    happens to execute the suite.
+    """
+    return str(value).replace("\\", "/")
+
+
 def _fetch_daemon_health(url: str) -> dict[str, object]:
     with urllib.request.urlopen(f"{url}/api/health", timeout=1.0) as response:  # nosec B310 - loopback daemon under test
         payload = json.loads(response.read().decode("utf-8"))
@@ -102,11 +113,17 @@ def test_owner_identity_uses_canonical_target_without_legacy_queue() -> None:
 
     assert identity["server_url"] == "https://app.spec-kitty.ai"
     assert identity["auth_scope"] is None
-    assert "/queues/queue-" in str(identity["queue_db_path"])
-    assert not str(identity["queue_db_path"]).endswith("/queue.db")
+    assert "/queues/queue-" in _posix_path(identity["queue_db_path"])
+    assert not _posix_path(identity["queue_db_path"]).endswith("/queue.db")
 
 
 def test_daemon_remains_live_for_project_b_after_project_a_opt_out() -> None:
+    # Make the assertions below describe a daemon started by THIS test in THIS
+    # environment: ``ensure_sync_daemon_running`` reports ``started=True`` for an
+    # already-healthy daemon it merely adopts, and an adopted daemon's owner
+    # record describes the environment that spawned it, not this one.
+    stop_sync_daemon(timeout=5.0)
+
     _admit_project(PROJECT_A)
     _admit_project(PROJECT_B)
 
@@ -123,9 +140,12 @@ def test_daemon_remains_live_for_project_b_after_project_a_opt_out() -> None:
         health = _fetch_daemon_health(status.url)
         owner = health.get("owner")
         assert isinstance(owner, dict)
-        assert owner["server_url"] == "https://app.spec-kitty.ai"
-        assert "/queues/queue-" in str(owner["queue_db_path"])
-        assert not str(owner["queue_db_path"]).endswith("/queue.db")
+        # The daemon's owner record must describe the SAME resolved target this
+        # process resolves — the canonical hosted URL, never the dev default.
+        expected_server_url = compute_foreground_identity(allow_network=False)["server_url"]
+        assert owner["server_url"] == expected_server_url == "https://app.spec-kitty.ai"
+        assert "/queues/queue-" in _posix_path(owner["queue_db_path"])
+        assert not _posix_path(owner["queue_db_path"]).endswith("/queue.db")
 
         record_project_opt_out(PROJECT_A, actor="wp08-test")
 
