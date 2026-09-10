@@ -14,6 +14,9 @@ work_packages:
       - NFR-003
       - C-002
       - C-004
+    plan_concern_refs:
+      - IC-01
+      - IC-02
     subtasks:
       - T001
       - T002
@@ -35,6 +38,8 @@ work_packages:
       - NFR-002
       - C-001
       - C-003
+    plan_concern_refs:
+      - IC-03
     subtasks:
       - T007
       - T008
