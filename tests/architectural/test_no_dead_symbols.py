@@ -1373,7 +1373,7 @@ _CATEGORY_C_EVENT_SYNC_RETENTION_DELIVERY: frozenset[SymbolKey] = frozenset(
             "SupersedeMarker", "28103221c51dc7ad13004841818581069756ef63456a93fd398760b0e9934968", source_module="specify_cli.event_journal.coalesce"
         ),  # specify_cli.event_journal.coalesce::SupersedeMarker
         SymbolKey(
-            "install", "49e1cbe2531458103c6492184d179bc70a1707789487b439a4815b4e21ec58ef", source_module="specify_cli.event_journal.coalesce"
+            "install", "a0e99cc2c58ef95509888b5310854428bd960a56624f1c1ec530c9a4addc9429", source_module="specify_cli.event_journal.coalesce"
         ),  # specify_cli.event_journal.coalesce::install
         SymbolKey(
             "JOURNAL_SUBDIR", "43ec497396ce60afcd8ef2916a2646172c1c3775c05813cb212642144d8e1d62", source_module="specify_cli.event_journal.journal"

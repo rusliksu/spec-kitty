@@ -182,21 +182,37 @@ def _load_coalesce() -> Any:
     return coalesce
 
 
-def _install_coalescing(ledger: SqliteDeliveryLedger) -> bool:
+def _coalescing_query_for(journal: EventJournal) -> SqliteDeliveryLedger:
+    """Answer "delivered anywhere?" on the journal's own live transaction.
+
+    The journal seam is process-global while a project unit of work is not, so
+    this factory is installed *instead of* a ledger instance. Pinning the drain's
+    ledger left the seam pointing at a transaction that closed with the drain:
+    the next append whose event carries a matching coalesce key — a queue capture
+    after a drain in the same long-lived process — then raised
+    ``ProjectStoreError: project unit of work is no longer active`` instead of
+    coalescing.
+    """
+    return SqliteDeliveryLedger(journal.unit_of_work, journal.layout_authority)
+
+
+def _install_coalescing() -> bool:
     """Register WP08's real coalescing strategy into the journal seam (D-020 / FR-011).
 
     The journal's coalescing seam defaults to a no-op; this is the live integration
     point that binds the strategy to the delivery *ledger* so "delivered anywhere?"
-    is answered authoritatively. Returns ``True`` when the strategy was installed,
-    ``False`` when WP08's ``coalesce`` module is not yet present in this checkout —
-    in which case the journal safely keeps its no-op seam rather than breaking the
-    drain (coalescing is simply inactive until the sibling WP lands).
+    is answered authoritatively — per append, against whichever unit of work is
+    appending (see :func:`_coalescing_query_for`). Returns ``True`` when the
+    strategy was installed, ``False`` when WP08's ``coalesce`` module is not yet
+    present in this checkout — in which case the journal safely keeps its no-op
+    seam rather than breaking the drain (coalescing is simply inactive until the
+    sibling WP lands).
     """
     try:
         coalesce: Any = _load_coalesce()
     except ImportError:
         return False
-    coalesce.install(ledger)
+    coalesce.install(_coalescing_query_for)
     return True
 
 
@@ -773,7 +789,7 @@ def dispatch(
         with store.unit_of_work() as unit:
             phase_journal = EventJournal(unit, store.layout_generation())
             phase_ledger = SqliteDeliveryLedger(unit, store.layout_generation())
-            _install_coalescing(phase_ledger)
+            _install_coalescing()
             selected = _select_undelivered(
                 phase_journal,
                 phase_ledger,
@@ -794,7 +810,7 @@ def dispatch(
         return _summarize_results(target.target_id, results, selected=len(selected.events))
     if journal is None or ledger is None or context is None:
         raise TypeError("dispatch requires either ProjectSyncStore or journal, ledger, and ProjectSyncContext")
-    _install_coalescing(ledger)
+    _install_coalescing()
     selected = _select_undelivered(
         journal,
         ledger,

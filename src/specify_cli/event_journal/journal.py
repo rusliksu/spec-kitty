@@ -145,6 +145,21 @@ class EventJournal:
         """Return the opaque identity minted for this repository's active UoW."""
         return self._unit.store_identity
 
+    @property
+    def unit_of_work(self) -> ProjectUnitOfWork:
+        """The store-owned transaction this journal appends inside.
+
+        Published so a process-global seam can rebind its per-append query to the
+        *caller's* live transaction instead of pinning the transaction that
+        happened to be open when the seam was installed.
+        """
+        return self._unit
+
+    @property
+    def layout_authority(self) -> LayoutGenerationAuthority:
+        """The layout generation authority revalidating this journal's writes."""
+        return self._authority
+
     def _existing_assignment(self, event_id: str) -> JournalWriteReceipt | None:
         row = self._unit.execute(
             "SELECT capture_sequence, epoch_id FROM journal_entries WHERE project_uuid = ? AND entry_id = ?",
