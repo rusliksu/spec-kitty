@@ -23,6 +23,9 @@ owned_files:
   - "tests/sync/test_offline_queue_counter.py"
 authoritative_surface: "src/specify_cli/sync/"
 execution_mode: "code_change"
+planning_base_branch: codex/sync-capture-coalescing
+merge_target_branch: codex/sync-capture-coalescing
+branch_strategy: Planning artifacts for this mission were generated on codex/sync-capture-coalescing. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into codex/sync-capture-coalescing unless the human explicitly redirects the landing branch.
 ---
 
 # Work Package Prompt: WP01 – Capture fold integrity
