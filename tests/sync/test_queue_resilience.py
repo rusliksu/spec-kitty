@@ -157,10 +157,19 @@ class TestCoalesceKey:
 
 
 class TestEventCoalescing:
-    """Integration tests: coalescing prevents duplicate queue rows."""
+    """Queue behaviour around the coalesce key while the seam is at its no-op default.
+
+    ``tests/sync/conftest.py`` resets the process-global coalescing seam around every
+    sync test, so no capture here is folded and each one is stored as its own row. The
+    fold contract itself -- a capture sharing a coalesce key with an undelivered entry,
+    with the seam installed by a real drain -- is pinned by
+    ``tests/delivery/test_dispatcher.py``
+    (``test_capture_after_a_drain_folds_without_an_orphan_outbox_task``) and by
+    ``tests/event_journal/test_coalesce.py``.
+    """
 
     def test_coalescing_updates_existing_row(self, temp_queue: OfflineQueue):
-        """Second event with same coalesce key replaces first, keeping queue size at 1."""
+        """With no seam installed both same-key captures are stored and both drain."""
         base_ns = {"project_uuid": PROJECT, "mission_slug": "010-feat"}
         event1 = {
             "event_id": "evt-001",

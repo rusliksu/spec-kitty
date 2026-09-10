@@ -71,6 +71,7 @@ from specify_cli.event_journal.models import Event
 from specify_cli.sync.project_context import AdmissionState, ProjectSyncContext
 from specify_cli.sync.project_identity import CanonicalProjectUUID
 from specify_cli.sync.project_store import ProjectSyncStore, ProjectUnitOfWork
+from specify_cli.sync.queue import OfflineQueue
 from specify_cli.sync.transport_attempts import (
     get_delivery_attempt_record,
     prepare_delivery_attempt,
@@ -159,6 +160,20 @@ def _coalescible_event(event_id: str, *, payload: bytes) -> Event:
         coalesce_key=_COALESCE_KEY,
         project_uuid=_TEST_PROJECT_UUID,
     )
+
+
+def _coalescible_capture(event_id: str) -> dict[str, Any]:
+    """A queue-level capture sharing one coalesce key with its sibling."""
+    return {
+        "event_id": event_id,
+        "event_type": "MissionDossierArtifactIndexed",
+        "project_uuid": _TEST_PROJECT_UUID,
+        "payload": {
+            "namespace": {"project_uuid": _TEST_PROJECT_UUID, "mission_slug": "010-feat"},
+            "artifact_id": {"path": "readme.md"},
+            "content_ref": {"algorithm": "sha256", "hash": event_id[-1] * 64},
+        },
+    }
 
 
 @pytest.fixture
@@ -1585,6 +1600,48 @@ def test_drain_leaves_the_seam_usable_for_the_next_capture(
 
     assert [row.event_id for row in rows] == ["cap-1"]
     assert rows[0].payload == b"second"
+
+
+def test_capture_after_a_drain_folds_without_an_orphan_outbox_task(
+    store: ProjectSyncStore,
+    context: ProjectSyncContext,
+    target_a: DeliveryTarget,
+) -> None:
+    """A coalesced capture after a real drain must not write an orphan task (FR-001/FR-002).
+
+    ``dispatch`` installs the process-global coalescing seam with a resolver, so the seam
+    stays live for the rest of the process -- the state a long-lived hosted-sync process is
+    in after its first drain. The next capture whose event shares a coalesce key with an
+    undelivered entry is folded by the journal; the outbox write must follow that decision
+    instead of inserting a task whose journal entry does not exist.
+    """
+    dispatch(store=store, receiver=StubReceiver(), target=target_a, context=context)
+
+    with store.unit_of_work() as unit:
+        queue = OfflineQueue(unit, store.layout_generation())
+        assert queue.queue_event(_coalescible_capture("cap-1")) is True
+        assert queue.queue_event(_coalescible_capture("cap-2")) is True
+        orphans = unit.execute(
+            "SELECT COUNT(*) FROM outbox_tasks AS t "
+            "LEFT JOIN journal_entries AS j "
+            "ON j.project_uuid = t.project_uuid AND j.entry_id = t.journal_entry_id "
+            "WHERE t.journal_entry_id IS NOT NULL AND j.entry_id IS NULL"
+        ).fetchone()
+        entries = unit.execute(
+            "SELECT COUNT(*) FROM journal_entries WHERE project_uuid = ? "
+            "AND entry_id IN ('cap-1', 'cap-2')",
+            (_TEST_PROJECT_UUID,),
+        ).fetchone()
+        pending = unit.execute(
+            "SELECT COUNT(*) FROM outbox_tasks WHERE project_uuid = ? AND task_kind = 'event' "
+            "AND state NOT IN ('synced', 'terminal_failed')",
+            (_TEST_PROJECT_UUID,),
+        ).fetchone()
+        queue_size = queue.size()
+
+    assert orphans is not None and int(orphans[0]) == 0
+    assert entries is not None and int(entries[0]) == 1
+    assert pending is not None and int(pending[0]) == queue_size == 1
 
 
 # -- HTTP 412 protocol skew halts the pass and parks nothing (#1553) ------------
