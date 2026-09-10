@@ -2,7 +2,7 @@
 
 **Mission Branch**: `codex/sync-capture-coalescing`
 **Created**: 2026-09-10
-**Status**: Draft
+**Status**: Approved (owner, 2026-09-10)
 **Input**: User description: "make hosted-sync capture-time coalescing integrity-safe end to end: the journal coalescing seam must never leave the project-store outbox or journal inconsistent, on any capture path and in any process that has already drained once."
 
 ## Context
@@ -64,7 +64,7 @@ cap-overflow sequences and assert the observable row counts agree at every step.
    equals the persisted pending count.
 2. **Given** a capture path with no coalescing seam installed, **When** an event is
    captured, **Then** the observed behavior matches the chosen contract in
-   "Open Product Decisions" below.
+   "Product Decisions" below.
 
 ---
 
@@ -139,9 +139,9 @@ candidate SHA pass the POSIX `fast-tests-sync` job.
 - **Unit of work**: the store-owned transaction that a capture writes inside and that the
   coalescing answer must be read from.
 
-## Open Product Decisions
+## Product Decisions
 
-**D-001 (blocking for plan): what does a coalesced capture leave behind?**
+**D-001 (resolved): what does a coalesced capture leave behind?**
 
 - **Decision A1 - capture folds into the surviving entry.** A "not stored as new"
   decision means the capture writes no new journal entry and no new outbox task; the
@@ -156,7 +156,15 @@ fork test oracles remain valid. A1 matches the journal's documented latest-wins 
 and the queue test whose prose already says "keeps queue size at 1". A2 matches the
 assertions currently written in the queue and counter suites.
 
-**Status**: Open. Requires explicit owner approval before plan.
+**Decision (2026-09-10, owner-approved): A1 — a coalesced capture folds into the
+surviving entry.** Accepted consequences: a "not stored as new" decision writes no new
+journal entry and no new outbox task; the surviving undelivered entry's payload is
+replaced in place; the queue reports an unchanged pending count; and the two fork oracles
+that assert two pending rows for one coalesce key are superseded deliberately in this
+mission under C-004 (queue-size and counter oracles move from 2 to 1, and the coalescing
+test's drain expectation is rewritten to the surviving identity). A2 is recorded as
+rejected: it would leave the process-global seam unable to fold an undelivered duplicate
+after any drain, which is the production shape this mission exists to repair.
 
 ## Baseline Already On This Branch
 
