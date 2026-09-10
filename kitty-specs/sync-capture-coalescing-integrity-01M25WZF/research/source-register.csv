@@ -1,0 +1,12 @@
+source_id,kind,reference,what_it_supports
+SRC-001,ci_run,https://github.com/rusliksu/spec-kitty/actions/runs/34281328452,Base POSIX evidence for the pinned-ledger defect (4 failed / 3039 passed)
+SRC-002,ci_job,https://github.com/rusliksu/spec-kitty/actions/runs/34281328452/job/102246597822,Traceback of ProjectStoreError from the queue capture path
+SRC-003,ci_run,https://github.com/rusliksu/spec-kitty/actions/runs/34489743886,Post-repair POSIX evidence on head 342f784c7 (3 failed / 3040 passed)
+SRC-004,ci_job,https://github.com/rusliksu/spec-kitty/actions/runs/34489743886/job/102913159263,Traceback of the outbox foreign-key violation at queue.py:433
+SRC-005,pull_request,https://github.com/rusliksu/spec-kitty/pull/24,Draft delivery surface carrying a98f2cb54 and 342f784c7
+SRC-006,source_file,src/specify_cli/event_journal/journal.py,Coalescing seam contract and the coalesced-capture sentinel receipt
+SRC-007,source_file,src/specify_cli/event_journal/coalesce.py,Latest-wins strategy and the resolver seam
+SRC-008,source_file,src/specify_cli/delivery/dispatcher.py,The live installer of the process-global seam
+SRC-009,source_file,src/specify_cli/sync/queue.py,The single live capture path and the coalesce-key derivation
+SRC-010,source_file,src/specify_cli/sync/project_store.py,Outbox and journal schema including the composite foreign key
+SRC-011,source_file,src/specify_cli/delivery/ledger.py,Delivered-anywhere query used by the coalescing decision
