@@ -51,6 +51,15 @@ covers `MissionDossierArtifactIndexed` (project, mission slug, artifact path) an
 `MissionDossierSnapshotComputed` (project, mission slug). Every other event type carries
 `coalesce_key=None` and always stores as new.
 
+**D-7 - the base moved during planning.** Pull request 24 was merged into `main` as
+`78c1e9ab1`, together with `a84b110a7`, which adds an autouse `tests/sync/conftest.py`
+fixture resetting the process-global coalescing seam around every sync test.
+Consequence: the POSIX sync shard can now be green while the capture-path defect is
+untouched, because no dispatcher-installed seam survives into a queue test. A test that
+relied on leakage from an earlier file would be defeated by that fixture, and a green
+shard alone is therefore not evidence that FR-001/FR-002 hold: the acceptance test must
+perform the drain and the capture inside the same test body.
+
 ## Decisions
 
 **RD-001 - capture folds into the surviving entry (A1, owner-approved 2026-09-10).**

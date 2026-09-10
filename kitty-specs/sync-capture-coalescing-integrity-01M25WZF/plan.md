@@ -18,7 +18,12 @@ entry's payload is replaced, and the pending count is unchanged.
   `C:\Users\Ruslan\.codex-worktrees\spec-kitty-sync-capture-coalescing`.
 - Planning artifacts land on the same branch (single_branch topology, verified through
   `spec-kitty spec-commit --owned-checkout`).
-- Merge target for the delivery PR: `main` (already published as draft pull request 24).
+- Base: `main` at `78c1e9ab1` (merge of pull request 24), which already contains the
+  resolver-based seam, the daemon oracle repair and the per-test seam reset.
+- Delivery: a new pull request from this mission branch to `main`; pull request 24 is
+  merged and is no longer a delivery surface.
+- The per-test seam reset in `tests/sync/conftest.py` is an isolation measure, not a
+  repair: the WP01 acceptance test must drive the drain and the capture in one test.
 - The protected primary checkout `C:\Users\Ruslan\spec-kitty` is never modified (C-003).
 
 ## Technical Context

@@ -166,14 +166,21 @@ test's drain expectation is rewritten to the surviving identity). A2 is recorded
 rejected: it would leave the process-global seam unable to fold an undelivered duplicate
 after any drain, which is the production shape this mission exists to repair.
 
-## Baseline Already On This Branch
+## Baseline Already On `main`
 
-- `a98f2cb54` - the coalescing seam carries a resolver and answers through the appending
-  unit of work (FR-004), with a regression test that drains first and captures second.
-- `342f784c7` - the daemon isolation oracle is platform- and scope-hermetic (FR-006).
-- Published evidence: draft pull request 24 at these two commits; POSIX sync job moved
-  from 4 failed / 3039 passed to 3 failed / 3040 passed, and the three remaining failures
-  are the capture-path integrity defect this mission exists to close.
+- Pull request 24 was merged into `main`; merge commit `78c1e9ab1` carries the
+  resolver-based seam (FR-004, with a regression test that drains first and captures
+  second), the platform- and scope-hermetic daemon oracle (FR-006), and an autouse
+  `tests/sync/conftest.py` fixture `_reset_event_journal_coalescing_seam` that resets the
+  process-global seam around every sync test.
+- POSIX evidence for that work: the sync job moved from 4 failed / 3039 passed to
+  3 failed / 3040 passed with the daemon node green; the three remaining failures were
+  the capture-path integrity defect this mission exists to close.
+- **Consequence for this mission**: the conftest fixture makes the sync shard
+  deterministic by removing cross-file seam leakage, so the shard can be green while the
+  production defect is untouched. A long-lived process that drains once and then captures
+  a coalesceable duplicate still writes the outbox task the foreign key refuses, so the
+  WP01 acceptance test must drive the drain and the capture inside one test body.
 
 ## Success Criteria *(mandatory)*
 
