@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -13,6 +14,12 @@ from .models import Event
 
 class DeliveredAnywhereQuery(Protocol):
     def delivered_anywhere(self, event_id: str) -> bool: ...
+
+
+# The seam is process-global while a project unit of work is not: both the
+# strategy and `install` therefore take a RESOLVER (journal -> query) so the
+# answer always comes from the caller's live transaction, never from a ledger
+# instance pinned when the seam was installed and closed since.
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,8 +37,8 @@ def read_supersede_markers(journal: EventJournal) -> list[SupersedeMarker]:
 class CoalescingStrategy:
     """Latest-wins coalescing that never mutates a delivered payload."""
 
-    def __init__(self, ledger: DeliveredAnywhereQuery) -> None:
-        self._ledger = ledger
+    def __init__(self, query_for: Callable[[EventJournal], DeliveredAnywhereQuery]) -> None:
+        self._query_for = query_for
 
     def __call__(self, journal: EventJournal, event: Event) -> CoalesceDecision:
         key = event.coalesce_key
@@ -40,7 +47,8 @@ class CoalescingStrategy:
         candidates = [row for row in journal.read_all() if row.coalesce_key == key]
         if not candidates:
             return CoalesceDecision()
-        undelivered = [candidate for candidate in candidates if not self._ledger.delivered_anywhere(candidate.event_id)]
+        query = self._query_for(journal)
+        undelivered = [candidate for candidate in candidates if not query.delivered_anywhere(candidate.event_id)]
         if undelivered:
             journal.replace_undelivered_payload(undelivered[-1].event_id, event.payload)
             return CoalesceDecision(store_as_new=False)
@@ -53,8 +61,8 @@ class CoalescingStrategy:
         return CoalesceDecision()
 
 
-def install(ledger: DeliveredAnywhereQuery) -> CoalescingStrategy:
-    strategy = CoalescingStrategy(ledger)
+def install(query_for: Callable[[EventJournal], DeliveredAnywhereQuery]) -> CoalescingStrategy:
+    strategy = CoalescingStrategy(query_for)
     register_coalesce_strategy(strategy)
     return strategy
 

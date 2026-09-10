@@ -10,6 +10,7 @@ from uuid import uuid4
 import pytest
 
 from specify_cli.core.env import SYNC_DISABLE_ENV_VARS
+from specify_cli.event_journal import reset_coalesce_strategy
 from specify_cli.sync.queue import OfflineQueue
 from specify_cli.sync.emitter import EventEmitter
 from specify_cli.sync.clock import LamportClock
@@ -211,6 +212,20 @@ def _isolate_pre_review_gate_sync_toggles(monkeypatch: pytest.MonkeyPatch) -> No
     """
     for _name in SYNC_DISABLE_ENV_VARS:
         monkeypatch.delenv(_name, raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _reset_event_journal_coalescing_seam() -> Iterator[None]:
+    """Keep dispatcher-installed coalescing out of unrelated sync tests.
+
+    The journal seam is intentionally process-global in production so a capture
+    after a drain can use the active project UoW. A dispatcher test can therefore
+    leave the seam installed for the next file in the same xdist worker; reset it
+    around every sync test so queue assertions do not depend on file ordering.
+    """
+    reset_coalesce_strategy()
+    yield
+    reset_coalesce_strategy()
 
 
 @pytest.fixture

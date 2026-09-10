@@ -145,6 +145,22 @@ def _make_event(index: int) -> Event:
     )
 
 
+_COALESCE_KEY = "drain-capture-coalesce-key"
+
+
+def _coalescible_event(event_id: str, *, payload: bytes) -> Event:
+    """A same-key capture used to observe the coalescing seam after a drain."""
+    return Event(
+        event_id=event_id,
+        event_type="mission.updated",
+        payload=payload,
+        occurred_at=_OCCURRED_AT,
+        created_at=f"2026-06-29T00:00:0{event_id[-1]}+00:00",
+        coalesce_key=_COALESCE_KEY,
+        project_uuid=_TEST_PROJECT_UUID,
+    )
+
+
 @pytest.fixture
 def store() -> ProjectSyncStore:
     value = ProjectSyncStore(_TEST_PROJECT_UUID)
@@ -595,8 +611,8 @@ class _FakeCoalesce:
     def __init__(self) -> None:
         self.installed_with: object | None = None
 
-    def install(self, ledger: object) -> str:
-        self.installed_with = ledger
+    def install(self, query_for: object) -> str:
+        self.installed_with = query_for
         return "fake-strategy"
 
 
@@ -1488,22 +1504,31 @@ def test_expired_attempt_refusal_is_recovery_required_not_project_not_admitted(
 
 
 # --------------------------------------------------------------------------- #
-# D-020 coalescing carry — install(ledger) on the live dispatch path (FR-011) #
+# D-020 coalescing carry — journal-scoped query on the live path (FR-011)    #
 # --------------------------------------------------------------------------- #
 
 
-def test_install_coalescing_invokes_install_with_ledger(
-    ledger: SqliteDeliveryLedger,
+def test_install_coalescing_installs_a_journal_scoped_query(
     monkeypatch: pytest.MonkeyPatch,
+    unit: ProjectUnitOfWork,
+    store: ProjectSyncStore,
 ) -> None:
     fake = _FakeCoalesce()
     monkeypatch.setattr("specify_cli.delivery.dispatcher._load_coalesce", lambda: fake)
-    assert _install_coalescing(ledger) is True
-    assert fake.installed_with is ledger
+    assert _install_coalescing() is True
+
+    # The seam is process-global while a unit of work is not: it must receive a
+    # resolver, not one ledger pinned to whoever happened to install it.
+    query_for = fake.installed_with
+    assert callable(query_for)
+    journal = EventJournal(unit, store.layout_generation())
+    resolved = query_for(journal)
+    assert isinstance(resolved, SqliteDeliveryLedger)
+    assert resolved.unit_of_work_identity == journal.unit_of_work_identity
+    assert resolved.project_uuid == _TEST_PROJECT_UUID
 
 
 def test_install_coalescing_degrades_when_module_absent(
-    ledger: SqliteDeliveryLedger,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     def _missing() -> Any:
@@ -1511,7 +1536,7 @@ def test_install_coalescing_degrades_when_module_absent(
 
     monkeypatch.setattr("specify_cli.delivery.dispatcher._load_coalesce", _missing)
     # The drain must not break when WP08's coalesce module is not yet merged.
-    assert _install_coalescing(ledger) is False
+    assert _install_coalescing() is False
 
 
 def test_dispatch_activates_coalescing_on_live_path(
@@ -1526,10 +1551,40 @@ def test_dispatch_activates_coalescing_on_live_path(
 
     dispatch(store=store, receiver=stub, target=target_a, context=context)
 
-    # The live dispatch path registered the real coalescing strategy bound to the
-    # delivery ledger (D-020): without this, FR-011 coalescing is dead in production.
-    assert isinstance(fake.installed_with, SqliteDeliveryLedger)
-    assert fake.installed_with.project_uuid == _TEST_PROJECT_UUID
+    # The live dispatch path registered the real coalescing strategy (D-020):
+    # without this, FR-011 coalescing is dead in production. It carries a resolver,
+    # so it stays usable after this drain's unit of work closes.
+    query_for = fake.installed_with
+    assert callable(query_for)
+    with store.unit_of_work() as unit:
+        resolved = query_for(EventJournal(unit, store.layout_generation()))
+    assert resolved.project_uuid == _TEST_PROJECT_UUID
+
+
+def test_drain_leaves_the_seam_usable_for_the_next_capture(
+    store: ProjectSyncStore,
+    context: ProjectSyncContext,
+    target_a: DeliveryTarget,
+) -> None:
+    """A drain must not leave a closed unit of work installed in the seam.
+
+    Regression (the `fast-tests-sync` failure on main): `dispatch` installed a
+    ledger pinned to the drain's own unit of work. That transaction closes with the
+    drain, so the next capture whose event carries a matching coalesce key - exactly
+    what `OfflineQueue.queue_event` does after a drain in the same long-lived
+    process - raised `ProjectStoreError: project unit of work is no longer active`
+    instead of coalescing.
+    """
+    dispatch(store=store, receiver=StubReceiver(), target=target_a, context=context)
+
+    with store.unit_of_work() as unit:
+        journal = EventJournal(unit, store.layout_generation())
+        journal.append(_coalescible_event("cap-1", payload=b"first"))
+        journal.append(_coalescible_event("cap-2", payload=b"second"))
+        rows = [row for row in journal.read_all() if row.coalesce_key == _COALESCE_KEY]
+
+    assert [row.event_id for row in rows] == ["cap-1"]
+    assert rows[0].payload == b"second"
 
 
 # -- HTTP 412 protocol skew halts the pass and parks nothing (#1553) ------------

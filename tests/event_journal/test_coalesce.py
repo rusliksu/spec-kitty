@@ -73,8 +73,9 @@ def ledger(unit: ProjectUnitOfWork, store: ProjectSyncStore) -> SqliteDeliveryLe
 
 
 @pytest.fixture()
-def strategy(ledger: SqliteDeliveryLedger) -> CoalescingStrategy:
-    return install(ledger)
+def strategy() -> CoalescingStrategy:
+    """Install the real strategy, resolved against the appending journal's unit."""
+    return install(lambda journal: SqliteDeliveryLedger(journal.unit_of_work, journal.layout_authority))
 
 
 def _event(event_id: str, *, payload: bytes, key: str | None, created_at: str = T1) -> Event:
@@ -233,8 +234,8 @@ def test_registration_is_idempotent(
     ledger: SqliteDeliveryLedger,
     unit: ProjectUnitOfWork,
 ) -> None:
-    install(ledger)
-    install(ledger)  # double-install must not stack strategies
+    install(lambda appending: ledger)
+    install(lambda appending: ledger)  # double-install must not stack strategies
 
     journal.append(_event("evt-1", payload=b"original", key="grp", created_at=T1))
     ledger.record_success("evt-1", TARGET)
