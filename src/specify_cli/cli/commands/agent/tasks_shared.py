@@ -63,9 +63,12 @@ def resolve_repo_root_with_owned_checkout(
     that worktree (issue 26). A declaration that is not owned writes nothing and
     exits fail-closed with the shared typed refusal.
     """
-    from specify_cli.core.paths import locate_project_root
+    from specify_cli.cli.commands.agent import tasks as _tasks
 
-    ambient_root = locate_project_root()
+    # Routed through the ``tasks`` seam (module docstring's interception rule): the
+    # historical ``monkeypatch.setattr(tasks, "locate_project_root", ...)`` targets
+    # must keep intercepting, so this reads the patched attribute, not core.paths.
+    ambient_root = _tasks.locate_project_root()
     if ambient_root is None:
         _emit_owned_root_error("Could not locate project root", json_output=json_output)
         raise typer.Exit(1)

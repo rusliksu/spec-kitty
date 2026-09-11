@@ -305,6 +305,7 @@ from specify_cli.cli.commands.agent.tasks_shared import (
     _RUNTIME_STATE_DENY_LIST as _RUNTIME_STATE_DENY_LIST,
     _check_unchecked_subtasks as _check_unchecked_subtasks,
     _coord_topology_active as _coord_topology_active,
+    _emit_owned_root_error as _emit_owned_root_error,
     _emit_sparse_session_warning as _emit_sparse_session_warning,
     _ensure_target_branch_checked_out as _ensure_target_branch_checked_out,
     _filter_by_planning_tip_content as _filter_by_planning_tip_content,
