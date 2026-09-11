@@ -1,0 +1,54 @@
+work_packages:
+  - id: WP01
+    title: "Owned-checkout seam for state-recording commands"
+    dependencies: []
+    owned_files:
+      - "src/specify_cli/cli/commands/agent/tasks_move_task.py"
+      - "src/specify_cli/cli/commands/agent/tasks_shared.py"
+      - "src/specify_cli/cli/commands/agent/status.py"
+      - "tests/tasks/test_move_task_owned_checkout_seam.py"
+      - "tests/status/test_status_owned_checkout_seam.py"
+    requirement_refs:
+      - FR-001
+      - FR-002
+      - FR-003
+      - FR-004
+      - FR-005
+      - NFR-002
+      - NFR-004
+      - C-001
+      - C-002
+      - C-003
+    plan_concern_refs:
+      - IC-01
+      - IC-02
+    subtasks:
+      - T001
+      - T002
+      - T003
+      - T004
+      - T005
+      - T006
+
+  - id: WP02
+    title: "Planning-side honour-or-refuse and evidence closure"
+    dependencies:
+      - WP01
+    owned_files:
+      - "src/specify_cli/cli/commands/agent/tasks.py"
+      - "src/specify_cli/cli/commands/agent/mission_finalize.py"
+      - "src/specify_cli/cli/commands/research.py"
+      - "kitty-specs/tasks-status-owned-checkout-seam-01M282V3/traces/**"
+    requirement_refs:
+      - FR-006
+      - NFR-001
+      - NFR-003
+      - C-004
+    plan_concern_refs:
+      - IC-03
+      - IC-04
+    subtasks:
+      - T007
+      - T008
+      - T009
+      - T010
