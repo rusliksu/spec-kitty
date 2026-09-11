@@ -1,7 +1,7 @@
 {
-  "event_count": 3,
-  "last_event_id": "01M28XRAVDX6FR8AS7RMJK8YRX",
-  "materialized_at": "2026-09-11T19:05:20.493666+00:00",
+  "event_count": 4,
+  "last_event_id": "01M291MDEQG9AXJHJ4X2VZ0BGA",
+  "materialized_at": "2026-09-11T20:13:06.391937+00:00",
   "mission_number": "",
   "mission_slug": "tasks-status-owned-checkout-seam-01M282V3",
   "mission_type": "software-dev",
@@ -14,7 +14,7 @@
     "for_review": 0,
     "in_progress": 1,
     "in_review": 0,
-    "planned": 0
+    "planned": 1
   },
   "work_packages": {
     "WP01": {
@@ -28,6 +28,13 @@
       "model": "__resolved_model_absent__",
       "provider": "__resolved_provider_absent__",
       "role": "implementer"
+    },
+    "WP02": {
+      "actor": "codex",
+      "force_count": 0,
+      "lane": "planned",
+      "last_event_id": "01M291MDEQG9AXJHJ4X2VZ0BGA",
+      "last_transition_at": "2026-09-11T20:13:06.391937+00:00"
     }
   }
 }
