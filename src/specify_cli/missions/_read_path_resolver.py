@@ -1197,6 +1197,12 @@ def candidate_feature_dir_for_mission(
     :class:`MissionSelectorAmbiguous` (C-CTX-4 / C-009 — an ambiguous selector is
     a structured error, never a silent wrong-but-plausible directory).
 
+    ``effective_root`` (issue 26): the declared owned checkout, when a caller
+    names one. Every lookup above folds to the primary by contract, so an owned
+    mission is invisible from the ambient root; naming the checkout here makes
+    this primitive return the mission surface that actually exists. ``None``
+    (the default) leaves the historical result untouched.
+
     ``resolver`` (WP03, FR-002): optional :class:`~mission_runtime.MissionResolver`
     threaded through the bare-modern fold and the existence-gated resolver's own
     identity probe, so this 30+-caller read primitive reaches the single walk
@@ -1218,13 +1224,26 @@ def candidate_feature_dir_for_mission(
         repo_root, mission_slug, resolver=resolver
     )
 
-    return _resolve_mission_read_path(
+    resolved = _resolve_mission_read_path(
         repo_root,
         mission_slug,
         mid8_from_slug(mission_slug),
         topology=stored_topology,
         resolver=resolver,
     )
+    if effective_root is None:
+        # No declaration: byte-identical to the historical behaviour.
+        return resolved
+
+    # ``effective_root`` (issue 26): an explicitly declared owned checkout owns
+    # the mission, so when that checkout actually carries the mission directory
+    # this primitive must return THAT surface rather than the ambient fold. The
+    # historical result is kept whenever the declared checkout has nothing under
+    # the resolved name, so the option can never invent a missing directory.
+    owned_candidate = _compose_primary_feature_dir(
+        repo_root, resolved.name, effective_root=effective_root
+    )
+    return owned_candidate if owned_candidate.exists() else resolved
 
 
 def _stored_topology_best_effort(
