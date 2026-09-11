@@ -276,6 +276,79 @@ WIP was re-parked rather than left half-landed with red guards and a gated featu
 `git revert 5dd8a5847`; the primary checkout is untouched. The mission's planning record plus
 D-1..D-13 is the deliverable of these passes.
 
+**D-14 - the write side is closed, and the closure is proven end to end.** The third pass carried the
+declared root all the way through the write chain and lifted the fail-closed gate. Three folds still
+collapsed it, and each was closed at the site that caused it:
+
+1. `mission_runtime/write_target_degrade.resolve_write_target_or_degrade` (with its
+   `_mission_meta_exists` pre-gate) resolved the placement against the ambient root, so an owned
+   mission had no visible `meta.json` and the target degraded to the repo default - the protected
+   primary branch - surfaced as `PROTECTED_BRANCH_REFUSED`. Both now take an optional
+   `effective_root`.
+2. `mission_runtime/resolution.resolve_placement_only` derived `target_branch` through
+   `get_feature_target_branch`, which folds every root to the primary **by contract**. With a
+   declared root it now reads the stored `target_branch` from that checkout and derives its
+   fallback branch there, mirroring the opted-in arms already present at lines 1116 and 2299. The
+   no-declaration arm is unchanged.
+3. `coordination/status_transition._resolve_write_target` now threads the declared root into both
+   the placement port and the `get_feature_target_branch` fallback, and `agent status emit`'s
+   post-transition reload carries it too, so the reported `status_events_path` is the log the
+   command actually wrote (D-12 recorded this path naming the protected primary).
+
+A fourth, latent defect surfaced from the lint gate rather than from behaviour:
+NaNcandidate_feature_dir_for_mission` had gained an `effective_root` parameter that the body never
+consulted (ruff `ARG001`). Every caller above it therefore still resolved the ambient fold, and the
+placement ref only came out right because its `resolve_primary_branch(placement_root)` fallback
+happened to agree on this repository. On a repository whose primary branch differs from the mission’s
+stored `target_branch` an owned run would have resolved the WRONG ref. With a declared checkout the
+primitive now returns that checkout’s own mission directory when it exists there and keeps the historical
+result when it does not, so the option can never invent an absent directory.
+
+**Live proof (the acceptance run, from the protected primary’s own working directory).**
+
+```text
+primary cwd: C:\Users\Ruslan\spec-kitty   HEAD 78c1e9ab1, clean
+
+agent status emit WP02 --to planned --actor codex \
+  --mission tasks-status-owned-checkout-seam-01M282V3 \
+  --owned-checkout <owned worktree> --json
+  -> exit 0, event 01M291MDEQG9AXJHJ4X2VZ0BGA
+  -> status_events_path = <owned worktree>\kitty-specs\<slug>\status.events.jsonl
+  -> the event is the last line of THAT log
+  -> primary HEAD unchanged, git status empty, no kitty-specs/<slug>/ in the primary
+
+agent tasks move-task WP01 --to doing --owned-checkout <owned worktree> --json
+  -> {"result": "success", "transition_applied": true, "new_lane": "in_progress",
+      "path": "<owned worktree>\kitty-specs\<slug>\tasks\WP01-owned-checkout-seam.md",
+      "status_events_path": "<owned worktree>\kitty-specs\<slug>\status.events.jsonl"}
+
+the same move-task WITHOUT --owned-checkout, from the primary
+  -> {"error": "mission_not_found", "handle": "tasks-status-owned-checkout-seam-01M282V3"}
+     (exit 2 - the guarded path is unchanged, C-001)
+```
+
+The `OWNED_CHECKOUT_WRITE_PATH_PENDING` gate that parked this work in D-12 is lifted: the hazard it
+guarded against is closed at the source, and the primary-unchanged assertions above are now machine-checked
+in both oracles rather than observed by hand.
+
+**The executable oracles (WP01 T001-T006).** Two new modules build a REAL owned checkout - a registered
+linked worktree of a temporary primary, holding a real mission whose directory exists only there:
+NaNtests/tasks/test_move_task_owned_checkout_seam.py` (4 tests) and
+NaNtests/status/test_status_owned_checkout_seam.py` (3 tests). They assert the recorded lane sequence in the
+owned log, the reported paths, that a refusal appends nothing, that a foreign directory is refused with a
+typed error code, and that the primary’s HEAD and porcelain output are unchanged in every run.
+
+**The local test bill, measured against a real baseline.** A clone of `main` (`78c1e9ab1`) was
+built and the same suites run in it. At baseline on this Windows host the pinned guard files already fail
+13 tests (11 golden `--help` fixtures that differ only in rich box-drawing characters, the
+NaNlist-tasks` JSON byte-identity pin and the pre-review observability pin - all Windows path-
+separator artifacts) and `tests/status/test_doctor_husks.py` fails 2 more. Those are unchanged by this
+work. What this work cost, and has now paid: the `_MoveTaskArgs` field-set pin, the C-001 seam-
+interception pin, the golden `move-task` help fixture, and two architectural ratchet descriptors
+NaN(MissionStatus._find_meta_path` and the `_compose_primary_feature_dir` leaf) that anchor the exact
+lines this seam re-wrote. The 12 `test_mission_setup_plan_phases` errors and the remaining failure set are
+identical in the baseline clone.
+
 ## Sources
 
 `research/source-register.csv`, `research/evidence-log.csv`.
