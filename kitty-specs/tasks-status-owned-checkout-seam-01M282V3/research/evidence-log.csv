@@ -1,0 +1,8 @@
+evidence_id,date,claim,command_or_artifact,result
+EV-001,2026-09-11,"The working owned-checkout pattern already exists","read src/specify_cli/cli/commands/next_cmd.py:85-182","option + _require_main_repo_unless_owned + resolve_ownership_claim + claimed_checkout used as repo root"
+EV-002,2026-09-11,"Ownership validation is a shared typed authority","read src/specify_cli/core/checkout_ownership.py","OwnershipClaim / OwnershipValidationResult / resolve_ownership_claim / error_for_claim"
+EV-003,2026-09-11,"Task commands resolve the census from the ambient root","read src/specify_cli/cli/commands/agent/tasks_move_task.py:341, tasks_shared.py, selector_resolution.resolve_mission_handle","locate_project_root returns the main root from inside a worktree, so the owned mission is absent"
+EV-004,2026-09-11,"SPECIFY_REPO_ROOT does not help","SPECIFY_REPO_ROOT=<owned worktree> spec-kitty agent status lifecycle --mission <slug> --json","mission_not_found (resolver collapses the worktree through get_main_repo_root)"
+EV-005,2026-09-11,"Write side is already parameterised by the root","read src/specify_cli/coordination/status_transition.py:746-814, tasks_shared.py status placement","transaction identity derives from repo_root/feature_dir/anchor; status state placed via placement_seam"
+EV-006,2026-09-11,"An independent fix is in flight and conflicts","git cherry-pick 4b8357eda 3683aa73d 2b833d510 onto origin/main","CONFLICT in status_transition._identity_for_request; cherry-pick aborted"
+EV-007,2026-09-11,"The gap stops a real mission","mission sync-capture-coalescing-integrity-01M25WZF runtime query","mission_state blocked, reason no actionable wp; research wrote into the protected primary"
