@@ -439,7 +439,12 @@ def _mt_resolve_targets(st: _MoveTaskState, ports: TasksPorts) -> None:
     except Pre30LayoutError as e:
         _tasks._output_error(st.json_output, str(e))
         raise typer.Exit(1) from None
-    st.wp = _tasks.locate_work_package(repo_root, st.mission_slug, st.task_id)
+    st.wp = _tasks.locate_work_package(
+        repo_root,
+        st.mission_slug,
+        st.task_id,
+        effective_root=st.repo_root if st.owned_checkout is not None else None,
+    )
     # Lane is event-log-only; read from the canonical coord-husk event log.
     st.old_lane = _read_transactional_wp_lane(
         feature_dir=st.mt_feature_dir,
@@ -2389,6 +2394,9 @@ def _mt_emit_transitions(st: _MoveTaskState, ports: TasksPorts) -> None:
             TransitionRequest(
                 feature_dir=st.feature_dir,
                 mission_slug=st.mission_slug,
+                # Issue 26: a declared owned checkout owns the mission on the write side
+                # too, so the transaction anchor never crosses into a sibling checkout.
+                effective_root=st.repo_root if st.owned_checkout is not None else None,
                 wp_id=st.task_id,
                 to_lane=target,
                 actor=transition_actor,

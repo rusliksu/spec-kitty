@@ -186,6 +186,38 @@ The remaining WP01 change is therefore, in the layer's own idiom:
 The no-declaration path stays byte-identical throughout, which the parity check in D-8 already
 demonstrates for the option surface.
 
+**D-11 - the fold bottoms out in one guarded leaf.** After threading `effective_root` through the
+placement seam factory, `resolve_artifact_surface`, `resolve_placement_only`, both status-surface
+resolver functions, `TransitionRequest` and `locate_work_package`, the owned run still ends in the
+same refusal. A stack probe on the live CLI located the last fold:
+
+```text
+_mt_resolve_targets -> task_utils/support.locate_work_package -> surface_resolver.resolve_status_surface
+  -> mission_runtime/_read_path_resolver._compose_primary_feature_dir   (line 1263)
+       primary_dir = get_main_repo_root(repo_root) / KITTY_SPECS_DIR / mission_slug   (line 1308)
+```
+
+`_compose_primary_feature_dir` is the terminal KITTY_SPECS join, and it folds **every** root it is
+handed through `get_main_repo_root`; every layer above inherits that fold. The leaf documents itself
+as permanent (C-004, never delete) and is machine-guarded: its sanctioned-import census lives in
+`tests/architectural/test_no_read_side_bypass.py` (`_FOUNDATION_SANCTION_SEED` +
+`_READ_SANCTIONED_MODULES`) and `tests/architectural/test_single_mission_surface_resolver.py` owns
+the join. Closing issue 26 therefore has exactly two coherent shapes:
+
+1. give that leaf an explicit owned-root parameter and update the two architectural censuses that
+   sanction its callers (the seam this mission has already threaded is the correct upstream); or
+2. adopt the placement-layer approach of the in-flight pull request 20, which changes
+   `_read_path_resolver` and the task-context routing from the other direction (C-004).
+
+Everything threaded so far is additive and verified non-regressive: `tests/mission_runtime/`, the
+move-task orchestration suite and the compat-surface guard are **653 passed, 0 failed**, and the
+no-declaration path still returns `mission_not_found` for an owned mission (parity held).
+
+**Scope note**: the seam legitimately spans shared helpers outside the command files named in
+`wps.yaml` — `task_utils/support.py` (the work-package locator), `mission_runtime/resolution.py`,
+`coordination/surface_resolver.py` and `status/models.py`. WP01's `owned_files` must be widened to
+name them, or the change is split across WPs; that is a plan edit, not a silent expansion.
+
 ## Sources
 
 `research/source-register.csv`, `research/evidence-log.csv`.
