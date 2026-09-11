@@ -117,3 +117,40 @@ Hand-off: mission `linked-worktree-prerequisite-resolution-01M1MFE9` recorded th
 residual blocker for WP03/T012. With `fast-tests-sync` and the aggregate quality gate both green at
 the delivery head, that blocker is closed on the delivery surface; the dependent mission still owns
 its own acceptance decision.
+
+## Addendum: canonical-producer lint on the delivery branch
+
+The first three pushes of this branch were red on a second workflow that the earlier evidence did not
+cover: `canonical-producer-lint` (`AST lint -- canonical producers`, run `34576932783` at head
+`b0a6e5a5e`):
+
+```text
+tests/delivery/test_dispatcher.py:167:11: CP001 hand-rolled event dict (keys event_type+payload)
+tests/delivery/test_dispatcher.py:167:11: CP002 function declared dict[str, Any] return builds
+  event-shaped dict in body
+2 new canonical-producer violation(s) (119 silenced by baseline)
+```
+
+Cause: the acceptance fixture hand-rolled its whole event payload as nested dicts. Remediation on the
+code revision `53948e0f0`:
+
+1. the payload is now built by the canonical model - `MissionDossierArtifactIndexedPayload` with
+   `LocalNamespaceTuple`, `ArtifactIdentity` and `ContentHashRef` - and dumped with
+   `model_dump(mode="json")`;
+2. the remaining hand-rolled piece is the queue's own wire envelope, which the queue's capture API
+   requires as a mapping and which production assembles in the lifecycle fan-out (itself
+   allow-listed). `tests/delivery/test_dispatcher.py::CP001` and `::CP002` are therefore recorded in
+   `scripts/canonical_producer_lint_baseline.txt`, exactly as the sibling queue test files
+   (`tests/sync/test_offline_queue_counter.py`, `tests/sync/test_queue_resilience.py`,
+   `tests/integration/test_offline_queue_overflow.py`) already are. The baseline is file-scoped, so
+   this also silences any future CP001/CP002 site in that file - recorded here as the mechanism's
+   known blunt edge.
+
+The acceptance test and the WP01 verification set were re-run after the refactor and are unchanged:
+`1 passed` for the acceptance node and `369 passed, 0 failed` for the set.
+
+## Final head check
+
+At head `53948e0f0` every workflow on the pull request is green: `CI Quality` (`success`,
+`fast-tests-sync` and `quality-gate` included), `canonical-producer-lint`, `ci-windows`,
+`ui-e2e`, `drift-detector`, `docs-freshness` and `Release Readiness Check`.
