@@ -94,6 +94,45 @@ primary for a mission that lives elsewhere is never an acceptable outcome (FR-00
 - **R-3**: PR 20 may land first; the two approaches overlap in `move-task`. The mitigation is to keep
   this mission's change additive and to record the difference in the review trail.
 
+## Addendum: the first implementation pass and the folds that remain
+
+A first pass on `move-task` (option + validated claim + claimed root as the command's root, plus
+skipping the primary fold in `_ensure_target_branch_checked_out`) moved the failure from
+`mission_not_found` to a deeper refusal, which is itself the useful finding: **the resolution stack
+folds a linked worktree back to the primary in more than one place**, and the command therefore needs
+the owned root threaded further than the option surface.
+
+Observed with the partial pass, run from this mission's own worktree:
+
+```text
+without --owned-checkout   -> {"error": "mission_not_found", "handle": "<slug>"}   (unchanged, parity held)
+with    --owned-checkout   -> {"error": "meta.json not found for mission '<slug>' at
+                               C:\\Users\\Ruslan\\spec-kitty\\kitty-specs\\<slug>"}
+```
+
+**D-8 - the remaining fold sites (all read the primary, none sees an owned root):**
+
+- `src/mission_runtime/resolution.py:1027` (`primary_root = get_main_repo_root(repo_root)` in the
+  topology-only resolver) and `:1083` in `mission_context_for`. The latter already accepts an
+  **`effective_root`** and documents that folding an owned checkout through `get_main_repo_root`
+  'would silently cross-read a sibling checkout (#3328 / C-002)' — this is the sanctioned seam and
+  the one the remaining work must thread.
+- `src/mission_runtime/lifecycle_phase.py:107, 264, 383` — the same fold in the lifecycle phase
+  helpers.
+- `src/specify_cli/missions/_read_path_resolver.py:1308` — `primary_dir = get_main_repo_root(repo_root)
+  / KITTY_SPECS_DIR / mission_slug`.
+- `src/specify_cli/coordination/surface_resolver.py:764` — `_compose_primary_feature_dir(repo_root, ...)`
+  composed the primary path the final refusal named; this is the status-surface side of RD-003 and the
+  reason R-1 is answered 'a route IS needed'.
+- `src/specify_cli/cli/commands/agent/tasks_shared.py` `_find_mission_slug` legacy-dir probe
+  (folds for an existence check only; harmless but part of the same family).
+
+**Consequence for the plan**: WP01 is not an option-plumbing change. The seam must thread the
+declared checkout as the **effective root** through `mission_context_for` and the surface resolver,
+which is the same layer the in-flight PR 20 touches from the other direction (C-004). The working
+method stays: keep the no-declaration path byte-identical (proved above), thread the effective root
+through the sanctioned seam, and let the acceptance test decide when the seam is complete.
+
 ## Sources
 
 `research/source-register.csv`, `research/evidence-log.csv`.

@@ -320,6 +320,7 @@ from specify_cli.cli.commands.agent.tasks_shared import (
     _resolve_git_common_dir as _resolve_git_common_dir,
     _review_currency_check_branch as _review_currency_check_branch,
     _skip_target_branch_commit as _skip_target_branch_commit,
+    resolve_repo_root_with_owned_checkout as resolve_repo_root_with_owned_checkout,
     _validate_ready_for_review as _validate_ready_for_review,
     _wp_branch_merged_into_target as _wp_branch_merged_into_target,
 )
@@ -724,6 +725,17 @@ def move_task(
         bool | None, typer.Option("--auto-commit/--no-auto-commit", help="Automatically commit WP file changes to target branch (default: from project config)")
     ] = None,
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON format")] = False,
+    owned_checkout: Annotated[
+        Path | None,
+        typer.Option(
+            "--owned-checkout",
+            help=(
+                "Explicit checkout root owned by this invocation. Use it to record a "
+                "transition for a mission that lives in a linked worktree; the path is "
+                "validated against this repository before anything is written."
+            ),
+        ),
+    ] = None,
     skip_pre_review_gate: Annotated[
         bool,
         typer.Option(
@@ -783,6 +795,7 @@ def move_task(
             auto_commit=auto_commit,
             json_output=json_output,
             skip_pre_review_gate=skip_pre_review_gate,
+            owned_checkout=owned_checkout,
         )
     )
 
