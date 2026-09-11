@@ -852,6 +852,10 @@ class TransitionRequest:
     mission_slug: str | None = None
     _legacy_mission_slug: str | None = None
     repo_root: Path | None = None
+    # Explicitly declared checkout that owns this mission (issue 26). ``None`` keeps
+    # the historical primary fold; when set, the transaction anchor and the status
+    # surface resolve from this checkout instead of a sibling one.
+    effective_root: Path | None = None
     # Transition target
     wp_id: str | None = None
     to_lane: str | None = None

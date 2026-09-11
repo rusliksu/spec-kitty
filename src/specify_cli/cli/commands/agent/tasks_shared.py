@@ -49,6 +49,80 @@ from specify_cli.status import is_dossier_snapshot as _is_dossier_snapshot
 logger = logging.getLogger(__name__)
 
 
+def resolve_repo_root_with_owned_checkout(
+    owned_checkout: Path | None,
+    *,
+    json_output: bool,
+) -> Path:
+    """Return the repo root a state-recording command must operate on.
+
+    Without a declaration this is the ambient project root, byte-for-byte as before.
+    With one, the path is validated through the shared checkout-ownership authority
+    (``core/checkout_ownership``) and the claimed checkout becomes the root, so a
+    mission that lives in an owned linked worktree is resolvable and writable from
+    that worktree (issue 26). A declaration that is not owned writes nothing and
+    exits fail-closed with the shared typed refusal.
+    """
+    from specify_cli.cli.commands.agent import tasks as _tasks
+
+    # Routed through the ``tasks`` seam (module docstring's interception rule): the
+    # historical ``monkeypatch.setattr(tasks, "locate_project_root", ...)`` targets
+    # must keep intercepting, so this reads the patched attribute, not core.paths.
+    ambient_root = _tasks.locate_project_root()
+    if ambient_root is None:
+        _emit_owned_root_error("Could not locate project root", json_output=json_output)
+        raise typer.Exit(1)
+    if owned_checkout is None:
+        return ambient_root
+
+    # Deferred: the ownership authority is reachable only on this opt-in path, so
+    # it stays out of the import graph paid by every non-owning invocation.
+    from specify_cli.core.checkout_ownership import (
+        error_for_claim,
+        resolve_ownership_claim,
+    )
+
+    claim = resolve_ownership_claim(owned_checkout, resolved_primary=ambient_root)
+    refusal = error_for_claim(claim)
+    if refusal is not None:
+        _emit_owned_root_error(str(refusal), json_output=json_output, error_code=refusal.error_code)
+        raise typer.Exit(1)
+
+    # WIP gate (mission research.md D-12): the resolution and read layers are
+    # owned-aware, but the canonical status WRITE path (MissionStatus aggregate ->
+    # status store) still folds its root to the primary, so honouring the option
+    # today writes the transition into the protected checkout - demonstrated once
+    # during development and recorded. Refuse fail-closed until the write side
+    # carries the declared checkout, rather than expose a path that can mutate the
+    # primary.
+    _emit_owned_root_error(
+        "--owned-checkout is not enabled for this command yet: the canonical status "
+        "write path is not owned-aware, so the transition would be written into the "
+        "primary checkout. See the mission's research.md (D-12).",
+        json_output=json_output,
+        error_code="OWNED_CHECKOUT_WRITE_PATH_PENDING",
+    )
+    raise typer.Exit(1)
+
+
+def _emit_owned_root_error(
+    message: str,
+    *,
+    json_output: bool,
+    error_code: str | None = None,
+) -> None:
+    """Render a repo-root refusal in the command family's existing envelope."""
+    import json as _json
+    import sys as _sys
+
+    if json_output:
+        payload: dict[str, object] = {"success": False, "error": message}
+        if error_code is not None:
+            payload["error_code"] = error_code
+        print(_json.dumps(payload))
+        return
+    print(f"Error: {message}", file=_sys.stderr)
+
 def _review_currency_check_branch(
     *,
     main_repo_root: Path,
@@ -170,8 +244,14 @@ def _ensure_target_branch_checked_out(
     repo_root: Path,
     mission_slug: str,
     json_output: bool,
+    *,
+    owned_root: Path | None = None,
 ) -> tuple[Path, str]:
     """Resolve branch context without auto-checkout (respects user's current branch).
+
+    ``owned_root`` is the explicitly declared checkout (issue 26). When it is
+    given it IS the root that owns the mission, so the primary-fold below is
+    skipped; without it the historical fold is untouched.
 
     Returns:
         (main_repo_root, current_branch)
@@ -180,8 +260,10 @@ def _ensure_target_branch_checked_out(
     from specify_cli.core.git_ops import get_current_branch, resolve_target_branch
 
     # Write path: keep main-repo-root resolution so canonical serialization
-    # pins to the primary checkout regardless of where the operator stands.
-    main_repo_root = _tasks.get_main_repo_root(repo_root)
+    # pins to the primary checkout regardless of where the operator stands —
+    # unless the caller declared the owned checkout that owns this mission
+    # (issue 26), in which case that checkout IS the root for this command.
+    main_repo_root = owned_root if owned_root is not None else _tasks.get_main_repo_root(repo_root)
 
     # Check for detached HEAD using robust branch detection
     current_branch = get_current_branch(main_repo_root)

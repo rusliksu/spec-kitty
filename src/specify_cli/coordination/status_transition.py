@@ -562,7 +562,11 @@ def _canonical_repo_root(feature_dir: Path, repo_root: Path) -> Path:
 
 
 def _canonical_primary_feature_dir(
-    repo_root: Path, mission_slug: str, fallback: Path
+    repo_root: Path,
+    mission_slug: str,
+    fallback: Path,
+    *,
+    effective_root: Path | None = None,
 ) -> Path:
     """Resolve the CWD-invariant primary feature-dir anchor via the facade.
 
@@ -592,9 +596,9 @@ def _canonical_primary_feature_dir(
     )
 
     def _primary_anchor() -> Path:
-        anchor: Path = placement_seam(repo_root, mission_slug).read_dir(
-            MissionArtifactKind.PRIMARY_METADATA
-        )
+        anchor: Path = placement_seam(
+            repo_root, mission_slug, effective_root=effective_root
+        ).read_dir(MissionArtifactKind.PRIMARY_METADATA)
         return anchor
 
     def _fallback() -> Path:
@@ -619,7 +623,9 @@ def _canonical_primary_feature_dir(
     # discarded it, then re-invoked the primary resolver — a second composition
     # of the same path. Now both halves come from one resolution.
     try:
-        resolved = resolve_status_surface_with_anchor(repo_root, mission_slug)
+        resolved = resolve_status_surface_with_anchor(
+            repo_root, mission_slug, effective_root=effective_root
+        )
     except FileNotFoundError:
         # No meta.json at the canonical location: degrade to the request dir so
         # ad-hoc fixtures and the create→first-write window keep working.
@@ -759,7 +765,10 @@ def _identity_for_request(request: TransitionRequest) -> _TransactionIdentity:
     interim_repo_root = _repo_root_for_feature(canonical_feature_dir, request.repo_root)
     canonical_repo_root = _canonical_repo_root(canonical_feature_dir, interim_repo_root)
     feature_dir = _canonical_primary_feature_dir(
-        canonical_repo_root, mission_slug, fallback=canonical_feature_dir
+        canonical_repo_root,
+        mission_slug,
+        fallback=canonical_feature_dir,
+        effective_root=request.effective_root,
     )
     repo_root = request.repo_root or canonical_repo_root
 
