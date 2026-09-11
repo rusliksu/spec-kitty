@@ -210,6 +210,9 @@ class _MoveTaskState:
     model: str | None = None
     profile: str | None = None
     invocation_id: str | None = None
+    # Explicit checkout declared by the caller (issue 26); None keeps the
+    # ambient-root behaviour byte-for-byte.
+    owned_checkout: Path | None = None
     # --- phase A: resolved targets ---
     target_lane: Lane = Lane.PLANNED
     repo_root: Path = field(default_factory=Path)
@@ -338,10 +341,12 @@ def _mt_resolve_targets(st: _MoveTaskState, ports: TasksPorts) -> None:
     """Resolve roots/branch/feature-dir and load the WP + its canonical lane."""
     from specify_cli.cli.commands.agent import tasks as _tasks
     st.target_lane = Lane(ensure_lane(st.to))
-    repo_root = _tasks.locate_project_root()
-    if repo_root is None:
-        _tasks._output_error(st.json_output, "Could not locate project root")
-        raise typer.Exit(1)
+    # Issue 26: an explicitly declared owned checkout becomes the root this command
+    # resolves and writes through; without it this is the ambient root exactly as
+    # before (refusals are typed and write nothing).
+    repo_root = _tasks.resolve_repo_root_with_owned_checkout(
+        st.owned_checkout, json_output=st.json_output
+    )
     st.repo_root = repo_root
     # FR-010 / FR-019: one-shot sparse-checkout warning before any read/mutate.
     _tasks._emit_sparse_session_warning(repo_root, command="spec-kitty agent tasks move-task")
@@ -352,7 +357,10 @@ def _mt_resolve_targets(st: _MoveTaskState, ports: TasksPorts) -> None:
         explicit_mission=st.mission, json_output=st.json_output, repo_root=repo_root
     )
     st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
-        repo_root, st.mission_slug, st.json_output
+        repo_root,
+        st.mission_slug,
+        st.json_output,
+        owned_root=repo_root if st.owned_checkout is not None else None,
     )
     from specify_cli.cli.commands.agent.workflow import _resolve_dispatch_binding
 
@@ -431,7 +439,12 @@ def _mt_resolve_targets(st: _MoveTaskState, ports: TasksPorts) -> None:
     except Pre30LayoutError as e:
         _tasks._output_error(st.json_output, str(e))
         raise typer.Exit(1) from None
-    st.wp = _tasks.locate_work_package(repo_root, st.mission_slug, st.task_id)
+    st.wp = _tasks.locate_work_package(
+        repo_root,
+        st.mission_slug,
+        st.task_id,
+        effective_root=st.repo_root if st.owned_checkout is not None else None,
+    )
     # Lane is event-log-only; read from the canonical coord-husk event log.
     st.old_lane = _read_transactional_wp_lane(
         feature_dir=st.mt_feature_dir,
@@ -2381,6 +2394,9 @@ def _mt_emit_transitions(st: _MoveTaskState, ports: TasksPorts) -> None:
             TransitionRequest(
                 feature_dir=st.feature_dir,
                 mission_slug=st.mission_slug,
+                # Issue 26: a declared owned checkout owns the mission on the write side
+                # too, so the transaction anchor never crosses into a sibling checkout.
+                effective_root=st.repo_root if st.owned_checkout is not None else None,
                 wp_id=st.task_id,
                 to_lane=target,
                 actor=transition_actor,
@@ -2896,6 +2912,7 @@ class _MoveTaskArgs:
     model: str | None = None
     profile: str | None = None
     invocation_id: str | None = None
+    owned_checkout: Path | None = None
 
 
 def _do_move_task(args: _MoveTaskArgs, *, ports: TasksPorts | None = None) -> None:
@@ -2950,6 +2967,7 @@ def _do_move_task(args: _MoveTaskArgs, *, ports: TasksPorts | None = None) -> No
         force=args.force,
         tracker_ref=args.tracker_ref,
         skip_review_artifact_check=args.skip_review_artifact_check,
+        owned_checkout=args.owned_checkout,
         auto_commit=args.auto_commit,
         json_output=args.json_output,
         skip_pre_review_gate=args.skip_pre_review_gate,
