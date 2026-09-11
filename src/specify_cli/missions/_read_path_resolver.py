@@ -1078,6 +1078,7 @@ def resolve_surface_dir_or_typed_error(
     mission_slug: str,
     *,
     on_missing_meta: Path,
+    effective_root: Path | None = None,
 ) -> Path:
     """Resolve the authoritative status-surface DIRECTORY, or raise the typed error.
 
@@ -1139,7 +1140,9 @@ def resolve_surface_dir_or_typed_error(
     from specify_cli.coordination.surface_resolver import resolve_status_surface
 
     try:
-        surface: Path = resolve_status_surface(repo_root, mission_slug)
+        surface: Path = resolve_status_surface(
+            repo_root, mission_slug, effective_root=effective_root
+        )
     except (FileNotFoundError, ValueError):
         return on_missing_meta
     return surface.parent

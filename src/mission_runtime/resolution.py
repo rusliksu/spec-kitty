@@ -1609,7 +1609,7 @@ def resolve_placement_only(
     # missions).
     try:
         candidate_dir = candidate_feature_dir_for_mission(
-            repo_root, mission_slug, resolver=resolver
+            repo_root, mission_slug, resolver=resolver, effective_root=effective_root
         )
     except StatusReadPathNotFound as exc:
         # Fail-closed surface refusal at entry canonicalization: translate to
@@ -1652,7 +1652,22 @@ def resolve_placement_only(
     # ``effective_root`` (issue 26): a declared owned checkout owns the mission, so
     # every root-consuming read below uses it instead of folding to the primary.
     placement_root = effective_root or repo_root
-    target_branch = get_feature_target_branch(placement_root, mission_slug)
+    if effective_root is None:
+        target_branch = get_feature_target_branch(placement_root, mission_slug)
+    else:
+        # Issue 26: the legacy helper folds a generic worktree to the ambient
+        # primary checkout, so an owned mission's stored ``target_branch`` is
+        # invisible to it and it degrades to the repo default (the protected
+        # primary branch) — exactly the write-into-primary hazard D-12 caught.
+        # Read the validated checkout's own meta instead and derive the
+        # fallback from that checkout, mirroring the opted-in arms of
+        # ``_assemble_core_fragments`` (line 1116) and ``resolve_action_context``
+        # (line 2299). The no-declaration arm above stays byte-identical.
+        from specify_cli.core.git_ops import resolve_primary_branch
+        from specify_cli.core.paths import read_target_branch_from_meta
+
+        stored_target = read_target_branch_from_meta(candidate_dir)
+        target_branch = stored_target or str(resolve_primary_branch(placement_root))
     topology = _resolve_topology(
         effective_root or get_main_repo_root(repo_root), mission_slug, resolver=resolver
     )

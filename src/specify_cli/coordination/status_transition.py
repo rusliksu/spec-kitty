@@ -648,7 +648,11 @@ def _canonical_primary_feature_dir(
 
 
 def _resolve_write_target(
-    repo_root: Path, mission_slug: str, coord_branch: str | None
+    repo_root: Path,
+    mission_slug: str,
+    coord_branch: str | None,
+    *,
+    effective_root: Path | None = None,
 ) -> str:
     """Resolve the status write-target ref via the canonical placement resolver.
 
@@ -743,9 +747,15 @@ def _resolve_write_target(
             mission_slug,
             MissionArtifactKind.STATUS_STATE,
             degrade_ref=coord_branch or None,
+            effective_root=effective_root,
         ).ref
     except ActionContextError:
-        fallback_ref: str = get_feature_target_branch(repo_root, mission_slug)
+        # Issue 26: the fallback reads the mission meta from disk, so it must
+        # read it where the mission actually lives — the owned checkout when
+        # one was declared, never the ambient primary.
+        fallback_ref: str = get_feature_target_branch(
+            effective_root or repo_root, mission_slug
+        )
         return fallback_ref
 
 
@@ -770,7 +780,9 @@ def _identity_for_request(request: TransitionRequest) -> _TransactionIdentity:
         fallback=canonical_feature_dir,
         effective_root=request.effective_root,
     )
-    repo_root = request.repo_root or canonical_repo_root
+    # Issue 26: a declared owned checkout is the root this transition belongs to;
+    # the canonical re-anchor above can only see the enclosing checkout.
+    repo_root = request.effective_root or request.repo_root or canonical_repo_root
 
     # FR-007: fail-closed reader routing. Malformed meta surfaces typed
     # MissionMetaReadError instead of raw ValueError.
@@ -816,7 +828,9 @@ def _identity_for_request(request: TransitionRequest) -> _TransactionIdentity:
         feature_dir=feature_dir,
         mission_id=effective_mission_id,
         mid8=effective_mid8,
-        destination_ref=_resolve_write_target(repo_root, mission_slug, coord_branch),
+        destination_ref=_resolve_write_target(
+            repo_root, mission_slug, coord_branch, effective_root=request.effective_root
+        ),
         meta_exists=meta_exists,
         coordination_branch=coord_branch,
         transaction_meta_exists=(feature_dir.parent / transaction_dir_name / "meta.json").exists(),
