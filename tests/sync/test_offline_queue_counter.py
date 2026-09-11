@@ -99,6 +99,9 @@ class TestRowCountCache:
         assert temp_queue.size() == _persisted_pending(unit) == 5
 
     def test_counter_unchanged_on_coalesce(self, temp_queue: OfflineQueue, unit: ProjectUnitOfWork) -> None:
+        # No coalescing seam is installed in this suite (it is reset per test), so both
+        # same-key captures are stored and the counter must equal the persisted rows. The
+        # seam-active fold contract lives in tests/delivery/test_dispatcher.py.
         assert temp_queue.queue_event(_dossier_evt("a-1", "miss-1", "spec.md")) is True
         assert temp_queue.queue_event(_dossier_evt("b-1", "miss-1", "spec.md")) is True
         assert temp_queue.size() == _persisted_pending(unit) == 2

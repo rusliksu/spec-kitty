@@ -427,6 +427,15 @@ class OfflineQueue:
             journal_event,
             test_hooks=test_hooks,
         )
+        if not receipt.inserted and receipt.capture_sequence == 0 and receipt.epoch_id == 0:
+            # The active coalescing strategy folded this capture into a surviving
+            # undelivered journal entry (decision A1): the journal deliberately wrote
+            # no row for this identity and replaced the survivor's payload instead.
+            # The survivor already owns a pending task, so there is nothing to insert
+            # here -- an insert would reference a journal entry that does not exist,
+            # and the composite foreign key on (project_uuid, journal_entry_id) would
+            # refuse it exactly as it does today.
+            return True
 
         def write(permit: LayoutWritePermit) -> None:
             _require_project_destination(permit)

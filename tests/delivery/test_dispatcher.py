@@ -66,11 +66,19 @@ from specify_cli.delivery.receivers import (
     TeamspaceReceiver,
     map_batch_response,
 )
+from spec_kitty_events.dossier import (
+    ArtifactIdentity,
+    ContentHashRef,
+    LocalNamespaceTuple,
+    MissionDossierArtifactIndexedPayload,
+)
+
 from specify_cli.event_journal.journal import EventJournal
 from specify_cli.event_journal.models import Event
 from specify_cli.sync.project_context import AdmissionState, ProjectSyncContext
 from specify_cli.sync.project_identity import CanonicalProjectUUID
 from specify_cli.sync.project_store import ProjectSyncStore, ProjectUnitOfWork
+from specify_cli.sync.queue import OfflineQueue
 from specify_cli.sync.transport_attempts import (
     get_delivery_attempt_record,
     prepare_delivery_attempt,
@@ -159,6 +167,33 @@ def _coalescible_event(event_id: str, *, payload: bytes) -> Event:
         coalesce_key=_COALESCE_KEY,
         project_uuid=_TEST_PROJECT_UUID,
     )
+
+
+def _coalescible_capture(event_id: str) -> dict[str, Any]:
+    """A queue-level capture whose payload is built by the canonical dossier model.
+
+    The payload comes from ``MissionDossierArtifactIndexedPayload``; only the queue's wire
+    envelope is assembled here, because the queue's capture API takes a mapping and
+    production assembles the same envelope in the lifecycle fan-out.
+    """
+    payload = MissionDossierArtifactIndexedPayload(
+        namespace=LocalNamespaceTuple(
+            project_uuid=_TEST_PROJECT_UUID,
+            mission_slug="010-feat",
+            target_branch="main",
+            mission_type="software-dev",
+            manifest_version="1",
+        ),
+        artifact_id=ArtifactIdentity(mission_type="software-dev", path="readme.md", artifact_class="evidence"),
+        content_ref=ContentHashRef(hash=event_id[-1] * 64, algorithm="sha256"),
+        indexed_at=_OCCURRED_AT,
+    )
+    return {
+        "event_id": event_id,
+        "event_type": "MissionDossierArtifactIndexed",
+        "project_uuid": _TEST_PROJECT_UUID,
+        "payload": payload.model_dump(mode="json"),
+    }
 
 
 @pytest.fixture
@@ -1585,6 +1620,48 @@ def test_drain_leaves_the_seam_usable_for_the_next_capture(
 
     assert [row.event_id for row in rows] == ["cap-1"]
     assert rows[0].payload == b"second"
+
+
+def test_capture_after_a_drain_folds_without_an_orphan_outbox_task(
+    store: ProjectSyncStore,
+    context: ProjectSyncContext,
+    target_a: DeliveryTarget,
+) -> None:
+    """A coalesced capture after a real drain must not write an orphan task (FR-001/FR-002).
+
+    ``dispatch`` installs the process-global coalescing seam with a resolver, so the seam
+    stays live for the rest of the process -- the state a long-lived hosted-sync process is
+    in after its first drain. The next capture whose event shares a coalesce key with an
+    undelivered entry is folded by the journal; the outbox write must follow that decision
+    instead of inserting a task whose journal entry does not exist.
+    """
+    dispatch(store=store, receiver=StubReceiver(), target=target_a, context=context)
+
+    with store.unit_of_work() as unit:
+        queue = OfflineQueue(unit, store.layout_generation())
+        assert queue.queue_event(_coalescible_capture("cap-1")) is True
+        assert queue.queue_event(_coalescible_capture("cap-2")) is True
+        orphans = unit.execute(
+            "SELECT COUNT(*) FROM outbox_tasks AS t "
+            "LEFT JOIN journal_entries AS j "
+            "ON j.project_uuid = t.project_uuid AND j.entry_id = t.journal_entry_id "
+            "WHERE t.journal_entry_id IS NOT NULL AND j.entry_id IS NULL"
+        ).fetchone()
+        entries = unit.execute(
+            "SELECT COUNT(*) FROM journal_entries WHERE project_uuid = ? "
+            "AND entry_id IN ('cap-1', 'cap-2')",
+            (_TEST_PROJECT_UUID,),
+        ).fetchone()
+        pending = unit.execute(
+            "SELECT COUNT(*) FROM outbox_tasks WHERE project_uuid = ? AND task_kind = 'event' "
+            "AND state NOT IN ('synced', 'terminal_failed')",
+            (_TEST_PROJECT_UUID,),
+        ).fetchone()
+        queue_size = queue.size()
+
+    assert orphans is not None and int(orphans[0]) == 0
+    assert entries is not None and int(entries[0]) == 1
+    assert pending is not None and int(pending[0]) == queue_size == 1
 
 
 # -- HTTP 412 protocol skew halts the pass and parks nothing (#1553) ------------
