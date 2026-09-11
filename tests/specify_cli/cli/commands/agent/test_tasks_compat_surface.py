@@ -106,8 +106,6 @@ _TASKS_SHARED: tuple[str, ...] = (  # WP02 (wave2) — 20 symbols
     # canonical ``core.git_ops.resolve_primary_branch`` is the single source
     # (21 -> 20; total 141 -> 140).
     "_review_currency_check_branch",
-    "_emit_owned_root_error",
-    "resolve_repo_root_with_owned_checkout",
     "_RUNTIME_STATE_DENY_LIST",
     "_filter_runtime_state_paths",
     "_emit_sparse_session_warning",
@@ -562,10 +560,7 @@ def test_guard_covers_full_169_symbol_surface() -> None:
     ``_mt_approval_policy_metadata`` and ``_mt_hop_review_ref`` — the
     APPROVED/DONE approval-gate policy_metadata sidecar builder and the
     per-hop review_ref resolver that derives from the SAME hop_review_result
-    object used as review_result (tasks_move_task 81 -> 83): 169 -> 171.
-    tasks-status-owned-checkout-seam-01M282V3 WP01 added the owned-checkout seam to
-    ``tasks_shared`` — ``resolve_repo_root_with_owned_checkout`` and its
-    ``_emit_owned_root_error`` renderer (tasks_shared 21 -> 23): 171 -> 173."""
+    object used as review_result (tasks_move_task 81 -> 83): 169 -> 171."""
     # TODO(under-investigation, operator-flagged): the operator doubts this
     # consolidated compat guard earns its ROI. Every seam-local symbol addition
     # costs a three-part edit — register in the per-seam tuple, add an identity
@@ -573,4 +568,4 @@ def test_guard_covers_full_169_symbol_surface() -> None:
     # low incremental regression-catch value over the identity-re-export guard
     # alone. Revisit whether the golden-count ratchet should be relaxed or
     # dropped (see M4 #3578 integration, which paid this tax for 4 helpers).
-    assert len(SYMBOL_TO_MODULE) == 173  # golden-count: cardinality-is-contract
+    assert len(SYMBOL_TO_MODULE) == 171  # golden-count: cardinality-is-contract
