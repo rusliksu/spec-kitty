@@ -303,13 +303,20 @@ _RAW_JOIN_SITES: tuple[ContentDescriptor, ...] = (
     ContentDescriptor(
         rel_path="specify_cli/missions/_read_path_resolver.py",
         qualname="_compose_primary_feature_dir",
-        token_substring=("primary_dir : Path = get_main_repo_root ( repo_root ) / KITTY_SPECS_DIR / mission_slug"),
+        # Re-anchored by tasks-status-owned-checkout-seam-01M282V3 WP01 (issue
+        # 26): the left operand is now the resolved ``root`` (the declared owned
+        # checkout when one is given, else ``get_main_repo_root(repo_root)``), so
+        # the join token names that local instead of the inline fold. The join
+        # itself and the ``assert_safe_path_segment`` guard above it are
+        # unchanged; the no-declaration value of ``root`` is the same primary
+        # root as before.
+        token_substring=("primary_dir : Path = root / KITTY_SPECS_DIR / mission_slug"),
         occurrence=None,
         rationale=(
             "TBYD — IS the _compose_primary_feature_dir leaf definition (WP03 "
             "T015 extraction of the former primary_feature_dir_for_mission body); "
             "assert_safe_path_segment called just above (NFR-002); "
-            "get_main_repo_root wraps the left operand; "
+            "get_main_repo_root roots the left operand through ``root``; "
             "this leaf is the canonical topology-blind entry point, surviving "
             "WP08's deletion of the (now-thin) public wrapper."
         ),

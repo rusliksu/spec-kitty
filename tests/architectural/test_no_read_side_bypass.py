@@ -645,7 +645,11 @@ _ALLOW_LIST_SEED: tuple[ContentDescriptor, ...] = (
     ContentDescriptor(
         rel_path="src/specify_cli/status/aggregate.py",
         qualname="MissionStatus._find_meta_path",
-        token_substring="candidate_feature_dir_for_mission ( repo_root , mission_slug )",
+        # Re-anchored by tasks-status-owned-checkout-seam-01M282V3 WP01 (issue
+        # 26): the call now spans lines because it carries the declared owned
+        # root, so the anchor is the call HEAD rather than the whole call
+        # (the descriptor still pins rel_path + qualname, so it stays exact).
+        token_substring="candidate_dir = candidate_feature_dir_for_mission (",
         occurrence=None,
         rationale=(
             "Ledger :527: named explicitly in research.md's hard-cases list; "
