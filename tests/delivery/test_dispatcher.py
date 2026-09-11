@@ -66,6 +66,13 @@ from specify_cli.delivery.receivers import (
     TeamspaceReceiver,
     map_batch_response,
 )
+from spec_kitty_events.dossier import (
+    ArtifactIdentity,
+    ContentHashRef,
+    LocalNamespaceTuple,
+    MissionDossierArtifactIndexedPayload,
+)
+
 from specify_cli.event_journal.journal import EventJournal
 from specify_cli.event_journal.models import Event
 from specify_cli.sync.project_context import AdmissionState, ProjectSyncContext
@@ -163,16 +170,29 @@ def _coalescible_event(event_id: str, *, payload: bytes) -> Event:
 
 
 def _coalescible_capture(event_id: str) -> dict[str, Any]:
-    """A queue-level capture sharing one coalesce key with its sibling."""
+    """A queue-level capture whose payload is built by the canonical dossier model.
+
+    The payload comes from ``MissionDossierArtifactIndexedPayload``; only the queue's wire
+    envelope is assembled here, because the queue's capture API takes a mapping and
+    production assembles the same envelope in the lifecycle fan-out.
+    """
+    payload = MissionDossierArtifactIndexedPayload(
+        namespace=LocalNamespaceTuple(
+            project_uuid=_TEST_PROJECT_UUID,
+            mission_slug="010-feat",
+            target_branch="main",
+            mission_type="software-dev",
+            manifest_version="1",
+        ),
+        artifact_id=ArtifactIdentity(mission_type="software-dev", path="readme.md", artifact_class="evidence"),
+        content_ref=ContentHashRef(hash=event_id[-1] * 64, algorithm="sha256"),
+        indexed_at=_OCCURRED_AT,
+    )
     return {
         "event_id": event_id,
         "event_type": "MissionDossierArtifactIndexed",
         "project_uuid": _TEST_PROJECT_UUID,
-        "payload": {
-            "namespace": {"project_uuid": _TEST_PROJECT_UUID, "mission_slug": "010-feat"},
-            "artifact_id": {"path": "readme.md"},
-            "content_ref": {"algorithm": "sha256", "hash": event_id[-1] * 64},
-        },
+        "payload": payload.model_dump(mode="json"),
     }
 
 
