@@ -133,6 +133,35 @@ which is the same layer the in-flight PR 20 touches from the other direction (C-
 method stays: keep the no-declaration path byte-identical (proved above), thread the effective root
 through the sanctioned seam, and let the acceptance test decide when the seam is complete.
 
+**D-9 - the concrete call chain that must carry the effective root.** Traced on this revision:
+
+```text
+move-task (tasks.py)
+  -> _do_move_task -> _mt_resolve_targets (tasks_move_task.py)
+       repo_root            = resolve_repo_root_with_owned_checkout(...)   # claimed checkout when declared
+       main_repo_root       = _ensure_target_branch_checked_out(..., owned_root=repo_root)
+  -> _mt_build_request   -> TransitionRequest(repo_root=..., ...)
+  -> coordination/status_transition.py
+       _identity_for_request  -> resolve_status_surface_with_anchor(repo_root, mission_slug)   # line 622
+       _primary_anchor()      -> placement_seam(...).read_dir(PRIMARY_METADATA)
+  -> coordination/surface_resolver.py
+       resolve_status_surface_with_anchor -> _compose_primary_feature_dir(repo_root, slug)      # line 764
+                                            |
+                                            '-> folds the linked worktree back to the primary
+```
+
+The two functions that need an explicit **`effective_root`** parameter are therefore
+`resolve_status_surface_with_anchor` and its thin wrapper `resolve_status_surface` (both currently
+take only `repo_root`, `mission_slug`, `topology`), and the transition request must be able to carry
+the declared checkout so `status_transition` and `_primary_anchor` stop folding. `mission_context_for`
+already accepts `effective_root` (line 1083) and is the model for the parameter shape; the same
+treatment is needed in `lifecycle_phase.py` (lines 107, 264, 383) and
+`missions/_read_path_resolver.py:1308`.
+
+This is the bounded implementation left for WP01: an additive `effective_root` parameter on the
+surface resolver pair, carried on the transition request from the task command, with the
+no-declaration path proved byte-identical.
+
 ## Sources
 
 `research/source-register.csv`, `research/evidence-log.csv`.
