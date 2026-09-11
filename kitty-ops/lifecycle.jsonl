@@ -58,3 +58,5 @@
 {"agent": "codex", "at": "2026-09-11T11:16:23.350078+00:00", "canonical_action_id": "discovery::research", "mission_id": "01M282V3ZTZNZDDD40BSZ7B6SH", "phase": "started", "reason": null, "wp_id": null}
 {"agent": "codex", "at": "2026-09-11T11:19:13.670746+00:00", "canonical_action_id": "discovery::research", "mission_id": "01M282V3ZTZNZDDD40BSZ7B6SH", "phase": "completed", "reason": null, "wp_id": null}
 {"agent": "codex", "at": "2026-09-11T11:19:44.753573+00:00", "canonical_action_id": "specify::specify", "mission_id": "01M282V3ZTZNZDDD40BSZ7B6SH", "phase": "started", "reason": null, "wp_id": null}
+{"agent": "codex", "at": "2026-09-11T11:20:08.283877+00:00", "canonical_action_id": "specify::specify", "mission_id": "01M282V3ZTZNZDDD40BSZ7B6SH", "phase": "completed", "reason": null, "wp_id": null}
+{"agent": "codex", "at": "2026-09-11T11:22:20.582357+00:00", "canonical_action_id": "plan::plan", "mission_id": "01M282V3ZTZNZDDD40BSZ7B6SH", "phase": "started", "reason": null, "wp_id": null}
