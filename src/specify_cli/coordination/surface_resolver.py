@@ -771,6 +771,7 @@ def resolve_status_surface_with_anchor(
     primary_dir: Path = _compose_primary_feature_dir(
         resolution_root,
         _canonicalize_primary_read_handle(resolution_root, mission_slug),
+        effective_root=effective_root,
     )
     if meta is None:
         # FR-007: fail-closed reader routing. Malformed meta surfaces typed

@@ -218,6 +218,36 @@ no-declaration path still returns `mission_not_found` for an owned mission (pari
 `coordination/surface_resolver.py` and `status/models.py`. WP01's `owned_files` must be widened to
 name them, or the change is split across WPs; that is a plan edit, not a silent expansion.
 
+**D-12 - the WRITE side still folds, and that is the next target (with a live demonstration).**
+With the leaf carrying an owned root, the read side stopped folding entirely: the owned run resolved
+the mission in the declared checkout and reached real business logic ("WP WP01 has no canonical
+status … finalize-tasks"). Adding the same option to `agent status emit` then exposed the write side,
+and it is a **hazard**, not a partial success:
+
+```text
+agent status emit WP01 --to planned --actor codex --owned-checkout <owned worktree> --mission <slug>
+  -> {"wp_id": "WP01", "from_lane": "genesis", "to_lane": "planned",
+      "status_events_path": "C:\\Users\\Ruslan\\spec-kitty\\kitty-specs\\<slug>\\status.events.jsonl"}
+```
+
+The event was written into the **protected primary checkout** (an untracked mission dir holding
+`status.events.jsonl` and `status.json`) — exactly the FR-004 / C-003 violation this mission exists to
+prevent. It was removed immediately; the primary is clean again (`git status` empty, HEAD
+`78c1e9ab1`).
+
+The folding chain is `status emit` -> `MissionStatus.load` -> `specify_cli/status/aggregate.py::
+_find_meta_path` (line 545 `_compose_primary_feature_dir(repo_root, bare_dir_name)` and the
+`resolve_bare_modern_mission_dir_name` call above it, line 550 `candidate_feature_dir_for_mission`)
+-> the status writer/store. `MissionStatus` applies the primary fold before those calls, so the
+declared checkout never reaches them.
+
+**Actions taken instead of shipping a footgun**: the `agent status emit` option was reverted in full,
+and `resolve_repo_root_with_owned_checkout` now fails closed with
+`OWNED_CHECKOUT_WRITE_PATH_PENDING` for any declared checkout, so no command can currently write into
+the primary through this seam. The resolution/read threading stays in place; lifting that gate is the
+last step of WP01, after `MissionStatus` / `aggregate._find_meta_path` and the status store carry the
+declared root the way the layers above now do.
+
 ## Sources
 
 `research/source-register.csv`, `research/evidence-log.csv`.

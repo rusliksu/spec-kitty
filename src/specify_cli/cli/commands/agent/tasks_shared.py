@@ -87,7 +87,22 @@ def resolve_repo_root_with_owned_checkout(
     if refusal is not None:
         _emit_owned_root_error(str(refusal), json_output=json_output, error_code=refusal.error_code)
         raise typer.Exit(1)
-    return claim.claimed_checkout
+
+    # WIP gate (mission research.md D-12): the resolution and read layers are
+    # owned-aware, but the canonical status WRITE path (MissionStatus aggregate ->
+    # status store) still folds its root to the primary, so honouring the option
+    # today writes the transition into the protected checkout - demonstrated once
+    # during development and recorded. Refuse fail-closed until the write side
+    # carries the declared checkout, rather than expose a path that can mutate the
+    # primary.
+    _emit_owned_root_error(
+        "--owned-checkout is not enabled for this command yet: the canonical status "
+        "write path is not owned-aware, so the transition would be written into the "
+        "primary checkout. See the mission's research.md (D-12).",
+        json_output=json_output,
+        error_code="OWNED_CHECKOUT_WRITE_PATH_PENDING",
+    )
+    raise typer.Exit(1)
 
 
 def _emit_owned_root_error(

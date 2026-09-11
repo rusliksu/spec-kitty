@@ -2093,6 +2093,7 @@ def resolve_artifact_surface(
         mission_slug,
         kind=MissionArtifactKind.PRIMARY_METADATA,
         resolver=resolver,
+        effective_root=effective_root,
     )
     # Idempotence under our own output (the #3012 backfilled-mission regression):
     # when the literal-composed ``<slug>-<mid8>`` primary dir does NOT exist but the
