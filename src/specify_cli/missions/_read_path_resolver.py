@@ -1146,11 +1146,7 @@ def resolve_surface_dir_or_typed_error(
 
 
 def candidate_feature_dir_for_mission(
-    repo_root: Path,
-    mission_slug: str,
-    *,
-    resolver: MissionResolver | None = None,
-    effective_root: Path | None = None,
+    repo_root: Path, mission_slug: str, *, resolver: MissionResolver | None = None
 ) -> Path:
     """Return the topology-aware mission-dir candidate without requiring it exist.
 
@@ -1264,12 +1260,7 @@ def _stored_topology_best_effort(
     return classify_from_meta(primary_meta, primary_dir)
 
 
-def _compose_primary_feature_dir(
-    repo_root: Path,
-    mission_slug: str,
-    *,
-    effective_root: Path | None = None,
-) -> Path:
+def _compose_primary_feature_dir(repo_root: Path, mission_slug: str) -> Path:
     """Module-private leaf: the pure ``KITTY_SPECS_DIR``-rooted primary-dir join.
 
     read-side-seam-primary-primitive-closure-01KYKMMT WP03 (T015): the terminal
@@ -1314,11 +1305,7 @@ def _compose_primary_feature_dir(
     from specify_cli.core.paths import assert_safe_path_segment, get_main_repo_root
 
     assert_safe_path_segment(mission_slug)
-    # ``effective_root`` (issue 26): an explicitly declared owned checkout owns the
-    # mission, so the KITTY_SPECS join is rooted there instead of folding to the
-    # primary. ``None`` keeps the historical fold for every existing caller.
-    root = effective_root or get_main_repo_root(repo_root)
-    primary_dir: Path = root / KITTY_SPECS_DIR / mission_slug
+    primary_dir: Path = get_main_repo_root(repo_root) / KITTY_SPECS_DIR / mission_slug
     return primary_dir
 
 
@@ -1388,7 +1375,6 @@ def resolve_planning_read_dir(
     *,
     kind: MissionArtifactKind,
     resolver: MissionResolver | None = None,
-    effective_root: Path | None = None,
 ) -> Path:
     """Resolve a mission dir for a *read* of one artifact ``kind`` (per-kind split).
 
@@ -1474,13 +1460,9 @@ def resolve_planning_read_dir(
         canonical = _canonicalize_primary_read_handle(
             repo_root, mission_slug, resolver=resolver
         )
-        return _compose_primary_feature_dir(
-            repo_root, canonical, effective_root=effective_root
-        )
+        return _compose_primary_feature_dir(repo_root, canonical)
     # STATUS-partition read → topology-aware seam (C-001 / C-005 transients intact).
-    return candidate_feature_dir_for_mission(
-        repo_root, mission_slug, resolver=resolver, effective_root=effective_root
-    )
+    return candidate_feature_dir_for_mission(repo_root, mission_slug, resolver=resolver)
 
 
 def resolve_subtasks_gate_dir(feature_dir: Path, repo_root: Path | None, mission_slug: str) -> Path:
