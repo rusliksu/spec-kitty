@@ -248,6 +248,34 @@ the primary through this seam. The resolution/read threading stays in place; lif
 last step of WP01, after `MissionStatus` / `aggregate._find_meta_path` and the status store carry the
 declared root the way the layers above now do.
 
+**D-13 - the second pass sized the remaining work honestly.** Re-applying the WIP and reading the
+write chain end to end produced the full bill for WP01. Beyond the read-side chokepoints this pass
+already threaded, closing issue 26 still needs the declared root carried through:
+
+1. `status/aggregate.py::MissionStatus.load` (line 190) — a new optional `effective_root` on the
+   factory, propagated to every resolution it performs;
+2. `status/aggregate.py::_read_meta` (line 398) — its `placement_seam(repo_root, mission_slug)`
+   composition at line 509;
+3. `status/aggregate.py::_find_meta_path` (line 460) — the `_compose_primary_feature_dir` (545) and
+   `candidate_feature_dir_for_mission` (550) legs;
+4. `status/aggregate.py::_resolve_read_dir` (line 290) and its delegator
+   `missions/_read_path_resolver.py::resolve_surface_dir_or_typed_error` (line 1076);
+5. the CLI-surface bill the option creates: 24 pinned guards turn red — the golden command-help
+   fixtures (`test_tasks_cli_contract.py`), the `_MoveTaskArgs` field-set pin
+   (`test_tasks_move_task_degod.py`), the seam-interception pin (`test_tasks_move_task_seam.py`), the
+   json byte-identity pin (`test_tasks_json_bytes.py`), the pre-review observability pin and the
+   compat-surface cardinality (171 -> 173).
+
+Those 24 failures are the *expected, paid* cost of adding a CLI option in this repository, not design
+work; but together with the four write-side chokepoints they are a dedicated session's worth, so the
+WIP was re-parked rather than left half-landed with red guards and a gated feature.
+
+**State of the branch after the second pass**: `src/` and `tests/` are byte-identical to
+`origin/main` (`git diff origin/main -- src tests` is empty); the WIP commits remain in history
+(`c627391c3`, `17b7edb03`, `e875c19f6`, `b6a8c5391`) and are restored with a single
+`git revert 5dd8a5847`; the primary checkout is untouched. The mission's planning record plus
+D-1..D-13 is the deliverable of these passes.
+
 ## Sources
 
 `research/source-register.csv`, `research/evidence-log.csv`.
