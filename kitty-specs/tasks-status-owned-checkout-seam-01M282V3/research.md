@@ -162,6 +162,30 @@ This is the bounded implementation left for WP01: an additive `effective_root` p
 surface resolver pair, carried on the transition request from the task command, with the
 no-declaration path proved byte-identical.
 
+**D-10 - the layer already owns the seam; its factory just does not expose it.** `mission_runtime
+/resolution.py` threads an `effective_root` through `mission_context_for` (line 1085),
+`resolve_action_context` (line 2224), the meta-path composer (line 225) and the fragment assemblers —
+the whole layer is already built for an explicitly declared root. The fold survives because the
+*factory* `placement_seam(repo_root, mission_slug)` (line 2198) and `PlacementSeam` itself do not
+accept or carry it, so every caller that builds a seam from a bare root re-folds to the primary.
+
+The remaining WP01 change is therefore, in the layer's own idiom:
+
+1. `placement_seam(repo_root, mission_slug, *, effective_root=None)` forwarding into
+   `PlacementSeam`, and `PlacementSeam` using it wherever it resolves an artifact home;
+2. `resolve_status_surface` / `resolve_status_surface_with_anchor` gaining the same optional
+   parameter and using `effective_root or repo_root` for `candidate_feature_dir_for_mission` and
+   `_compose_primary_feature_dir`;
+3. `TransitionRequest.effective_root` (status/models.py already defaults every field, so the
+   addition is compatible) carried from the task command, used by
+   `status_transition._canonical_primary_feature_dir` (line 564) for both its seam call and its
+   resolver call;
+4. the same treatment for `lifecycle_phase.py` and `missions/_read_path_resolver.py:1308` where
+   they compose the primary dir from a bare root.
+
+The no-declaration path stays byte-identical throughout, which the parity check in D-8 already
+demonstrates for the option surface.
+
 ## Sources
 
 `research/source-register.csv`, `research/evidence-log.csv`.
