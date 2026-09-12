@@ -2,7 +2,7 @@
 title: How to Accept and Merge a Mission
 description: "How to accept and merge a mission with Spec Kitty 3.2: Use this guide to validate mission readiness and merge to the mission's target branch."
 doc_status: active
-updated: '2026-07-04'
+updated: '2026-09-12'
 audience: docs/context/audience/external/project-owner.md
 type: how-to
 related:
@@ -40,6 +40,28 @@ Or in your terminal:
 ```bash
 spec-kitty accept
 ```
+
+### Accept a Mission in an Explicit Checkout
+
+For a mission held in a linked worktree of this repository, declare the checkout
+that owns its acceptance data:
+
+```bash
+spec-kitty accept --mission <slug> --owned-checkout <path> --diagnose --json
+spec-kitty accept --mission <slug> --owned-checkout <path>
+```
+
+Diagnostics read that checkout without writing. The second command checks its
+source and records acceptance there. An unrelated repository is refused. All
+acceptance surfaces must belong to the declared checkout; a separate coordination
+checkout is outside this declaration. Committing also requires the mission's
+non-protected target branch to be checked out there. The primary checkout remains
+unchanged, including when it contains a mission with the same name.
+
+The normal readiness requirements still apply. A failed runtime-state cutover
+does not record acceptance or create an acceptance commit; diagnostic matrix or
+seed changes can remain in the declared checkout for inspection and retry.
+Omitting `--owned-checkout` preserves the existing checkout selection.
 
 ### What Accept Checks
 

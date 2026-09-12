@@ -35,6 +35,7 @@ from typing import TYPE_CHECKING, Any
 
 from mission_runtime import TopologySurface
 from specify_cli.acceptance.execution_context import GateSurfaceRefMismatch
+from specify_cli.core.paths import effective_root_options
 from specify_cli.core.subtask_rows import iter_unchecked_subtask_rows
 from specify_cli.core.vcs.git import merge_base_changed_files
 from specify_cli.status_lanes import is_acceptable_ending
@@ -259,7 +260,7 @@ def _evaluate_branch_gate(
 
 
 def _acceptance_gate_context(
-    repo_root: Path, feature_dir: Path, *, branch: str | None = None
+    repo_root: Path, feature_dir: Path, *, branch: str | None = None, effective_root: Path | None = None
 ) -> GateExecutionContext:
     """Build the ACCEPT-phase :class:`GateExecutionContext` for the acceptance matrix.
 
@@ -299,6 +300,7 @@ def _acceptance_gate_context(
         MissionArtifactKind.ACCEPTANCE_MATRIX,
         phase=LifecyclePhase.ACCEPT,
         ref=ref,
+        **effective_root_options(effective_root),
     )
 
 
@@ -397,7 +399,7 @@ def _acceptance_matrix_read_dir(repo_root: Path, feature_dir: Path) -> Path:
 
 
 def _matrix_surface_cannot_hold(
-    context: GateExecutionContext, repo_root: Path, feature_dir: Path
+    context: GateExecutionContext, repo_root: Path, feature_dir: Path, *, effective_root: Path | None = None
 ) -> CannotEvaluate | None:
     """GEC-5 / C2: refuse when the coord-homed matrix is judged on a PRIMARY stamp.
 
@@ -424,7 +426,8 @@ def _matrix_surface_cannot_hold(
     from mission_runtime import MissionArtifactKind
 
     home = declared_home_surface(
-        repo_root, feature_dir.name, MissionArtifactKind.ACCEPTANCE_MATRIX
+        repo_root, feature_dir.name, MissionArtifactKind.ACCEPTANCE_MATRIX,
+        **effective_root_options(effective_root),
     )
     return context.surface_cannot_hold(home)
 
@@ -456,6 +459,7 @@ def _evaluate_acceptance_matrix(
     *,
     mutate_matrix: bool,
     branch: str | None = None,
+    effective_root: Path | None = None,
 ) -> None:
     """Read/enforce/validate the acceptance matrix once the branch gate passed.
 
@@ -477,7 +481,8 @@ def _evaluate_acceptance_matrix(
         write_acceptance_matrix,
     )
 
-    context = _acceptance_gate_context(repo_root, feature_dir, branch=branch)
+    root_kwargs = {"effective_root": effective_root} if effective_root is not None else {}
+    context = _acceptance_gate_context(repo_root, feature_dir, branch=branch, **root_kwargs)
     ref_mismatch = _assert_ref_agreement(context)
     if ref_mismatch is not None:
         _record_ref_mismatch_cannot_evaluate(
@@ -485,7 +490,7 @@ def _evaluate_acceptance_matrix(
         )
         return
 
-    cannot = _matrix_surface_cannot_hold(context, repo_root, feature_dir)
+    cannot = _matrix_surface_cannot_hold(context, repo_root, feature_dir, **root_kwargs)
     if cannot is not None:
         _record_matrix_cannot_evaluate(cannot, activity_issues, skipped_checks, blocked_checks)
         return
@@ -602,6 +607,7 @@ def _check_lane_gates(
     blocked_checks: list[AcceptanceCheckDiagnostic],
     *,
     mutate_matrix: bool = True,
+    effective_root: Path | None = None,
 ) -> None:
     """Enforce lane-based acceptance gates and acceptance matrix."""
     lanes_manifest = _resolve_lanes_manifest_or_stop(feature_dir, activity_issues, skipped_checks, blocked_checks)
@@ -622,6 +628,7 @@ def _check_lane_gates(
         blocked_checks,
         mutate_matrix=mutate_matrix,
         branch=branch,
+        **({"effective_root": effective_root} if effective_root is not None else {}),
     )
 
 

@@ -233,6 +233,7 @@ def declared_home_surface(
     kind: MissionArtifactKind,
     *,
     resolver: MissionResolver | None = None,
+    effective_root: Path | None = None,
 ) -> TopologySurface:
     """The surface a ``kind`` authoritatively belongs to under the STORED topology.
 
@@ -261,7 +262,8 @@ def declared_home_surface(
     ``resolve_artifact_surface`` projection) is built from. One shared
     predicate, two consumers — never a second competing guard.
     """
-    return declared_read_surface(repo_root, mission_slug, kind, resolver=resolver)
+    root_kwargs = {"effective_root": effective_root} if effective_root is not None else {}
+    return declared_read_surface(repo_root, mission_slug, kind, resolver=resolver, **root_kwargs)
 
 
 # Default HEAD resolver for GEC-2 ref agreement. Injected in tests so the seam is
@@ -310,6 +312,7 @@ def build_gate_execution_context(
     phase: LifecyclePhase,
     ref: str,
     resolver: MissionResolver | None = None,
+    effective_root: Path | None = None,
 ) -> GateExecutionContext:
     """The ONE construction door for a :class:`GateExecutionContext` (GEC-1).
 
@@ -327,8 +330,9 @@ def build_gate_execution_context(
         CoordinationBranchDeleted: when the declared coordination branch has been
             deleted from git (propagated from the resolver, C3 fail-loud).
     """
+    root_kwargs = {"effective_root": effective_root} if effective_root is not None else {}
     resolved = resolve_artifact_surface(
-        repo_root, mission_slug, kind, resolver=resolver
+        repo_root, mission_slug, kind, resolver=resolver, **root_kwargs
     )
     return GateExecutionContext(
         surface=resolved.path,

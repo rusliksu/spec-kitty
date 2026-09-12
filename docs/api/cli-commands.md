@@ -44,6 +44,10 @@ For non-obvious runtime behaviour an operator may encounter:
 
 ## spec-kitty accept
 
+Use `--owned-checkout PATH` to read and record acceptance in an explicitly
+declared checkout of the same repository. See
+[checkout requirements and failure behavior](../guides/how-to/missions/accept-and-merge.md#accept-a-mission-in-an-explicit-checkout).
+
 ```
  Usage: spec-kitty accept [OPTIONS]
 

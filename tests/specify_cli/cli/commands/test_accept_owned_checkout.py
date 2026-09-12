@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -25,8 +26,8 @@ from specify_cli.status.store import append_event
 
 pytestmark = [pytest.mark.integration, pytest.mark.git_repo]
 
-MISSION_ID = "01M29ACCEPT000000000000001"
-SLUG = "accept-owned-checkout-01M29ACC"
+MISSION_ID = "01M29ACCZTZNZDDD40BSZ7B6SH"
+SLUG = "accept-owned-checkout-01m29acc"
 BRANCH = "codex/owned-accept-fixture"
 app = typer.Typer()
 app.command()(accept)
@@ -151,14 +152,17 @@ def _owned_mission(tmp_path: Path, *, ready: bool = True) -> tuple[Path, Path, P
             NegativeInvariant(
                 invariant_id="NI1",
                 description="Retired symbol is absent",
-                verification_method="grep_absence",
-                verification_command="RETIRED_OWNED_SENTINEL",
+                verification_method="custom_command",
+                verification_command=(f'"{sys.executable}" -c "from pathlib import Path; raise SystemExit(int(Path(\'retired-owned.txt\').exists()))"'),
             )
         ],
     )
     (mission_dir / "acceptance-matrix.json").write_text(json.dumps(matrix.to_dict()) + "\n", encoding="utf-8")
     _git(owned, "add", ".")
     _git(owned, "commit", "-m", "Owned mission fixture")
+    (primary / "retired-owned.txt").write_text("Primary-only sentinel\n", encoding="utf-8")
+    _git(primary, "add", ".")
+    _git(primary, "commit", "-m", "Primary source differs from owned source")
     return primary, owned, mission_dir
 
 
@@ -208,6 +212,25 @@ def test_accept_commits_only_in_the_owned_checkout(
     assert _git(owned, "status", "--porcelain", "-uall") == ""
     committed = json.loads(_git(owned, "show", f"HEAD:kitty-specs/{SLUG}/meta.json"))
     assert committed["accepted_by"] == "tester"
+    matrix = json.loads(_git(owned, "show", f"HEAD:kitty-specs/{SLUG}/acceptance-matrix.json"))
+    assert matrix["negative_invariants"][0]["result"] == "confirmed_absent"
+
+
+def test_accept_checks_the_owned_source_invariant(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    primary, owned, mission_dir = _owned_mission(tmp_path)
+    (owned / "retired-owned.txt").write_text("Forbidden in this fixture\n", encoding="utf-8")
+    _git(owned, "add", ".")
+    _git(owned, "commit", "-m", "Violate the source invariant")
+    monkeypatch.chdir(primary)
+    metadata_before = (mission_dir / "meta.json").read_bytes()
+    primary_before = _files(primary)
+    result = runner.invoke(app, ["--mission", SLUG, "--owned-checkout", str(owned), "--json"])
+    assert result.exit_code == 1, result.output
+    assert json.loads(result.output)["ok"] is False
+    matrix = json.loads((mission_dir / "acceptance-matrix.json").read_text(encoding="utf-8"))
+    assert matrix["negative_invariants"][0]["result"] == "still_present"
+    assert (mission_dir / "meta.json").read_bytes() == metadata_before
+    assert _files(primary) == primary_before
 
 
 def test_unfinished_owned_mission_cannot_be_accepted(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -250,3 +273,149 @@ def test_foreign_checkout_is_refused_before_writing(tmp_path: Path, monkeypatch:
     assert _files(primary) == primary_before
     assert _files(owned) == owned_before
     assert _files(foreign) == foreign_before
+
+
+@pytest.mark.parametrize("dirty_file", ["spec.md", "issue-matrix.md"])
+def test_owned_dirty_file_is_not_sibling_coordination_residue(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, dirty_file: str) -> None:
+    primary, owned, mission_dir = _owned_mission(tmp_path)
+    primary_mission = primary / "kitty-specs" / SLUG
+    shutil.copytree(mission_dir, primary_mission)
+    meta = json.loads((primary_mission / "meta.json").read_text(encoding="utf-8"))
+    meta.update(topology="coord", coordination_branch="kitty/primary-coordination")
+    (primary_mission / "meta.json").write_text(json.dumps(meta), encoding="utf-8")
+    _git(primary, "add", ".")
+    _git(primary, "commit", "-m", "Primary copy has different topology")
+    _git(primary, "branch", "kitty/primary-coordination")
+    (mission_dir / dirty_file).write_text("# Uncommitted requirement change\n", encoding="utf-8")
+    monkeypatch.chdir(primary)
+    primary_before = _files(primary)
+    result = runner.invoke(app, ["--mission", SLUG, "--owned-checkout", str(owned), "--json"])
+    assert result.exit_code == 1, result.output
+    assert any(dirty_file in path for path in json.loads(result.output)["git_dirty"])
+    assert _files(primary) == primary_before
+
+
+def test_protected_target_is_refused_before_matrix_or_metadata_writes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    primary, owned, mission_dir = _owned_mission(tmp_path)
+    meta = json.loads((mission_dir / "meta.json").read_text(encoding="utf-8"))
+    meta["target_branch"] = "main"
+    (mission_dir / "meta.json").write_text(json.dumps(meta), encoding="utf-8")
+    _git(owned, "add", ".")
+    _git(owned, "commit", "-m", "Protected target fixture")
+    monkeypatch.chdir(primary)
+    primary_before, owned_before = _files(primary), _files(owned)
+    result = runner.invoke(app, ["--mission", SLUG, "--owned-checkout", str(owned), "--json"])
+    assert result.exit_code == 1, result.output
+    assert "non-protected target branch" in json.loads(result.output)["error"]
+    assert _files(primary) == primary_before
+    assert _files(owned) == owned_before
+
+
+def test_ownership_does_not_extend_to_a_coordination_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from specify_cli.coordination.workspace import CoordinationWorkspace
+    from specify_cli.missions._read_path_resolver import coord_feature_dir
+
+    primary, owned, mission_dir = _owned_mission(tmp_path)
+    mid8 = MISSION_ID[:8]
+    coord_branch = CoordinationWorkspace.branch_name(SLUG, mid8)
+    coord_root = CoordinationWorkspace.worktree_path(owned, SLUG, mid8)
+    meta = json.loads((mission_dir / "meta.json").read_text(encoding="utf-8"))
+    meta.update(topology="coord", coordination_branch=coord_branch)
+    (mission_dir / "meta.json").write_text(json.dumps(meta), encoding="utf-8")
+    (owned / ".gitignore").write_text(".worktrees/\n", encoding="utf-8")
+    _git(owned, "add", ".")
+    _git(owned, "commit", "-m", "Coordination surface requires another checkout")
+    _git(primary, "worktree", "add", "-b", coord_branch, str(coord_root), BRANCH)
+    # Coordination uses the declared (uppercase) identity suffix, including
+    # when the primary mission directory carries a lowercase legacy suffix.
+    coord_mission = coord_feature_dir(owned, SLUG, mid8)
+    if not coord_mission.exists():
+        shutil.copytree(mission_dir, coord_mission)
+    monkeypatch.chdir(primary)
+    primary_before, owned_before = _files(primary), _files(owned)
+    result = runner.invoke(app, ["--mission", SLUG, "--owned-checkout", str(owned), "--json"])
+    assert result.exit_code == 1, result.output
+    payload = json.loads(result.output)
+    assert "error" in payload, result.output
+    assert "outside the owned checkout" in payload["error"]
+    assert _files(primary) == primary_before
+    assert _files(owned) == owned_before
+
+
+@pytest.mark.parametrize("failure", ["error", "verification", "exception"])
+def test_failed_owned_cutover_cannot_record_acceptance(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str) -> None:
+    from specify_cli.migration import runtime_state_cutover as cutover
+    from specify_cli.migration.backfill_runtime_state import VerifyResult
+
+    primary, owned, mission_dir = _owned_mission(tmp_path)
+    monkeypatch.chdir(primary)
+    primary_before = _files(primary)
+    metadata_before = (mission_dir / "meta.json").read_bytes()
+    head_before = _git(owned, "rev-parse", "HEAD")
+
+    def refuse(feature_dir: Path, **kwargs: object) -> cutover.CutoverResult:
+        assert feature_dir == mission_dir
+        assert kwargs["effective_root"] == owned
+        if failure == "exception":
+            raise RuntimeError("Injected cutover failure")
+        return cutover.CutoverResult(
+            slug=SLUG,
+            flipped=False,
+            error="Injected cutover refusal" if failure == "error" else None,
+            verify=VerifyResult(ok=False, wp_count=1, mismatches=("missing seed",)),
+        )
+
+    monkeypatch.setattr(cutover, "stamp_accept_cutover", refuse)
+    result = runner.invoke(app, ["--mission", SLUG, "--owned-checkout", str(owned), "--json"])
+    assert result.exit_code == 1, result.output
+    assert "cutover" in json.loads(result.output)["error"].lower()
+    assert (mission_dir / "meta.json").read_bytes() == metadata_before
+    assert _git(owned, "rev-parse", "HEAD") == head_before
+    assert _files(primary) == primary_before
+
+
+def test_published_primary_copy_does_not_change_owned_placement(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    primary, owned, mission_dir = _owned_mission(tmp_path)
+    primary_mission = primary / "kitty-specs" / SLUG
+    shutil.copytree(mission_dir, primary_mission)
+    meta = json.loads((primary_mission / "meta.json").read_text(encoding="utf-8"))
+    meta.update(baseline_merge_commit=_git(primary, "rev-parse", "HEAD"), mission_number=42, target_branch="retired-mission")
+    (primary_mission / "meta.json").write_text(json.dumps(meta), encoding="utf-8")
+    _git(primary, "add", ".")
+    _git(primary, "commit", "-m", "Published primary copy")
+    monkeypatch.chdir(primary)
+    primary_before = _files(primary)
+    primary_head = _git(primary, "rev-parse", "HEAD")
+    result = runner.invoke(app, ["--mission", SLUG, "--owned-checkout", str(owned), "--json"])
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output)["commit_created"] is True
+    assert _files(primary) == primary_before
+    assert _git(primary, "rev-parse", "HEAD") == primary_head
+    assert _git(owned, "status", "--porcelain") == ""
+
+
+@pytest.mark.parametrize("target, expected", [(BRANCH, "consolidated"), ("retired-owned-mission", "published"), (None, "consolidated")])
+def test_owned_lifecycle_reads_its_own_durable_evidence(tmp_path: Path, target: str | None, expected: str) -> None:
+    from mission_runtime.lifecycle_phase import resolve_lifecycle_phase
+
+    primary, owned, mission_dir = _owned_mission(tmp_path)
+    meta = json.loads((mission_dir / "meta.json").read_text(encoding="utf-8"))
+    meta.update(baseline_merge_commit=_git(owned, "rev-parse", "HEAD"), mission_number=42, target_branch=target)
+    (mission_dir / "meta.json").write_text(json.dumps(meta), encoding="utf-8")
+    primary_before = _files(primary)
+    assert resolve_lifecycle_phase(SLUG, primary, effective_root=owned).value == expected
+    assert _files(primary) == primary_before
+
+
+@pytest.mark.parametrize("field", ["repo_root", "feature_dir"])
+def test_owned_summary_cannot_be_rebound_before_persistence(tmp_path: Path, field: str) -> None:
+    from specify_cli.acceptance import AcceptanceError, collect_feature_summary, perform_acceptance
+
+    primary, owned, mission_dir = _owned_mission(tmp_path)
+    summary = collect_feature_summary(owned, SLUG, effective_root=owned)
+    setattr(summary, field, primary if field == "repo_root" else primary / "kitty-specs" / SLUG)
+    primary_before, owned_before = _files(primary), _files(owned)
+    with pytest.raises(AcceptanceError, match="no longer identifies"):
+        perform_acceptance(summary, mode="local", actor="test-actor", auto_commit=True)
+    assert _files(primary) == primary_before
+    assert _files(owned) == owned_before
