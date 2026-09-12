@@ -1170,8 +1170,9 @@ def finalize_tasks(
         typer.Option(
             "--owned-checkout",
             help=(
-                "Explicit checkout root owned by this invocation. Not honoured by this command "
-                "yet; declaring it refuses before anything is read or written (issue 26)."
+                "Explicit checkout root owned by this invocation. Use it to finalize a mission "
+                "that lives in a linked worktree; the path is validated against this repository "
+                "before anything is written."
             ),
             metavar="PATH",
         ),
@@ -1194,11 +1195,11 @@ def finalize_tasks(
     # (WP01 golden byte-identity) and delegates to the CORELESS ``_do_finalize_tasks``,
     # which validates through the existing ``tasks_finalize_validation`` seam and
     # reads through the WP02 ``FsReader`` port — with NO borrowed core (deferred #2300).
-    _refuse_owned_checkout(owned_checkout, json_output=json_output, command="finalize-tasks")
     _do_finalize_tasks(
         mission=mission,
         json_output=json_output,
         validate_only=validate_only,
+        owned_checkout=owned_checkout,
     )
 
 

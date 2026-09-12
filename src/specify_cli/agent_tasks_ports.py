@@ -75,6 +75,11 @@ class MissionHandle:
 
     repo_root: Path
     mission_slug: str
+    #: Issue 26: the DECLARED owned checkout this operation belongs to, when the
+    #: caller named one. Every reader below resolves through the ambient-primary
+    #: fold, so an owned mission is invisible without it. ``None`` (the default)
+    #: reproduces the historical primary-root behaviour byte-for-byte.
+    effective_root: Path | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -245,13 +250,13 @@ class RealFsReader:
         # so the imported (typed ``-> Path``) resolver surfaces as ``Any`` here;
         # the annotation re-pins the known concrete type without a suppression.
         read_dir: Path = placement_seam(
-            mission.repo_root, mission.mission_slug
+            mission.repo_root, mission.mission_slug, effective_root=mission.effective_root
         ).read_dir(kind)
         return read_dir
 
     def wp_tasks_dir(self, mission: MissionHandle) -> Path:
         feature_dir: Path = placement_seam(
-            mission.repo_root, mission.mission_slug
+            mission.repo_root, mission.mission_slug, effective_root=mission.effective_root
         ).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
         return feature_dir / "tasks"
 
@@ -272,7 +277,7 @@ class RealFsReader:
         # equivalent (the fold's own no-op leg for an unresolvable handle
         # returns it unchanged either way).
         anchor: Path = placement_seam(
-            mission.repo_root, mission.mission_slug
+            mission.repo_root, mission.mission_slug, effective_root=mission.effective_root
         ).read_dir(MissionArtifactKind.PRIMARY_METADATA)
         return anchor
 
