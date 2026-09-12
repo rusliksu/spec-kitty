@@ -27,6 +27,16 @@ def research(
         help="Mission slug to target",
     ),
     force: bool = typer.Option(False, "--force", help="Overwrite existing research artifacts"),
+    owned_checkout: Path | None = typer.Option(
+        None,
+        "--owned-checkout",
+        help=(
+            "Explicit checkout root owned by this invocation. Use it to scaffold the research "
+            "artifacts of a mission that lives in a linked worktree; the path is validated "
+            "against this repository before anything is written."
+        ),
+        metavar="PATH",
+    ),
 ) -> None:
     """Execute Phase 0 research workflow to scaffold artifacts."""
 
@@ -37,6 +47,26 @@ def research(
     except TaskCliError as exc:
         console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
+
+    # Issue 26: a declared owned checkout is the root these artifacts belong to.
+    # Without it every seam read below folds a linked worktree back to the ambient
+    # primary - which is how `research` came to scaffold four files into the
+    # protected primary checkout during sync-capture-coalescing-integrity-01M25WZF
+    # (research.md D-7). The declaration is validated through the shared ownership
+    # authority before anything is read or written.
+    effective_root: Path | None = None
+    if owned_checkout is not None:
+        from specify_cli.core.checkout_ownership import (
+            error_for_claim,
+            resolve_ownership_claim,
+        )
+
+        claim = resolve_ownership_claim(owned_checkout, resolved_primary=repo_root)
+        refusal = error_for_claim(claim)
+        if refusal is not None:
+            console.print(f"[red]Error:[/red] {refusal}")
+            raise typer.Exit(1)
+        effective_root = claim.claimed_checkout
 
     project_root = get_project_root_or_exit(repo_root)
 
@@ -62,9 +92,9 @@ def research(
     # seam. The comment below already documents ``feature_dir`` as "its
     # current STATUS-namespace surface" — the dossier sync consumer needs the
     # coord-aware STATUS home, which ``STATUS_STATE`` preserves (NFR-001).
-    feature_dir = placement_seam(repo_root, mission_slug).read_dir(
-        MissionArtifactKind.STATUS_STATE
-    )
+    feature_dir = placement_seam(
+        repo_root, mission_slug, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.STATUS_STATE)
     # F-001: re-key to the canonical directory name. `--mission` accepts
     # handles (bare mid8, numeric prefix); the resolver canonicalizes the
     # DIRECTORY only, while `trigger_feature_dossier_sync_if_enabled` keys the
@@ -89,9 +119,25 @@ def research(
     # the seam returns the same `target_branch` dir (NFR-001 — behavior-neutral).
     # The dossier sync below keeps `feature_dir` (its current STATUS-namespace
     # surface) untouched.
-    planning_dir = placement_seam(repo_root, mission_slug).read_dir(
-        MissionArtifactKind.RESEARCH
-    )
+    planning_dir = placement_seam(
+        repo_root, mission_slug, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.RESEARCH)
+    # WP02 DoD (issue 26): never create a mission directory in a checkout this
+    # invocation does not own. An undeclared run whose composed planning dir does
+    # not exist means the mission lives somewhere else (a linked worktree) - the
+    # D-7 hazard, which used to scaffold four files into the protected primary.
+    # A genuinely new mission in the caller OWN checkout still has its directory
+    # (mission create makes it), so this guard never blocks that path.
+    if effective_root is None and not planning_dir.exists():
+        console.print(tracker.render())
+        console.print()
+        console.print(
+            f"[red]Error:[/red] mission [bold]{mission_slug}[/bold] is not present in "
+            f"this checkout ({planning_dir}). If it lives in a linked worktree, "
+            "declare that checkout: [cyan]--owned-checkout <path>[/cyan]."
+        )
+        raise typer.Exit(1)
+
     planning_dir.mkdir(parents=True, exist_ok=True)
 
     # Get mission from feature's meta.json (not project-level default).
@@ -104,9 +150,9 @@ def research(
     # PRIMARY-partition kind (FINALIZED_EXECUTION_PLAN) — read it via the seam so
     # a coord-topology mission validates the authored primary plan, not an absent
     # `coord/plan.md`.
-    plan_read_dir = placement_seam(repo_root, mission_slug).read_dir(
-        MissionArtifactKind.FINALIZED_EXECUTION_PLAN
-    )
+    plan_read_dir = placement_seam(
+        repo_root, mission_slug, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.FINALIZED_EXECUTION_PLAN)
     plan_path = plan_read_dir / "plan.md"
     try:
         validate_plan_filled(plan_path, mission_slug=mission_slug, strict=True)
