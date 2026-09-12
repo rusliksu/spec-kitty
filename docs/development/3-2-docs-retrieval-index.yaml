@@ -8004,6 +8004,7 @@ pages:
     anchors:
     - {slug: "prerequisites", text: "Prerequisites", level: 2}
     - {slug: "accept-the-mission", text: "Accept the Mission", level: 2}
+    - {slug: "accept-a-mission-in-an-explicit-checkout", text: "Accept a Mission in an Explicit Checkout", level: 3}
     - {slug: "what-accept-checks", text: "What Accept Checks", level: 3}
     - {slug: "negative-invariants-that-assert-the-merged-post-state", text: "Negative Invariants That Assert the Merged Post-State", level: 3}
     - {slug: "deferred-invariants-and-the-post-consolidation-gate", text: "Deferred Invariants and the Post-Consolidation Gate", level: 3}
