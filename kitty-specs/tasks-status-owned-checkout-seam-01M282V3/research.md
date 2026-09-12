@@ -349,6 +349,36 @@ NaN(MissionStatus._find_meta_path` and the `_compose_primary_feature_dir` leaf) 
 lines this seam re-wrote. The 12 `test_mission_setup_plan_phases` errors and the remaining failure set are
 identical in the baseline clone.
 
+**D-15 - the first CI round found three real gaps, and one of them is the defect itself.** The draft pull
+request ran the POSIX shards this host cannot, and reported four failures. Three were the seam meeting
+guards it had not yet been measured against, and the fourth was issue 26 appearing in a command that had
+never been in scope:
+
+1. `cutover-guard` (a required pre-merge check) refused the branch, because a mission living in an
+   owned checkout is never cut over. Its own remedy is
+   `spec-kitty migrate backfill-runtime-state --mission <slug>` - and that command could not run
+   either: `_flip_phase` resolves the placement port primary home from the mission dir, the
+   resolver folds the linked worktree back to the ambient primary, and the flip then failed closed with
+   `PlacementMismatchError` naming a primary path that does not exist. The migration command now
+   takes `--owned-checkout` (validated through the shared ownership authority) and threads an
+   `effective_root` into `_resolve_primary_home_or_degrade` / `_flip_phase` /
+   `cutover_mission`. This is the same defect class as the rest of the mission, found by a gate
+   rather than by a user, and it is the honest reason the guard could not be satisfied by hand.
+2. Four test doubles patched the seams this mission re-signed (`_compose_primary_feature_dir`,
+   `candidate_feature_dir_for_mission`, `resolve_status_surface`,
+   `_resolve_primary_home_or_degrade`) with fixed positional signatures and broke on the new
+   keyword. They are widened to absorb it; none of their claims change.
+3. The mission own WP prompt frontmatter carried `plan_concern_refs`, which the strict
+   `WPMetadata` schema forbids - a direct symptom of these artefacts having been hand-written because
+   `finalize-tasks` could not see the owned mission (D-1). Removed from both prompts and from
+   `wps.yaml` so a regeneration cannot reintroduce it.
+
+The mission is now genuinely cut over (`status_phase: "1"`) through the seam added in the same
+commit, not by editing `meta.json` by hand. Four local shard runs reproduce the CI selections and
+are green modulo the documented Windows baseline: missions fast 449 passed / 2 baseline failures, missions
+integration 306 passed, status fast 995 passed / 2 baseline failures, migration 137 passed / 2 baseline
+path-separator failures.
+
 ## Sources
 
 `research/source-register.csv`, `research/evidence-log.csv`.
