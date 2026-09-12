@@ -69,6 +69,12 @@ _JSON_FLAG = "--json"
 _DRY_RUN_HELP = "Seed nothing and flip nothing; report per-mission would-seed counts and would-flip."
 _MISSION_HELP = "Scope to a single mission (mission_id / mid8 / slug). Omit to process the whole corpus."
 _JSON_HELP = "Emit the per-mission cutover result list as structured JSON."
+_OWNED_CHECKOUT_FLAG = "--owned-checkout"
+_OWNED_CHECKOUT_METAVAR = "PATH"
+_OWNED_CHECKOUT_HELP = (
+    "Explicit checkout root owned by this invocation. Use it to cut over a mission that lives in "
+    "a linked worktree; the path is validated against this repository before anything is written."
+)
 _RUNTIME_STATE_SUMMARY_TITLE = "backfill-runtime-state summary"
 _LABEL_FLIPPED = "Flipped"
 _LABEL_WOULD_SEED = "Would seed (verify pending)"
@@ -946,6 +952,14 @@ def backfill_runtime_state_cmd(
         typer.Option(_MISSION_FLAG, help=_MISSION_HELP, metavar=_MISSION_METAVAR),
     ] = None,
     json_output: Annotated[bool, typer.Option(_JSON_FLAG, help=_JSON_HELP)] = False,
+    owned_checkout: Annotated[
+        Path | None,
+        typer.Option(
+            _OWNED_CHECKOUT_FLAG,
+            help=_OWNED_CHECKOUT_HELP,
+            metavar=_OWNED_CHECKOUT_METAVAR,
+        ),
+    ] = None,
 ) -> None:
     """Seed legacy runtime state as events, verify fail-closed, and flip status_phase.
 
@@ -991,13 +1005,23 @@ def backfill_runtime_state_cmd(
         _error(_NO_PROJECT_ROOT)
         raise typer.Exit(1)
 
+    # issue 26: a declared owned checkout IS the root this cutover belongs to.
+    # Without it every placement lookup below folds the linked worktree back to
+    # the ambient primary, resolves a home that does not exist there, and the
+    # flip refuses with PlacementMismatchError (fail-closed, but unrunnable for
+    # a mission that lives in an owned checkout).
+    effective_root = _resolve_declared_checkout(owned_checkout, repo_root)
+    repo_root_for_mission = effective_root if effective_root is not None else repo_root
+
     if mission is not None:
         # Route --mission through the canonical handle resolver so mission_id /
         # mid8 / slug all resolve (a raw kitty-specs/<slug> join matches the
         # literal slug only). resolve_mission_handle prints + sys.exit(2)s on an
         # unknown/ambiguous handle.
-        resolved = resolve_mission_handle(mission, repo_root, json_mode=json_output)
-        results: list[CutoverResult] = [cutover_mission(resolved.feature_dir, dry_run=dry_run)]
+        resolved = resolve_mission_handle(mission, repo_root_for_mission, json_mode=json_output)
+        results: list[CutoverResult] = [
+            cutover_mission(resolved.feature_dir, dry_run=dry_run, effective_root=effective_root)
+        ]
     else:
         results = cutover_repo(repo_root, dry_run=dry_run)
 
@@ -1096,6 +1120,29 @@ def rebaseline_dossier_hashes(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+
+def _resolve_declared_checkout(owned_checkout: Path | None, repo_root: Path) -> Path | None:
+    """Validate a declared owned checkout, or ``None`` when none was declared.
+
+    Reuses the shared checkout-ownership authority (never a local check), so an
+    invalid declaration is refused with the same typed refusal every other
+    owned-checkout command renders — before anything is written.
+    """
+    if owned_checkout is None:
+        return None
+
+    from specify_cli.core.checkout_ownership import (
+        error_for_claim,
+        resolve_ownership_claim,
+    )
+
+    claim = resolve_ownership_claim(owned_checkout, resolved_primary=repo_root)
+    refusal = error_for_claim(claim)
+    if refusal is not None:
+        _error(str(refusal))
+        raise typer.Exit(1)
+    return claim.claimed_checkout
 
 
 def _error(message: str) -> None:

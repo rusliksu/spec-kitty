@@ -103,7 +103,9 @@ class CutoverResult:
     error: str | None = None
 
 
-def _seed_phase(feature_dir: Path, *, read_dir: Path | None = None, dry_run: bool) -> BackfillResult:
+def _seed_phase(
+    feature_dir: Path, *, read_dir: Path | None = None, dry_run: bool, effective_root: Path | None = None
+) -> BackfillResult:
     """Phase 1 — idempotently seed the mission's legacy runtime state as events.
 
     Thin wrapper over :func:`backfill_runtime_state`; extracted so the seed step
@@ -111,7 +113,10 @@ def _seed_phase(feature_dir: Path, *, read_dir: Path | None = None, dry_run: boo
     *read_dir* is the FR-002 read/write-leg split (defaults to *feature_dir* —
     see :func:`backfill_runtime_state`'s docstring).
     """
-    return backfill_runtime_state(feature_dir, read_dir=read_dir, dry_run=dry_run)
+    return backfill_runtime_state(
+        feature_dir, read_dir=read_dir, dry_run=dry_run,
+        **({"effective_root": effective_root} if effective_root is not None else {}),
+    )
 
 
 def _verify_phase(
@@ -119,6 +124,7 @@ def _verify_phase(
     *,
     read_dir: Path | None = None,
     intent: Intent = Intent.WRITE,
+    effective_root: Path | None = None,
 ) -> VerifyResult:
     """Phase 2 — fail-closed count+value parity of the snapshot vs the OLD reader.
 
@@ -133,7 +139,10 @@ def _verify_phase(
     fail-closed rather than reporting a false pass. The deliberate C-003 write
     target is unchanged — only the guard becomes invoking-checkout-aware.
     """
-    return verify_backfill(feature_dir, read_dir=read_dir, intent=intent)
+    return verify_backfill(
+        feature_dir, read_dir=read_dir, intent=intent,
+        **({"effective_root": effective_root} if effective_root is not None else {}),
+    )
 
 
 class PlacementMismatchError(RuntimeError):
@@ -165,7 +174,9 @@ class PlacementMismatchError(RuntimeError):
         self.seeded_count = seeded_count
 
 
-def _resolve_primary_home_or_degrade(feature_dir: Path) -> Path | None:
+def _resolve_primary_home_or_degrade(
+    feature_dir: Path, *, effective_root: Path | None = None
+) -> Path | None:
     """Resolve the placement port's PRIMARY home for *feature_dir*, or ``None``.
 
     ``None`` is the DEGRADE signal: a resolver raise on an otherwise
@@ -194,8 +205,16 @@ def _resolve_primary_home_or_degrade(feature_dir: Path) -> Path | None:
 
     try:
         repo_root = resolve_canonical_root(feature_dir)
+        # ``effective_root`` (issue 26): every resolver below folds a linked
+        # worktree back to the ambient primary, so a mission that lives in an
+        # owned checkout resolves to a home that does not exist (and, before
+        # this parameter, made ``_flip_phase`` refuse with
+        # ``PlacementMismatchError``). The declared checkout is the home.
         return resolve_artifact_surface(
-            repo_root, feature_dir.name, MissionArtifactKind.PRIMARY_METADATA
+            repo_root,
+            feature_dir.name,
+            MissionArtifactKind.PRIMARY_METADATA,
+            effective_root=effective_root,
         ).path
     except (
         WorkspaceRootNotFound,
@@ -212,7 +231,7 @@ def _resolve_primary_home_or_degrade(feature_dir: Path) -> Path | None:
         return None
 
 
-def _flip_phase(feature_dir: Path) -> None:
+def _flip_phase(feature_dir: Path, *, effective_root: Path | None = None) -> None:
     """Phase 3 — the SOLE ``status_phase`` writer; only reached on an ``ok`` verify.
 
     Resolves the write target via :func:`canonicalize_feature_dir` (never
@@ -236,8 +255,13 @@ def _flip_phase(feature_dir: Path) -> None:
         PlacementMismatchError: the port resolved a genuine PRIMARY home that
             disagrees with the write target (fail-closed, FR-001).
     """
-    target = canonicalize_feature_dir(feature_dir)
-    resolved_home = _resolve_primary_home_or_degrade(feature_dir)
+    target = canonicalize_feature_dir(
+        feature_dir, **({"effective_root": effective_root} if effective_root is not None else {})
+    )
+    if effective_root is None:
+        resolved_home = _resolve_primary_home_or_degrade(feature_dir)
+    else:
+        resolved_home = _resolve_primary_home_or_degrade(feature_dir, effective_root=effective_root)
     if resolved_home is not None and resolved_home != target:
         raise PlacementMismatchError(
             f"_flip_phase refuses to write status_phase for {feature_dir.name!r}: "
@@ -266,6 +290,7 @@ def cutover_mission(
     *,
     status_feature_dir: Path | None = None,
     dry_run: bool = False,
+    effective_root: Path | None = None,
 ) -> CutoverResult:
     """Seed -> fail-closed verify -> atomic ``status_phase`` flip for one mission.
 
@@ -317,9 +342,10 @@ def cutover_mission(
         A :class:`CutoverResult` describing the outcome.
     """
     status_dir = status_feature_dir if status_feature_dir is not None else feature_dir
+    root_kwargs = {"effective_root": effective_root} if effective_root is not None else {}
     slug = feature_dir.name
     try:
-        seed = _seed_phase(status_dir, read_dir=feature_dir, dry_run=dry_run)
+        seed = _seed_phase(status_dir, read_dir=feature_dir, dry_run=dry_run, **root_kwargs)
     except MigrationOrderingError as exc:
         return CutoverResult(slug=slug, flipped=False, error=str(exc))
     except ProjectLayoutRequiredError:
@@ -335,7 +361,7 @@ def cutover_mission(
         return CutoverResult(slug=slug, flipped=False, seeded_count=seed.seeded_count, error=seed.reason)
 
     try:
-        verify = _verify_phase(status_dir, read_dir=feature_dir)
+        verify = _verify_phase(status_dir, read_dir=feature_dir, **root_kwargs)
     except MigrationOrderingError as exc:
         return CutoverResult(slug=slug, flipped=False, seeded_count=seed.seeded_count, error=str(exc))
 
@@ -346,7 +372,7 @@ def cutover_mission(
         return CutoverResult(slug=slug, flipped=False, would_flip=True, seeded_count=seed.seeded_count, verify=verify)
 
     try:
-        _flip_phase(feature_dir)
+        _flip_phase(feature_dir, effective_root=effective_root)
     except PlacementMismatchError as exc:
         # FR-015 (#3390): the seed phase above already wrote real events to
         # disk (a live run) before the flip aborted. Stamp the true count onto
@@ -377,7 +403,7 @@ class MissingMissionIdError(RuntimeError):
 
 
 def stamp_accept_cutover(
-    feature_dir: Path, *, status_feature_dir: Path | None = None
+    feature_dir: Path, *, status_feature_dir: Path | None = None, effective_root: Path | None = None
 ) -> CutoverResult:
     """Terminal-lifecycle accept-time stamp (IC-01 / contracts/stamp-seam.md).
 
@@ -411,7 +437,10 @@ def stamp_accept_cutover(
             "meta.json carries no mission_id (fail-closed, NFR-003/R6 — no "
             "slug-namespaced seed fallback)."
         )
-    return cutover_mission(feature_dir, status_feature_dir=status_feature_dir, dry_run=False)
+    return cutover_mission(
+        feature_dir, status_feature_dir=status_feature_dir, dry_run=False,
+        **({"effective_root": effective_root} if effective_root is not None else {}),
+    )
 
 
 def cutover_repo(

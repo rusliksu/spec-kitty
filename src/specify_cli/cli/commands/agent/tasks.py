@@ -305,6 +305,7 @@ from specify_cli.cli.commands.agent.tasks_shared import (
     _RUNTIME_STATE_DENY_LIST as _RUNTIME_STATE_DENY_LIST,
     _check_unchecked_subtasks as _check_unchecked_subtasks,
     _coord_topology_active as _coord_topology_active,
+    _emit_owned_root_error as _emit_owned_root_error,
     _emit_sparse_session_warning as _emit_sparse_session_warning,
     _ensure_target_branch_checked_out as _ensure_target_branch_checked_out,
     _filter_by_planning_tip_content as _filter_by_planning_tip_content,
@@ -320,6 +321,7 @@ from specify_cli.cli.commands.agent.tasks_shared import (
     _resolve_git_common_dir as _resolve_git_common_dir,
     _review_currency_check_branch as _review_currency_check_branch,
     _skip_target_branch_commit as _skip_target_branch_commit,
+    resolve_repo_root_with_owned_checkout as resolve_repo_root_with_owned_checkout,
     _validate_ready_for_review as _validate_ready_for_review,
     _wp_branch_merged_into_target as _wp_branch_merged_into_target,
 )
@@ -724,6 +726,17 @@ def move_task(
         bool | None, typer.Option("--auto-commit/--no-auto-commit", help="Automatically commit WP file changes to target branch (default: from project config)")
     ] = None,
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON format")] = False,
+    owned_checkout: Annotated[
+        Path | None,
+        typer.Option(
+            "--owned-checkout",
+            help=(
+                "Explicit checkout root owned by this invocation. Use it to record a "
+                "transition for a mission that lives in a linked worktree; the path is "
+                "validated against this repository before anything is written."
+            ),
+        ),
+    ] = None,
     skip_pre_review_gate: Annotated[
         bool,
         typer.Option(
@@ -783,6 +796,7 @@ def move_task(
             auto_commit=auto_commit,
             json_output=json_output,
             skip_pre_review_gate=skip_pre_review_gate,
+            owned_checkout=owned_checkout,
         )
     )
 
@@ -884,6 +898,18 @@ def mark_status(
 def list_tasks(
     lane: Annotated[str | None, typer.Option("--lane", help="Filter by lane")] = None,
     mission: Annotated[str | None, typer.Option("--mission", help="Mission slug")] = None,
+    owned_checkout: Annotated[
+        Path | None,
+        typer.Option(
+            "--owned-checkout",
+            help=(
+                "Explicit checkout root owned by this invocation. Use it to list the tasks of a "
+                "mission that lives in a linked worktree; the path is validated against this "
+                "repository before anything is read."
+            ),
+            metavar="PATH",
+        ),
+    ] = None,
 
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON format")] = False,
 ) -> None:
@@ -894,24 +920,28 @@ def list_tasks(
         spec-kitty agent tasks list-tasks --lane doing --json
     """
     try:
-        # Get repo root and feature slug
-        repo_root = locate_project_root()
-        if repo_root is None:
-            _output_error(json_output, "Could not locate project root")
-            raise typer.Exit(1)
+        # Get repo root and feature slug. Issue 26: a declared owned checkout is
+        # the root this listing belongs to; without it every lookup below folds a
+        # linked worktree back to the ambient primary and the mission is absent.
+        repo_root = resolve_repo_root_with_owned_checkout(
+            owned_checkout, json_output=json_output
+        )
+        effective_root = repo_root if owned_checkout is not None else None
 
         mission_slug = _find_mission_slug(explicit_mission=mission, json_output=json_output, repo_root=repo_root)
 
         # Ensure we operate on the target branch for this feature
-        main_repo_root, _ = _ensure_target_branch_checked_out(repo_root, mission_slug, json_output)
+        main_repo_root, _ = _ensure_target_branch_checked_out(
+            repo_root, mission_slug, json_output, owned_root=effective_root
+        )
 
         # Find all task files — tasks/ is PRIMARY-partition (FR-001 / C-001 per-leg
         # split — WP03 T010): WP task files live on the primary checkout regardless
         # of topology; a coord-topology mission's STATUS-only husk has no tasks/.
         tasks_dir = (
-            placement_seam(main_repo_root, mission_slug).read_dir(
-                MissionArtifactKind.WORK_PACKAGE_TASK
-            )
+            placement_seam(
+                main_repo_root, mission_slug, effective_root=effective_root
+            ).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
             / "tasks"
         )
         if not tasks_dir.exists():
@@ -922,9 +952,9 @@ def list_tasks(
         # read-surface-ssot-closeout WP08 / FR-001 / NFR-001: routed through the
         # kind-aware placement seam instead of the kind-blind
         # resolve_feature_dir_for_mission (same coord-aware STATUS_STATE resolution).
-        _lt_feature_dir = placement_seam(main_repo_root, mission_slug).read_dir(
-            MissionArtifactKind.STATUS_STATE
-        )
+        _lt_feature_dir = placement_seam(
+            main_repo_root, mission_slug, effective_root=effective_root
+        ).read_dir(MissionArtifactKind.STATUS_STATE)
         try:
             from specify_cli.status import read_events as _lt_read_events
             from specify_cli.status import reduce as _lt_reduce
@@ -1109,9 +1139,44 @@ from specify_cli.cli.commands.agent.tasks_finalize import (
 )
 
 
+def _refuse_owned_checkout(owned_checkout: Path | None, *, json_output: bool, command: str) -> None:
+    """Refuse a declared owned checkout on a command that cannot yet honour it.
+
+    WP02 T007 honour-or-refuse (issue 26): the port-based planning commands resolve
+    the mission dir through a frozen ``(repo_root, mission_slug)`` handle whose
+    readers fold a linked worktree back to the ambient primary. Until that handle
+    carries a declared root, the honest half of the contract is to refuse BEFORE
+    any read or write rather than operate on the primary checkout - the exact
+    hazard this mission exists to close (research.md D-7, D-12).
+    """
+    if owned_checkout is None:
+        return
+    _emit_owned_root_error(
+        f"{command} cannot yet honour --owned-checkout: its write path resolves the "
+        "mission through the ambient primary checkout (issue 26). Re-run it from the "
+        "checkout that owns the mission, or use a command that does honour it "
+        "(agent tasks move-task, agent status emit, agent tasks list-tasks, "
+        "migrate backfill-runtime-state).",
+        json_output=json_output,
+    )
+    raise typer.Exit(2)
+
+
 @app.command(name="finalize-tasks")
 def finalize_tasks(
     mission: Annotated[str | None, typer.Option("--mission", help="Mission slug")] = None,
+    owned_checkout: Annotated[
+        Path | None,
+        typer.Option(
+            "--owned-checkout",
+            help=(
+                "Explicit checkout root owned by this invocation. Use it to finalize a mission "
+                "that lives in a linked worktree; the path is validated against this repository "
+                "before anything is written."
+            ),
+            metavar="PATH",
+        ),
+    ] = None,
 
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON format")] = False,
     validate_only: Annotated[bool, typer.Option("--validate-only", help="Validate without writing changes")] = False,
@@ -1134,6 +1199,7 @@ def finalize_tasks(
         mission=mission,
         json_output=json_output,
         validate_only=validate_only,
+        owned_checkout=owned_checkout,
     )
 
 
@@ -1169,6 +1235,18 @@ def map_requirements(
         ),
     ] = None,
     mission: Annotated[str | None, typer.Option("--mission", help="Mission slug")] = None,
+    owned_checkout: Annotated[
+        Path | None,
+        typer.Option(
+            "--owned-checkout",
+            help=(
+                "Explicit checkout root owned by this invocation. Use it to map requirements for "
+                "a mission that lives in a linked worktree; the path is validated against this "
+                "repository before anything is written."
+            ),
+            metavar="PATH",
+        ),
+    ] = None,
 
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON format")] = False,
     auto_commit: Annotated[
@@ -1193,6 +1271,7 @@ def map_requirements(
         mission=mission,
         json_output=json_output,
         auto_commit=auto_commit,
+        owned_checkout=owned_checkout,
     )
 
 

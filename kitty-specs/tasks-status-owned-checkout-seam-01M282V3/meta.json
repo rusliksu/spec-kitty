@@ -1,0 +1,15 @@
+{
+  "created_at": "2026-09-11T11:15:00.224422+00:00",
+  "flattened": false,
+  "friendly_name": "Task and status commands honour an owned checkout",
+  "mission_id": "01M282V3ZTZNZDDD40BSZ7B6SH",
+  "mission_number": null,
+  "mission_slug": "tasks-status-owned-checkout-seam-01M282V3",
+  "mission_type": "software-dev",
+  "purpose_context": "Missions created with an owned checkout can be planned and implemented, but their work-package lane transitions and review verdicts cannot be recorded from that checkout at all; this mission closes that gap.",
+  "purpose_tldr": "Let the task and status commands address a mission that lives in an owned linked worktree.",
+  "slug": "tasks-status-owned-checkout-seam-01M282V3",
+  "status_phase": "1",
+  "target_branch": "codex/tasks-status-owned-checkout",
+  "topology": "single_branch"
+}

@@ -51,6 +51,8 @@ def _enrich_transition_request(
     *,
     read_dir: Path,
     mission_slug: str,
+    repo_root: Path | None = None,
+    effective_root: Path | None = None,
 ) -> TransitionRequest:  # noqa: F821
     """Inject aggregate-owned path/slug into a transition request."""
     import dataclasses
@@ -59,6 +61,8 @@ def _enrich_transition_request(
         request,
         feature_dir=read_dir,
         mission_slug=mission_slug,
+        effective_root=effective_root,
+        repo_root=repo_root or request.repo_root,
     )
 
 
@@ -180,6 +184,9 @@ class MissionStatus:
     topology: Literal["legacy", "coordination"]
     read_dir: Path
     repo_root: Path
+    # Explicitly declared owned checkout (issue 26). ``None`` keeps the historical
+    # primary fold for every resolution and write this aggregate performs.
+    effective_root: Path | None = None
     coordination_branch: str | None = None
 
     # ------------------------------------------------------------------
@@ -191,6 +198,8 @@ class MissionStatus:
         cls,
         repo_root: Path,
         mission_slug: str,
+        *,
+        effective_root: Path | None = None,
     ) -> MissionStatus:
         """Resolve topology once and return the authoritative status aggregate.
 
@@ -231,7 +240,9 @@ class MissionStatus:
         #    the aggregate carries identity + coord-branch declaration. The
         #    read_dir itself comes from the canonical surface, not from any
         #    hand-rolled composition here (FR-005 / #1821).
-        mission_id, coordination_branch, primary_candidate = cls._read_meta(repo_root, mission_slug)
+        mission_id, coordination_branch, primary_candidate = cls._read_meta(
+            repo_root, mission_slug, effective_root=effective_root
+        )
         # Route the mid8 through the authoritative failover resolver instead of
         # an inline ``[:8]`` slice (WP03 / FR-009). ``resolve_mid8`` declines to
         # ``""`` when no declared identity is available, preserving the legacy
@@ -248,6 +259,7 @@ class MissionStatus:
             repo_root=repo_root,
             mission_slug=mission_slug,
             primary_candidate=primary_candidate,
+            effective_root=effective_root,
         )
 
         topology: Literal["legacy", "coordination"] = (
@@ -263,6 +275,7 @@ class MissionStatus:
             read_dir=read_dir,
             repo_root=repo_root,
             coordination_branch=coordination_branch,
+            effective_root=effective_root,
         )
 
     @staticmethod
@@ -294,6 +307,7 @@ class MissionStatus:
         repo_root: Path,
         mission_slug: str,
         primary_candidate: Path,
+        effective_root: Path | None = None,
     ) -> Path:
         """Resolve the authoritative read dir as a thin adapter over the delegator.
 
@@ -347,6 +361,7 @@ class MissionStatus:
                 repo_root,
                 mission_slug,
                 on_missing_meta=primary_candidate,
+                effective_root=effective_root,
             )
         except CoordinationBranchDeleted:
             # ORDERING (WP05 / T023, FR-005): ``CoordinationBranchDeleted`` SUBCLASSES
@@ -396,7 +411,10 @@ class MissionStatus:
 
     @staticmethod
     def _read_meta(
-        repo_root: Path, mission_slug: str
+        repo_root: Path,
+        mission_slug: str,
+        *,
+        effective_root: Path | None = None,
     ) -> tuple[str | None, str | None, Path]:
         """Read ``meta.json`` and extract identity fields.
 
@@ -404,7 +422,9 @@ class MissionStatus:
             ``(mission_id, coordination_branch, primary_dir)`` — identity
             values may be ``None`` for legacy missions.
         """
-        meta_path, primary_dir = MissionStatus._find_meta_path(repo_root, mission_slug)
+        meta_path, primary_dir = MissionStatus._find_meta_path(
+            repo_root, mission_slug, effective_root=effective_root
+        )
         if not meta_path.exists():
             return None, None, primary_dir
         try:
@@ -457,7 +477,12 @@ class MissionStatus:
         return mission_id, coordination_branch, primary_dir
 
     @staticmethod
-    def _find_meta_path(repo_root: Path, mission_slug: str) -> tuple[Path, Path]:
+    def _find_meta_path(
+        repo_root: Path,
+        mission_slug: str,
+        *,
+        effective_root: Path | None = None,
+    ) -> tuple[Path, Path]:
         """Return ``(meta_path, primary_dir)`` via the canonical handle resolver.
 
         Routes EVERY handle form (full slug, bare mid8, full ULID, numeric
@@ -506,9 +531,9 @@ class MissionStatus:
         # every handle form (bare mid8 / ULID / numeric prefix / bare human
         # slug) to the correct composed primary dir internally, so the caller
         # no longer pre-canonicalizes with ``_canonicalize_primary_read_handle``.
-        primary_dir = placement_seam(repo_root, mission_slug).read_dir(
-            MissionArtifactKind.PRIMARY_METADATA
-        )
+        primary_dir = placement_seam(
+            repo_root, mission_slug, effective_root=effective_root
+        ).read_dir(MissionArtifactKind.PRIMARY_METADATA)
         raw_meta = primary_dir / _META_JSON_FILENAME
         # Pure-path happy path: when the literal slug already names an existing
         # primary mission dir with ``meta.json``, it IS the canonical directory
@@ -542,12 +567,16 @@ class MissionStatus:
             # ``_compose_primary_feature_dir`` by literal name, so the pinned
             # entry's token line is re-pointed to it in the same commit rather
             # than orphaned.
-            composed_primary = _compose_primary_feature_dir(repo_root, bare_dir_name)
+            composed_primary = _compose_primary_feature_dir(
+                repo_root, bare_dir_name, effective_root=effective_root
+            )
             composed_meta = composed_primary / _META_JSON_FILENAME
             if composed_meta.exists():
                 return composed_meta, composed_primary
         try:
-            candidate_dir = candidate_feature_dir_for_mission(repo_root, mission_slug)
+            candidate_dir = candidate_feature_dir_for_mission(
+                repo_root, mission_slug, effective_root=effective_root
+            )
         except StatusReadPathNotFound:
             # Fail-closed coordination window (coord worktree root materialized,
             # mission dir absent): defer to the literal primary candidate so the
@@ -655,6 +684,8 @@ class MissionStatus:
                 request,
                 read_dir=self.read_dir,
                 mission_slug=self.mission_slug,
+                repo_root=self.repo_root,
+                effective_root=self.effective_root,
             )
             return emit_status_transition_transactional(enriched)
 
@@ -689,11 +720,14 @@ class MissionStatus:
             raise TransitionError(error or f"Illegal transition: {from_lane_str} -> {resolved_to_lane}")
 
         # Inject the resolved read_dir so the transactional path uses the
-        # correct (possibly coord-worktree) directory.
+        # correct (possibly coord-worktree) directory, and carry the declared owned
+        # checkout (issue 26) so the write target resolves there, not in a sibling.
         enriched = _enrich_transition_request(
             request,
             read_dir=self.read_dir,
             mission_slug=self.mission_slug,
+            repo_root=self.repo_root,
+            effective_root=self.effective_root,
         )
         return emit_status_transition_transactional(enriched)
 

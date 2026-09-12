@@ -606,6 +606,8 @@ def resolve_status_surface(
     repo_root: Path,
     mission_slug: str,
     topology: MissionTopology | None = None,
+    *,
+    effective_root: Path | None = None,
 ) -> Path:
     """Return the canonical status.events.jsonl path for the given mission.
 
@@ -624,8 +626,10 @@ def resolve_status_surface(
     Raises FileNotFoundError when meta.json is absent.
     Raises ValueError when meta.json is malformed.
     """
+    if effective_root is None:
+        return resolve_status_surface_with_anchor(repo_root, mission_slug, topology).surface_path
     return resolve_status_surface_with_anchor(
-        repo_root, mission_slug, topology
+        repo_root, mission_slug, topology, effective_root=effective_root
     ).surface_path
 
 
@@ -633,6 +637,8 @@ def resolve_status_surface_with_anchor(
     repo_root: Path,
     mission_slug: str,
     topology: MissionTopology | None = None,
+    *,
+    effective_root: Path | None = None,
 ) -> ResolvedStatusSurface:
     """Resolve the canonical status surface and primary anchor in one pass.
 
@@ -671,8 +677,11 @@ def resolve_status_surface_with_anchor(
     Raises StatusReadPathNotFound when the coord-worktree mid8 cannot be derived
         from any declared source (fail closed — never fabricate a mid8).
     """
+    # ``effective_root`` (issue 26): a declared owned checkout owns the mission, so
+    # both compositions below read from it instead of folding to the primary.
+    resolution_root = effective_root or repo_root
     try:
-        feature_dir: Path = candidate_feature_dir_for_mission(repo_root, mission_slug)
+        feature_dir: Path = candidate_feature_dir_for_mission(resolution_root, mission_slug)
     except StatusReadPathNotFound as exc:
         # Option B (#1716 / FR-001 / FR-003): for the ``<slug>-<mid8>`` handle the
         # canonicalizer derives mid8 from the slug, so a coord-empty topology fails
@@ -762,8 +771,9 @@ def resolve_status_surface_with_anchor(
     # own reconciling comment above ``_FOUNDATION_SANCTIONED``. Six underlying
     # sites total, two different countable subsets by design — not a typo.
     primary_dir: Path = _compose_primary_feature_dir(
-        repo_root,
-        _canonicalize_primary_read_handle(repo_root, mission_slug),
+        resolution_root,
+        _canonicalize_primary_read_handle(resolution_root, mission_slug),
+        effective_root=effective_root,
     )
     if meta is None:
         # FR-007: fail-closed reader routing. Malformed meta surfaces typed

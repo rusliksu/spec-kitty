@@ -1078,6 +1078,7 @@ def resolve_surface_dir_or_typed_error(
     mission_slug: str,
     *,
     on_missing_meta: Path,
+    effective_root: Path | None = None,
 ) -> Path:
     """Resolve the authoritative status-surface DIRECTORY, or raise the typed error.
 
@@ -1139,14 +1140,20 @@ def resolve_surface_dir_or_typed_error(
     from specify_cli.coordination.surface_resolver import resolve_status_surface
 
     try:
-        surface: Path = resolve_status_surface(repo_root, mission_slug)
+        surface: Path = resolve_status_surface(
+            repo_root, mission_slug, effective_root=effective_root
+        )
     except (FileNotFoundError, ValueError):
         return on_missing_meta
     return surface.parent
 
 
 def candidate_feature_dir_for_mission(
-    repo_root: Path, mission_slug: str, *, resolver: MissionResolver | None = None
+    repo_root: Path,
+    mission_slug: str,
+    *,
+    resolver: MissionResolver | None = None,
+    effective_root: Path | None = None,
 ) -> Path:
     """Return the topology-aware mission-dir candidate without requiring it exist.
 
@@ -1190,6 +1197,12 @@ def candidate_feature_dir_for_mission(
     :class:`MissionSelectorAmbiguous` (C-CTX-4 / C-009 — an ambiguous selector is
     a structured error, never a silent wrong-but-plausible directory).
 
+    ``effective_root`` (issue 26): the declared owned checkout, when a caller
+    names one. Every lookup above folds to the primary by contract, so an owned
+    mission is invisible from the ambient root; naming the checkout here makes
+    this primitive return the mission surface that actually exists. ``None``
+    (the default) leaves the historical result untouched.
+
     ``resolver`` (WP03, FR-002): optional :class:`~mission_runtime.MissionResolver`
     threaded through the bare-modern fold and the existence-gated resolver's own
     identity probe, so this 30+-caller read primitive reaches the single walk
@@ -1211,13 +1224,26 @@ def candidate_feature_dir_for_mission(
         repo_root, mission_slug, resolver=resolver
     )
 
-    return _resolve_mission_read_path(
+    resolved = _resolve_mission_read_path(
         repo_root,
         mission_slug,
         mid8_from_slug(mission_slug),
         topology=stored_topology,
         resolver=resolver,
     )
+    if effective_root is None:
+        # No declaration: byte-identical to the historical behaviour.
+        return resolved
+
+    # ``effective_root`` (issue 26): an explicitly declared owned checkout owns
+    # the mission, so when that checkout actually carries the mission directory
+    # this primitive must return THAT surface rather than the ambient fold. The
+    # historical result is kept whenever the declared checkout has nothing under
+    # the resolved name, so the option can never invent a missing directory.
+    owned_candidate = _compose_primary_feature_dir(
+        repo_root, resolved.name, effective_root=effective_root
+    )
+    return owned_candidate if owned_candidate.exists() else resolved
 
 
 def _stored_topology_best_effort(
@@ -1260,7 +1286,12 @@ def _stored_topology_best_effort(
     return classify_from_meta(primary_meta, primary_dir)
 
 
-def _compose_primary_feature_dir(repo_root: Path, mission_slug: str) -> Path:
+def _compose_primary_feature_dir(
+    repo_root: Path,
+    mission_slug: str,
+    *,
+    effective_root: Path | None = None,
+) -> Path:
     """Module-private leaf: the pure ``KITTY_SPECS_DIR``-rooted primary-dir join.
 
     read-side-seam-primary-primitive-closure-01KYKMMT WP03 (T015): the terminal
@@ -1305,7 +1336,11 @@ def _compose_primary_feature_dir(repo_root: Path, mission_slug: str) -> Path:
     from specify_cli.core.paths import assert_safe_path_segment, get_main_repo_root
 
     assert_safe_path_segment(mission_slug)
-    primary_dir: Path = get_main_repo_root(repo_root) / KITTY_SPECS_DIR / mission_slug
+    # ``effective_root`` (issue 26): an explicitly declared owned checkout owns the
+    # mission, so the KITTY_SPECS join is rooted there instead of folding to the
+    # primary. ``None`` keeps the historical fold for every existing caller.
+    root = effective_root or get_main_repo_root(repo_root)
+    primary_dir: Path = root / KITTY_SPECS_DIR / mission_slug
     return primary_dir
 
 
@@ -1375,6 +1410,7 @@ def resolve_planning_read_dir(
     *,
     kind: MissionArtifactKind,
     resolver: MissionResolver | None = None,
+    effective_root: Path | None = None,
 ) -> Path:
     """Resolve a mission dir for a *read* of one artifact ``kind`` (per-kind split).
 
@@ -1460,9 +1496,13 @@ def resolve_planning_read_dir(
         canonical = _canonicalize_primary_read_handle(
             repo_root, mission_slug, resolver=resolver
         )
-        return _compose_primary_feature_dir(repo_root, canonical)
+        return _compose_primary_feature_dir(
+            repo_root, canonical, effective_root=effective_root
+        )
     # STATUS-partition read → topology-aware seam (C-001 / C-005 transients intact).
-    return candidate_feature_dir_for_mission(repo_root, mission_slug, resolver=resolver)
+    return candidate_feature_dir_for_mission(
+        repo_root, mission_slug, resolver=resolver, effective_root=effective_root
+    )
 
 
 def resolve_subtasks_gate_dir(feature_dir: Path, repo_root: Path | None, mission_slug: str) -> Path:
