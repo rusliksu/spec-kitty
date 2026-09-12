@@ -165,7 +165,9 @@ class PlacementMismatchError(RuntimeError):
         self.seeded_count = seeded_count
 
 
-def _resolve_primary_home_or_degrade(feature_dir: Path) -> Path | None:
+def _resolve_primary_home_or_degrade(
+    feature_dir: Path, *, effective_root: Path | None = None
+) -> Path | None:
     """Resolve the placement port's PRIMARY home for *feature_dir*, or ``None``.
 
     ``None`` is the DEGRADE signal: a resolver raise on an otherwise
@@ -194,8 +196,16 @@ def _resolve_primary_home_or_degrade(feature_dir: Path) -> Path | None:
 
     try:
         repo_root = resolve_canonical_root(feature_dir)
+        # ``effective_root`` (issue 26): every resolver below folds a linked
+        # worktree back to the ambient primary, so a mission that lives in an
+        # owned checkout resolves to a home that does not exist (and, before
+        # this parameter, made ``_flip_phase`` refuse with
+        # ``PlacementMismatchError``). The declared checkout is the home.
         return resolve_artifact_surface(
-            repo_root, feature_dir.name, MissionArtifactKind.PRIMARY_METADATA
+            repo_root,
+            feature_dir.name,
+            MissionArtifactKind.PRIMARY_METADATA,
+            effective_root=effective_root,
         ).path
     except (
         WorkspaceRootNotFound,
@@ -212,7 +222,7 @@ def _resolve_primary_home_or_degrade(feature_dir: Path) -> Path | None:
         return None
 
 
-def _flip_phase(feature_dir: Path) -> None:
+def _flip_phase(feature_dir: Path, *, effective_root: Path | None = None) -> None:
     """Phase 3 — the SOLE ``status_phase`` writer; only reached on an ``ok`` verify.
 
     Resolves the write target via :func:`canonicalize_feature_dir` (never
@@ -237,7 +247,7 @@ def _flip_phase(feature_dir: Path) -> None:
             disagrees with the write target (fail-closed, FR-001).
     """
     target = canonicalize_feature_dir(feature_dir)
-    resolved_home = _resolve_primary_home_or_degrade(feature_dir)
+    resolved_home = _resolve_primary_home_or_degrade(feature_dir, effective_root=effective_root)
     if resolved_home is not None and resolved_home != target:
         raise PlacementMismatchError(
             f"_flip_phase refuses to write status_phase for {feature_dir.name!r}: "
@@ -266,6 +276,7 @@ def cutover_mission(
     *,
     status_feature_dir: Path | None = None,
     dry_run: bool = False,
+    effective_root: Path | None = None,
 ) -> CutoverResult:
     """Seed -> fail-closed verify -> atomic ``status_phase`` flip for one mission.
 
@@ -346,7 +357,7 @@ def cutover_mission(
         return CutoverResult(slug=slug, flipped=False, would_flip=True, seeded_count=seed.seeded_count, verify=verify)
 
     try:
-        _flip_phase(feature_dir)
+        _flip_phase(feature_dir, effective_root=effective_root)
     except PlacementMismatchError as exc:
         # FR-015 (#3390): the seed phase above already wrote real events to
         # disk (a live run) before the flip aborted. Stamp the true count onto

@@ -20,9 +20,6 @@ owned_files:
   - "kitty-specs/tasks-status-owned-checkout-seam-01M282V3/traces/**"
 authoritative_surface: "src/specify_cli/cli/commands/"
 execution_mode: "planning_artifact"
-plan_concern_refs:
-  - IC-03
-  - IC-04
 planning_base_branch: codex/tasks-status-owned-checkout
 merge_target_branch: codex/tasks-status-owned-checkout
 branch_strategy: Planning artifacts for this mission were generated on codex/tasks-status-owned-checkout. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into codex/tasks-status-owned-checkout unless the human explicitly redirects the landing branch.

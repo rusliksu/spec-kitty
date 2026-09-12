@@ -672,7 +672,10 @@ def test_issue_2985_birth_cutover_preserves_every_wp_lane_and_repairs_old_seed(
     monkeypatch.setattr(
         runtime_state_cutover,
         "_resolve_primary_home_or_degrade",
-        lambda _feature_dir: feature_dir,
+        # ``**_kw`` absorbs the optional ``effective_root`` the helper gained in
+        # tasks-status-owned-checkout-seam-01M282V3 WP01 (issue 26); the stub
+        # just stands in for the resolved primary home.
+        lambda _feature_dir, **_kw: feature_dir,
     )
     expected_lanes = {
         "WP01": "done",

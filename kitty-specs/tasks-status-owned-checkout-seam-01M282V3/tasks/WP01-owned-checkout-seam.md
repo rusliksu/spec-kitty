@@ -41,9 +41,6 @@ owned_files:
   - "tests/architectural/test_single_mission_surface_resolver.py"
 authoritative_surface: "src/specify_cli/cli/commands/agent/"
 execution_mode: "code_change"
-plan_concern_refs:
-  - IC-01
-  - IC-02
 planning_base_branch: codex/tasks-status-owned-checkout
 merge_target_branch: codex/tasks-status-owned-checkout
 branch_strategy: Planning artifacts for this mission were generated on codex/tasks-status-owned-checkout. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into codex/tasks-status-owned-checkout unless the human explicitly redirects the landing branch.
