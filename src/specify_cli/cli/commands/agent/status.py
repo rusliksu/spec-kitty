@@ -167,6 +167,8 @@ def _resolve_mission_status_for_repo(
     main_repo_root: Path,
     mission_slug: str,
     json_output: bool = False,
+    *,
+    effective_root: Path | None = None,
 ) -> Any:
     """Resolve the coord-aware ``MissionStatus`` aggregate for a mission.
 
@@ -191,7 +193,11 @@ def _resolve_mission_status_for_repo(
     )
 
     try:
-        return MissionStatus.load(repo_root=main_repo_root, mission_slug=mission_slug)
+        return MissionStatus.load(
+            repo_root=main_repo_root,
+            mission_slug=mission_slug,
+            effective_root=effective_root,
+        )
     # ``CoordinationBranchDeleted`` (WP05 / T025): the aggregate now propagates the
     # converged coord-deleted hard-fail VERBATIM, so the CLI surfaces it as a clean
     # fail-closed error (#1848) rather than letting it escape uncaught.
@@ -317,6 +323,17 @@ def emit(
         ),
     ] = None,
     execution_mode: Annotated[str, typer.Option("--execution-mode", help="Execution mode (worktree or direct_repo)")] = "worktree",
+    owned_checkout: Annotated[
+        Path | None,
+        typer.Option(
+            "--owned-checkout",
+            help=(
+                "Explicit checkout root owned by this invocation. Use it to record a "
+                "transition for a mission that lives in a linked worktree; the path is "
+                "validated against this repository before anything is written."
+            ),
+        ),
+    ] = None,
     json_output: Annotated[bool, typer.Option("--json", help="Machine-readable JSON output")] = False,
 ) -> None:
     """Emit a status transition event for a work package.
@@ -331,14 +348,26 @@ def emit(
         spec-kitty agent status emit WP01 --to in_progress --actor claude --force --reason "resuming after crash"
     """
     try:
-        # Resolve repo root
-        cwd = Path.cwd().resolve()
-        repo_root = locate_project_root(cwd)
+        # Resolve repo root. Issue 26: an explicitly declared owned checkout becomes
+        # the root this command resolves and writes through; without it the ambient
+        # root is used exactly as before (refusals are typed and write nothing).
+        from specify_cli.cli.commands.agent.tasks_shared import (
+            resolve_repo_root_with_owned_checkout,
+        )
+
+        owned_root = (
+            resolve_repo_root_with_owned_checkout(owned_checkout, json_output=json_output)
+            if owned_checkout is not None
+            else None
+        )
+        repo_root = owned_root or locate_project_root(Path.cwd().resolve())
         if repo_root is None:
             _output_error(json_output, PROJECT_ROOT_NOT_FOUND)
             raise typer.Exit(1)
 
-        main_repo_root = get_main_repo_root(repo_root)
+        main_repo_root = (
+            owned_root if owned_root is not None else get_main_repo_root(repo_root)
+        )
 
         # Resolve feature slug
         mission_slug = _find_mission_slug(explicit_mission=mission, json_output=json_output, repo_root=repo_root)
@@ -346,7 +375,9 @@ def emit(
         # Resolve coord-aware mission aggregate via MissionStatus.load(). The
         # aggregate is retained (not just its read_dir) so the write below can
         # route through it without loading twice (FR-004).
-        ms = _resolve_mission_status_for_repo(main_repo_root, mission_slug, json_output)
+        ms = _resolve_mission_status_for_repo(
+            main_repo_root, mission_slug, json_output, effective_root=owned_root
+        )
         feature_dir = ms.read_dir
 
         # Parse evidence JSON if provided
@@ -411,9 +442,13 @@ def emit(
         # event log affected by this command.
         output_feature_dir = feature_dir
         try:
+            # Issue 26: the reload must carry the declared owned root too,
+            # or it folds back to the ambient primary and machine output
+            # reports an event-log path the command never wrote to.
             output_feature_dir = type(ms).load(
                 repo_root=main_repo_root,
                 mission_slug=mission_slug,
+                effective_root=owned_root,
             ).read_dir
         except Exception as reload_exc:  # noqa: BLE001
             logger.debug(

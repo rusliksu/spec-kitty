@@ -1521,6 +1521,7 @@ def resolve_placement_only(
     *,
     kind: MissionArtifactKind,
     resolver: MissionResolver | None = None,
+    effective_root: Path | None = None,
 ) -> CommitTarget:
     """Resolve the placement :class:`CommitTarget` for a mission artifact ``kind``.
 
@@ -1608,7 +1609,7 @@ def resolve_placement_only(
     # missions).
     try:
         candidate_dir = candidate_feature_dir_for_mission(
-            repo_root, mission_slug, resolver=resolver
+            repo_root, mission_slug, resolver=resolver, effective_root=effective_root
         )
     except StatusReadPathNotFound as exc:
         # Fail-closed surface refusal at entry canonicalization: translate to
@@ -1648,17 +1649,36 @@ def resolve_placement_only(
     # never re-inferred from ``coordination_branch`` (FR-004).
     from specify_cli.core.paths import get_main_repo_root
 
-    target_branch = get_feature_target_branch(repo_root, mission_slug)
+    # ``effective_root`` (issue 26): a declared owned checkout owns the mission, so
+    # every root-consuming read below uses it instead of folding to the primary.
+    placement_root = effective_root or repo_root
+    if effective_root is None:
+        target_branch = get_feature_target_branch(placement_root, mission_slug)
+    else:
+        # Issue 26: the legacy helper folds a generic worktree to the ambient
+        # primary checkout, so an owned mission's stored ``target_branch`` is
+        # invisible to it and it degrades to the repo default (the protected
+        # primary branch) — exactly the write-into-primary hazard D-12 caught.
+        # Read the validated checkout's own meta instead and derive the
+        # fallback from that checkout, mirroring the opted-in arms of
+        # ``_assemble_core_fragments`` (line 1116) and ``resolve_action_context``
+        # (line 2299). The no-declaration arm above stays byte-identical.
+        from specify_cli.core.git_ops import resolve_primary_branch
+        from specify_cli.core.paths import read_target_branch_from_meta
+
+        stored_target = read_target_branch_from_meta(candidate_dir)
+        target_branch = stored_target or str(resolve_primary_branch(placement_root))
     topology = _resolve_topology(
-        get_main_repo_root(repo_root), mission_slug, resolver=resolver
+        effective_root or get_main_repo_root(repo_root), mission_slug, resolver=resolver
     )
     _identity, branch_ref, _status_surface, _workspace = _assemble_core_fragments(
-        repo_root,
+        placement_root,
         mission_slug=mission_slug,
         target_branch=target_branch,
         topology=topology,
         cwd=None,
         resolver=resolver,
+        effective_root=effective_root,
     )
     # FR-002 / FR-004 (write-surface-coherence WP01): the projection is
     # kind-aware. A ``_PRIMARY_ARTIFACT_KINDS`` member routes to the primary
@@ -1710,6 +1730,9 @@ class PlacementSeam:
 
     repo_root: Path
     mission_slug: str
+    # Explicitly declared checkout that owns this mission (issue 26). ``None`` keeps
+    # the historical primary fold for every projection below.
+    effective_root: Path | None = None
 
     def write_target(self, kind: MissionArtifactKind) -> CommitTarget:
         """Return the :class:`CommitTarget` a write of ``kind`` must commit to.
@@ -1718,7 +1741,12 @@ class PlacementSeam:
         docstring. Never constructs ``CommitTarget(ref=<current_checkout>)``
         (the forbidden-for-callers grammar, contracts/seam-api.md).
         """
-        return resolve_placement_only(self.repo_root, self.mission_slug, kind=kind)
+        return resolve_placement_only(
+            self.repo_root,
+            self.mission_slug,
+            kind=kind,
+            effective_root=self.effective_root,
+        )
 
     def read_dir(self, kind: MissionArtifactKind) -> Path:
         """Return the directory a read of ``kind`` resolves to.
@@ -1770,7 +1798,12 @@ class PlacementSeam:
             )
             return retrospective_dir
 
-        return resolve_artifact_surface(self.repo_root, self.mission_slug, kind).path
+        return resolve_artifact_surface(
+            self.repo_root,
+            self.mission_slug,
+            kind,
+            effective_root=self.effective_root,
+        ).path
 
 
 @dataclass(frozen=True)
@@ -2027,6 +2060,7 @@ def resolve_artifact_surface(
     kind: MissionArtifactKind,
     *,
     resolver: MissionResolver | None = None,
+    effective_root: Path | None = None,
 ) -> ResolvedSurface:
     """Resolve the affirmative read/write surface for a mission artifact ``kind``.
 
@@ -2062,7 +2096,9 @@ def resolve_artifact_surface(
     from specify_cli.core.paths import get_main_repo_root
     from specify_cli.missions._read_path_resolver import resolve_planning_read_dir
 
-    primary_root = get_main_repo_root(repo_root)
+    # An explicitly declared checkout IS the root that owns the mission (issue 26);
+    # folding it through ``get_main_repo_root`` would cross-read a sibling checkout.
+    primary_root = effective_root or get_main_repo_root(repo_root)
     # The affirmative PRIMARY home (canonicalized handle → ``<slug>-<mid8>`` dir).
     # ``resolve_planning_read_dir`` is typed ``-> Path`` but the
     # ``follow_imports=skip`` boundary on ``specify_cli.*`` widens it to ``Any``;
@@ -2072,6 +2108,7 @@ def resolve_artifact_surface(
         mission_slug,
         kind=MissionArtifactKind.PRIMARY_METADATA,
         resolver=resolver,
+        effective_root=effective_root,
     )
     # Idempotence under our own output (the #3012 backfilled-mission regression):
     # when the literal-composed ``<slug>-<mid8>`` primary dir does NOT exist but the
@@ -2195,7 +2232,12 @@ def resolve_create_time_write_target(planning_branch: str) -> CommitTarget:
     return CommitTarget(ref=planning_branch)
 
 
-def placement_seam(repo_root: Path, mission_slug: str) -> PlacementSeam:
+def placement_seam(
+    repo_root: Path,
+    mission_slug: str,
+    *,
+    effective_root: Path | None = None,
+) -> PlacementSeam:
     """Construct the placement seam for one mission operation (T001 entry point).
 
     Asserts the P-1 partition invariant (T002) before returning the seam: the
@@ -2208,7 +2250,11 @@ def placement_seam(repo_root: Path, mission_slug: str) -> PlacementSeam:
     :func:`~mission_runtime.artifacts.artifact_home_for`.
     """
     assert_partition_invariant()
-    return PlacementSeam(repo_root=repo_root, mission_slug=mission_slug)
+    return PlacementSeam(
+        repo_root=repo_root,
+        mission_slug=mission_slug,
+        effective_root=effective_root,
+    )
 
 
 def resolve_action_context(

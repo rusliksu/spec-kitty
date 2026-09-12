@@ -82,6 +82,8 @@ class _FinalizeState:
     # --- phase A: resolved context ---
     repo_root: Path = field(default_factory=Path)
     main_repo_root: Path = field(default_factory=Path)
+    #: Issue 26: the declared owned checkout, when the caller named one.
+    owned_checkout: Path | None = None
     target_branch: str = ""
     mission_slug: str = ""
     primary_feature_dir: Path = field(default_factory=Path)
@@ -120,10 +122,24 @@ def _ft_resolve_context(st: _FinalizeState, ports: TasksPorts) -> None:
     coord-aware resolver in phase C.
     """
     from specify_cli.cli.commands.agent import tasks as _tasks
-    repo_root = _tasks.locate_project_root()
-    if repo_root is None:
-        _tasks._output_error(st.json_output, "Could not locate project root")
-        raise typer.Exit(1)
+    from specify_cli.cli.commands.agent.tasks_shared import (
+        resolve_repo_root_with_owned_checkout,
+    )
+
+    # Issue 26: a declared owned checkout is the root this finalize belongs to;
+    # every lookup below folds a linked worktree back to the ambient primary, so
+    # an owned mission is otherwise invisible. The no-declaration arm keeps the
+    # historical locate + refusal byte-for-byte (including the patchable
+    # `_tasks._output_error` seam the seam tests intercept).
+    if st.owned_checkout is None:
+        repo_root = _tasks.locate_project_root()
+        if repo_root is None:
+            _tasks._output_error(st.json_output, "Could not locate project root")
+            raise typer.Exit(1)
+    else:
+        repo_root = resolve_repo_root_with_owned_checkout(
+            st.owned_checkout, json_output=st.json_output
+        )
     st.repo_root = repo_root
     # FR-010 / FR-019: one-shot sparse-checkout session warning.
     _tasks._emit_sparse_session_warning(repo_root, command="spec-kitty agent tasks finalize-tasks")
@@ -133,7 +149,11 @@ def _ft_resolve_context(st: _FinalizeState, ports: TasksPorts) -> None:
     st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
         repo_root, st.mission_slug, st.json_output
     )
-    handle = MissionHandle(repo_root=st.main_repo_root, mission_slug=st.mission_slug)
+    handle = MissionHandle(
+        repo_root=st.main_repo_root,
+        mission_slug=st.mission_slug,
+        effective_root=repo_root if st.owned_checkout is not None else None,
+    )
     st.primary_feature_dir = ports.fs.planning_read_dir(
         handle, kind=MissionArtifactKind.WORK_PACKAGE_TASK
     )
@@ -325,6 +345,7 @@ def _do_finalize_tasks(
     validate_only: bool,
     *,
     ports: TasksPorts | None = None,
+    owned_checkout: Path | None = None,
 ) -> None:
     """Orchestrate ``finalize-tasks`` over the WP02 ``FsReader`` port, CORELESS.
 
@@ -337,7 +358,12 @@ def _do_finalize_tasks(
     """
     from specify_cli.cli.commands.agent import tasks as _tasks
     ports = ports or _default_finalize_ports()
-    st = _FinalizeState(mission=mission, json_output=json_output, validate_only=validate_only)
+    st = _FinalizeState(
+        mission=mission,
+        json_output=json_output,
+        validate_only=validate_only,
+        owned_checkout=owned_checkout,
+    )
     try:
         _ft_resolve_context(st, ports)
         # WP06 (coord-commit-integrity-01KY5JS8, FR-008, DIRECTIVE_024 declared

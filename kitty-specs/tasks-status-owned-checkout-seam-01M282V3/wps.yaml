@@ -1,0 +1,63 @@
+work_packages:
+  - id: WP01
+    title: "Owned-checkout seam for state-recording commands"
+    dependencies: []
+    owned_files:
+      - "src/specify_cli/cli/commands/agent/tasks_move_task.py"
+      - "src/specify_cli/cli/commands/agent/tasks_shared.py"
+      - "src/specify_cli/cli/commands/agent/status.py"
+      - "tests/tasks/test_move_task_owned_checkout_seam.py"
+      - "tests/status/test_status_owned_checkout_seam.py"
+      # Scope amendment (research.md D-11 scope note, paid in D-14): the seam
+      # legitimately spans the shared resolution/placement layer and the two
+      # pinned guards it re-writes. Named here rather than expanded silently.
+      - "tests/specify_cli/cli/commands/agent/test_tasks_move_task_degod.py"
+      - "tests/specify_cli/cli/commands/agent/test_tasks_move_task_seam.py"
+      - "src/specify_cli/cli/commands/agent/tasks.py"
+      - "src/specify_cli/status/models.py"
+      - "src/specify_cli/status/aggregate.py"
+      - "src/specify_cli/coordination/status_transition.py"
+      - "src/specify_cli/missions/_read_path_resolver.py"
+      - "src/mission_runtime/resolution.py"
+      - "src/mission_runtime/write_target_degrade.py"
+      - "tests/specify_cli/cli/commands/agent/fixtures/tasks_cli/help/move-task.help"
+      - "tests/architectural/test_no_read_side_bypass.py"
+      - "tests/architectural/test_single_mission_surface_resolver.py"
+    requirement_refs:
+      - FR-001
+      - FR-002
+      - FR-003
+      - FR-004
+      - FR-005
+      - NFR-002
+      - NFR-004
+      - C-001
+      - C-002
+      - C-003
+    subtasks:
+      - T001
+      - T002
+      - T003
+      - T004
+      - T005
+      - T006
+
+  - id: WP02
+    title: "Planning-side honour-or-refuse and evidence closure"
+    dependencies:
+      - WP01
+    owned_files:
+      - "src/specify_cli/cli/commands/agent/tasks.py"
+      - "src/specify_cli/cli/commands/agent/mission_finalize.py"
+      - "src/specify_cli/cli/commands/research.py"
+      - "kitty-specs/tasks-status-owned-checkout-seam-01M282V3/traces/**"
+    requirement_refs:
+      - FR-006
+      - NFR-001
+      - NFR-003
+      - C-004
+    subtasks:
+      - T007
+      - T008
+      - T009
+      - T010

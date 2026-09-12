@@ -6,5 +6,6 @@ spec-kitty agent tasks list-tasks --lane doing --json
 Options
 --lane TEXT Filter by lane
 --mission TEXT Mission slug
+--owned-checkout PATH Explicit checkout root owned by this invocation. Use it to list the tasks of a mission that lives in a linked worktree; the path is validated against this repository before anything is read.
 --json Output JSON format
 --help -h Show this message and exit.

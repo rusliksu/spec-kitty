@@ -547,7 +547,13 @@ class WorkPackage:
         return str(view.resolved.lane)
 
 
-def locate_work_package(repo_root: Path, feature: str, wp_id: str) -> WorkPackage:
+def locate_work_package(
+    repo_root: Path,
+    feature: str,
+    wp_id: str,
+    *,
+    effective_root: Path | None = None,
+) -> WorkPackage:
     """Locate a work package by ID, supporting both legacy and new formats.
 
     Always uses main repo's kitty-specs/ regardless of current directory.
@@ -567,11 +573,16 @@ def locate_work_package(repo_root: Path, feature: str, wp_id: str) -> WorkPackag
     # read-side-placement-seam-migration WP07: routed through
     # ``placement_seam`` (fail-loud on a deleted-coord mismatch, NFR-002)
     # instead of the kind-blind ``resolve_planning_read_dir``.
-    main_root = get_main_repo_root(repo_root)
-    feature_path = placement_seam(main_root, feature).read_dir(
-        MissionArtifactKind.WORK_PACKAGE_TASK
-    )
-    status_dir = resolve_status_surface(main_root, feature).parent
+    # ``effective_root`` (issue 26): an explicitly declared owned checkout owns the
+    # mission, so neither the placement read nor the status surface may fold back to
+    # the primary. Without it the historical fold is untouched.
+    main_root = effective_root or get_main_repo_root(repo_root)
+    feature_path = placement_seam(
+        main_root, feature, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
+    status_dir = resolve_status_surface(
+        main_root, feature, effective_root=effective_root
+    ).parent
 
     tasks_root = feature_path / "tasks"
     if not tasks_root.exists():

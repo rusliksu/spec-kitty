@@ -1,0 +1,10 @@
+source_id,kind,reference,what_it_supports
+SRC-001,issue,https://github.com/rusliksu/spec-kitty/issues/26,Reproduction and impact of the owned-worktree resolution gap
+SRC-002,source_file,src/specify_cli/cli/commands/next_cmd.py,The sanctioned owned-checkout pattern to reuse
+SRC-003,source_file,src/specify_cli/core/checkout_ownership.py,Ownership claim validation and typed refusals
+SRC-004,source_file,src/specify_cli/cli/selector_resolution.py,Mission handle resolution against a repo root
+SRC-005,source_file,src/specify_cli/core/paths.py,locate_project_root semantics (main root from a worktree) and SPECIFY_REPO_ROOT
+SRC-006,source_file,src/specify_cli/coordination/status_transition.py,Transaction identity derivation and write target
+SRC-007,source_file,src/specify_cli/cli/commands/agent/tasks_shared.py,Status-state placement and mission slug requirement
+SRC-008,pull_request,https://github.com/rusliksu/spec-kitty/pull/20,In-flight owned-mission routing for move-task
+SRC-009,mission_artifact,kitty-specs/sync-capture-coalescing-integrity-01M25WZF/traces/tooling-friction.md,Field record of the gap from the previous mission

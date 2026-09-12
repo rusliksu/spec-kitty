@@ -8,6 +8,7 @@ spec-kitty agent tasks finalize-tasks --mission 001-my-feature --json
 spec-kitty agent tasks finalize-tasks --mission 021-my-feature --json
 Options
 --mission TEXT Mission slug
+--owned-checkout PATH Explicit checkout root owned by this invocation. Use it to finalize a mission that lives in a linked worktree; the path is validated against this repository before anything is written.
 --json Output JSON format
 --validate-only Validate without writing changes
 --help -h Show this message and exit.
