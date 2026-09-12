@@ -87,6 +87,7 @@ def _primary_feature_dir(
     repo_root: Path,
     *,
     resolver: MissionResolver | None = None,
+    effective_root: Path | None = None,
 ) -> Path:
     """The canonical PRIMARY mission dir every field this module reads anchors on.
 
@@ -104,6 +105,14 @@ def _primary_feature_dir(
         _compose_primary_feature_dir,
     )
 
+    if effective_root is not None:
+        from mission_runtime.artifacts import MissionArtifactKind
+        from specify_cli.missions._read_path_resolver import resolve_planning_read_dir
+
+        return resolve_planning_read_dir(
+            repo_root, mission_slug, kind=MissionArtifactKind.PRIMARY_METADATA,
+            resolver=resolver, effective_root=effective_root,
+        )
     main_root = get_main_repo_root(repo_root)
     canonical_handle = _canonicalize_primary_read_handle(
         main_root, mission_slug, resolver=resolver
@@ -220,6 +229,7 @@ def resolve_lifecycle_phase(
     repo_root: Path,
     *,
     resolver: MissionResolver | None = None,
+    effective_root: Path | None = None,
 ) -> LifecyclePhase:
     """Derive a mission's :class:`LifecyclePhase` from durable signals (D2).
 
@@ -254,15 +264,23 @@ def resolve_lifecycle_phase(
         resolver: Optional :class:`MissionResolver` threaded through handle
             canonicalization. ``None`` preserves historical behaviour.
     """
-    feature_dir = _primary_feature_dir(mission_slug, repo_root, resolver=resolver)
+    root_kwargs = {"effective_root": effective_root} if effective_root is not None else {}
+    feature_dir = _primary_feature_dir(mission_slug, repo_root, resolver=resolver, **root_kwargs)
     baseline = _read_baseline_merge_commit(feature_dir)
     if not baseline:
         return LifecyclePhase.PRE_CONSOLIDATION
 
     from specify_cli.core.paths import get_feature_target_branch, get_main_repo_root
 
-    main_root = get_main_repo_root(repo_root)
-    target_branch = get_feature_target_branch(repo_root, mission_slug)
+    if effective_root is None:
+        main_root = get_main_repo_root(repo_root)
+        target_branch = get_feature_target_branch(repo_root, mission_slug)
+    else:
+        from specify_cli.core.git_ops import resolve_primary_branch
+        from specify_cli.core.paths import read_target_branch_from_meta
+
+        main_root = effective_root
+        target_branch = read_target_branch_from_meta(feature_dir) or str(resolve_primary_branch(effective_root))
     if _target_ref_exists(main_root, target_branch):
         return LifecyclePhase.CONSOLIDATED
 

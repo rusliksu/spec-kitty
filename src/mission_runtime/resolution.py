@@ -997,7 +997,8 @@ def _resolve_topology(
 
 
 def resolve_topology(
-    repo_root: Path, mission_handle: str, *, resolver: MissionResolver | None = None
+    repo_root: Path, mission_handle: str, *, resolver: MissionResolver | None = None,
+    effective_root: Path | None = None,
 ) -> MissionTopology:
     """Public seam: read the WP02 **stored** :class:`MissionTopology` for a mission.
 
@@ -1024,11 +1025,12 @@ def resolve_topology(
         candidate_feature_dir_for_mission,
     )
 
-    primary_root = get_main_repo_root(repo_root)
+    primary_root = effective_root or get_main_repo_root(repo_root)
+    root_kwargs = {"effective_root": effective_root} if effective_root is not None else {}
     mission_slug = mission_handle
     try:
         candidate_dir = candidate_feature_dir_for_mission(
-            repo_root, mission_handle, resolver=resolver
+            repo_root, mission_handle, resolver=resolver, **root_kwargs
         )
     except (StatusReadPathNotFound, MissionSelectorAmbiguous):
         # Unresolvable / ambiguous handle: pass the raw handle through so the
@@ -1037,7 +1039,7 @@ def resolve_topology(
         candidate_dir = None
     if candidate_dir is not None and candidate_dir.exists():
         mission_slug = candidate_dir.name
-    return _resolve_topology(primary_root, mission_slug, resolver=resolver)
+    return _resolve_topology(primary_root, mission_slug, resolver=resolver, **root_kwargs)
 
 
 def mission_context_for(
@@ -1638,7 +1640,10 @@ def resolve_placement_only(
     # through completely UNCHANGED (#3076 regression floor, T012) — including
     # for ``STATUS_STATE`` / ``DECISION_LOG``, which are never in the E2
     # in-scope set (SC-005 non-regression).
-    phase = resolve_lifecycle_phase(mission_slug, repo_root, resolver=resolver)
+    phase = resolve_lifecycle_phase(
+        mission_slug, repo_root, resolver=resolver,
+        **({"effective_root": effective_root} if effective_root is not None else {}),
+    )
     if phase is LifecyclePhase.PUBLISHED and kind in _E2_CONSOLIDATED_ELIGIBLE_KINDS:
         return _resolve_consolidated_e2_target(repo_root, mission_slug, resolver=resolver)
 
@@ -1669,7 +1674,8 @@ def resolve_placement_only(
         stored_target = read_target_branch_from_meta(candidate_dir)
         target_branch = stored_target or str(resolve_primary_branch(placement_root))
     topology = _resolve_topology(
-        effective_root or get_main_repo_root(repo_root), mission_slug, resolver=resolver
+        effective_root or get_main_repo_root(repo_root), mission_slug, resolver=resolver,
+        **({"effective_root": effective_root} if effective_root is not None else {}),
     )
     _identity, branch_ref, _status_surface, _workspace = _assemble_core_fragments(
         placement_root,
@@ -1887,6 +1893,7 @@ def declared_read_surface(
     kind: MissionArtifactKind,
     *,
     resolver: MissionResolver | None = None,
+    effective_root: Path | None = None,
 ) -> TopologySurface:
     """The intrinsic, materialization-BLIND declared home for a read of ``kind``.
 
@@ -1918,7 +1925,8 @@ def declared_read_surface(
     """
     if is_primary_artifact_kind(kind):
         return TopologySurface.PRIMARY
-    topology = resolve_topology(repo_root, mission_slug, resolver=resolver)
+    root_kwargs = {"effective_root": effective_root} if effective_root is not None else {}
+    topology = resolve_topology(repo_root, mission_slug, resolver=resolver, **root_kwargs)
     if routes_through_coordination(topology):
         return TopologySurface.COORD
     return TopologySurface.PRIMARY
@@ -1931,6 +1939,7 @@ def _classify_artifact_surface(
     *,
     primary_dir: Path,
     resolver: MissionResolver | None,
+    effective_root: Path | None = None,
 ) -> tuple[TopologySurface, Path | None]:
     """Classify the affirmative surface for ``kind`` (the four-CoordState answer).
 
@@ -1947,7 +1956,8 @@ def _classify_artifact_surface(
     primary, not a fallback); only a ``COORD`` declared answer proceeds to
     the materialization-aware four-state classifier below.
     """
-    declared = declared_read_surface(primary_root, canonical_slug, kind, resolver=resolver)
+    root_kwargs = {"effective_root": effective_root} if effective_root is not None else {}
+    declared = declared_read_surface(primary_root, canonical_slug, kind, resolver=resolver, **root_kwargs)
     if declared is TopologySurface.PRIMARY:
         return TopologySurface.PRIMARY, None
 
@@ -1963,9 +1973,9 @@ def _classify_artifact_surface(
     )
 
     coordination_branch = _resolve_coordination_branch(
-        primary_root, canonical_slug, resolver=resolver
+        primary_root, canonical_slug, resolver=resolver, **root_kwargs
     )
-    mission_id = _resolve_mission_id(primary_root, canonical_slug, resolver=resolver)
+    mission_id = _resolve_mission_id(primary_root, canonical_slug, resolver=resolver, **root_kwargs)
     mid8 = resolve_mid8(canonical_slug, mission_id=mission_id)
     coord_state = probe_coord_state(
         primary_root, canonical_slug, mid8, coordination_branch=coordination_branch
@@ -2129,6 +2139,7 @@ def resolve_artifact_surface(
         kind,
         primary_dir=primary_dir,
         resolver=resolver,
+        **({"effective_root": effective_root} if effective_root is not None else {}),
     )
     # T010 / renata M1: populate the previously-always-``None``
     # ``SurfaceLocations.consolidated`` field. This is the SAME phase
@@ -2146,7 +2157,10 @@ def resolve_artifact_surface(
     # leaves ``consolidated`` ``None`` — "n/a" per data-model.md — so
     # ``translate_surface(CONSOLIDATED, …)`` keeps refusing with its
     # existing "no resolved location" guard before any consolidation exists.
-    phase = resolve_lifecycle_phase(canonical_slug, primary_root, resolver=resolver)
+    phase = resolve_lifecycle_phase(
+        canonical_slug, primary_root, resolver=resolver,
+        **({"effective_root": effective_root} if effective_root is not None else {}),
+    )
     consolidated_dir = None if phase is LifecyclePhase.PRE_CONSOLIDATION else primary_dir
     locations = SurfaceLocations(
         primary=primary_dir, coord=coord_dir, consolidated=consolidated_dir
