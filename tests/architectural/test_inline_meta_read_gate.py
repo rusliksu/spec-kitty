@@ -324,8 +324,21 @@ FLOOR_MARGIN = 2
 # the four-site margin (``147 <= 147 < 151``). Measured directly via
 # ``pytest tests/architectural/test_inline_meta_read_gate.py::test_routed_load_meta_floor``
 # on the integrated PR tip.
+# RAISED 2026-09-03 (#3716 / commit-boundary mission): the discard-path
+# transactional fix added two genuine routed sites, both resolving the PRIMARY
+# target branch for the discard commits — ``load_meta`` in
+# ``mission_type._commit_flattened_meta`` (commit-the-flatten leg) and
+# ``load_meta_or_empty`` in ``retrospective_terminus._primary_target_branch``
+# (the retrospective degrade-ref). Live rises 154 -> 156; floor raised 150 -> 152,
+# the lowest permitted value within the four-site margin (``152 <= 152 < 156``).
+# RAISED 2026-09-03 (#3843 landing, rebased onto #3716): explicit-owned-checkout
+# routing adds genuine canonical metadata reads on top of the #3716 sites above.
+# Live rises 156 -> 157; floor raised 152 -> 153, the lowest permitted value
+# within the four-site margin (``153 <= 153 < 157``). Measured directly via
+# ``pytest tests/architectural/test_inline_meta_read_gate.py::test_routed_load_meta_floor``
+# on the integrated (rebased) PR tip.
 ROUTED_LOAD_META_FLOOR_MARGIN = 4
-ROUTED_LOAD_META_FLOOR = 150
+ROUTED_LOAD_META_FLOOR = 153
 
 
 # --------------------------------------------------------------------------- #

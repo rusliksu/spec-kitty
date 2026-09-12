@@ -68,6 +68,7 @@ _SPECIFY_CLI_NEXT_SHARD_1_FILES: tuple[str, ...] = (
 _SPECIFY_CLI_NEXT_SHARD_2_FILES: tuple[str, ...] = (
     "tests/specify_cli/next/test_decision_dispatch.py",
     "tests/specify_cli/next/test_next_cold_start_performance.py",
+    "tests/specify_cli/next/test_next_invocation_lifecycle_seam.py",
     "tests/specify_cli/next/test_workflow_command.py",
     "tests/specify_cli/next/test_workflow_registry.py",
 )
@@ -108,6 +109,7 @@ _RUNTIME_SHARD_1_FILES: tuple[str, ...] = (
 _RUNTIME_SHARD_2_FILES: tuple[str, ...] = (
     "tests/runtime/next/test_pertype_presence_gate.py",
     "tests/runtime/next/test_cli_guard_family.py",
+    "tests/runtime/next/test_composed_guard_launder.py",
     "tests/runtime/test_banner_visibility.py",
     "tests/runtime/test_bridge_composition.py",
     "tests/runtime/test_bridge_decision_builder.py",
@@ -122,6 +124,7 @@ _RUNTIME_SHARD_2_FILES: tuple[str, ...] = (
 _RUNTIME_SHARD_3_FILES: tuple[str, ...] = (
     "tests/runtime/next/test_committed_authority.py",
     "tests/runtime/next/test_merged_mission_terminal.py",
+    "tests/runtime/next/test_presence_filenames.py",
     "tests/runtime/test_bootstrap_unit.py",
     "tests/runtime/test_bootstrap_version_fallback.py",
     "tests/runtime/test_bridge_engine.py",

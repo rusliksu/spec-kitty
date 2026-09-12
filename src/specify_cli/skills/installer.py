@@ -217,8 +217,8 @@ def _project_skill_files(
         entries.append(
             ManagedFileEntry(
                 skill_name=skill.name,
-                source_file=str(rel_within_skill),
-                installed_path=str(dest.relative_to(project_path)),
+                source_file=rel_within_skill.as_posix(),
+                installed_path=dest.relative_to(project_path).as_posix(),
                 installation_class=installation_class,
                 agent_key=agent_key,
                 content_hash=compute_content_hash(dest),
@@ -248,8 +248,8 @@ def _make_entries_for_existing(
         entries.append(
             ManagedFileEntry(
                 skill_name=skill.name,
-                source_file=str(rel_within_skill),
-                installed_path=str(dest.relative_to(project_path)),
+                source_file=rel_within_skill.as_posix(),
+                installed_path=dest.relative_to(project_path).as_posix(),
                 installation_class=installation_class,
                 agent_key=agent_key,
                 content_hash=compute_content_hash(dest),
@@ -295,9 +295,7 @@ def install_skills_for_agent(
 
         if installation_class == SKILL_CLASS_SHARED:
             if shared_root_installed is not None and skill.name in shared_root_installed:
-                entries = _make_entries_for_existing(
-                    skill, target_skill_dir, project_path, installation_class, agent_key
-                )
+                entries = _make_entries_for_existing(skill, target_skill_dir, project_path, installation_class, agent_key)
             else:
                 entries = _project_skill_files(
                     skill,
