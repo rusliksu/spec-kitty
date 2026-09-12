@@ -7,6 +7,7 @@ Options
 --replace Replace existing refs instead of merging (default: merge/union)
 --tracker-ref TEXT External tracker reference (e.g., '#1298' or 'JIRA-123'). Repeatable; requires --wp. Persists to the WP frontmatter as tracker_refs.
 --mission TEXT Mission slug
+--owned-checkout PATH Explicit checkout root owned by this invocation. Not honoured by this command yet; declaring it refuses before anything is read or written (issue 26).
 --json Output JSON format
 --auto-commit --no-auto-commit Automatically commit WP file changes (default: from project config)
 --help -h Show this message and exit.

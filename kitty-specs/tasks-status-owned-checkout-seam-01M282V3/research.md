@@ -379,6 +379,23 @@ are green modulo the documented Windows baseline: missions fast 449 passed / 2 b
 integration 306 passed, status fast 995 passed / 2 baseline failures, migration 137 passed / 2 baseline
 path-separator failures.
 
+**D-16 - WP02 starts with one command that honours the seam and two that refuse it honestly.** The
+planning-side package is explicitly honour-or-refuse (T007). The split landed as:
+
+* `agent tasks list-tasks --owned-checkout <wt>` **honours** the declaration - it lists the owned
+  mission\u2019s work packages, each path inside the declared checkout, and without the option the owned
+  mission is still invisible (`mission_not_found`, exit 2 - parity held).
+* `agent tasks finalize-tasks` and `agent tasks map-requirements` **refuse** it, before any read
+  or write, with a typed message naming issue 26 and the commands that do honour it. Their write path runs
+  through the WP02 ports, whose `MissionHandle` is a frozen `(repo_root, mission_slug)` pair whose
+  readers fold a linked worktree to the ambient primary; carrying the declared root through that handle is
+  the remaining piece of WP02, and refusing is the honest half of the contract until it lands.
+
+All three gained the option, so the golden `--help` fixtures for those three commands were updated
+alongside (the same pass that produced the `move-task` fixture). Verified live from the protected
+primary\u2019s working directory: list-tasks listed WP01 (in_progress) and WP02 (planned) from the owned log
+with owned paths; finalize-tasks exited 2 with the refusal and wrote nothing; the primary stayed clean.
+
 ## Sources
 
 `research/source-register.csv`, `research/evidence-log.csv`.
