@@ -396,6 +396,41 @@ alongside (the same pass that produced the `move-task` fixture). Verified live f
 primary\u2019s working directory: list-tasks listed WP01 (in_progress) and WP02 (planned) from the owned log
 with owned paths; finalize-tasks exited 2 with the refusal and wrote nothing; the primary stayed clean.
 
+**D-17 — обязательное покрытие на ae36eddc4 осталось ниже порога после исправления шардов.**
+Прогон CI Quality https://github.com/rusliksu/spec-kitty/actions/runs/34697875221 завершился
+с успешными запущенными тестовыми шардами и `cutover-guard`, но обязательный `diff-coverage`
+показал 25 покрытых строк из 29 (86%, порог 90%). Не покрыты строки 1666–1667 и 1669–1670
+в `src/mission_runtime/resolution.py`: чтение целевой ветки из метаданных объявленного checkout.
+Общее покрытие diff 68% — отдельный рекомендательный показатель, не причина блокировки.
+
+В `tests/mission_runtime/test_resolution_target_branch.py` добавлен параметризованный тест
+публичного `placement_seam(..., effective_root=caller).write_target(kind)` для `RESEARCH` и
+`STATUS_STATE`. Настоящий связанный worktree содержит миссию, отсутствующую в основном
+checkout; её целевая ветка отличается и от `main`, и от текущей ветки worktree. Тест проверяет
+целевую ветку и отсутствие изменений в основном checkout и метаданных миссии. Локально все
+9 тестов файла прошли; каждая из четырёх строк имеет `hits=1` в отчёте coverage.
+Независимое ревью дополнения замечаний не выявило.
+Контрольная мутация в отдельном Python-процессе подменила чтение целевой ветки на `main`:
+оба сценария упали на сравнении `main` с `codex/owned-mission-target` (2 failed).
+Исходный код при этом не редактировался.
+
+Тесты сохраняют маркер `git_repo`: это реальные Git-сценарии, а не `fast`-тесты без subprocess.
+Их штатный шард `integration-tests-core-misc` измеряет `mission_runtime`, но пропускается
+для draft без метки `ci:full` или `ready-for-ci`. Для окончательной проверки используется
+предусмотренная метка `ci:full`; пороги, фильтры и исходный код не меняются.
+
+Уточнение хронологии D-16: последующие коммиты уже реализовали поддержку объявленного
+checkout для `finalize-tasks`, `map-requirements` и `research`; отказ двух первых команд,
+описанный в D-16, относится к промежуточному состоянию ветки.
+
+**D-18 — команда приёмки пока не видит owned-миссию.**
+12 сентября 2026 года запуск кода этой ветки из её связанного worktree командой
+`python -m specify_cli accept --mission tasks-status-owned-checkout-seam-01M282V3 --diagnose --json`
+завершился с кодом 1 и `{"error":"mission_not_found","handle":"tasks-status-owned-checkout-seam-01M282V3"}`.
+У `accept --help` нет опции `--owned-checkout`. Это отдельный оставшийся пробел: успешный CI
+и снятие draft не являются доказательством успешной приёмки миссии. Её lifecycle не закрывается
+и не исправляется вручную; `kitty-ops/lifecycle.jsonl` остаётся побайтно равным `origin/main`.
+
 ## Sources
 
 `research/source-register.csv`, `research/evidence-log.csv`.
