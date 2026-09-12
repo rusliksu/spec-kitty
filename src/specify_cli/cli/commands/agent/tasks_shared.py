@@ -240,6 +240,14 @@ def _find_mission_slug(
 
     raw_handle = explicit_mission.strip()
     if repo_root is not None:
+        from specify_cli.missions.operation_context import resolve_mission_operation_context
+
+        operation = resolve_mission_operation_context(repo_root, raw_handle, cwd=Path.cwd())
+        if operation.mission_anchor_root != operation.repository_root:
+            linked_slug: str = resolve_mission_handle(
+                raw_handle, operation.mission_anchor_root, json_mode=json_output
+            ).mission_slug
+            return linked_slug
         # Write path: keep main-repo-root resolution so canonical serialization
         # pins to the primary checkout regardless of where the operator stands.
         # Note: repo_root from locate_project_root() already resolves to the main

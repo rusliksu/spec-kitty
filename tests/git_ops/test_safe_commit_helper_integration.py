@@ -554,7 +554,7 @@ def test_safe_commit_can_commit_explicitly_ignored_file(git_repo: Path):
         text=True,
         check=True,
     )
-    assert str(wp_file.relative_to(git_repo)) in tracked.stdout
+    assert wp_file.relative_to(git_repo).as_posix() in tracked.stdout
 
 def test_safe_commit_multiple_files_at_once(git_repo: Path):
     """Test committing multiple intended files while preserving staged files."""

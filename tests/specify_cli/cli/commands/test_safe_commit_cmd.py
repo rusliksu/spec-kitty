@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -24,6 +25,96 @@ from specify_cli.mission_metadata import load_meta, write_meta
 pytestmark = [pytest.mark.unit, pytest.mark.git_repo]
 
 runner = CliRunner()
+
+
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("selector", ["linked-worktree-prerequisite-resolution-01M1MFE9", "01M1MFE98JDK0S33WSYBQRPSDF"])
+@pytest.mark.parametrize("path_form", ["absolute", "repository-relative", "mission-relative"])
+def test_owned_spec_commit_uses_selected_branch_and_is_idempotent(
+    tmp_path: Path, isolated_env: dict[str, str], selector: str, path_form: str,
+) -> None:
+    """The canonical commit must land only the selected Mission file in its task branch."""
+    from tests.tasks.linked_worktree_harness import create_linked_mission, git
+
+    ctx = create_linked_mission(tmp_path)
+    plan = ctx.mission_dir / "plan.md"
+    plan.write_text(plan.read_text(encoding="utf-8") + "\nVerified owned plan change.\n", encoding="utf-8")
+    argument = str(plan)
+    if path_form == "repository-relative":
+        argument = plan.relative_to(ctx.linked).as_posix()
+    elif path_form == "mission-relative":
+        argument = "plan.md"
+    args = ("spec-commit", argument, "--mission", selector, "--message", "test owned plan commit", "--json")
+    committed = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", *args, env=isolated_env)
+    assert committed.returncode == 0, committed.stdout + committed.stderr
+    payload = json.loads(committed.stdout)
+    assert payload["success"] is True
+    assert payload["committed"] is True
+    assert payload["placement_ref"] == "codex/task"
+    assert payload["commit_hash"] == git(ctx.linked, "rev-parse", "HEAD")
+    relative = plan.relative_to(ctx.linked).as_posix()
+    assert git(ctx.linked, "show", f"HEAD:{relative}") == plan.read_text(encoding="utf-8").strip()
+    assert git(ctx.linked, "status", "--porcelain") == ""
+    capture = json.loads((ctx.linked / ".kittify/sync-state.json").read_text(encoding="utf-8"))
+    pending = capture["pending_local_commits"]
+    assert len(pending) == 1
+    assert pending[0]["git_hash"] == payload["commit_hash"]
+    assert [Path(path).as_posix() for path in pending[0]["changed_files"]] == [relative]
+    repeated = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", *args, env=isolated_env)
+    assert repeated.returncode == 0, repeated.stdout + repeated.stderr
+    assert json.loads(repeated.stdout)["committed"] is False
+    assert git(ctx.linked, "rev-parse", "HEAD") == payload["commit_hash"]
+
+
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("refusal", ["outside", "sibling", "primary", "traversal", "symlink", "conflict", "ambiguous", "missing", "branch", "policy"])
+def test_owned_spec_commit_refuses_before_mutation(
+    tmp_path: Path, isolated_env: dict[str, str], refusal: str,
+) -> None:
+    from tests.tasks.linked_worktree_harness import create_linked_mission, git, snapshot_primary, write_mission
+
+    ctx = create_linked_mission(tmp_path)
+    selector = ctx.mission_dir.name
+    plan = ctx.mission_dir / "plan.md"
+    plan.write_text(plan.read_text(encoding="utf-8") + "\nUncommitted owned change.\n", encoding="utf-8")
+    argument = str(plan)
+    if refusal == "outside":
+        argument = str(ctx.linked / "README.md")
+    elif refusal == "sibling":
+        sibling = ctx.linked / "kitty-specs/other-01M1OTHR"
+        write_mission(sibling, "01M1OTHRZZZZZZZZZZZZZZZZZZ")
+        argument = str(sibling / "plan.md")
+    elif refusal == "primary":
+        primary_mission = ctx.primary / "kitty-specs" / selector
+        write_mission(primary_mission)
+        argument = str(primary_mission / "plan.md")
+    elif refusal == "traversal":
+        argument = "../../README.md"
+    elif refusal == "symlink":
+        link = ctx.mission_dir / "escape.md"
+        link.symlink_to(ctx.primary / "README.md")
+        argument = str(link)
+    elif refusal == "conflict":
+        write_mission(ctx.primary / "kitty-specs" / selector, "01M1MFE9ZZZZZZZZZZZZZZZZZZ")
+    elif refusal == "ambiguous":
+        write_mission(ctx.linked / "kitty-specs/other-01M1MFE9", "01M1MFE9ZZZZZZZZZZZZZZZZZZ")
+        selector = "01M1MFE9"
+    elif refusal == "missing":
+        selector = "missing-01M1NONE"
+    elif refusal == "branch":
+        git(ctx.linked, "checkout", "-q", "-b", "codex/not-the-target")
+    else:
+        (ctx.primary / ".kittify/config.yaml").write_text("protection:\n  protected_branches: [codex/task]\n", encoding="utf-8")
+        (ctx.linked / ".kittify/config.yaml").write_text("protection:\n  protected_branches: []\n", encoding="utf-8")
+    before = snapshot_primary(ctx.linked)
+    result = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", "spec-commit", argument,
+                     "--mission", selector, "--message", "must refuse", "--json", env=isolated_env)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "Traceback" not in result.stdout + result.stderr
+    assert json.loads(result.stdout)["success"] is False
+    assert snapshot_primary(ctx.linked) == before
 
 
 def _init_spec_kitty_repo(repo: Path) -> None:

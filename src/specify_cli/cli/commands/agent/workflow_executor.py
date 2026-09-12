@@ -114,7 +114,10 @@ def _claim_policy_metadata(shell_pid: int, agent: str) -> dict[str, Any]:
     return metadata
 
 
-def _locate_wp(repo_root: Path, mission_slug: str, normalized_wp_id: str) -> WorkPackage:
+def _locate_wp(
+    repo_root: Path, mission_slug: str, normalized_wp_id: str, *,
+    effective_root: Path | None = None, status_read_dir: Path | None = None,
+) -> WorkPackage:
     """Typed accessor for ``workflow.locate_work_package`` (#2675 T054).
 
     ``_wf()`` returns ``ModuleType``, so ``.locate_work_package(...)`` leaks
@@ -122,9 +125,13 @@ def _locate_wp(repo_root: Path, mission_slug: str, normalized_wp_id: str) -> Wor
     this module -- every ``locate_work_package`` call site (erroring or not)
     routes through here instead of scattering casts at each read site.
     """
+    options = (
+        {"effective_root": effective_root, "status_read_dir": status_read_dir}
+        if effective_root is not None else {}
+    )
     return cast(
         "WorkPackage",
-        _wf().locate_work_package(repo_root, mission_slug, normalized_wp_id),
+        _wf().locate_work_package(repo_root, mission_slug, normalized_wp_id, **options),
     )
 
 
@@ -218,6 +225,7 @@ def commit_workflow_change(
     pre_emit_event_size: int,
     pre_emit_status_bytes: bytes | None,
     auto_rebase_lane_after_commit: bool = False,
+    effective_root: Path | None = None,
 ) -> None:
     """Commit a workflow change with atomic event-log rollback on failure.
 
@@ -251,8 +259,9 @@ def commit_workflow_change(
     # ``safe_commit`` fallback below even for a genuine coord-topology mission.
     # Anchor this read on the primary surface via the same kind-aware seam
     # every other identity read in this module already uses.
+    anchor_options = {"effective_root": effective_root} if effective_root is not None else {}
     primary_meta_dir = w._resolve_workflow_read_dir(
-        repo_root=repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.PRIMARY_METADATA
+        repo_root=repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.PRIMARY_METADATA, **anchor_options
     )
     coord_branch, mission_id, mid8 = w._load_coord_branch_meta(primary_meta_dir)
     events_path = feature_dir / w._STATUS_EVENTS_FILENAME
@@ -271,7 +280,7 @@ def commit_workflow_change(
     # DESTINATION ref is threaded from this ONE resolution rather than the
     # raw, un-seam-resolved ``target_branch`` parameter (C-001).
     placement = w._resolve_workflow_placement(
-        repo_root=repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.STATUS_STATE
+        repo_root=repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.STATUS_STATE, **anchor_options
     )
     if placement.ref != target_branch:
         # Diagnostic only (never authoritative): the seam is the single
@@ -369,7 +378,7 @@ def commit_workflow_change(
     # pre-check root from (mission_slug, mid8) for FR-002(b) robustness.
     try:
         w._commit_via_legacy_safe_commit(
-            repo_root=repo_root,
+            repo_root=effective_root if effective_root is not None else repo_root,
             target_branch=placement.ref,
             paths=paths,
             message=message,
@@ -394,6 +403,7 @@ def ensure_workspace_materialized(
     wp_id: str,
     create_workspace: Callable[[], None],
     reenter_self_heal: Callable[[], None],
+    *, planning_operation: object | None = None,
 ) -> None:
     """Ensure the already-resolved *workspace* is materialized on disk.
 
@@ -444,7 +454,13 @@ def ensure_workspace_materialized(
         return
 
     cwd = Path.cwd().resolve()
-    if _wf().is_worktree_context(cwd):
+    if _wf().is_worktree_context(cwd) and planning_operation is not None:
+        from specify_cli.missions.operation_context import MissionOperationContext, validate_owned_planning_checkout
+
+        if not isinstance(planning_operation, MissionOperationContext):
+            raise ValueError("A validated Mission operation context is required")
+        validate_owned_planning_checkout(planning_operation)
+    elif _wf().is_worktree_context(cwd):
         print("Error: Workspace does not exist and cannot be created from a worktree.")
         print("Run this command from the main repository:")
         print(f"  spec-kitty agent action implement {wp_id} --agent <your-name>")
@@ -570,10 +586,14 @@ def implement_sparse_checkout_preflight(
         raise typer.Exit(1) from exc
 
 
-def implement_locate_wp(repo_root: Path, mission_slug: str, normalized_wp_id: str) -> WorkPackage:
+def implement_locate_wp(
+    repo_root: Path, mission_slug: str, normalized_wp_id: str, *,
+    effective_root: Path | None = None, status_read_dir: Path | None = None,
+) -> WorkPackage:
     """Find the WP file, translating the canonical-status-missing case."""
     try:
-        return _locate_wp(repo_root, mission_slug, normalized_wp_id)
+        return _locate_wp(repo_root, mission_slug, normalized_wp_id,
+                          effective_root=effective_root, status_read_dir=status_read_dir)
     except RuntimeError as e:
         if is_missing_canonical_status_error(e):
             print(f"Error: {missing_canonical_status_message(normalized_wp_id, mission_slug)}")
@@ -614,7 +634,8 @@ def implement_check_wp_charter_precondition(main_repo_root: Path, wp: WorkPackag
 
 
 def implement_check_dependency_gate(
-    main_repo_root: Path, mission_slug: str, normalized_wp_id: str, wp_meta: WPMetadata
+    main_repo_root: Path, mission_slug: str, normalized_wp_id: str, wp_meta: WPMetadata,
+    *, status_read_dir: Path | None = None,
 ) -> None:
     """Gate the not-yet-started claim transition on dependency readiness.
 
@@ -630,7 +651,10 @@ def implement_check_dependency_gate(
     from specify_cli.status import resolve_lane_alias as dep_resolve_alias
 
     w = _wf()
-    dependency_feature_dir = w._canonical_status_feature_dir(main_repo_root, mission_slug)
+    dependency_feature_dir = (
+        status_read_dir if status_read_dir is not None
+        else w._canonical_status_feature_dir(main_repo_root, mission_slug)
+    )
     dependency_snapshot = dep_reduce_events(dep_read_events(dependency_feature_dir))
     dependency_lanes = {
         wp_id: state.get("lane", Lane.PLANNED) for wp_id, state in dependency_snapshot.work_packages.items()
@@ -670,6 +694,7 @@ def implement_resolve_feedback_and_gate(
     mission_slug: str,
     normalized_wp_id: str,
     wp: WorkPackage,
+    *, effective_root: Path | None = None,
 ) -> tuple[Path, bool, str | None, Path | None, str | None]:
     """Resolve the review-feedback context and enforce the analysis-report gate.
 
@@ -677,6 +702,7 @@ def implement_resolve_feedback_and_gate(
     review_feedback_file, review_feedback_source)``.
     """
     w = _wf()
+    anchor_options = {"effective_root": effective_root} if effective_root is not None else {}
 
     # IC-04/T017: review-feedback-context READ. WORK_PACKAGE_TASK is a
     # PRIMARY-partition kind (review-cycle artifacts + this WP's baseline
@@ -684,7 +710,8 @@ def implement_resolve_feedback_and_gate(
     # fix-mode and baseline-commit sites) — routes through the kind-aware
     # seam instead of the kind-blind coord husk (NFR-001 / Directive-041).
     feature_dir = w._resolve_workflow_read_dir(
-        repo_root=main_repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK
+        repo_root=main_repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK,
+        **anchor_options,
     )
     has_feedback, review_feedback_ref, review_feedback_file, review_feedback_source = resolve_review_feedback_context(
         feature_dir=feature_dir,
@@ -700,15 +727,15 @@ def implement_resolve_feedback_and_gate(
     # #1989 (read-side companion to WP01): read the report from the PRIMARY
     # checkout where record-analysis writes it (see _analysis_report_gate_dir).
     w._require_current_analysis_report(
-        w._analysis_report_gate_dir(main_repo_root, mission_slug),
-        main_repo_root,
+        w._analysis_report_gate_dir(main_repo_root, mission_slug, **anchor_options),
+        effective_root if effective_root is not None else main_repo_root,
         mission_slug,
     )
 
     return feature_dir, has_feedback, review_feedback_ref, review_feedback_file, review_feedback_source
 
 
-def implement_resolve_mission_type(repo_root: Path, mission_slug: str) -> tuple[str, str | None]:
+def implement_resolve_mission_type(repo_root: Path, mission_slug: str, *, effective_root: Path | None = None) -> tuple[str, str | None]:
     """Resolve the mission type + (for research missions) the deliverables path.
 
     FR-005 (#2186): the mission TYPE is a meta.json read and meta.json lives
@@ -720,7 +747,9 @@ def implement_resolve_mission_type(repo_root: Path, mission_slug: str) -> tuple[
     instead — PRIMARY_METADATA is a PRIMARY-partition kind, so it resolves
     PRIMARY for every topology without ever consulting that husk.
     """
-    mission_type_dir = placement_seam(repo_root, mission_slug).read_dir(MissionArtifactKind.PRIMARY_METADATA)
+    mission_type_dir = placement_seam(
+        repo_root, mission_slug, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.PRIMARY_METADATA)
     mission_type = get_mission_type(mission_type_dir)
     deliverables_path = None
     if mission_type == MISSION_TYPE_RESEARCH:
@@ -844,6 +873,7 @@ def _implement_write_claim_and_commit(
     target_branch: str,
     pre_emit_event_size: int,
     pre_emit_status_bytes: bytes | None,
+    effective_root: Path | None = None,
 ) -> None:
     """Auto-commit the claim's event-log/status artifacts (enables instant
     status sync). The WP file is not mutated for the claim (byte-stable, SC-004);
@@ -874,6 +904,7 @@ def _implement_write_claim_and_commit(
     # WP06 T027: route through BookkeepingTransaction when the
     # mission has a coordination branch, fall back to safe_commit
     # with surgical event-log truncate on failure otherwise.
+    anchor_options = {"effective_root": effective_root} if effective_root is not None else {}
     w._commit_workflow_change(
         repo_root=main_repo_root,
         feature_dir=feature_dir,
@@ -886,6 +917,7 @@ def _implement_write_claim_and_commit(
         pre_emit_event_size=pre_emit_event_size,
         pre_emit_status_bytes=pre_emit_status_bytes,
         auto_rebase_lane_after_commit=True,
+        **anchor_options,
     )
 
 
@@ -980,6 +1012,7 @@ def implement_claim_transition(
     workspace_path: Path,
     status_execution_mode: str,
     resolved_binding: ResolvedBinding | None = None,
+    effective_root: Path | None = None,
 ) -> ImplementClaimResult:
     """Move a WP to ``in_progress`` (claiming it) if not already there.
 
@@ -1001,7 +1034,9 @@ def implement_claim_transition(
 
     # Move to in_progress lane if not already there, and ensure agent is recorded
     # Lane is event-log-only; read from canonical event log (no frontmatter fallback)
-    wf_feature_dir = w._canonical_status_feature_dir(main_repo_root, mission_slug)
+    anchor_options = {"effective_root": effective_root} if effective_root is not None else {}
+    artifact_root = effective_root if effective_root is not None else main_repo_root
+    wf_feature_dir = w._canonical_status_feature_dir(main_repo_root, mission_slug, **anchor_options)
     wf_events = wf_read_events(wf_feature_dir)
     wf_snapshot = wf_reduce(wf_events) if wf_events else None
     wf_has_canonical = wf_snapshot is not None and normalized_wp_id in wf_snapshot.work_packages
@@ -1035,7 +1070,7 @@ def implement_claim_transition(
             raise typer.Exit(1)
 
         shell_pid = _implement_start_claim(
-            main_repo_root=main_repo_root,
+            main_repo_root=artifact_root,
             feature_dir=wf_feature_dir,
             mission_slug=mission_slug,
             normalized_wp_id=normalized_wp_id,
@@ -1054,7 +1089,7 @@ def implement_claim_transition(
                 mission_slug=mission_slug,
                 actor=agent or wp_agent_assignment.tool or "unknown",
                 resolved_binding=resolved_binding,
-                repo_root=main_repo_root,
+                repo_root=artifact_root,
             )
         _implement_write_claim_and_commit(
             wp=wp,
@@ -1066,14 +1101,16 @@ def implement_claim_transition(
             target_branch=target_branch,
             pre_emit_event_size=pre_emit_event_size,
             pre_emit_status_bytes=pre_emit_status_bytes,
+            **anchor_options,
         )
 
         print(f"✓ Claimed {normalized_wp_id} (agent: {agent}, PID: {shell_pid}, target: {target_branch})")
 
-        _implement_trigger_dossier_sync(repo_root, mission_slug)
+        _implement_trigger_dossier_sync(artifact_root, mission_slug)
 
         # Reload to get updated content
-        wp = _locate_wp(repo_root, mission_slug, normalized_wp_id)
+        locate_options = {"effective_root": effective_root, "status_read_dir": wf_feature_dir} if effective_root is not None else {}
+        wp = _locate_wp(repo_root, mission_slug, normalized_wp_id, **locate_options)
     else:
         print(f"⚠️  {normalized_wp_id} is already in lane: {current_lane}. Action implement will not move it to in_progress.")
         _implement_emit_resume_refresh(
@@ -1081,7 +1118,7 @@ def implement_claim_transition(
             wp_id=normalized_wp_id,
             mission_slug=mission_slug,
             actor=agent or wp_agent_assignment.tool or "unknown",
-            repo_root=main_repo_root,
+            repo_root=artifact_root,
             resolved_binding=resolved_binding,
         )
         status_artifacts = [path.resolve() for path in w._collect_status_artifacts(wf_feature_dir)]
@@ -1097,6 +1134,7 @@ def implement_claim_transition(
             pre_emit_event_size=pre_emit_event_size,
             pre_emit_status_bytes=pre_emit_status_bytes,
             auto_rebase_lane_after_commit=True,
+            **anchor_options,
         )
 
     return ImplementClaimResult(

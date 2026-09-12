@@ -30,6 +30,7 @@ from __future__ import annotations
 import contextlib
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -38,9 +39,89 @@ import typer
 pytestmark = [pytest.mark.unit, pytest.mark.git_repo]
 
 
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("selector", ["linked-worktree-prerequisite-resolution-01M1MFE9", "01M1MFE98JDK0S33WSYBQRPSDF"])
+def test_owned_setup_plan_scaffolds_selected_mission_without_primary_writes(
+    tmp_path: Path, isolated_env: dict[str, str], selector: str,
+) -> None:
+    """The real command must scaffold from a committed spec in the linked checkout."""
+    from tests.tasks.linked_worktree_harness import create_linked_mission, git
+
+    ctx = create_linked_mission(tmp_path)
+    for checkout in (ctx.primary, ctx.linked):
+        config = checkout / ".kittify/config.yaml"
+        config.write_text(config.read_text(encoding="utf-8") + "mission_type_activations:\n  - software-dev\n", encoding="utf-8")
+        git(checkout, "add", ".kittify/config.yaml")
+        git(checkout, "commit", "-q", "-m", "activate fixture Mission type")
+    git(ctx.linked, "rm", str((ctx.mission_dir / "plan.md").relative_to(ctx.linked)))
+    git(ctx.linked, "commit", "-q", "-m", "prepare first plan scaffold")
+    result = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", "agent", "mission",
+                     "setup-plan", "--mission", selector, "--json", env=isolated_env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["result"] == "success"
+    assert payload["scaffold_only"] is True
+    assert payload["phase_complete"] is False
+    assert Path(payload["feature_dir"]) == ctx.mission_dir
+    assert Path(payload["spec_file"]) == ctx.mission_dir / "spec.md"
+    assert Path(payload["plan_file"]) == ctx.mission_dir / "plan.md"
+    assert payload["current_branch"] == "codex/task"
+    assert payload["target_branch"] == "codex/task"
+    assert payload["branch_matches_target"] is True
+    assert (ctx.mission_dir / "plan.md").read_bytes() == (ctx.linked / ".kittify/templates/plan-template.md").read_bytes()
+    lifecycle = {
+        entry["event_type"]: entry["payload"]
+        for line in (ctx.mission_dir / "status.events.jsonl").read_text(encoding="utf-8").splitlines()
+        if (entry := json.loads(line)).get("event_type") in {"SpecifyCompleted", "PlanStarted"}
+    }
+    assert set(lifecycle) == {"SpecifyCompleted", "PlanStarted"}
+    assert Path(lifecycle["SpecifyCompleted"]["artifact_path"]).as_posix() == (
+        "kitty-specs/linked-worktree-prerequisite-resolution-01M1MFE9/spec.md"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Topology-true git helpers
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("selector", ["linked-worktree-prerequisite-resolution-01M1MFE9", "01M1MFE98JDK0S33WSYBQRPSDF"])
+def test_owned_setup_plan_commits_substantive_plan_and_reports_completion(
+    tmp_path: Path, isolated_env: dict[str, str], selector: str,
+) -> None:
+    from tests.tasks.linked_worktree_harness import create_linked_mission, git
+
+    ctx = create_linked_mission(tmp_path)
+    for checkout in (ctx.primary, ctx.linked):
+        config = checkout / ".kittify/config.yaml"
+        config.write_text(config.read_text(encoding="utf-8") + "mission_type_activations:\n  - software-dev\n", encoding="utf-8")
+        git(checkout, "add", ".kittify/config.yaml")
+        git(checkout, "commit", "-q", "-m", "activate fixture Mission type")
+    plan = ctx.mission_dir / "plan.md"
+    plan.write_text(plan.read_text(encoding="utf-8") + "\n**Primary Dependencies**: Typer\n", encoding="utf-8")
+    args = ("agent", "mission", "setup-plan", "--mission", selector, "--json")
+    result = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", *args, env=isolated_env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["result"] == "success"
+    assert payload["phase_complete"] is True
+    assert payload["commit_created"] is True
+    assert payload["commit_hash"] == git(ctx.linked, "rev-parse", "HEAD")
+    assert payload["target_branch"] == "codex/task"
+    relative = plan.relative_to(ctx.linked).as_posix()
+    assert git(ctx.linked, "show", f"HEAD:{relative}") == plan.read_text(encoding="utf-8").strip()
+    events = [json.loads(line) for line in (ctx.mission_dir / "status.events.jsonl").read_text(encoding="utf-8").splitlines()]
+    completed = [row for row in events if row.get("event_type") == "PlanCompleted"]
+    assert len(completed) == 1
+    assert Path(completed[0]["payload"]["artifact_path"]).as_posix() == relative
+    head = git(ctx.linked, "rev-parse", "HEAD")
+    repeated = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", *args, env=isolated_env)
+    assert repeated.returncode == 0, repeated.stdout + repeated.stderr
+    assert json.loads(repeated.stdout)["phase_complete"] is True
+    assert git(ctx.linked, "rev-parse", "HEAD") == head
 
 
 def _git(repo: Path, *args: str) -> subprocess.CompletedProcess[bytes]:

@@ -771,11 +771,11 @@ _CHECKOUT_GRAMMAR_ALLOW_LIST_SEED: tuple[ContentDescriptor, ...] = (
         token_substring="CommitTarget ( ref = st . target_branch )",
         occurrence=None,
         rationale=(
-            "tracked: #2453 - st.target_branch is the "
-            "_ensure_target_branch_checked_out current-checkout branch, not "
-            "the seam-resolved placement; deferred to the #2453 sweep (this "
-            "call predates the STATUS_STATE routing WP05 added elsewhere in "
-            "this module)."
+            "No-auto-commit compatibility value only: the default route's "
+            "target comes from _ensure_target_branch_checked_out, while the "
+            "owned-operation route derives target_branch from placement_seam; "
+            "the auto-commit arm always replaces this value with the canonical "
+            "write projection before any commit."
         ),
     ),
     ContentDescriptor(

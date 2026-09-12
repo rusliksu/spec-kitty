@@ -363,7 +363,7 @@ def _load_coord_branch_meta(feature_dir: Path) -> tuple[str | None, str | None, 
     return (coord, mid, mid8)
 
 
-def _canonical_status_feature_dir(main_repo_root: Path, mission_slug: str) -> Path:
+def _canonical_status_feature_dir(main_repo_root: Path, mission_slug: str, *, effective_root: Path | None = None) -> Path:
     """Resolve the canonical read-side mission directory for status state.
 
     Routes through the single guarded read-side seam
@@ -383,6 +383,11 @@ def _canonical_status_feature_dir(main_repo_root: Path, mission_slug: str) -> Pa
     """
     from specify_cli.missions._read_path_resolver import resolve_handle_to_read_path
 
+    if effective_root is not None:
+        from mission_runtime import resolve_action_context
+
+        context = resolve_action_context(main_repo_root, action="tasks", feature=mission_slug, effective_root=effective_root)
+        return context.status_surface.status_read_dir
     return resolve_handle_to_read_path(main_repo_root, mission_slug)
 
 
@@ -558,7 +563,12 @@ def _revert_coordination_commit(receipt: CommitReceipt) -> None:
         )
 
 
-def _workflow_placement_seam(repo_root: Path, mission_slug: str) -> PlacementSeam:
+def _workflow_placement_seam(
+    repo_root: Path,
+    mission_slug: str,
+    *,
+    effective_root: Path | None = None,
+) -> PlacementSeam:
     """Construct the ONE placement-seam instance every workflow.py wrapper shares.
 
     read-surface-ssot-closeout WP04 (T017/T018): the pre-existing
@@ -574,11 +584,17 @@ def _workflow_placement_seam(repo_root: Path, mission_slug: str) -> PlacementSea
     """
     from mission_runtime import placement_seam
 
-    return placement_seam(repo_root, mission_slug)
+    if effective_root is None:
+        return placement_seam(repo_root, mission_slug)
+    return placement_seam(
+        repo_root,
+        mission_slug,
+        effective_root=effective_root,
+    )
 
 
 def _resolve_workflow_placement(
-    *, repo_root: Path, mission_slug: str, kind: MissionArtifactKind
+    *, repo_root: Path, mission_slug: str, kind: MissionArtifactKind, effective_root: Path | None = None,
 ) -> CommitTarget:
     """Resolve the write :class:`CommitTarget` for ``kind`` via the placement seam.
 
@@ -593,11 +609,16 @@ def _resolve_workflow_placement(
     mechanism) keep reading that separately — this helper answers only "where
     does a write of this kind land", the seam's one job.
     """
-    return _workflow_placement_seam(repo_root, mission_slug).write_target(kind)
+    return _workflow_placement_seam(
+        repo_root,
+        mission_slug,
+        effective_root=effective_root,
+    ).write_target(kind)
 
 
 def _resolve_workflow_read_dir(
-    *, repo_root: Path, mission_slug: str, kind: MissionArtifactKind
+    *, repo_root: Path, mission_slug: str, kind: MissionArtifactKind,
+    effective_root: Path | None = None,
 ) -> Path:
     """Resolve the read directory for ``kind`` via the placement seam (IC-04/T017).
 
@@ -607,9 +628,15 @@ def _resolve_workflow_read_dir(
     Directive-041 — do not pin the old kind-blind coord husk) now routes
     through this ONE wrapper over :func:`_workflow_placement_seam`
     ``.read_dir(kind)`` instead of re-deriving the seam call inline at each
-    read site.
+    read site. A validated ``effective_root`` binds the seam to the selected
+    Mission checkout; the canonical artifact context still decides the
+    partition-specific read surface.
     """
-    read_dir: Path = _workflow_placement_seam(repo_root, mission_slug).read_dir(kind)
+    read_dir: Path = _workflow_placement_seam(
+        repo_root,
+        mission_slug,
+        effective_root=effective_root,
+    ).read_dir(kind)
     return read_dir
 
 
@@ -781,7 +808,9 @@ def _render_charter_context(
 app = typer.Typer(name="action", help="Mission action commands that display prompts and instructions for agents", no_args_is_help=True)
 
 
-def _ensure_target_branch_checked_out(repo_root: Path, mission_slug: str) -> tuple[Path, str]:
+def _ensure_target_branch_checked_out(
+    repo_root: Path, mission_slug: str, *, effective_root: Path | None = None,
+) -> tuple[Path, str]:
     """Resolve branch context without auto-checkout (respects user's current branch).
 
     Returns the planning repo root and the user's current branch.
@@ -798,7 +827,7 @@ def _ensure_target_branch_checked_out(repo_root: Path, mission_slug: str) -> tup
     main_repo_root = get_main_repo_root(repo_root)
 
     # Check for detached HEAD using robust branch detection
-    current_branch = get_current_branch(main_repo_root)
+    current_branch = get_current_branch(effective_root or main_repo_root)
     if current_branch is None:
         print("Error: Detached HEAD — checkout a branch before continuing.")
         raise typer.Exit(1)
@@ -809,9 +838,12 @@ def _ensure_target_branch_checked_out(repo_root: Path, mission_slug: str) -> tup
             main_repo_root,
             action="tasks",
             feature=mission_slug,
+            effective_root=effective_root,
         )
         target = _ctx.target_branch
     except ActionContextError:
+        if effective_root is not None:
+            raise
         # Fall back to the direct helper if execution context cannot be resolved
         # (e.g. mission directory not yet created during early planning).
         target = get_feature_target_branch(main_repo_root, mission_slug)
@@ -852,6 +884,11 @@ def _find_mission_slug(
 
     raw_handle = explicit_mission.strip()
     if repo_root is not None:
+        from specify_cli.missions.operation_context import resolve_mission_operation_context
+
+        operation = resolve_mission_operation_context(repo_root, raw_handle, cwd=Path.cwd())
+        if operation.mission_anchor_root != operation.repository_root:
+            return resolve_mission_handle(raw_handle, operation.mission_anchor_root).mission_slug
         legacy_dir = _resolve_workflow_read_dir(
             repo_root=get_main_repo_root(repo_root),
             mission_slug=raw_handle,
@@ -910,15 +947,18 @@ def _preview_claimable_wp_for_mission(repo_root: Path, mission_slug: str):
 
 
 
-def _analysis_report_gate_dir(main_repo_root: Path, mission_slug: str) -> Path:
+def _analysis_report_gate_dir(
+    main_repo_root: Path, mission_slug: str, *, effective_root: Path | None = None,
+) -> Path:
     """Resolve the mission dir the implement gate reads ``analysis-report.md`` from.
 
-    #1989: this MUST be the topology-blind primary checkout — where
+    #1989: this MUST be the topology-blind primary partition — where
     ``record-analysis`` writes the report — NOT the coord-aware
     ``candidate_feature_dir_for_mission`` (which resolves to the coordination
     worktree once one exists, and that worktree lacks the report + ``spec.md`` for
     the freshness hash, so the gate would falsely report it missing). Extracted as
     a named seam so the read-anchor decision is unit-testable in isolation.
+    ``effective_root`` retains a previously validated caller-owned Mission.
     """
     # read-side-seam-primary-primitive-closure-01KYKMMT WP05/FR-004: routed
     # through the kind-aware seam (ANALYSIS_REPORT is a PRIMARY-partition kind)
@@ -930,6 +970,7 @@ def _analysis_report_gate_dir(main_repo_root: Path, mission_slug: str) -> Path:
         repo_root=main_repo_root,
         mission_slug=mission_slug,
         kind=MissionArtifactKind.ANALYSIS_REPORT,
+        **({"effective_root": effective_root} if effective_root is not None else {}),
     )
 
 
@@ -1230,13 +1271,27 @@ def implement(
 
         mission_slug = _find_mission_slug(explicit_mission=request.mission, repo_root=repo_root)
 
+        from specify_cli.missions.operation_context import resolve_mission_operation_context
+        from mission_runtime import resolve_action_context
+
+        operation = resolve_mission_operation_context(repo_root, mission_slug, cwd=Path.cwd())
+        anchor_options: dict[str, Path] = {}
+        status_options: dict[str, Path] = {}
+        if operation.mission_anchor_root != operation.repository_root:
+            anchor_options = {"effective_root": operation.mission_anchor_root}
+            mission_context = resolve_action_context(
+                repo_root, action="tasks", feature=mission_slug,
+                effective_root=operation.mission_anchor_root,
+            )
+            status_options = {"status_read_dir": mission_context.status_surface.status_read_dir}
+
         # -- WP05/T021 FR-007: Sparse-checkout preflight -- runs BEFORE any
         # worktree creation or state changes (same surface as merge).
         _executor.implement_sparse_checkout_preflight(repo_root, mission_slug, request.agent, request.allow_sparse_checkout)
 
         # Ensure planning repo is on the target branch before we start
         # (needed for auto-commits and status tracking inside this command)
-        main_repo_root, target_branch = _ensure_target_branch_checked_out(repo_root, mission_slug)
+        main_repo_root, target_branch = _ensure_target_branch_checked_out(repo_root, mission_slug, **anchor_options)
 
         # Determine which WP to implement
         if request.wp_id:
@@ -1250,7 +1305,7 @@ def implement(
                 raise typer.Exit(1)
 
         # Find WP file to read dependencies
-        wp = _executor.implement_locate_wp(repo_root, mission_slug, normalized_wp_id)
+        wp = _executor.implement_locate_wp(repo_root, mission_slug, normalized_wp_id, **anchor_options, **status_options)
 
         # C-006 charter precondition: check BEFORE any worktree creation or
         # status transition.
@@ -1260,7 +1315,7 @@ def implement(
 
         # Only gate the not-yet-started claim transition (resumes on an
         # already-in-flight WP are never re-gated).
-        _executor.implement_check_dependency_gate(main_repo_root, mission_slug, normalized_wp_id, wp_meta)
+        _executor.implement_check_dependency_gate(main_repo_root, mission_slug, normalized_wp_id, wp_meta, **status_options)
 
         (
             feature_dir,
@@ -1268,7 +1323,9 @@ def implement(
             review_feedback_ref,
             review_feedback_file,
             _review_feedback_source,
-        ) = _executor.implement_resolve_feedback_and_gate(main_repo_root, mission_slug, normalized_wp_id, wp)
+        ) = _executor.implement_resolve_feedback_and_gate(
+            main_repo_root, mission_slug, normalized_wp_id, wp, **anchor_options
+        )
 
         # FR-008/#1832 (C-IC05): SINGLE resolution path. Resolve the workspace
         # exactly once here, then *consume* that resolved context for the rest
@@ -1281,7 +1338,16 @@ def implement(
         # implement` WP-execution write site — refuse a claim invoked from a
         # checkout the mission does not own. write_intent gates the
         # checkout-identity refusal (pure reads leave it False).
-        workspace = resolve_workspace_for_wp(main_repo_root, mission_slug, normalized_wp_id, write_intent=True)
+        if not anchor_options:
+            workspace = resolve_workspace_for_wp(main_repo_root, mission_slug, normalized_wp_id, write_intent=True)
+        else:
+            workspace = resolve_workspace_for_wp(
+                main_repo_root,
+                mission_slug,
+                normalized_wp_id,
+                write_intent=True,
+                effective_root=operation.mission_anchor_root,
+            )
         status_execution_mode = "direct_repo" if workspace.resolution_kind == "repo_root" else "worktree"
 
         def _create_workspace() -> None:
@@ -1300,9 +1366,12 @@ def implement(
         from specify_cli.lanes.implement_support import reenter_lane_self_heal
 
         def _reenter_self_heal() -> None:
-            reenter_lane_self_heal(main_repo_root, mission_slug, normalized_wp_id)
+            reenter_lane_self_heal(main_repo_root, mission_slug, normalized_wp_id, **anchor_options)
 
-        _ensure_workspace_materialized(workspace, normalized_wp_id, _create_workspace, _reenter_self_heal)
+        materialize_options = {"planning_operation": operation} if anchor_options else {}
+        _ensure_workspace_materialized(
+            workspace, normalized_wp_id, _create_workspace, _reenter_self_heal, **materialize_options
+        )
         workspace_path = workspace.worktree_path
 
         # Seam C-005 (#3281/FR-007): the claim-ancestry gate runs HERE --
@@ -1319,9 +1388,9 @@ def implement(
         # which is a DIFFERENT surface than the PRIMARY ``feature_dir`` above
         # (WORK_PACKAGE_TASK) for coord-topology missions -- reuse the same
         # coord-aware resolver ``implement_claim_transition`` below consults.
-        status_feature_dir = _canonical_status_feature_dir(main_repo_root, mission_slug)
+        status_feature_dir = _canonical_status_feature_dir(main_repo_root, mission_slug, **anchor_options)
         ancestry = resolve_claim_ancestry_gate(
-            main_repo_root, mission_slug, status_feature_dir, normalized_wp_id, workspace_path
+            main_repo_root, mission_slug, status_feature_dir, normalized_wp_id, workspace_path, **anchor_options
         )
         if not ancestry.ok:
             print(
@@ -1360,6 +1429,7 @@ def implement(
             workspace_path=workspace_path,
             status_execution_mode=status_execution_mode,
             resolved_binding=resolved_binding,
+            **anchor_options,
         )
         wp = claim_result.wp
         wp_slug = claim_result.wp_slug
@@ -1383,7 +1453,7 @@ def implement(
             return
 
         # Detect mission type and get deliverables_path for research missions.
-        mission_type, deliverables_path = _executor.implement_resolve_mission_type(repo_root, mission_slug)
+        mission_type, deliverables_path = _executor.implement_resolve_mission_type(repo_root, mission_slug, **anchor_options)
 
         # Capture baseline test results (one-time, cached) before the agent starts coding
         _executor.implement_capture_baseline(

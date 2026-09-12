@@ -55,7 +55,7 @@ from pathlib import Path
 
 import typer
 
-from mission_runtime import MissionArtifactKind
+from mission_runtime import MissionArtifactKind, MissionContext, mission_context_for
 from specify_cli.agent_tasks_ports import MissionHandle, TasksPorts
 from specify_cli.cli.commands.agent.tasks_materialization import (
     _resolve_checkbox,
@@ -102,6 +102,7 @@ class _MarkStatusState:
     main_repo_root: Path = field(default_factory=Path)
     target_branch: str = ""
     mission_slug: str = ""
+    mission_context: MissionContext | None = None
     resolved_auto_commit: bool = False
     feature_dir: Path = field(default_factory=Path)
     status_dir: Path = field(default_factory=Path)
@@ -166,6 +167,25 @@ def _ms_resolve_context(st: _MarkStatusState) -> None:
     st.mission_slug = _tasks._find_mission_slug(
         explicit_mission=st.mission, json_output=st.json_output, repo_root=repo_root
     )
+    from specify_cli.missions.operation_context import resolve_mission_operation_context
+
+    operation = resolve_mission_operation_context(
+        repo_root,
+        st.mission_slug,
+        cwd=Path.cwd(),
+    )
+    if operation.mission_anchor_root != operation.repository_root:
+        st.mission_context = mission_context_for(
+            operation.repository_root,
+            st.mission_slug,
+            effective_root=operation.mission_anchor_root,
+        )
+        st.main_repo_root = operation.repository_root
+        target = st.mission_context.artifact(MissionArtifactKind.TASKS_INDEX).commit_target
+        if target is None:
+            raise ValueError("Selected Mission tasks have no commit target")
+        st.target_branch = target.ref
+        return
     st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
         repo_root, st.mission_slug, st.json_output
     )
@@ -182,14 +202,21 @@ def _ms_resolve_read_dir(st: _MarkStatusState, ports: TasksPorts) -> None:
     husk under coord topology, so the write and the validation read would diverge.
     """
     from specify_cli.cli.commands.agent import tasks as _tasks
-    handle = MissionHandle(repo_root=st.main_repo_root, mission_slug=st.mission_slug)
-    st.feature_dir = ports.fs.planning_read_dir(handle, kind=MissionArtifactKind.TASKS_INDEX)
+    if st.mission_context is not None:
+        st.feature_dir = st.mission_context.artifact(MissionArtifactKind.TASKS_INDEX).read_dir
+    else:
+        handle = MissionHandle(repo_root=st.main_repo_root, mission_slug=st.mission_slug)
+        st.feature_dir = ports.fs.planning_read_dir(handle, kind=MissionArtifactKind.TASKS_INDEX)
     # #3027: this TASKS_INDEX-resolved dir is also handed to
     # owning_wp_from_authored_roster, which reads WORK_PACKAGE_TASK-kinded
     # ``tasks/*.md`` files — see the pinning comment on that function.
     from specify_cli.coordination import resolve_status_surface
 
-    st.status_dir = resolve_status_surface(st.main_repo_root, st.mission_slug).parent
+    st.status_dir = (
+        st.mission_context.artifact(MissionArtifactKind.STATUS_STATE).write_dir
+        if st.mission_context is not None
+        else resolve_status_surface(st.main_repo_root, st.mission_slug).parent
+    )
     # Boundary guard — hard-reject pre-3.0 layout before any WP mutation
     try:
         check_pre30_layout(st.feature_dir)

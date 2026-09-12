@@ -30,6 +30,7 @@ from specify_cli.cli.console import console
 import typer
 
 from mission_runtime import ActionContextError
+from specify_cli.missions.operation_context import MissionSurfaceConflictError
 
 from specify_cli.cli.commands.agent.mission_branch_context import (
     _inject_branch_contract,
@@ -388,7 +389,8 @@ def _read_meta_for_pr_bound(feature_dir: Path) -> dict[str, Any]:
     """
     from specify_cli.mission_metadata import load_meta_or_empty
 
-    return load_meta_or_empty(feature_dir)
+    metadata: dict[str, Any] = load_meta_or_empty(feature_dir)
+    return metadata
 
 
 def _read_meta_for_emission(feature_dir: Path) -> dict[str, Any] | None:
@@ -401,13 +403,14 @@ def _read_meta_for_emission(feature_dir: Path) -> dict[str, Any] | None:
     """
     from specify_cli.mission_metadata import load_meta
 
-    return load_meta(feature_dir, allow_missing=True, on_malformed="none")
+    metadata: dict[str, Any] | None = load_meta(feature_dir, allow_missing=True, on_malformed="none")
+    return metadata
 
 
 def _emit_check_prerequisites_detection_error(
     *,
     repo_root: Path,
-    detection_error: ValueError | ActionContextError,
+    detection_error: ValueError | ActionContextError | MissionSurfaceConflictError,
     feature: str | None,
     json_output: bool,
     paths_only: bool,
@@ -422,13 +425,17 @@ def _emit_check_prerequisites_detection_error(
     if include_tasks:
         command_args.append("--include-tasks")
 
-    payload = _build_setup_plan_detection_error(
-        repo_root,
-        str(detection_error),
-        feature,
-        error_code="FEATURE_CONTEXT_UNRESOLVED",
-        command_name="check-prerequisites",
-        command_args=command_args,
+    payload = (
+        {"error_code": "FEATURE_CONTEXT_UNRESOLVED", "mission_flag": feature, "error": str(detection_error)}
+        if isinstance(detection_error, MissionSurfaceConflictError)
+        else _build_setup_plan_detection_error(
+            repo_root,
+            str(detection_error),
+            feature,
+            error_code="FEATURE_CONTEXT_UNRESOLVED",
+            command_name="check-prerequisites",
+            command_args=command_args,
+        )
     )
     if json_output:
         _emit_json(payload)
@@ -571,7 +578,7 @@ def check_prerequisites(
             command_name="spec-kitty agent mission check-prerequisites",
         )
 
-        # Determine feature directory (main repo or worktree).
+        # Determine feature directory (main repo or caller-owned worktree).
         #
         # #2017-class surface-split fix: the planning-authoring surface this
         # command reports MUST agree with where ``finalize-tasks`` reads its
@@ -588,15 +595,31 @@ def check_prerequisites(
         # of every planning command onto one surface authority is tracked by the
         # single-authority-topology-cleanup mission (#1716 write-surface coherence).
         cwd = Path.cwd().resolve()
+        branch_root = repo_root
         try:
-            feature_dir = _mission._primary_anchored_feature_dir(repo_root, feature)
+            if feature and feature.strip():
+                from specify_cli.missions.operation_context import (
+                    resolve_mission_operation_context,
+                )
+
+                operation = resolve_mission_operation_context(
+                    repo_root, feature.strip(), cwd=cwd
+                )
+                branch_root = operation.mission_anchor_root
+                feature_dir = (
+                    operation.identity.feature_dir
+                    if operation.identity is not None
+                    else None
+                )
+            else:
+                feature_dir = _mission._primary_anchored_feature_dir(repo_root, feature)
             if feature_dir is None:
                 feature_dir = _mission._find_feature_directory(
-                    repo_root,
+                    operation.mission_anchor_root if feature and feature.strip() else repo_root,
                     cwd,
                     explicit_feature=feature,
                 )
-        except (ValueError, ActionContextError) as detection_error:
+        except (ValueError, ActionContextError, MissionSurfaceConflictError) as detection_error:
             _emit_check_prerequisites_detection_error(
                 repo_root=repo_root,
                 detection_error=detection_error,
@@ -609,7 +632,7 @@ def check_prerequisites(
 
         validation_result = _mission.validate_feature_structure(feature_dir, check_tasks=include_tasks)
         target_branch = _resolve_feature_target_branch(feature_dir, repo_root)
-        current_branch = _mission.get_current_branch(repo_root) or target_branch
+        current_branch = _mission.get_current_branch(branch_root) or target_branch
         _emit_check_prerequisites_result(
             validation_result=validation_result,
             feature_dir=feature_dir,

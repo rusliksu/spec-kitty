@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,75 @@ import pytest
 from specify_cli.cli.commands.agent import mission_check_prerequisites as seam
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
+
+
+def _list_field(payload: dict[str, object], key: str) -> list[Any]:
+    """Assert the wire field is an array before checking its contents or length."""
+    value = payload[key]
+    assert isinstance(value, list), (key, value)
+    return value
+
+
+@pytest.mark.git_repo
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("selector", ["linked-worktree-prerequisite-resolution-01M1MFE9", "01M1MFE98JDK0S33WSYBQRPSDF"])
+def test_owned_prerequisites_preserves_exact_identity_and_primary(
+    tmp_path: Path, isolated_env: dict[str, str], selector: str,
+) -> None:
+    """A caller-owned exact hit must report its own directory and task branch."""
+    from tests.tasks.linked_worktree_harness import create_linked_mission
+
+    ctx = create_linked_mission(tmp_path)
+    result = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", "agent", "mission",
+                     "check-prerequisites", "--mission", selector, "--paths-only", "--json", env=isolated_env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert Path(payload["feature_dir"]) == ctx.mission_dir
+    assert payload["current_branch"] == "codex/task"
+    assert payload["target_branch"] == "codex/task"
+
+
+@pytest.mark.git_repo
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("consumer", ["check-prerequisites", "setup-plan"])
+@pytest.mark.parametrize("case", ["missing", "ambiguous", "omitted", "conflict"])
+def test_owned_planning_refuses_invalid_selection_before_writes(
+    tmp_path: Path, isolated_env: dict[str, str], consumer: str, case: str,
+) -> None:
+    """Read consumers must never recover an invalid selector by choosing a Mission."""
+    from tests.tasks.linked_worktree_harness import create_linked_mission, git, write_mission
+
+    ctx = create_linked_mission(tmp_path)
+    selector = "missing-mission"
+    if case in {"ambiguous", "omitted"}:
+        write_mission(ctx.linked / "kitty-specs" / "other-01M1MFE9", "01M1MFE9ZZZZZZZZZZZZZZZZZZ")
+        git(ctx.linked, "add", "kitty-specs")
+        git(ctx.linked, "commit", "-q", "-m", "seed ambiguous linked Missions")
+        selector = "01M1MFE9"
+    elif case == "conflict":
+        write_mission(ctx.primary / "kitty-specs" / ctx.mission_dir.name, "01M1MFE9ZZZZZZZZZZZZZZZZZZ")
+        git(ctx.primary, "add", "kitty-specs")
+        git(ctx.primary, "commit", "-q", "-m", "seed different primary identity")
+        selector = ctx.mission_dir.name
+    before_head = git(ctx.linked, "rev-parse", "HEAD")
+    before_files = {p.relative_to(ctx.mission_dir): p.read_bytes() for p in ctx.mission_dir.rglob("*") if p.is_file()}
+    args = ["agent", "mission", consumer, "--json"]
+    if case != "omitted":
+        args.extend(["--mission", selector])
+    result = ctx.run(ctx.linked, sys.executable, "-m", "specify_cli.__init__", *args, env=isolated_env)
+    assert result.returncode != 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload.get("error_code"), payload
+    if case == "conflict":
+        assert payload["error_code"] == (
+            "FEATURE_CONTEXT_UNRESOLVED" if consumer == "check-prerequisites" else "PLAN_CONTEXT_UNRESOLVED"
+        )
+        assert "different identities" in payload["error"]
+    assert "feature_dir" not in payload
+    assert git(ctx.linked, "rev-parse", "HEAD") == before_head
+    assert {p.relative_to(ctx.mission_dir): p.read_bytes() for p in ctx.mission_dir.rglob("*") if p.is_file()} == before_files
 
 
 # ---------------------------------------------------------------------------
@@ -44,7 +114,7 @@ def test_paths_only_payload_aliases_legacy_keys() -> None:
     assert out["SPEC_FILE"] == "/repo/kitty-specs/001-demo/spec.md"
     assert out["IMPL_PLAN"] == "/repo/kitty-specs/001-demo/plan.md"
     assert out["TASKS"] == "/repo/kitty-specs/001-demo/tasks.md"
-    assert out["SPECS_DIR"] == "/repo/kitty-specs"
+    assert out["SPECS_DIR"] == str(Path("/repo/kitty-specs"))
     assert out["artifact_files"] == {"x": 1}
 
 
@@ -193,7 +263,7 @@ def test_resume_probe_reports_merged_mission_as_valid_existing_history(tmp_path:
     assert payload["error_code"] == "MISSION_RESUME_EXISTING"
     assert payload["mission_number"] == 254
     assert "do not repair or remove" in str(payload["remediation"])
-    assert "topology" in " ".join(payload["integrity_warnings"])
+    assert "topology" in " ".join(_list_field(payload, "integrity_warnings"))
 
 
 def test_resume_probe_matches_bare_slug_to_legacy_numbered_history(tmp_path: Path) -> None:
@@ -220,7 +290,7 @@ def test_resume_probe_matches_bare_slug_to_legacy_numbered_history(tmp_path: Pat
     assert payload["resume_state"] == "existing"
     assert payload["mission_slug"] == "001-foo"
     assert payload["mission_number"] == 1
-    assert "mission_id" in " ".join(payload["integrity_warnings"])
+    assert "mission_id" in " ".join(_list_field(payload, "integrity_warnings"))
 
 
 def test_resume_probe_reports_ambiguous_duplicate_human_slug(tmp_path: Path) -> None:
@@ -231,7 +301,7 @@ def test_resume_probe_reports_ambiguous_duplicate_human_slug(tmp_path: Path) -> 
 
     assert payload["resume_state"] == "ambiguous"
     assert payload["error_code"] == "MISSION_RESUME_AMBIGUOUS"
-    assert len(payload["candidates"]) == 2
+    assert len(_list_field(payload, "candidates")) == 2
 
 
 def test_resume_probe_reports_malformed_partial_scaffold(tmp_path: Path) -> None:
@@ -243,7 +313,7 @@ def test_resume_probe_reports_malformed_partial_scaffold(tmp_path: Path) -> None
 
     assert payload["resume_state"] == "malformed"
     assert payload["error_code"] == "MISSION_RESUME_MALFORMED"
-    assert "meta.json is missing" in " ".join(payload["problems"])
+    assert "meta.json is missing" in " ".join(_list_field(payload, "problems"))
 
 
 @pytest.mark.parametrize(
@@ -268,7 +338,7 @@ def test_resume_probe_rejects_invalid_mission_created_envelope(
     payload = seam._build_resume_probe_payload(tmp_path, "bad-envelope")
 
     assert payload["resume_state"] == "malformed"
-    assert expected_problem in " ".join(payload["problems"])
+    assert expected_problem in " ".join(_list_field(payload, "problems"))
 
 
 @pytest.mark.parametrize(
@@ -299,7 +369,7 @@ def test_resume_probe_rejects_coherent_but_invalid_creation_metadata(
     payload = seam._build_resume_probe_payload(tmp_path, "bad-meta")
 
     assert payload["resume_state"] == "malformed"
-    assert expected_problem in " ".join(payload["problems"])
+    assert expected_problem in " ".join(_list_field(payload, "problems"))
 
 
 def test_resume_probe_rejects_premerge_directory_with_wrong_identity_mid8(tmp_path: Path) -> None:
@@ -316,7 +386,7 @@ def test_resume_probe_rejects_premerge_directory_with_wrong_identity_mid8(tmp_pa
     payload = seam._build_resume_probe_payload(tmp_path, "wrong-mid8")
 
     assert payload["resume_state"] == "malformed"
-    assert "directory mid8" in " ".join(payload["problems"])
+    assert "directory mid8" in " ".join(_list_field(payload, "problems"))
 
 
 @pytest.mark.parametrize("drift", ["empty", "corrupt", "mismatch", "schema"])
@@ -343,7 +413,8 @@ def test_resume_probe_rejects_missing_or_drifted_mission_created_snapshot(
 
     assert payload["resume_state"] == "malformed"
     assert payload["error_code"] == "MISSION_RESUME_MALFORMED"
-    assert "MissionCreated" in " ".join(payload["problems"]) or "status.events" in " ".join(payload["problems"])
+    problems = " ".join(_list_field(payload, "problems"))
+    assert "MissionCreated" in problems or "status.events" in problems
 
 
 # ---------------------------------------------------------------------------

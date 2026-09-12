@@ -14,7 +14,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, replace
 from kernel.clock import now_utc, now_utc_iso, timedelta
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from specify_cli.coordination.outbound import queue_saas_emission
 from specify_cli.core.commit_guard import GuardCapability
@@ -58,6 +58,9 @@ from specify_cli.status.wp_state import annotate as _annotate
 from specify_cli.workspace import canonicalize_feature_dir, delete_context
 
 _logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from specify_cli.missions.operation_context import MissionOperationContext
 
 
 @dataclass(frozen=True)
@@ -641,6 +644,45 @@ def _canonical_primary_feature_dir(
     return resolved.primary_anchor
 
 
+def _is_caller_owned_planning_surface(
+    operation: MissionOperationContext,
+    mission_slug: str,
+) -> bool:
+    """Return whether the selected linked checkout owns mission planning state.
+
+    ``resolve_mission_operation_context`` intentionally preserves any matching
+    caller worktree.  That is necessary for a task-owned planning checkout, but
+    too broad for transactional status: implementation lanes carry a sparse copy
+    of the same mission and must read/write the canonical status surface instead.
+
+    The mission runtime already owns the target-branch decision.  A linked
+    checkout is therefore a planning surface only when its checked-out branch is
+    the runtime-resolved target branch.  Lane and coordination worktrees fail
+    that test and are re-anchored to the canonical repository/status authority.
+    """
+    if (
+        operation.identity is None
+        or operation.mission_anchor_root == operation.repository_root
+    ):
+        return False
+
+    from mission_runtime import ActionContextError, resolve_action_context  # noqa: PLC0415
+    from specify_cli.core.git_ops import get_current_branch  # noqa: PLC0415
+
+    try:
+        context = resolve_action_context(
+            operation.repository_root,
+            action="status",
+            feature=mission_slug,
+            cwd=operation.mission_anchor_root,
+            effective_root=operation.mission_anchor_root,
+        )
+    except ActionContextError:
+        return False
+    current_branch = cast(str | None, get_current_branch(operation.mission_anchor_root))
+    return current_branch == context.target_branch
+
+
 def _resolve_write_target(
     repo_root: Path, mission_slug: str, coord_branch: str | None
 ) -> str:
@@ -758,10 +800,22 @@ def _identity_for_request(request: TransitionRequest) -> _TransactionIdentity:
     canonical_feature_dir = canonicalize_feature_dir(raw_feature_dir)
     interim_repo_root = _repo_root_for_feature(canonical_feature_dir, request.repo_root)
     canonical_repo_root = _canonical_repo_root(canonical_feature_dir, interim_repo_root)
-    feature_dir = _canonical_primary_feature_dir(
-        canonical_repo_root, mission_slug, fallback=canonical_feature_dir
+    from specify_cli.missions.operation_context import resolve_mission_operation_context
+
+    operation = resolve_mission_operation_context(
+        canonical_repo_root, mission_slug, cwd=raw_feature_dir
     )
-    repo_root = request.repo_root or canonical_repo_root
+    if _is_caller_owned_planning_surface(operation, mission_slug):
+        assert operation.identity is not None
+        feature_dir = operation.identity.feature_dir
+        repo_root = operation.mission_anchor_root
+    else:
+        feature_dir = _canonical_primary_feature_dir(
+            operation.repository_root,
+            mission_slug,
+            fallback=canonical_feature_dir,
+        )
+        repo_root = operation.repository_root
 
     # FR-007: fail-closed reader routing. Malformed meta surfaces typed
     # MissionMetaReadError instead of raw ValueError.
@@ -802,12 +856,20 @@ def _identity_for_request(request: TransitionRequest) -> _TransactionIdentity:
         coordination_branch=coord_branch,
     )
     transaction_dir_name = _transaction_dir_name(mission_slug, effective_mid8)
+    destination_ref = _resolve_write_target(repo_root, mission_slug, coord_branch)
+    if operation.mission_anchor_root != operation.repository_root and coord_branch is None:
+        from specify_cli.core.git_ops import get_current_branch
+
+        caller_branch = get_current_branch(operation.mission_anchor_root)
+        if caller_branch is not None:
+            destination_ref = caller_branch
+
     return _TransactionIdentity(
         repo_root=repo_root,
         feature_dir=feature_dir,
         mission_id=effective_mission_id,
         mid8=effective_mid8,
-        destination_ref=_resolve_write_target(repo_root, mission_slug, coord_branch),
+        destination_ref=destination_ref,
         meta_exists=meta_exists,
         coordination_branch=coord_branch,
         transaction_meta_exists=(feature_dir.parent / transaction_dir_name / "meta.json").exists(),

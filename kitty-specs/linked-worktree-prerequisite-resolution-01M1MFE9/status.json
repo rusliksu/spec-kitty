@@ -1,0 +1,42 @@
+{
+  "event_count": 3,
+  "last_event_id": "01M1MH0MYDQGQGYFN636FGN392",
+  "materialized_at": "2026-09-03T20:57:52.845249+00:00",
+  "mission_number": "",
+  "mission_slug": "linked-worktree-prerequisite-resolution-01M1MFE9",
+  "mission_type": "software-dev",
+  "summary": {
+    "approved": 0,
+    "blocked": 0,
+    "canceled": 0,
+    "claimed": 0,
+    "done": 0,
+    "for_review": 0,
+    "in_progress": 0,
+    "in_review": 0,
+    "planned": 3
+  },
+  "work_packages": {
+    "WP01": {
+      "actor": "finalize-tasks",
+      "force_count": 0,
+      "lane": "planned",
+      "last_event_id": "01M1MH06SA5BVJWFYKQ5FKM14C",
+      "last_transition_at": "2026-09-03T20:57:38.346981+00:00"
+    },
+    "WP02": {
+      "actor": "finalize-tasks",
+      "force_count": 0,
+      "lane": "planned",
+      "last_event_id": "01M1MH0DS2XVNA3VC22SRNRH5D",
+      "last_transition_at": "2026-09-03T20:57:45.506468+00:00"
+    },
+    "WP03": {
+      "actor": "finalize-tasks",
+      "force_count": 0,
+      "lane": "planned",
+      "last_event_id": "01M1MH0MYDQGQGYFN636FGN392",
+      "last_transition_at": "2026-09-03T20:57:52.845249+00:00"
+    }
+  }
+}

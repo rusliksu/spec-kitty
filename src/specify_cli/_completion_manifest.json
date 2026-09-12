@@ -101,7 +101,7 @@
        "deprecated": false
       },
       "setup-plan": {
-       "help": "Scaffold implementation plan template in the project root checkout.\n\nThis command is designed for AI agents to call programmatically.\nCreates plan.md and commits to target branch.\n\nExamples:\n    spec-kitty agent mission setup-plan --json\n    spec-kitty agent mission setup-plan --mission 020-my-feature --json\n\nLocal verification is authoritative. When hosted sync is requested, the\ncommand collects canonical session, structural-boundary, and route evidence\nwithout raising, composes one immutable decision, and reports any refusal as\nadditive warnings. Lifecycle JSONL is persisted locally first. Lifecycle\nfan-out and dossier publication are executed only by\n:func:`_execute_setup_plan_hosted_effects` after an allowing decision.",
+       "help": "Scaffold the implementation plan in the selected planning checkout.\n\nThis command is designed for AI agents to call programmatically.\nCreates plan.md and commits to target branch.\n\nExamples:\n    spec-kitty agent mission setup-plan --json\n    spec-kitty agent mission setup-plan --mission 020-my-feature --json\n\nLocal verification is authoritative. When hosted sync is requested, the\ncommand collects canonical session, structural-boundary, and route evidence\nwithout raising, composes one immutable decision, and reports any refusal as\nadditive warnings. Lifecycle JSONL is persisted locally first. Lifecycle\nfan-out and dossier publication are executed only by\n:func:`_execute_setup_plan_hosted_effects` after an allowing decision.",
        "hidden": false,
        "deprecated": false
       },
@@ -1276,7 +1276,7 @@
    "deprecated": false
   },
   "spec-commit": {
-   "help": "Commit spec artifacts to the mission's resolved placement.\n\nOn a protected primary the coordination worktree is materialised on demand\nso the commit lands on the coordination branch (materialize-then-retry).\nOn an unprotected or flattened primary the commit is direct.",
+   "help": "Commit spec artifacts to the mission's resolved placement.\n\nPlanning writes use the Mission's direct planning surface. A protected\ndestination is refused; coordination is not a bypass for that protection.",
    "hidden": false,
    "deprecated": false
   },

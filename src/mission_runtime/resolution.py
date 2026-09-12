@@ -683,6 +683,8 @@ def _resolve_wp_bearing_fields(
     resolve_workspace_for_wp: Callable[..., Any],
     resolve_lane_alias: Callable[[str], str],
     planned_lane: str,
+    effective_root: Path | None = None,
+    status_read_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Assemble the WP-bearing fields (incl. ``commands``) for one build call.
 
@@ -698,7 +700,11 @@ def _resolve_wp_bearing_fields(
         )
 
     try:
-        wp = locate_work_package(repo_root, mission_slug, normalized_wp_id)
+        lookup_options = (
+            {"effective_root": effective_root, "status_read_dir": status_read_dir}
+            if effective_root is not None else {}
+        )
+        wp = locate_work_package(repo_root, mission_slug, normalized_wp_id, **lookup_options)
     except Exception as exc:
         raise ActionContextError("WORK_PACKAGE_UNRESOLVED", str(exc)) from exc
 
@@ -709,7 +715,8 @@ def _resolve_wp_bearing_fields(
         resolve_lane_alias=resolve_lane_alias,
         planned_lane=planned_lane,
     )
-    wp_workspace = resolve_workspace_for_wp(repo_root, mission_slug, normalized_wp_id)
+    workspace_options = {"effective_root": effective_root} if effective_root is not None else {}
+    wp_workspace = resolve_workspace_for_wp(repo_root, mission_slug, normalized_wp_id, **workspace_options)
 
     return {
         "wp_id": normalized_wp_id,
@@ -1696,9 +1703,10 @@ class PlacementSeam:
       (``tests/retrospective/test_home_resolution_single_authority.py``).
 
     Both projections are CWD-invariant: they derive from ``repo_root`` +
-    ``mission_slug`` (the stored topology, read via ``meta.json``), never from
-    the current checkout (T-2). Coord-routing decisions inside the delegated
-    resolvers consult ONLY :func:`~mission_runtime.context.
+    ``mission_slug`` or from an explicitly validated ``effective_root`` supplied
+    by the operation boundary, never from the ambient current checkout (T-2).
+    Coord-routing decisions inside the delegated resolvers consult ONLY
+    :func:`~mission_runtime.context.
     routes_through_coordination` over the stored topology — this seam never
     inlines its own coord-topology equality check (T-1).
 
@@ -1710,15 +1718,34 @@ class PlacementSeam:
 
     repo_root: Path
     mission_slug: str
+    effective_root: Path | None = None
+    resolver: MissionResolver | None = None
 
     def write_target(self, kind: MissionArtifactKind) -> CommitTarget:
         """Return the :class:`CommitTarget` a write of ``kind`` must commit to.
 
-        Thin projection over :func:`resolve_placement_only` — see class
-        docstring. Never constructs ``CommitTarget(ref=<current_checkout>)``
-        (the forbidden-for-callers grammar, contracts/seam-api.md).
+        Thin projection over :func:`resolve_placement_only` for the default
+        repository route and :func:`mission_context_for` for an explicitly
+        validated owned checkout. Never constructs
+        ``CommitTarget(ref=<current_checkout>)`` (the forbidden-for-callers
+        grammar, contracts/seam-api.md).
         """
-        return resolve_placement_only(self.repo_root, self.mission_slug, kind=kind)
+        if self.effective_root is None:
+            return resolve_placement_only(
+                self.repo_root,
+                self.mission_slug,
+                kind=kind,
+                resolver=self.resolver,
+            )
+        target = mission_context_for(
+            self.repo_root,
+            self.mission_slug,
+            resolver=self.resolver,
+            effective_root=self.effective_root,
+        ).artifact(kind).commit_target
+        if target is None:
+            raise ValueError("Selected Mission artifact has no commit target")
+        return target
 
     def read_dir(self, kind: MissionArtifactKind) -> Path:
         """Return the directory a read of ``kind`` resolves to.
@@ -1757,6 +1784,14 @@ class PlacementSeam:
         main-repo path where it previously returned ``None``. Reason on BOTH
         axes when auditing a migrated call site.
         """
+        if self.effective_root is not None:
+            return mission_context_for(
+                self.repo_root,
+                self.mission_slug,
+                resolver=self.resolver,
+                effective_root=self.effective_root,
+            ).artifact(kind).read_dir
+
         if kind is MissionArtifactKind.RETROSPECTIVE:
             from specify_cli.retrospective.writer import resolve_retrospective_home
 
@@ -2195,7 +2230,13 @@ def resolve_create_time_write_target(planning_branch: str) -> CommitTarget:
     return CommitTarget(ref=planning_branch)
 
 
-def placement_seam(repo_root: Path, mission_slug: str) -> PlacementSeam:
+def placement_seam(
+    repo_root: Path,
+    mission_slug: str,
+    *,
+    effective_root: Path | None = None,
+    resolver: MissionResolver | None = None,
+) -> PlacementSeam:
     """Construct the placement seam for one mission operation (T001 entry point).
 
     Asserts the P-1 partition invariant (T002) before returning the seam: the
@@ -2206,9 +2247,19 @@ def placement_seam(repo_root: Path, mission_slug: str) -> PlacementSeam:
     construction — so a future kind added without a partition entry fails
     loudly here rather than as a deep ``ValueError`` inside
     :func:`~mission_runtime.artifacts.artifact_home_for`.
+
+    ``effective_root`` is the already-validated caller-owned checkout selected
+    by the operation boundary.  When supplied, both projections resolve from
+    that checkout through :func:`mission_context_for`; callers never import the
+    lower-level owned-root path helpers directly.
     """
     assert_partition_invariant()
-    return PlacementSeam(repo_root=repo_root, mission_slug=mission_slug)
+    return PlacementSeam(
+        repo_root=repo_root,
+        mission_slug=mission_slug,
+        effective_root=effective_root,
+        resolver=resolver,
+    )
 
 
 def resolve_action_context(
@@ -2363,5 +2414,7 @@ def resolve_action_context(
         resolve_workspace_for_wp=resolve_workspace_for_wp,
         resolve_lane_alias=resolve_lane_alias,
         planned_lane=Lane.PLANNED,
+        effective_root=effective_root,
+        status_read_dir=status_surface.status_read_dir,
     )
     return build_execution_context(**base_fields, **wp_fields)

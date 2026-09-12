@@ -107,6 +107,7 @@ class _MapReqState:
     repo_root: Path = field(default_factory=Path)
     mission_slug: str = ""
     main_repo_root: Path = field(default_factory=Path)
+    mission_anchor_root: Path = field(default_factory=Path)
     target_branch: str = ""
     auto_commit_on: bool = False
     commit_target: CommitTarget = field(default_factory=lambda: CommitTarget(ref=""))
@@ -177,25 +178,65 @@ def _mr_resolve_context(st: _MapReqState) -> None:
     # FR-010 / FR-019: one-shot sparse-checkout session warning.
     _tasks._emit_sparse_session_warning(repo_root, command="spec-kitty agent tasks map-requirements")
 
-    st.mission_slug = _tasks._find_mission_slug(
-        explicit_mission=st.mission, json_output=st.json_output, repo_root=repo_root
+    from specify_cli.missions.operation_context import resolve_mission_operation_context
+
+    operation = (
+        resolve_mission_operation_context(repo_root, st.mission.strip(), cwd=Path.cwd())
+        if st.mission and st.mission.strip()
+        else None
     )
-    st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
-        repo_root, st.mission_slug, st.json_output
-    )
+    if operation is not None and operation.identity is not None:
+        st.mission_slug = operation.identity.mission_slug
+        st.mission_anchor_root = operation.mission_anchor_root
+        st.main_repo_root = operation.repository_root
+        effective_root = (
+            operation.mission_anchor_root
+            if operation.mission_anchor_root != operation.repository_root
+            else None
+        )
+        st.target_branch = placement_seam(
+            operation.repository_root,
+            st.mission_slug,
+            effective_root=effective_root,
+        ).write_target(MissionArtifactKind.WORK_PACKAGE_TASK).ref
+    else:
+        st.mission_slug = _tasks._find_mission_slug(
+            explicit_mission=st.mission, json_output=st.json_output, repo_root=repo_root
+        )
+        st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
+            repo_root, st.mission_slug, st.json_output
+        )
+        st.mission_anchor_root = st.main_repo_root
     st.auto_commit_on = (
         _tasks.get_auto_commit_default(st.main_repo_root) if st.auto_commit is None else st.auto_commit
     )
-    st.commit_target = CommitTarget(ref=st.target_branch)
+    effective_root = (
+        st.mission_anchor_root
+        if st.mission_anchor_root != st.main_repo_root
+        else None
+    )
+    if effective_root is None:
+        # No-auto-commit compatibility value only; the auto-commit arm below
+        # replaces it with the canonical placement projection before writing.
+        st.commit_target = CommitTarget(ref=st.target_branch)
+    else:
+        st.commit_target = placement_seam(
+            st.main_repo_root,
+            st.mission_slug,
+            effective_root=effective_root,
+        ).write_target(MissionArtifactKind.WORK_PACKAGE_TASK)
     if st.auto_commit_on:
-        from specify_cli.coordination.commit_router import _resolve_planning_placement
+        if effective_root is None:
+            from specify_cli.coordination.commit_router import (
+                _resolve_planning_placement,
+            )
 
-        # map-requirements edits WP prompt files → WORK_PACKAGE_TASK (primary)
-        # (write-surface-coherence WP02 / T009). Resolve the destination through
-        # the kind authority instead of the hardcoded target_branch above.
-        st.commit_target = _resolve_planning_placement(
-            st.main_repo_root, st.mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK
-        )
+            # Preserve the historical interception seam for the default route.
+            st.commit_target = _resolve_planning_placement(
+                st.main_repo_root,
+                st.mission_slug,
+                kind=MissionArtifactKind.WORK_PACKAGE_TASK,
+            )
         protected_error = _tasks._protected_branch_status_commit_error(
             st.commit_target.ref,
             st.main_repo_root,
@@ -283,9 +324,28 @@ def _mr_resolve_read_dirs(st: _MapReqState, ports: TasksPorts) -> None:
         find_undeclared_requirement_citations,
         parse_requirement_ids_from_spec_md,
     )
-
-    # #2064: resolve the WP ``tasks/`` dir through the SAME seam finalize uses.
-    st.feature_dir = _tasks._map_requirements_feature_dir(st.main_repo_root, st.mission_slug)
+    mission = MissionHandle(st.main_repo_root, st.mission_slug)
+    if (
+        st.mission_anchor_root != Path()
+        and st.mission_anchor_root != st.main_repo_root
+    ):
+        # The operation boundary has already validated this caller-owned root.
+        # Keep both reads behind the same kind-aware seam used for writes.
+        st.feature_dir = placement_seam(
+            st.main_repo_root,
+            st.mission_slug,
+            effective_root=st.mission_anchor_root,
+        ).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
+        st.primary_dir = st.feature_dir
+    else:
+        # Preserve both historical interception ports for the default route.
+        _tasks._map_requirements_feature_dir(
+            st.main_repo_root, st.mission_slug
+        )
+        st.primary_dir = ports.fs.primary_anchor_dir(mission)
+        st.feature_dir = placement_seam(
+            st.main_repo_root, st.mission_slug
+        ).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
     # Boundary guard — hard-reject pre-3.0 layout before any WP mutation.
     try:
         check_pre30_layout(st.feature_dir)
@@ -296,9 +356,6 @@ def _mr_resolve_read_dirs(st: _MapReqState, ports: TasksPorts) -> None:
     # FR-011 / T012: fold the handle to its canonical dir NAME first so a bare
     # mid8 / human slug resolves the durable ``<slug>-<mid8>`` home (ambiguous
     # handle RAISES — no silent pick, C-002). Routed through the port (T030).
-    handle = MissionHandle(repo_root=st.main_repo_root, mission_slug=st.mission_slug)
-    st.primary_dir = ports.fs.primary_anchor_dir(handle)
-
     if not st.feature_dir.exists():
         _tasks._output_error(st.json_output, f"Mission directory not found: {st.feature_dir}")
         raise typer.Exit(1)
@@ -323,12 +380,7 @@ def _mr_resolve_read_dirs(st: _MapReqState, ports: TasksPorts) -> None:
     # files are WORK_PACKAGE_TASK — a PRIMARY-partition kind. Resolve the read dir
     # through the kind-aware seam (the SAME single authority WP01 routed the rest
     # of the gate reads onto) instead of the topology-routed ``feature_dir``.
-    st.tasks_dir = (
-        placement_seam(st.main_repo_root, st.mission_slug).read_dir(
-            MissionArtifactKind.WORK_PACKAGE_TASK
-        )
-        / "tasks"
-    )
+    st.tasks_dir = st.feature_dir / "tasks"
     _mr_unknown_wp_gate(st)
 
 

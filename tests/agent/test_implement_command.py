@@ -236,7 +236,7 @@ class TestImplementCommand:
             implement("WP01", mission="010-feature", json_output=True, recover=False)
 
         payload = json.loads(capsys.readouterr().out.strip())
-        assert payload["workspace"] == ".worktrees/010-feature-lane-a"
+        assert Path(payload["workspace"]) == Path(".worktrees") / "010-feature-lane-a"
         assert payload["branch"] == "kitty/mission-010-feature-lane-a"
         assert payload["lane_id"] == "lane-a"
         assert payload["mission_slug"] == "010-feature"

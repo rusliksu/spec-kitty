@@ -408,6 +408,7 @@ def allocate_lane_worktree(
     wp_id: str,
     lanes_manifest: LanesManifest,
     base: str | None = None,
+    *, effective_root: Path | None = None,
 ) -> tuple[Path, str]:
     """Allocate or reuse the worktree for the lane containing wp_id.
 
@@ -512,7 +513,8 @@ def allocate_lane_worktree(
     # #2514 (WP04): hoisted above the crash-recovery branch below so BOTH the
     # recovery path and the fresh-create path see the same two values without
     # recomputing them twice — see ``_register_sparse_checkout_if_coord``.
-    coordination_branch = _read_coordination_branch(repo_root, mission_slug)
+    anchor_options = {"effective_root": effective_root} if effective_root is not None else {}
+    coordination_branch = _read_coordination_branch(repo_root, mission_slug, **anchor_options)
     # Route through the authoritative resolver (WP03 / FR-009, F-1). The
     # former raising ``mid8`` + try/except is replaced by resolve_mid8's
     # decline-to-``""`` contract; ``or None`` preserves the prior ``None``
@@ -899,6 +901,7 @@ def _register_sparse_checkout_if_coord(
 
 def _read_coordination_branch(
     repo_root: Path, mission_slug: str,
+    *, effective_root: Path | None = None,
 ) -> str | None:
     """Return the ``coordination_branch`` field from ``meta.json``.
 
@@ -915,9 +918,18 @@ def _read_coordination_branch(
     # checkout where ``meta.json`` lives post-#2106 (the coord husk has none / a
     # STATUS-only one) — never the coord-aware resolver (which would need the very
     # answer this read produces).
-    meta_dir = placement_seam(repo_root, mission_slug).read_dir(
-        MissionArtifactKind.PRIMARY_METADATA
-    )
+    if effective_root is not None:
+        from specify_cli.core.paths import load_meta_fail_closed
+
+        meta_dir = placement_seam(
+            repo_root, mission_slug, effective_root=effective_root
+        ).read_dir(MissionArtifactKind.PRIMARY_METADATA)
+        data = load_meta_fail_closed(meta_dir)
+        if data is None:
+            raise ValueError(f"Owned planning metadata is missing: {meta_dir}")
+        value = data.get("coordination_branch")
+        return value if isinstance(value, str) and value else None
+    meta_dir = placement_seam(repo_root, mission_slug).read_dir(MissionArtifactKind.PRIMARY_METADATA)
     data = load_meta(meta_dir, on_malformed="none")
     if data is None:
         return None

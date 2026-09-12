@@ -75,7 +75,7 @@ import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from mission_runtime import CommitTarget
 from kernel.paths import to_posix
@@ -700,14 +700,12 @@ def _staged_patch_for_paths(repo_path: Path, normalized_files: list[str]) -> str
         ["git", "diff", "--cached", "--binary", "--no-ext-diff", "--no-renames", "--", *normalized_files],
         cwd=repo_path,
         capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
         check=False,
     )
     if result.returncode != 0:
         return None
-    return result.stdout
+    # Preserve patch bytes, including CRLF content, through the string carrier.
+    return result.stdout.decode("utf-8", errors="surrogateescape")
 
 
 def _unstage_requested_files(repo_path: Path, normalized_files: list[str]) -> None:
@@ -775,15 +773,13 @@ def _restore_staged_patch(
     result = subprocess.run(
         ["git", "apply", "--cached", "--whitespace=nowarn", "-"],
         cwd=repo_path,
-        input=patch,
+        # Text-mode stdin rewrites LF to CRLF on Windows and corrupts context.
+        input=patch.encode("utf-8", errors="surrogateescape"),
         capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
         check=False,
     )
     if result.returncode != 0:
-        detail = (result.stderr or result.stdout).strip()
+        detail = (result.stderr or result.stdout).decode("utf-8", errors="replace").strip()
         suffix = f": {detail}" if detail else "."
         raise SafeCommitRecoveryFailed(
             f"safe_commit: failed to restore caller staging in {repo_path}; git apply --cached rejected the requested-file patch{suffix}",
@@ -929,6 +925,7 @@ def safe_commit(  # noqa: C901 -- sequential validation gates; splitting harms r
     message: str,
     paths: tuple[Path, ...],
     capability: GuardCapability = GuardCapability.STANDARD,
+    local_commit_store: Literal["repository", "worktree"] = "repository",
 ) -> CommitResult:
     """Commit ``paths`` to ``destination_ref`` inside ``worktree_root``.
 
@@ -987,6 +984,9 @@ def safe_commit(  # noqa: C901 -- sequential validation gates; splitting harms r
             relative to ``worktree_root`` when possible.
         capability: Asserted-at-the-surface authorization passed to
             ``commit_guard.evaluate``. Defaults to ``GuardCapability.STANDARD``.
+        local_commit_store: Capture the pending LocalCommit in the repository
+            (legacy default) or committing worktree's per-checkout runtime store.
+            This does not alter branch protection or authorize hosted egress.
 
     Returns:
         :class:`CommitResult` carrying the new commit SHA, the declared
@@ -1006,6 +1006,12 @@ def safe_commit(  # noqa: C901 -- sequential validation gates; splitting harms r
             safe_commit could not capture recovery state before mutating.
         RuntimeError: a low-level ``git add`` or ``git commit`` failed.
     """
+    # Local capture uses one of the same roots validated below, never a third
+    # caller-supplied path. Default callers retain repository-local capture.
+    if local_commit_store not in ("repository", "worktree"):
+        raise ValueError(f"Invalid local commit store: {local_commit_store!r}")
+    capture_root = worktree_root if local_commit_store == "worktree" else repo_root
+
     # 0. Compat shim: accept either ``target`` (preferred) or the legacy
     #    ``destination_ref`` string. The CommitTarget's ``ref`` is the single
     #    destination authority; ``destination_ref`` mirrors it below so callers
@@ -1192,6 +1198,11 @@ def safe_commit(  # noqa: C901 -- sequential validation gates; splitting harms r
         orphan_stash_ref: str | None = None
         unrecovered_paths: Sequence[str] = ()
         if created_stash:
+            if not commit_created:
+                # Git cannot restore the unrelated stash over our failed
+                # requested staging. Restore its original patch only AFTER
+                # the stash, so partially staged caller content stays intact.
+                _unstage_requested_files(worktree_root, normalized_files)
             stash_ref = _find_stash_ref(worktree_root, stash_message)
             if stash_ref is not None:
                 pop_result = subprocess.run(
@@ -1248,10 +1259,10 @@ def safe_commit(  # noqa: C901 -- sequential validation gates; splitting harms r
             from specify_cli.sync.local_commit import emit_local_commit  # noqa: PLC0415
 
             emit_local_commit(
-                repo_root=repo_root,
+                repo_root=capture_root,
                 git_hash=new_sha,
                 mission_id=_derive_mission_id(mission_specs_files),
-                build_id=_get_current_build_id(repo_root),
+                build_id=_get_current_build_id(capture_root),
                 changed_files=mission_specs_files,
                 committed_at=now_utc_iso(),
             )

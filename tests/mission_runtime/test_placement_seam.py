@@ -259,6 +259,32 @@ def test_read_dir_non_retrospective_uses_resolve_planning_read_dir(
     assert result == repo / "kitty-specs" / _MISSION_SLUG
 
 
+def test_effective_root_keeps_both_projections_on_owned_checkout(
+    repo: Path, tmp_path: Path
+) -> None:
+    """An explicitly validated checkout owns both seam projections.
+
+    ``repo_root`` is deliberately a decoy with no Mission.  Resolving either
+    projection through it would therefore fail; the selected checkout must be
+    the only filesystem authority while its stored target ref remains the
+    write authority.
+    """
+    primary_dir = _build_mission(repo, topology=MissionTopology.SINGLE_BRANCH)
+    decoy_repo_root = tmp_path / "decoy-primary"
+    decoy_repo_root.mkdir()
+
+    seam = placement_seam(
+        decoy_repo_root,
+        _MISSION_SLUG,
+        effective_root=repo,
+    )
+
+    assert seam.read_dir(MissionArtifactKind.SPEC) == primary_dir
+    assert seam.write_target(MissionArtifactKind.SPEC) == CommitTarget(
+        ref=_TARGET_BRANCH
+    )
+
+
 # ---------------------------------------------------------------------------
 # T002 -- P-1 partition invariant (disjoint + total)
 # ---------------------------------------------------------------------------

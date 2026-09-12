@@ -615,7 +615,7 @@ def resolve_planning_artifact_staging(
 # ---------------------------------------------------------------------------
 
 
-def _resolve_placement_ref(repo_root: Path, *, mission_slug: str, wp_id: str) -> CommitTarget | None:
+def _resolve_placement_ref(repo_root: Path, *, mission_slug: str, wp_id: str, effective_root: Path | None = None) -> CommitTarget | None:
     """Resolve the context's artifact-placement ref (C-PLACE-1 / IC-05).
 
     Routes through the single canonical resolver (``resolve_action_context``,
@@ -626,13 +626,14 @@ def _resolve_placement_ref(repo_root: Path, *, mission_slug: str, wp_id: str) ->
     lifecycle on a context-resolution edge case).
     """
     try:
-        context = resolve_action_context(
-            repo_root,
-            action="implement",
-            feature=mission_slug,
-            wp_id=wp_id,
+        context = (
+            resolve_action_context(repo_root, action="implement", feature=mission_slug, wp_id=wp_id)
+            if effective_root is None else
+            resolve_action_context(repo_root, action="implement", feature=mission_slug, wp_id=wp_id, effective_root=effective_root)
         )
     except ActionContextError:
+        if effective_root is not None:
+            raise
         # WP03 / T017 (#3128): this handler is deliberately NARROW — only the
         # legacy-fallback ``ActionContextError`` degrades to ``None`` here. A
         # Seam-B ``CheckoutIdentityError`` is an ``Exception``-direct refusal

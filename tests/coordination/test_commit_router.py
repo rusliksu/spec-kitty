@@ -38,6 +38,57 @@ _PRIMARY_BRANCH = "main"
 _COORD_REF = "kitty/mission-my-slug-ABCD1234"
 
 
+@pytest.mark.git_repo
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("reject_hook", [False, True])
+def test_owned_router_preserves_unrelated_staging_and_shared_writer_rollback(
+    tmp_path: Path, reject_hook: bool,
+) -> None:
+    from specify_cli.coordination.commit_router import commit_for_mission
+    from specify_cli.missions.operation_context import resolve_mission_operation_context
+    from tests.tasks.linked_worktree_harness import create_linked_mission, git, snapshot_primary
+
+    ctx = create_linked_mission(tmp_path)
+    plan = ctx.mission_dir / "plan.md"
+    events = ctx.mission_dir / "status.events.jsonl"
+    plan.write_text("# Changed plan\n", encoding="utf-8")
+    events.write_text('{"event_type":"test-event"}\n', encoding="utf-8")
+    unrelated = ctx.linked / "README.md"
+    unrelated.write_text("unrelated staged content\n", encoding="utf-8")
+    git(ctx.linked, "add", "README.md")
+    staged_before = git(ctx.linked, "diff", "--cached", "--binary")
+    requested_index_before = git(ctx.linked, "ls-files", "--stage", "--", str(plan), str(events))
+    if reject_hook:
+        hook = ctx.primary / ".git/hooks/pre-commit"
+        hook.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+        hook.chmod(0o755)
+    operation = resolve_mission_operation_context(ctx.primary, ctx.mission_dir.name, cwd=ctx.linked)
+    primary_before = snapshot_primary(ctx.primary)
+    head_before = git(ctx.linked, "rev-parse", "HEAD")
+    result = commit_for_mission(
+        repo_root=ctx.primary, mission_slug=ctx.mission_dir.name, files=(plan, events),
+        message="owned mixed-partition commit", policy=ProtectionPolicy.resolve(ctx.primary),
+        kind=MissionArtifactKind.FINALIZED_EXECUTION_PLAN, operation=operation,
+    )
+    assert snapshot_primary(ctx.primary) == primary_before
+    assert git(ctx.linked, "diff", "--cached", "--binary") == staged_before, result
+    assert unrelated.read_text(encoding="utf-8") == "unrelated staged content\n"
+    assert git(ctx.linked, "stash", "list") == ""
+    if reject_hook:
+        assert result.status == "error"
+        assert git(ctx.linked, "rev-parse", "HEAD") == head_before
+        assert git(ctx.linked, "ls-files", "--stage", "--", str(plan), str(events)) == requested_index_before
+        assert not (ctx.linked / ".kittify/sync-state.json").exists()
+    else:
+        assert result.status == "committed"
+        assert result.placement_ref == "codex/task"
+        assert git(ctx.linked, "rev-list", "--count", f"{head_before}..HEAD") == "1"
+        changed = set(git(ctx.linked, "show", "--pretty=", "--name-only", "HEAD").splitlines())
+        assert changed == {path.relative_to(ctx.linked).as_posix() for path in (plan, events)}
+        assert result.commit_hash == git(ctx.linked, "rev-parse", "HEAD")
+
+
 def _patch_primary_target(ref: str = _PRIMARY_BRANCH) -> object:
     """Patch the router's primary-target-branch read.
 

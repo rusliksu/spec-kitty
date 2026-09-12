@@ -11,7 +11,9 @@ specifically about the protected-branch refusal.
 from __future__ import annotations
 
 import subprocess
+import json
 from pathlib import Path
+from typing import Any, Literal
 
 import pytest
 
@@ -24,6 +26,7 @@ from specify_cli.git.commit_helpers import (
     SafeCommitEmptyChangeset,
     SafeCommitHeadMismatch,
     SafeCommitNotAWorktree,
+    SafeCommitRecoveryFailed,
     safe_commit,
 )
 
@@ -98,6 +101,158 @@ def test_safe_commit_happy_path(lane_repo: Path) -> None:
     ).stdout.strip()
     assert result.sha in log
     assert "WP01: add alpha" in log
+
+
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("store", ["repository", "worktree"])
+def test_safe_commit_local_capture_uses_explicit_store_without_losing_frame(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, store: Literal["repository", "worktree"],
+) -> None:
+    from specify_cli.git import commit_helpers
+    from tests.tasks.linked_worktree_harness import create_linked_mission, snapshot_primary
+
+    ctx = create_linked_mission(tmp_path)
+    plan = ctx.mission_dir / "plan.md"
+    plan.write_text("# Changed plan\n", encoding="utf-8")
+    capture_root = ctx.primary if store == "repository" else ctx.linked
+    build_roots: list[Path] = []
+    def build_id(root: Path) -> str:
+        build_roots.append(root)
+        return "test-build"
+    monkeypatch.setattr(commit_helpers, "_get_current_build_id", build_id)
+    primary_before = snapshot_primary(ctx.primary)
+    result = safe_commit(
+        repo_root=ctx.primary, worktree_root=ctx.linked, destination_ref="codex/task",
+        message="capture store contract", paths=(plan,),
+        **({"local_commit_store": store} if store == "worktree" else {}),
+    )
+    assert build_roots == [capture_root]
+    pending = json.loads((capture_root / ".kittify/sync-state.json").read_text(encoding="utf-8"))["pending_local_commits"]
+    assert len(pending) == 1
+    assert pending[0]["git_hash"] == result.sha
+    assert pending[0]["build_id"] == "test-build"
+    assert [Path(path).as_posix() for path in pending[0]["changed_files"]] == [plan.relative_to(ctx.linked).as_posix()]
+    other_root = ctx.linked if store == "repository" else ctx.primary
+    assert not (other_root / ".kittify/sync-state.json").exists()
+    if store == "worktree":
+        assert snapshot_primary(ctx.primary) == primary_before
+
+
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+@pytest.mark.parametrize("linked", [False, True])
+@pytest.mark.parametrize("requested_staged", [False, True])
+@pytest.mark.parametrize("failure", ["hook", "stage"])
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"], ids=["lf", "crlf"])
+def test_failed_commit_restores_staging_and_working_bytes(
+    tmp_path: Path, linked: bool, requested_staged: bool, failure: str, newline: bytes,
+) -> None:
+    """A failed commit must preserve both the caller's index and unstaged edits."""
+    from tests.tasks.linked_worktree_harness import create_linked_mission, git, snapshot_primary
+
+    if linked:
+        ctx = create_linked_mission(tmp_path)
+        primary, checkout, branch = ctx.primary, ctx.linked, "codex/task"
+    else:
+        primary = checkout = tmp_path / "repo"
+        branch = "codex/task"
+        _init_repo(primary, initial_branch=branch)
+        git(primary, "config", "core.autocrlf", "false")
+    requested = checkout / "requested.txt"
+    unrelated = checkout / "unrelated.txt"
+    requested.write_bytes(b"requested baseline" + newline)
+    unrelated.write_bytes(b"unrelated baseline" + newline)
+    git(checkout, "add", "requested.txt", "unrelated.txt")
+    git(checkout, "commit", "-q", "-m", "recovery baseline")
+    if requested_staged:
+        requested.write_bytes(b"requested staged" + newline)
+        git(checkout, "add", "requested.txt")
+    requested.write_bytes(b"requested working" + newline)
+    unrelated.write_bytes(b"unrelated staged" + newline)
+    git(checkout, "add", "unrelated.txt")
+    untracked = checkout / "untracked.txt"
+    untracked.write_bytes(b"keep untracked\n")
+    paths = (requested,)
+    if failure == "hook":
+        hook = primary / ".git/hooks/pre-commit"
+        hook.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+        hook.chmod(0o755)
+    else:
+        paths = (requested, checkout / "missing.txt")
+    staged_before = git(checkout, "diff", "--cached", "--binary")
+    index_before = tuple(git(checkout, "rev-parse", f":{name}") for name in ("requested.txt", "unrelated.txt"))
+    head_before = git(checkout, "rev-parse", "HEAD")
+    primary_before = snapshot_primary(primary)
+
+    with pytest.raises(RuntimeError) as error:
+        safe_commit(
+            repo_root=primary, worktree_root=checkout, destination_ref=branch,
+            message="must not commit", paths=paths,
+        )
+
+    assert not isinstance(error.value, SafeCommitRecoveryFailed), error.value
+    assert git(checkout, "rev-parse", "HEAD") == head_before
+    assert git(checkout, "diff", "--cached", "--binary") == staged_before
+    assert tuple(git(checkout, "rev-parse", f":{name}") for name in ("requested.txt", "unrelated.txt")) == index_before
+    assert requested.read_bytes() == b"requested working" + newline
+    assert unrelated.read_bytes() == b"unrelated staged" + newline
+    assert untracked.read_bytes() == b"keep untracked\n"
+    assert git(checkout, "stash", "list") == ""
+    if linked:
+        assert snapshot_primary(primary) == primary_before
+
+
+@pytest.mark.non_sandbox
+@pytest.mark.real_worktree_detection
+def test_failed_commit_keeps_recovery_stash_when_pop_itself_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A real recovery failure must remain explicit, with all caller data recoverable."""
+    from specify_cli.git import commit_helpers
+    from tests.tasks.linked_worktree_harness import create_linked_mission, git, snapshot_primary
+
+    ctx = create_linked_mission(tmp_path)
+    requested = ctx.linked / "requested.txt"
+    requested.write_bytes(b"baseline\n")
+    git(ctx.linked, "add", "requested.txt")
+    git(ctx.linked, "commit", "-q", "-m", "requested baseline")
+    requested.write_bytes(b"requested staged\n")
+    git(ctx.linked, "add", "requested.txt")
+    requested.write_bytes(b"requested working\n")
+    unrelated = ctx.linked / "README.md"
+    unrelated.write_bytes(b"unrelated staged\n")
+    git(ctx.linked, "add", "README.md")
+    expected_patch = git(ctx.linked, "diff", "--cached", "--binary", "--", "requested.txt")
+    requested_oid = git(ctx.linked, "rev-parse", ":requested.txt")
+    unrelated_oid = git(ctx.linked, "rev-parse", ":README.md")
+    hook = ctx.primary / ".git/hooks/pre-commit"
+    hook.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+    hook.chmod(0o755)
+    real_run = commit_helpers.subprocess.run
+
+    def fail_pop(args: list[str], *pos: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        if args[:4] == ["git", "stash", "pop", "--index"]:
+            return subprocess.CompletedProcess(args, 1, "", "simulated pop failure")
+        return real_run(args, *pos, **kwargs)
+
+    monkeypatch.setattr(commit_helpers.subprocess, "run", fail_pop)
+    head_before = git(ctx.linked, "rev-parse", "HEAD")
+    primary_before = snapshot_primary(ctx.primary)
+    with pytest.raises(SafeCommitRecoveryFailed) as error:
+        safe_commit(repo_root=ctx.primary, worktree_root=ctx.linked,
+                    destination_ref="codex/task", message="must reject", paths=(requested,))
+    assert error.value.commit_sha is None
+    stash_ref = error.value.orphan_stash_ref
+    assert stash_ref is not None
+    assert "simulated pop failure" in str(error.value)
+    assert git(ctx.linked, "show", f"{stash_ref}^2:README.md") == "unrelated staged"
+    assert git(ctx.linked, "rev-parse", f"{stash_ref}^2:README.md") == unrelated_oid
+    assert git(ctx.linked, "diff", "--cached", "--binary", "--", "requested.txt") == expected_patch
+    assert git(ctx.linked, "rev-parse", ":requested.txt") == requested_oid
+    assert requested.read_bytes() == b"requested working\n"
+    assert git(ctx.linked, "rev-parse", "HEAD") == head_before
+    assert snapshot_primary(ctx.primary) == primary_before
 
 
 def _install_warn_mode_guard_hook(repo: Path, warning_text: str) -> None:

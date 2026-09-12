@@ -24,7 +24,7 @@ Public API:
 
 from __future__ import annotations
 
-from mission_runtime import MissionArtifactKind, placement_seam
+from mission_runtime import MissionArtifactKind, MissionContext, placement_seam
 import json
 from pathlib import Path
 from typing import Literal
@@ -61,7 +61,7 @@ def _generate_ulid() -> str:
     return str(_ulid_mod.ULID())
 
 
-def _mission_dir(repo_root: Path, mission_slug: str) -> Path:
+def _mission_dir(repo_root: Path, mission_slug: str, context: MissionContext | None = None) -> Path:
     """Return ``kitty-specs/<mission_slug>/`` via the kind-aware placement seam.
 
     write-side-seam-matrix-tracer-01KYP3MH WP02 (FR-010, #3055) Move A: routed
@@ -74,15 +74,19 @@ def _mission_dir(repo_root: Path, mission_slug: str) -> Path:
     writes agree on where the coord-owned decision/status log lives under
     every topology, closing a prior read/write split-brain risk.
     """
+    if context is not None:
+        if context.mission_slug != mission_slug:
+            raise ValueError("Decision context does not match the selected Mission")
+        return context.artifact(MissionArtifactKind.STATUS_STATE).write_dir
     mission_dir: Path = placement_seam(repo_root, mission_slug).read_dir(
         MissionArtifactKind.STATUS_STATE
     )
     return mission_dir
 
 
-def _events_path(repo_root: Path, mission_slug: str) -> Path:
+def _events_path(repo_root: Path, mission_slug: str, context: MissionContext | None = None) -> Path:
     """Return the path to ``status.events.jsonl``."""
-    return _mission_dir(repo_root, mission_slug) / _EVENTS_FILENAME
+    return _mission_dir(repo_root, mission_slug, context) / _EVENTS_FILENAME
 
 
 def _append_raw_event(events_path: Path, event_dict: dict) -> int:  # type: ignore[type-arg]
@@ -114,6 +118,7 @@ def emit_decision_opened(
     decision_id: str,
     entry: IndexEntry,
     actor: str,
+    context: MissionContext | None = None,
 ) -> int:
     """Append a ``DecisionPointOpened`` (interview) event to status.events.jsonl.
 
@@ -163,7 +168,7 @@ def emit_decision_opened(
         "event_type": DECISION_POINT_OPENED,
         "payload": json.loads(payload.model_dump_json()),
     }
-    return _append_raw_event(_events_path(repo_root, mission_slug), event_dict)
+    return _append_raw_event(_events_path(repo_root, mission_slug, context), event_dict)
 
 
 def emit_decision_resolved(
@@ -173,6 +178,7 @@ def emit_decision_resolved(
     decision_id: str,
     entry: IndexEntry,
     actor: str,
+    context: MissionContext | None = None,
 ) -> int:
     """Append a ``DecisionPointResolved`` (interview) event to status.events.jsonl.
 
@@ -242,4 +248,4 @@ def emit_decision_resolved(
         "event_type": DECISION_POINT_RESOLVED,
         "payload": json.loads(payload.model_dump_json()),
     }
-    return _append_raw_event(_events_path(repo_root, mission_slug), event_dict)
+    return _append_raw_event(_events_path(repo_root, mission_slug, context), event_dict)

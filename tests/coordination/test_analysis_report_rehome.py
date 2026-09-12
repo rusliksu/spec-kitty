@@ -227,7 +227,7 @@ def test_review_cycle_authored_lands_on_coord_ref_and_is_absent_on_primary(
         reviewer_agent="reviewer-renata",
     )
 
-    rel = str(created.artifact_path.relative_to(ctx.repo))
+    rel = created.artifact_path.relative_to(ctx.repo).as_posix()
     assert rel == f"kitty-specs/{ctx.slug}/tasks/WP01/review-cycle-1.md", rel
 
     # Commit through the REAL router, with the caller's CURRENT (unfixed, T015
