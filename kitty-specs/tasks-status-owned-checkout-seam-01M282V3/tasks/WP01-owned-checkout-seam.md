@@ -1,49 +1,52 @@
 ---
-work_package_id: "WP01"
-title: "Owned-checkout seam for state-recording commands"
-dependencies:
-  []
+work_package_id: WP01
+title: Owned-checkout seam for state-recording commands
+dependencies: []
 requirement_refs:
-  - FR-001
-  - FR-002
-  - FR-003
-  - FR-004
-  - FR-005
-  - NFR-002
-  - NFR-004
-  - C-001
-  - C-002
-  - C-003
-subtasks:
-  - T001
-  - T002
-  - T003
-  - T004
-  - T005
-  - T006
-owned_files:
-  - "src/specify_cli/cli/commands/agent/tasks_move_task.py"
-  - "src/specify_cli/cli/commands/agent/tasks_shared.py"
-  - "src/specify_cli/cli/commands/agent/status.py"
-  - "tests/tasks/test_move_task_owned_checkout_seam.py"
-  - "tests/status/test_status_owned_checkout_seam.py"
-  - "src/specify_cli/cli/commands/agent/tasks.py"
-  - "src/specify_cli/status/models.py"
-  - "src/specify_cli/status/aggregate.py"
-  - "src/specify_cli/coordination/status_transition.py"
-  - "src/specify_cli/missions/_read_path_resolver.py"
-  - "src/mission_runtime/resolution.py"
-  - "src/mission_runtime/write_target_degrade.py"
-  - "tests/specify_cli/cli/commands/agent/test_tasks_move_task_degod.py"
-  - "tests/specify_cli/cli/commands/agent/test_tasks_move_task_seam.py"
-  - "tests/specify_cli/cli/commands/agent/fixtures/tasks_cli/help/move-task.help"
-  - "tests/architectural/test_no_read_side_bypass.py"
-  - "tests/architectural/test_single_mission_surface_resolver.py"
-authoritative_surface: "src/specify_cli/cli/commands/agent/"
-execution_mode: "code_change"
+- C-001
+- C-002
+- C-003
+- FR-001
+- FR-002
+- FR-003
+- FR-004
+- FR-005
+- NFR-002
+- NFR-004
 planning_base_branch: codex/tasks-status-owned-checkout
 merge_target_branch: codex/tasks-status-owned-checkout
 branch_strategy: Planning artifacts for this mission were generated on codex/tasks-status-owned-checkout. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into codex/tasks-status-owned-checkout unless the human explicitly redirects the landing branch.
+subtasks:
+- T001
+- T002
+- T003
+- T004
+- T005
+- T006
+history: []
+authoritative_surface: src/specify_cli/cli/commands/agent/
+create_intent: []
+execution_mode: code_change
+owned_files:
+- src/specify_cli/cli/commands/agent/tasks_move_task.py
+- src/specify_cli/cli/commands/agent/tasks_shared.py
+- src/specify_cli/cli/commands/agent/status.py
+- tests/tasks/test_move_task_owned_checkout_seam.py
+- tests/status/test_status_owned_checkout_seam.py
+- src/specify_cli/cli/commands/agent/tasks.py
+- src/specify_cli/status/models.py
+- src/specify_cli/status/aggregate.py
+- src/specify_cli/coordination/status_transition.py
+- src/specify_cli/missions/_read_path_resolver.py
+- src/mission_runtime/resolution.py
+- src/mission_runtime/write_target_degrade.py
+- tests/specify_cli/cli/commands/agent/test_tasks_move_task_degod.py
+- tests/specify_cli/cli/commands/agent/test_tasks_move_task_seam.py
+- tests/specify_cli/cli/commands/agent/fixtures/tasks_cli/help/move-task.help
+- tests/architectural/test_no_read_side_bypass.py
+- tests/architectural/test_single_mission_surface_resolver.py
+tags: []
+tracker_refs: []
 ---
 
 # Work Package Prompt: WP01 – Owned-checkout seam for state-recording commands
