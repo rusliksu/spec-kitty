@@ -1240,8 +1240,9 @@ def map_requirements(
         typer.Option(
             "--owned-checkout",
             help=(
-                "Explicit checkout root owned by this invocation. Not honoured by this command "
-                "yet; declaring it refuses before anything is read or written (issue 26)."
+                "Explicit checkout root owned by this invocation. Use it to map requirements for "
+                "a mission that lives in a linked worktree; the path is validated against this "
+                "repository before anything is written."
             ),
             metavar="PATH",
         ),
@@ -1261,7 +1262,6 @@ def map_requirements(
     # (WP01 golden byte-identity) and delegates to ``_do_map_requirements``, which
     # runs the WP04 ``plan_mapping`` core and executes the write/commit through the
     # WP02 ports (``FsReader.primary_anchor_dir`` fold, ``commit_artifact``).
-    _refuse_owned_checkout(owned_checkout, json_output=json_output, command="map-requirements")
     _do_map_requirements(
         wp=wp,
         refs=refs,
@@ -1271,6 +1271,7 @@ def map_requirements(
         mission=mission,
         json_output=json_output,
         auto_commit=auto_commit,
+        owned_checkout=owned_checkout,
     )
 
 

@@ -107,6 +107,8 @@ class _MapReqState:
     repo_root: Path = field(default_factory=Path)
     mission_slug: str = ""
     main_repo_root: Path = field(default_factory=Path)
+    #: Issue 26: the declared owned checkout, when the caller named one.
+    owned_checkout: Path | None = None
     target_branch: str = ""
     auto_commit_on: bool = False
     commit_target: CommitTarget = field(default_factory=lambda: CommitTarget(ref=""))
@@ -168,10 +170,21 @@ def _mr_validate_modes(st: _MapReqState) -> None:
 def _mr_resolve_context(st: _MapReqState) -> None:
     """Phase B: repo/mission/target-branch resolution + the protected-branch gate."""
     from specify_cli.cli.commands.agent import tasks as _tasks
-    repo_root = _tasks.locate_project_root()
-    if repo_root is None:
-        _tasks._output_error(st.json_output, "Could not locate project root")
-        raise typer.Exit(1)
+    from specify_cli.cli.commands.agent.tasks_shared import (
+        resolve_repo_root_with_owned_checkout,
+    )
+
+    # Issue 26: a declared owned checkout is the root this write belongs to; the
+    # no-declaration arm keeps the historical locate + refusal byte-for-byte.
+    if st.owned_checkout is None:
+        repo_root = _tasks.locate_project_root()
+        if repo_root is None:
+            _tasks._output_error(st.json_output, "Could not locate project root")
+            raise typer.Exit(1)
+    else:
+        repo_root = resolve_repo_root_with_owned_checkout(
+            st.owned_checkout, json_output=st.json_output
+        )
     st.repo_root = repo_root
 
     # FR-010 / FR-019: one-shot sparse-checkout session warning.
@@ -180,9 +193,16 @@ def _mr_resolve_context(st: _MapReqState) -> None:
     st.mission_slug = _tasks._find_mission_slug(
         explicit_mission=st.mission, json_output=st.json_output, repo_root=repo_root
     )
-    st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
-        repo_root, st.mission_slug, st.json_output
-    )
+    # Only the declared arm passes the keyword, so the no-declaration call shape
+    # stays exactly what the C-001 seam-interception pin asserts.
+    if st.owned_checkout is None:
+        st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
+            repo_root, st.mission_slug, st.json_output
+        )
+    else:
+        st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
+            repo_root, st.mission_slug, st.json_output, owned_root=repo_root
+        )
     st.auto_commit_on = (
         _tasks.get_auto_commit_default(st.main_repo_root) if st.auto_commit is None else st.auto_commit
     )
@@ -285,7 +305,17 @@ def _mr_resolve_read_dirs(st: _MapReqState, ports: TasksPorts) -> None:
     )
 
     # #2064: resolve the WP ``tasks/`` dir through the SAME seam finalize uses.
-    st.feature_dir = _tasks._map_requirements_feature_dir(st.main_repo_root, st.mission_slug)
+    # Issue 26: the declared root is passed ONLY when one was declared, so the
+    # no-declaration arm keeps calling the two-positional-argument seam the
+    # pre30-guard-wiring / read-surface patches intercept.
+    if st.owned_checkout is None:
+        st.feature_dir = _tasks._map_requirements_feature_dir(
+            st.main_repo_root, st.mission_slug
+        )
+    else:
+        st.feature_dir = _tasks._map_requirements_feature_dir(
+            st.main_repo_root, st.mission_slug, effective_root=st.repo_root
+        )
     # Boundary guard — hard-reject pre-3.0 layout before any WP mutation.
     try:
         check_pre30_layout(st.feature_dir)
@@ -296,7 +326,11 @@ def _mr_resolve_read_dirs(st: _MapReqState, ports: TasksPorts) -> None:
     # FR-011 / T012: fold the handle to its canonical dir NAME first so a bare
     # mid8 / human slug resolves the durable ``<slug>-<mid8>`` home (ambiguous
     # handle RAISES — no silent pick, C-002). Routed through the port (T030).
-    handle = MissionHandle(repo_root=st.main_repo_root, mission_slug=st.mission_slug)
+    handle = MissionHandle(
+        repo_root=st.main_repo_root,
+        mission_slug=st.mission_slug,
+        effective_root=st.repo_root if st.owned_checkout is not None else None,
+    )
     st.primary_dir = ports.fs.primary_anchor_dir(handle)
 
     if not st.feature_dir.exists():
@@ -324,9 +358,11 @@ def _mr_resolve_read_dirs(st: _MapReqState, ports: TasksPorts) -> None:
     # through the kind-aware seam (the SAME single authority WP01 routed the rest
     # of the gate reads onto) instead of the topology-routed ``feature_dir``.
     st.tasks_dir = (
-        placement_seam(st.main_repo_root, st.mission_slug).read_dir(
-            MissionArtifactKind.WORK_PACKAGE_TASK
-        )
+        placement_seam(
+            st.main_repo_root,
+            st.mission_slug,
+            effective_root=st.repo_root if st.owned_checkout is not None else None,
+        ).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
         / "tasks"
     )
     _mr_unknown_wp_gate(st)
@@ -583,7 +619,11 @@ def _mr_auto_commit(st: _MapReqState, ports: TasksPorts) -> None:
         return
     spec_number = st.mission_slug.split("-")[0] if "-" in st.mission_slug else st.mission_slug
     commit_msg = f"chore: Map requirements for {', '.join(sorted(st.new_mappings))} on spec {spec_number}"
-    handle = MissionHandle(repo_root=st.main_repo_root, mission_slug=st.mission_slug)
+    handle = MissionHandle(
+        repo_root=st.main_repo_root,
+        mission_slug=st.mission_slug,
+        effective_root=st.repo_root if st.owned_checkout is not None else None,
+    )
     try:
         _router_result = ports.coord.commit_artifact(
             handle,
@@ -669,6 +709,7 @@ def _do_map_requirements(
     auto_commit: bool | None,
     *,
     ports: TasksPorts | None = None,
+    owned_checkout: Path | None = None,
 ) -> None:
     """Orchestrate ``map-requirements`` over the WP04 core + WP02 ports (C-005 seam).
 
@@ -689,6 +730,7 @@ def _do_map_requirements(
         mission=mission,
         json_output=json_output,
         auto_commit=auto_commit,
+        owned_checkout=owned_checkout,
     )
     try:
         _mr_validate_modes(st)
@@ -723,7 +765,9 @@ def _do_map_requirements(
 # ===========================================================================
 
 
-def _map_requirements_feature_dir(main_repo_root: Path, mission_slug: str) -> Path:
+def _map_requirements_feature_dir(
+    main_repo_root: Path, mission_slug: str, *, effective_root: Path | None = None
+) -> Path:
     """Resolve the WP ``tasks/`` read surface for ``map-requirements`` (#2064).
 
     Routes through ``PlacementSeam.read_dir(WORK_PACKAGE_TASK)`` — the
@@ -740,7 +784,7 @@ def _map_requirements_feature_dir(main_repo_root: Path, mission_slug: str) -> Pa
     # WP03 / FR-001 / C-001: tasks/ is WORK_PACKAGE_TASK (PRIMARY-partition).
     # The topology-blind primary_feature_dir_for_mission never raises, so the
     # caller's existence guard preserves the historical user-facing contract.
-    resolved: Path = placement_seam(main_repo_root, mission_slug).read_dir(
-        MissionArtifactKind.WORK_PACKAGE_TASK
-    )
+    resolved: Path = placement_seam(
+        main_repo_root, mission_slug, effective_root=effective_root
+    ).read_dir(MissionArtifactKind.WORK_PACKAGE_TASK)
     return resolved
