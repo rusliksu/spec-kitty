@@ -626,6 +626,8 @@ def resolve_status_surface(
     Raises FileNotFoundError when meta.json is absent.
     Raises ValueError when meta.json is malformed.
     """
+    if effective_root is None:
+        return resolve_status_surface_with_anchor(repo_root, mission_slug, topology).surface_path
     return resolve_status_surface_with_anchor(
         repo_root, mission_slug, topology, effective_root=effective_root
     ).surface_path

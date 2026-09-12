@@ -431,6 +431,23 @@ checkout для `finalize-tasks`, `map-requirements` и `research`; отказ �
 и снятие draft не являются доказательством успешной приёмки миссии. Её lifecycle не закрывается
 и не исправляется вручную; `kitty-ops/lifecycle.jsonl` остаётся побайтно равным `origin/main`.
 
+**D-19 — полный запуск выявил несовместимость формы вызова без флага.**
+В прогоне https://github.com/rusliksu/spec-kitty/actions/runs/34707152033 ранее пропускавшиеся
+шарды `integration-tests-core-misc` обнаружили четыре падения: три сценария в
+`tests/integration/test_migration_backfill.py` и
+`test_identity_consumes_canonical_surface_resolver` в
+`tests/specify_cli/coordination/test_status_facade_adoption_wp02.py`. Причина — передача
+`effective_root=None` в старые перехватчики без этого аргумента. Это реальная несовместимость
+вызовов без объявления checkout; локально получены те же 3+1 падения `TypeError`.
+
+Исправлены исходные вызовы в `_flip_phase`, `_canonical_primary_feature_dir` и
+`resolve_status_surface`: при `None` сохраняется прежняя позиционная форма; при объявленном
+checkout аргумент передаётся как раньше. Тесты-перехватчики не ослаблялись.
+Проверка шести затронутых файлов тестов, включая семь сценариев команд на настоящих
+worktree и девять сценариев выбора ветки, завершилась `41 passed`. Ruff и независимое
+ревью трёх исправлений прошли. Этот прогон также проверяет сохранение конечной стадии
+задачи после backfill и отказ записи при несовпадении места размещения.
+
 ## Sources
 
 `research/source-register.csv`, `research/evidence-log.csv`.

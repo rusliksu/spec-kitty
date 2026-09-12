@@ -623,9 +623,12 @@ def _canonical_primary_feature_dir(
     # discarded it, then re-invoked the primary resolver — a second composition
     # of the same path. Now both halves come from one resolution.
     try:
-        resolved = resolve_status_surface_with_anchor(
-            repo_root, mission_slug, effective_root=effective_root
-        )
+        if effective_root is None:
+            resolved = resolve_status_surface_with_anchor(repo_root, mission_slug)
+        else:
+            resolved = resolve_status_surface_with_anchor(
+                repo_root, mission_slug, effective_root=effective_root
+            )
     except FileNotFoundError:
         # No meta.json at the canonical location: degrade to the request dir so
         # ad-hoc fixtures and the create→first-write window keep working.

@@ -247,7 +247,10 @@ def _flip_phase(feature_dir: Path, *, effective_root: Path | None = None) -> Non
             disagrees with the write target (fail-closed, FR-001).
     """
     target = canonicalize_feature_dir(feature_dir)
-    resolved_home = _resolve_primary_home_or_degrade(feature_dir, effective_root=effective_root)
+    if effective_root is None:
+        resolved_home = _resolve_primary_home_or_degrade(feature_dir)
+    else:
+        resolved_home = _resolve_primary_home_or_degrade(feature_dir, effective_root=effective_root)
     if resolved_home is not None and resolved_home != target:
         raise PlacementMismatchError(
             f"_flip_phase refuses to write status_phase for {feature_dir.name!r}: "
