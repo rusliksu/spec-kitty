@@ -122,13 +122,35 @@ def research(
     planning_dir = placement_seam(
         repo_root, mission_slug, effective_root=effective_root
     ).read_dir(MissionArtifactKind.RESEARCH)
-    # WP02 DoD (issue 26): never create a mission directory in a checkout this
-    # invocation does not own. An undeclared run whose composed planning dir does
-    # not exist means the mission lives somewhere else (a linked worktree) - the
-    # D-7 hazard, which used to scaffold four files into the protected primary.
-    # A genuinely new mission in the caller OWN checkout still has its directory
-    # (mission create makes it), so this guard never blocks that path.
-    if effective_root is None and not planning_dir.exists():
+    # WP02 DoD (issue 26): never create a mission directory in a checkout OTHER
+    # than the caller own. The hazard (research.md D-7) IS the fold: the caller
+    # stands in a linked worktree, the seam composes the mission dir under the
+    # ambient primary, and the scaffold lands there. So the guard fires only when
+    # the fold actually moved the write to a different checkout AND that directory
+    # does not exist. The caller-primary case keeps its historical
+    # "compose kitty-specs/<raw> and scaffold" contract (F-001: an unresolvable
+    # slug IS the scaffold-new-mission path, pinned by
+    # tests/specify_cli/missions/test_handle_equivalence_matrix.py).
+    def _caller_in_linked_worktree() -> bool:
+        """True when the process stands in a LINKED worktree (`.git` is a file).
+
+        That is the precondition of the D-7 hazard: `find_repo_root()` folds such
+        a cwd to the ambient primary, so an undeclared scaffold lands in a
+        checkout the caller is not standing in. A normal clone (`.git` directory)
+        keeps the historical behaviour, including the `kitty-specs/<raw>`
+        compose for an unresolvable slug (F-001 contract).
+        """
+        for candidate in (Path.cwd().resolve(), *Path.cwd().resolve().parents):
+            git_entry = candidate / ".git"
+            if git_entry.exists():
+                return git_entry.is_file()
+        return False
+
+    if (
+        effective_root is None
+        and not planning_dir.exists()
+        and _caller_in_linked_worktree()
+    ):
         console.print(tracker.render())
         console.print()
         console.print(
