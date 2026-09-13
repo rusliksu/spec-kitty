@@ -195,7 +195,7 @@ def test_owned_move_task_review_cycle_is_durable_without_primary_writes(tmp_path
     assert approval["review_result"]["reviewer"] == "fixture-reviewer"
     assert approval["review_result"]["verdict"] == "approved"
     artifacts = list((mission_dir / "tasks").rglob("review-cycle-*.md"))
-    assert len(artifacts) == 1
+    assert [artifact.name for artifact in artifacts] == ["review-cycle-1.md"]
     evidence_ref = artifacts[0].relative_to(owned).as_posix()
     assert "test://independent-review" in _git(owned, "show", f"HEAD:{evidence_ref}")
     assert _file_bytes(primary) == before
