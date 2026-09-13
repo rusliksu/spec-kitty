@@ -1441,7 +1441,8 @@ def _plan_compatibility_repairs(
 
 
 def backfill_runtime_state(
-    feature_dir: Path, *, read_dir: Path | None = None, dry_run: bool = False
+    feature_dir: Path, *, read_dir: Path | None = None, dry_run: bool = False,
+    effective_root: Path | None = None,
 ) -> BackfillResult:
     """Idempotently seed one mission's frontmatter/checkbox runtime state as events.
 
@@ -1471,8 +1472,9 @@ def backfill_runtime_state(
     Returns:
         A :class:`BackfillResult` describing what happened.
     """
-    feature_dir = canonicalize_feature_dir(feature_dir)
-    read_dir = canonicalize_feature_dir(read_dir) if read_dir is not None else feature_dir
+    root_kwargs = {"effective_root": effective_root} if effective_root is not None else {}
+    feature_dir = canonicalize_feature_dir(feature_dir, **root_kwargs)
+    read_dir = canonicalize_feature_dir(read_dir, **root_kwargs) if read_dir is not None else feature_dir
     slug = feature_dir.name
 
     if not (read_dir / "tasks").is_dir():
@@ -2086,7 +2088,7 @@ def _has_snapshot_runtime(wp: dict[str, Any]) -> bool:
 
 
 def _invocation_write_refusal(
-    feature_dir: Path, intent: Intent
+    feature_dir: Path, intent: Intent, *, effective_root: Path | None = None
 ) -> FailClosedRefusal | None:
     """Return the fail-closed refusal when *feature_dir*'s invoking checkout does
     not own the redirected path a WRITE-guarding verify is about to read (#3049).
@@ -2122,7 +2124,9 @@ def _invocation_write_refusal(
     """
     if intent is not Intent.WRITE:
         return None
-    canonical = canonicalize_feature_dir(feature_dir)
+    canonical = canonicalize_feature_dir(
+        feature_dir, **({"effective_root": effective_root} if effective_root is not None else {})
+    )
     if canonical == feature_dir:
         return None
     identity = resolve_checkout_identity(feature_dir, Intent.WRITE)
@@ -2134,6 +2138,7 @@ def verify_backfill(
     *,
     read_dir: Path | None = None,
     intent: Intent = Intent.PRIMARY_READ,
+    effective_root: Path | None = None,
 ) -> VerifyResult:
     """Fail-closed proof that OLD-reader values survive in deterministic seeds.
 
@@ -2172,11 +2177,12 @@ def verify_backfill(
     Raises:
         MigrationOrderingError: if verify is run after ``strip_mutable_fields``.
     """
-    refusal = _invocation_write_refusal(feature_dir, intent)
+    root_kwargs = {"effective_root": effective_root} if effective_root is not None else {}
+    refusal = _invocation_write_refusal(feature_dir, intent, **root_kwargs)
     if refusal is not None:
         return VerifyResult(ok=False, wp_count=0, mismatches=(refusal.message(),))
-    feature_dir = canonicalize_feature_dir(feature_dir)
-    read_dir = canonicalize_feature_dir(read_dir) if read_dir is not None else feature_dir
+    feature_dir = canonicalize_feature_dir(feature_dir, **root_kwargs)
+    read_dir = canonicalize_feature_dir(read_dir, **root_kwargs) if read_dir is not None else feature_dir
     try:
         legacy = read_legacy_runtime(read_dir)
     except LegacyRuntimeReadError as exc:
