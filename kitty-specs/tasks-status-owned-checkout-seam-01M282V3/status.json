@@ -26,8 +26,19 @@
       "last_event_id": "01M28XRAVDX6FR8AS7RMJK8YRX",
       "last_transition_at": "2026-09-11T19:05:20.493666+00:00",
       "model": "__resolved_model_absent__",
+      "notes": [
+        "Реализация проверена: 188 тестов прошли; две контрольные подмены обнаружены; независимое ревью 44e07eb6 не нашло дефектов. Внешний CI ещё не выполнен."
+      ],
       "provider": "__resolved_provider_absent__",
-      "role": "implementer"
+      "role": "implementer",
+      "subtasks": {
+        "T001": "done",
+        "T002": "done",
+        "T003": "done",
+        "T004": "done",
+        "T005": "done",
+        "T006": "done"
+      }
     },
     "WP02": {
       "actor": "codex",
