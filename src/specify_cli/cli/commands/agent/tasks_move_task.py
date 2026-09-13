@@ -2741,7 +2741,7 @@ def _mt_emit_runtime_state(st: _MoveTaskState, ports: TasksPorts) -> None:
         actor=st.final_hop_actor or st.actor,
         mission_slug=st.mission_slug,
         repo_root=st.main_repo_root,
-        **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
+        **effective_root_options(st.repo_root if getattr(st, "owned_checkout", None) is not None else None),
     )
 
 

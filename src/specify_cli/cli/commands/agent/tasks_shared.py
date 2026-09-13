@@ -123,9 +123,10 @@ def _review_currency_check_branch(
     from specify_cli.cli.commands.agent import tasks as _tasks
 
     context = getattr(workspace, "context", None)
-    implementation_base = getattr(workspace, "implementation_base_commit", None)
-    if implementation_base:
-        return str(implementation_base)
+    if effective_root is not None:
+        implementation_base = getattr(workspace, "implementation_base_commit", None)
+        if isinstance(implementation_base, str) and implementation_base:
+            return implementation_base
     base_branch = getattr(context, "base_branch", None)
     if base_branch:
         return str(base_branch)
