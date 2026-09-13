@@ -158,3 +158,27 @@ CLI сообщил `local_only/no_auto_commit`; созданный им доку
 Диагностика приёмки после одобрения первой задачи: только WP02 ещё в работе;
 metadata issues, missing required artifacts, git dirty и path violations отсутствуют.
 Фактический результат приёмки будет записан после второй задачи.
+
+## Фактическая приёмка
+
+13 сентября 2026 года обычный `accept --mission <slug> --owned-checkout
+<task-checkout> --actor codex --json` выполнен с исходниками PR #28
+(`0681de39d56a6c4f7a9e37b56f703f1b38a7937f`) через локальный PYTHONPATH.
+Глобальная установка не менялась. Команда вернула **exit=0, ok=true**,
+обе задачи в `accepted_wps` и `approved_wps`; failed_checks, skipped_checks,
+blocked_checks, metadata_issues, activity_issues и path_violations пусты.
+Необязательный quickstart.md отсутствует — это предупреждение, не пропуск проверки.
+
+Acceptance commit: `e474e0d7ca3ee8e74e1e787275ceb2c930f2fba5`;
+штатный следующий commit сохранил ссылку на него в метаданных. Ссылка проверена
+чтением meta.json непосредственно из HEAD. Родитель принятой версии:
+`162be961e7e872c62498447955fd26fcd79760c5`.
+Результат команды сохранён локально в `out/actual-owned-acceptance.json`.
+Оба созданных CLI документа независимого ревью сохранены и прочитаны из Git;
+обе задачи имеют `force_count=0`. Старое отклонение первой задачи остаётся в истории.
+
+Основная копия до и после приёмки чистая, HEAD
+`78c1e9ab1f6d110398e449c2cc156d981dbc68c4`; journal blob
+`b0c8620e5b611c7ff53f6014a31a27328d7c7509` неизменён.
+Принятие не является merge: обе задачи остаются approved/merge_pending,
+PR #27 и PR #28 не объединены, релиза, deploy и глобального обновления не было.
