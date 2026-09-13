@@ -7,6 +7,8 @@ bookkeeping commit succeeds.
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 from specify_cli.core.constants import KITTY_SPECS_DIR
 import logging
 import subprocess
@@ -880,7 +882,10 @@ def _prepare_event(
         # coord-topology mission) without ever attempting recovery.
         from specify_cli.missions._read_path_resolver import resolve_subtasks_gate_dir  # noqa: PLC0415
 
-        subtasks_dir = resolve_subtasks_gate_dir(feature_dir, request.repo_root, mission_slug)
+        subtasks_dir = resolve_subtasks_gate_dir(
+            feature_dir, request.repo_root, mission_slug,
+            **(effective_root_options(request.effective_root)),
+        )
         subtasks_complete = _emit._infer_subtasks_complete(
             subtasks_dir,
             request.wp_id,
@@ -1188,6 +1193,7 @@ def read_events_transactional(
     feature_dir: Path,
     mission_slug: str,
     repo_root: Path | None = None,
+    effective_root: Path | None = None,
 ) -> list[StatusEvent]:
     """Read status events from the same target transactional writes use."""
     identity = _identity_for_request(
@@ -1198,6 +1204,7 @@ def read_events_transactional(
             to_lane=Lane.PLANNED,
             actor="status-read",
             repo_root=repo_root,
+            effective_root=effective_root,
         )
     )
     return _read_events_from_transaction_target(identity, mission_slug)
@@ -1208,6 +1215,7 @@ def read_event_stream_transactional(
     feature_dir: Path,
     mission_slug: str,
     repo_root: Path | None = None,
+    effective_root: Path | None = None,
 ) -> EventStream:
     """Read the complete event stream from the transactional write target."""
     identity = _identity_for_request(
@@ -1218,6 +1226,7 @@ def read_event_stream_transactional(
             to_lane=Lane.PLANNED,
             actor="status-read",
             repo_root=repo_root,
+            effective_root=effective_root,
         )
     )
     return _read_event_stream_from_transaction_target(identity, mission_slug)
@@ -1465,6 +1474,7 @@ def emit_inner_state_changed_transactional(
     repo_root: Path | None = None,
     operation: str | None = None,
     capability: GuardCapability = GuardCapability.STANDARD,
+    effective_root: Path | None = None,
 ) -> InnerStateChanged:
     """Persist AND commit one off-axis ``InnerStateChanged`` annotation (FR-007).
 
@@ -1513,6 +1523,7 @@ def emit_inner_state_changed_transactional(
         actor=actor,
         repo_root=repo_root,
     )
+    request = replace(request, effective_root=effective_root)
     identity = _identity_for_request(request)
 
     def _uncommitted_emit() -> InnerStateChanged:
@@ -1524,6 +1535,7 @@ def emit_inner_state_changed_transactional(
             mission_slug=mission_slug,
             at=at,
             repo_root=repo_root,
+            **(effective_root_options(effective_root)),
         )
 
     if (

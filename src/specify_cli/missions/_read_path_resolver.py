@@ -24,6 +24,8 @@ Spec source: FR-030, SC-02.
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 from specify_cli.core.constants import KITTY_SPECS_DIR
 from specify_cli.core.paths import WorkspaceRootNotFound, resolve_canonical_root
 from collections.abc import Mapping
@@ -1505,7 +1507,7 @@ def resolve_planning_read_dir(
     )
 
 
-def resolve_subtasks_gate_dir(feature_dir: Path, repo_root: Path | None, mission_slug: str) -> Path:
+def resolve_subtasks_gate_dir(feature_dir: Path, repo_root: Path | None, mission_slug: str, *, effective_root: Path | None = None) -> Path:
     """Resolve the PRIMARY mission dir the subtask-completeness gate reads ``tasks.md`` from.
 
     The single canonical seam (closes #2574) for the "resolve PRIMARY
@@ -1533,7 +1535,7 @@ def resolve_subtasks_gate_dir(feature_dir: Path, repo_root: Path | None, mission
        ``tmp_path`` fixture with no git ancestry), ``feature_dir`` is returned
        unchanged, preserving pre-existing non-repo test behavior.
     """
-    primary_root = repo_root
+    primary_root = effective_root or repo_root
     if primary_root is None:
         try:
             primary_root = resolve_canonical_root(feature_dir)
@@ -1544,7 +1546,8 @@ def resolve_subtasks_gate_dir(feature_dir: Path, repo_root: Path | None, mission
     # follow_imports=skip boundary crossed here) — a cast was redundant
     # (#2675 WP07 T062).
     return resolve_planning_read_dir(
-        primary_root, mission_slug, kind=MissionArtifactKind.TASKS_INDEX
+        primary_root, mission_slug, kind=MissionArtifactKind.TASKS_INDEX,
+        **(effective_root_options(effective_root)),
     )
 
 
@@ -1651,6 +1654,7 @@ def resolve_feature_dir_for_mission(
     *,
     cwd: Path | None = None,
     env: Mapping[str, str] | None = None,
+    effective_root: Path | None = None,
 ) -> Path:
     """Resolve a mission directory through ``resolve_action_context``.
 
@@ -1666,6 +1670,7 @@ def resolve_feature_dir_for_mission(
         feature=mission_slug,
         cwd=cwd,
         env=env,
+        **(effective_root_options(effective_root)),
     )
     return Path(context.feature_dir)
 

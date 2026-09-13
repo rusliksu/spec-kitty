@@ -1,28 +1,34 @@
 ---
-work_package_id: "WP02"
-title: "Planning-side honour-or-refuse and evidence closure"
+work_package_id: WP02
+title: Планирование и проверка результата
 dependencies:
-  - WP01
+- WP01
 requirement_refs:
-  - FR-006
-  - NFR-001
-  - NFR-003
-  - C-004
-subtasks:
-  - T007
-  - T008
-  - T009
-  - T010
-owned_files:
-  - "src/specify_cli/cli/commands/agent/tasks.py"
-  - "src/specify_cli/cli/commands/agent/mission_finalize.py"
-  - "src/specify_cli/cli/commands/research.py"
-  - "kitty-specs/tasks-status-owned-checkout-seam-01M282V3/traces/**"
-authoritative_surface: "src/specify_cli/cli/commands/"
-execution_mode: "planning_artifact"
+- FR-006
+- NFR-001
+- NFR-003
+- C-004
 planning_base_branch: codex/tasks-status-owned-checkout
 merge_target_branch: codex/tasks-status-owned-checkout
 branch_strategy: Planning artifacts for this mission were generated on codex/tasks-status-owned-checkout. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into codex/tasks-status-owned-checkout unless the human explicitly redirects the landing branch.
+subtasks:
+- T007
+- T008
+- T009
+- T010
+authoritative_surface: src/specify_cli/cli/commands/
+execution_mode: code_change
+owned_files:
+- src/specify_cli/cli/commands/agent/tasks.py
+- src/specify_cli/cli/commands/agent/mission_finalize.py
+- src/specify_cli/cli/commands/research.py
+- kitty-specs/tasks-status-owned-checkout-seam-01M282V3/traces/**
+- src/specify_cli/cli/commands/agent/tasks_finalize.py
+- src/specify_cli/cli/commands/agent/tasks_map_requirements.py
+- src/specify_cli/migration/runtime_state_cutover.py
+- src/specify_cli/status/bootstrap.py
+- tests/tasks/test_finalize_owned_checkout_seam.py
+- kitty-specs/tasks-status-owned-checkout-seam-01M282V3/contracts/**
 ---
 
 # Work Package Prompt: WP02 – Planning-side honour-or-refuse and evidence closure

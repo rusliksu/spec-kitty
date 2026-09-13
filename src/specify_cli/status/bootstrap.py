@@ -11,6 +11,8 @@ not reimplement event emission or validation.
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -91,6 +93,7 @@ def bootstrap_canonical_state(
     *,
     dry_run: bool = False,
     capability: GuardCapability = GuardCapability.STANDARD,
+    effective_root: Path | None = None,
 ) -> BootstrapResult:
     """Ensure every WP in a feature has canonical status state.
 
@@ -144,6 +147,7 @@ def bootstrap_canonical_state(
     existing_events = read_events_transactional(
         feature_dir=feature_dir,
         mission_slug=mission_slug,
+        **(effective_root_options(effective_root)),
     )
     initialized_wp_ids: set[str] = {e.wp_id for e in existing_events}
 
@@ -168,6 +172,7 @@ def bootstrap_canonical_state(
                 to_lane="planned",
                 actor="finalize-tasks",
                 reason="canonical bootstrap",
+                effective_root=effective_root,
             ),
             capability=capability,
         )

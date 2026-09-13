@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -127,9 +128,7 @@ def _init_owned_mission(tmp_path: Path) -> tuple[Path, Path, Path]:
     primary = tmp_path / "primary"
     owned = tmp_path / "owned-checkout"
     (primary / ".kittify").mkdir(parents=True)
-    (primary / ".kittify" / "config.yaml").write_text(
-        "mission_type_activations:\n  - software-dev\n", encoding="utf-8"
-    )
+    (primary / ".kittify" / "config.yaml").write_text("mission_type_activations:\n  - software-dev\n", encoding="utf-8")
     (primary / "kitty-specs").mkdir()
     (primary / "kitty-specs" / ".gitkeep").touch()
 
@@ -143,14 +142,10 @@ def _init_owned_mission(tmp_path: Path) -> tuple[Path, Path, Path]:
 
     mission_dir = owned / "kitty-specs" / MISSION_SLUG
     (mission_dir / "tasks").mkdir(parents=True)
-    (mission_dir / "meta.json").write_text(
-        json.dumps(_META, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    (mission_dir / "meta.json").write_text(json.dumps(_META, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     (mission_dir / "tasks.md").write_text(_TASKS_MD, encoding="utf-8")
     (mission_dir / "tasks" / "WP01-owned-seam.md").write_text(_WP01, encoding="utf-8")
-    (mission_dir / "status.events.jsonl").write_text(
-        json.dumps(_GENESIS_EVENT, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    (mission_dir / "status.events.jsonl").write_text(json.dumps(_GENESIS_EVENT, sort_keys=True) + "\n", encoding="utf-8")
     _git(owned, "add", ".")
     _git(owned, "commit", "-m", "Add owned mission")
     return primary, owned, mission_dir
@@ -168,9 +163,146 @@ def _invoke(args: list[str]) -> Any:
     return runner.invoke(status_app, args)
 
 
-def test_status_emit_records_the_event_in_the_owned_checkout(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def _file_bytes(root: Path) -> dict[str, bytes]:
+    return {p.relative_to(root).as_posix(): p.read_bytes() for p in root.rglob("*") if p.is_file() and ".git" not in p.relative_to(root).parts}
+
+
+def _enter_review(owned: Path) -> None:
+    from specify_cli.status import Lane, WPInnerStateDelta, emit_inner_state_changed
+
+    for lane, actor, extra in (
+        ("claimed", "fixture-implementer", []),
+        ("in_progress", "fixture-implementer", ["--workspace-context", str(owned)]),
+        ("for_review", "fixture-implementer", ["--subtasks-complete", "--implementation-evidence-present"]),
+        ("in_review", "fixture-reviewer", []),
+    ):
+        if lane == "for_review":
+            emit_inner_state_changed(
+                owned / "kitty-specs" / MISSION_SLUG,
+                "WP01",
+                WPInnerStateDelta(subtasks={"T001": Lane.DONE}),
+                actor="fixture-implementer",
+                mission_slug=MISSION_SLUG,
+                repo_root=owned,
+                effective_root=owned,
+            )
+        result = _invoke(["emit", "WP01", "--to", lane, "--actor", actor, "--mission", MISSION_SLUG, "--owned-checkout", str(owned), "--json", *extra])
+        assert result.exit_code == 0, result.output
+
+
+@pytest.mark.parametrize("command", ["emit", "list-tasks"])
+def test_owned_mission_divergence_is_reported(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, command: str) -> None:
+    from specify_cli.cli.commands.agent.tasks import app as tasks_app
+
+    primary, owned, mission_dir = _init_owned_mission(tmp_path)
+    copy = primary / "kitty-specs" / MISSION_SLUG
+    shutil.copytree(mission_dir, copy)
+    (copy / "tasks.md").write_text("Different primary task index\n", encoding="utf-8")
+    before = _file_bytes(primary)
+    monkeypatch.chdir(primary)
+    args = [command, "--mission", MISSION_SLUG, "--owned-checkout", str(owned), "--json"]
+    if command == "emit":
+        args += ["WP01", "--to", "claimed", "--actor", "codex"]
+    result = runner.invoke(status_app if command == "emit" else tasks_app, args)
+    assert result.exit_code == 0, result.output
+    assert "owned_mission_divergence" in result.stderr
+    json.loads(result.stdout)  # The diagnostic must not corrupt the JSON envelope.
+    assert _file_bytes(primary) == before
+
+
+def test_incomplete_owned_subtasks_refuse_review_even_with_completion_flag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    primary, owned, mission_dir = _init_owned_mission(tmp_path)
+    monkeypatch.chdir(primary)
+    common = ["WP01", "--actor", "fixture-implementer", "--mission", MISSION_SLUG, "--owned-checkout", str(owned), "--json"]
+    for lane in ("claimed", "in_progress"):
+        result = _invoke(["emit", "--to", lane, "--workspace-context", str(owned), *common])
+        assert result.exit_code == 0, result.output
+    before = {root: _file_bytes(root) for root in (primary, owned)}
+    result = _invoke(["emit", "--to", "for_review", "--subtasks-complete", "--implementation-evidence-present", *common])
+    assert result.exit_code == 1, result.output
+    assert "requires completed subtasks" in result.output
+    assert _lanes(mission_dir)[-1] == "in_progress"
+    for root, expected in before.items():
+        assert _file_bytes(root) == expected
+
+
+@pytest.mark.parametrize("command", ["validate", "lifecycle"])
+@pytest.mark.parametrize("declaration", ["owned", "absent", "foreign"])
+def test_status_read_commands_honour_explicit_ownership_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, command: str, declaration: str) -> None:
+    from specify_cli.status.reducer import materialize
+
+    primary, owned, mission_dir = _init_owned_mission(tmp_path)
+    materialize(mission_dir)
+    foreign = tmp_path / "foreign"
+    foreign.mkdir()
+    _git(foreign, "init")
+    monkeypatch.chdir(owned if declaration == "absent" else primary)
+    before = {root: _file_bytes(root) for root in (primary, owned, foreign)}
+    primary_head, primary_index = _head(primary), _git(primary, "ls-files", "--stage")
+    args = [command, "--mission", MISSION_SLUG, "--json"]
+    if declaration != "absent":
+        args += ["--owned-checkout", str(owned if declaration == "owned" else foreign)]
+    result = _invoke(args)
+    if declaration == "owned":
+        assert result.exit_code == 0, result.output
+        payload = json.loads(result.output)
+        assert payload["mission_slug"] == MISSION_SLUG
+        if command == "lifecycle":
+            assert payload["total_wps"] == 1
+        else:
+            assert payload["passed"] is True
+    else:
+        assert result.exit_code != 0
+    for root, expected in before.items():
+        assert _file_bytes(root) == expected
+    assert _head(primary) == primary_head
+    assert _git(primary, "ls-files", "--stage") == primary_index
+
+
+@pytest.mark.parametrize("valid", [True, False])
+def test_owned_review_verdict_is_recorded_or_refused_without_foreign_writes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, valid: bool) -> None:
+    """Catch lost review payloads and invalid verdicts that still mutate status."""
+    primary, owned, mission_dir = _init_owned_mission(tmp_path)
+    monkeypatch.chdir(primary)
+    primary_before, primary_head = _file_bytes(primary), _head(primary)
+    _enter_review(owned)
+    owned_before = _file_bytes(owned)
+    verdict = {"reviewer": "fixture-reviewer", "verdict": "approved", "reference": "test://independent-review"}
+    if not valid:
+        verdict.pop("reviewer")
+    result = _invoke(
+        [
+            "emit",
+            "WP01",
+            "--to",
+            "approved",
+            "--actor",
+            "fixture-reviewer",
+            "--mission",
+            MISSION_SLUG,
+            "--owned-checkout",
+            str(owned),
+            "--review-result-json",
+            json.dumps(verdict),
+            "--json",
+        ]
+    )
+    assert result.exit_code == (0 if valid else 1), result.output
+    assert _file_bytes(primary) == primary_before
+    assert _head(primary) == primary_head
+    if valid:
+        events = [json.loads(line) for line in (mission_dir / "status.events.jsonl").read_text(encoding="utf-8").splitlines()]
+        approval = next(event for event in reversed(events) if event.get("to_lane") == "approved")
+        assert approval["review_result"] == verdict
+        snapshot = json.loads((mission_dir / "status.json").read_text(encoding="utf-8"))
+        assert snapshot["work_packages"]["WP01"]["lane"] == "approved"
+    else:
+        assert "reviewer" in json.loads(result.output)["error"].lower()
+        assert _file_bytes(owned) == owned_before
+        assert _lanes(mission_dir)[-1] == "in_review"
+
+
+def test_status_emit_records_the_event_in_the_owned_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """A declared owned checkout owns the write, and reports that path back."""
     primary, owned, mission_dir = _init_owned_mission(tmp_path)
     primary_head, primary_status = _head(primary), _porcelain(primary)
@@ -207,9 +339,7 @@ def test_status_emit_records_the_event_in_the_owned_checkout(
     assert not (primary / "kitty-specs" / MISSION_SLUG).exists()
 
 
-def test_status_emit_without_declaration_still_fails_closed(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_status_emit_without_declaration_still_fails_closed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """No declaration, no owned routing: refusal, and nothing appended."""
     primary, _owned, mission_dir = _init_owned_mission(tmp_path)
     primary_head, primary_status = _head(primary), _porcelain(primary)
@@ -235,9 +365,7 @@ def test_status_emit_without_declaration_still_fails_closed(
     assert _porcelain(primary) == primary_status
 
 
-def test_status_emit_refuses_a_checkout_that_is_not_owned(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_status_emit_refuses_a_checkout_that_is_not_owned(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """A foreign directory is refused through the shared typed refusal."""
     primary, _owned, mission_dir = _init_owned_mission(tmp_path)
     foreign = tmp_path / "foreign-checkout"

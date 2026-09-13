@@ -22,13 +22,15 @@ without re-importing the god-module.
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import logging
 import subprocess
 from collections.abc import Callable
 from kernel.clock import UTC, datetime, now_utc, parse_iso
 from kernel._safe_re import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, TypedDict
 
 if TYPE_CHECKING:
     from specify_cli.cli.commands.review._issue_matrix import (
@@ -53,6 +55,10 @@ from specify_cli.status import (
 from specify_cli.status import is_dossier_snapshot as _is_dossier_snapshot
 
 logger = logging.getLogger(__name__)
+
+
+class ReviewWorkspaceOptions(TypedDict, total=False):
+    resolved_workspace: ResolvedWorkspace
 
 # Mirror of the constant defined in ``tasks``. Hoisted as a module-local
 # constant so this seam has no back-import to the god-module.
@@ -845,12 +851,14 @@ def _validate_worktree_state(
     mission_slug: str,
     wp_id: str,
     target_lane: str,
-    resolve_workspace_for_wp: Callable[[Path, str, str], ResolvedWorkspace],
-    get_feature_target_branch: Callable[[Path, str], str],
+    resolve_workspace_for_wp: Callable[..., ResolvedWorkspace],
+    get_feature_target_branch: Callable[..., str],
     review_currency_check_branch: Callable[..., str],
     behind_commits_touch_only_planning_artifacts: Callable[[Path, str, str], bool],
     filter_runtime_state_paths: Callable[[str], str],
     list_wp_branch_specs_changes_for_guard: Callable[..., list[str]],
+    effective_root: Path | None = None,
+    resolved_workspace: ResolvedWorkspace | None = None,
 ) -> tuple[bool, list[str]] | None:
     """Check 2 (software-dev): worktree currency + commit gates.
 
@@ -864,10 +872,13 @@ def _validate_worktree_state(
     # canonical resolver succeeds; if the WP has no on-disk markdown file (e.g.
     # in tests that mock surrounding state), fall through to the legacy
     # worktree-existence checks below rather than hard-failing.
+    root_kwargs = effective_root_options(effective_root)
     workspace: ResolvedWorkspace | None
     try:
-        workspace = resolve_workspace_for_wp(main_repo_root, mission_slug, wp_id)
-    except (ValueError, FileNotFoundError):
+        workspace = resolved_workspace or resolve_workspace_for_wp(main_repo_root, mission_slug, wp_id, **root_kwargs)
+    except (ValueError, FileNotFoundError) as exc:
+        if effective_root is not None:
+            return False, [f"Cannot resolve the declared review workspace: {exc}"]
         workspace = None
 
     if workspace is not None and workspace.resolution_kind == "repo_root":
@@ -880,6 +891,8 @@ def _validate_worktree_state(
     )
 
     if not worktree_path.exists():
+        if effective_root is not None:
+            return False, [f"The declared review workspace is missing: {worktree_path}"]
         return None
 
     health = _check_worktree_health(worktree_path, wp_id, target_lane)
@@ -888,13 +901,14 @@ def _validate_worktree_state(
 
     # Check if the lane worktree is behind the branch it is expected to
     # track. In the lane-only model this is usually the mission branch.
-    target_branch = get_feature_target_branch(repo_root, mission_slug)
+    target_branch = get_feature_target_branch(repo_root, mission_slug, **root_kwargs)
 
     check_branch = review_currency_check_branch(
         main_repo_root=main_repo_root,
         mission_slug=mission_slug,
         target_branch=target_branch,
         workspace=workspace,
+        **root_kwargs,
     )
 
     currency = _check_branch_currency(
@@ -916,6 +930,17 @@ def _validate_worktree_state(
     )
     if uncommitted is not None:
         return False, uncommitted
+
+    if workspace is not None and workspace.resolution_kind == "single_branch_workspace":
+        from specify_cli.workspace.context import get_normalized_wp
+        from specify_cli.workspace.owned import has_owned_implementation_changes, verify_review_head
+
+        assert workspace.implementation_base_commit and workspace.implementation_head_commit and workspace.branch_name
+        owned_files = list(get_normalized_wp(main_repo_root, mission_slug, wp_id, **root_kwargs).metadata.owned_files)
+        if not has_owned_implementation_changes(worktree_path, workspace.implementation_base_commit, workspace.implementation_head_commit, owned_files):
+            return False, [f"No committed implementation changes in {wp_id}'s owned_files after the verified primary upstream base."]
+        verify_review_head(worktree_path, workspace.branch_name, workspace.implementation_head_commit)
+        return None  # single_branch planning artifacts legitimately share this checkout
 
     no_commit = _check_implementation_commit_present(
         worktree_path=worktree_path,
@@ -949,13 +974,15 @@ def _validate_ready_for_review(
     *,
     get_main_repo_root: Callable[[Path], Path],
     get_mission_type: Callable[[Path], str],
-    get_feature_target_branch: Callable[[Path, str], str],
-    resolve_workspace_for_wp: Callable[[Path, str, str], ResolvedWorkspace],
+    get_feature_target_branch: Callable[..., str],
+    resolve_workspace_for_wp: Callable[..., ResolvedWorkspace],
     review_currency_check_branch: Callable[..., str],
     behind_commits_touch_only_planning_artifacts: Callable[[Path, str, str], bool],
     filter_runtime_state_paths: Callable[[str], str],
     list_wp_branch_specs_changes_for_guard: Callable[..., list[str]],
     console: _ConsoleLike,
+    effective_root: Path | None = None,
+    resolved_workspace: ResolvedWorkspace | None = None,
 ) -> tuple[bool, list[str]]:
     """Validate that WP is ready for review by checking for uncommitted changes.
 
@@ -987,7 +1014,8 @@ def _validate_ready_for_review(
 
     # Write path: keep main-repo-root resolution so canonical serialization
     # pins to the primary checkout regardless of where the operator stands.
-    main_repo_root = get_main_repo_root(repo_root)
+    main_repo_root = effective_root or get_main_repo_root(repo_root)
+    root_kwargs = effective_root_options(effective_root)
     # WP06 / FR-006 / T027: route research-artifact read to PRIMARY-partition seam.
     # research.md / meta.json / spec.md all live on PRIMARY (not the coord husk).
     # resolve_feature_dir_for_mission (coord-aware) would return the STATUS-only
@@ -997,7 +1025,7 @@ def _validate_ready_for_review(
         placement_seam,
     )
 
-    feature_dir = placement_seam(main_repo_root, mission_slug).read_dir(
+    feature_dir = placement_seam(main_repo_root, mission_slug, **root_kwargs).read_dir(
         MissionArtifactKind.RESEARCH
     )
 
@@ -1020,6 +1048,7 @@ def _validate_ready_for_review(
 
     # Check 2: For software-dev missions, check worktree for implementation commits
     if mission_type == MISSION_TYPE_SOFTWARE_DEV:
+        workspace_options: ReviewWorkspaceOptions = {"resolved_workspace": resolved_workspace} if resolved_workspace is not None else {}
         worktree_result = _validate_worktree_state(
             repo_root=repo_root,
             main_repo_root=main_repo_root,
@@ -1033,6 +1062,8 @@ def _validate_ready_for_review(
             behind_commits_touch_only_planning_artifacts=behind_commits_touch_only_planning_artifacts,
             filter_runtime_state_paths=filter_runtime_state_paths,
             list_wp_branch_specs_changes_for_guard=list_wp_branch_specs_changes_for_guard,
+            **root_kwargs,
+            **workspace_options,
         )
         if worktree_result is not None:
             return worktree_result

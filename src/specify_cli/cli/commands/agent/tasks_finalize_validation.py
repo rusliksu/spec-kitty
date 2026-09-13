@@ -20,6 +20,8 @@ import from ``tasks_outline``.
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 from dataclasses import dataclass, field
 from pathlib import Path
 import re
@@ -97,6 +99,7 @@ def _read_transactional_wp_lane(
     mission_slug: str,
     wp_id: str,
     repo_root: Path,
+    effective_root: Path | None = None,
 ) -> Lane:
     """Read the WP lane from the same status target transactional writes use."""
     return _wp_lane_from_status_events(
@@ -104,6 +107,7 @@ def _read_transactional_wp_lane(
             feature_dir=feature_dir,
             mission_slug=mission_slug,
             repo_root=repo_root,
+            **(effective_root_options(effective_root)),
         ),
         wp_id,
     )

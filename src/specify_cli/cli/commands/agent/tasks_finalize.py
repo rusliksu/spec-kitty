@@ -43,6 +43,8 @@ the parity contract).
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import contextlib
 import traceback
 from dataclasses import dataclass, field
@@ -147,7 +149,8 @@ def _ft_resolve_context(st: _FinalizeState, ports: TasksPorts) -> None:
         explicit_mission=st.mission, json_output=st.json_output, repo_root=repo_root
     )
     st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
-        repo_root, st.mission_slug, st.json_output
+        repo_root, st.mission_slug, st.json_output,
+        **({"owned_root": repo_root} if st.owned_checkout is not None else {}),
     )
     handle = MissionHandle(
         repo_root=st.main_repo_root,
@@ -285,11 +288,12 @@ def _ft_apply_writes(st: _FinalizeState) -> None:
     # ``_tasks.resolve_feature_dir_for_mission`` — the kind-blind resolver's
     # module re-export was retired in the same WP; ``STATUS_STATE`` resolves
     # the SAME coord-aware dir the kind-blind resolver produced for this read).
-    st.feature_dir = placement_seam(st.main_repo_root, st.mission_slug).read_dir(
+    root_kwargs = effective_root_options(st.repo_root if st.owned_checkout is not None else None)
+    st.feature_dir = placement_seam(st.main_repo_root, st.mission_slug, **root_kwargs).read_dir(
         MissionArtifactKind.STATUS_STATE
     )
     st.bootstrap_result = _tasks.bootstrap_canonical_state(
-        st.feature_dir, st.mission_slug, dry_run=st.validate_only
+        st.feature_dir, st.mission_slug, dry_run=st.validate_only, **root_kwargs
     )
 
 

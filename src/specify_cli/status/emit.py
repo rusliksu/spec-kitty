@@ -40,6 +40,8 @@ Pipeline order (critical -- do not reorder):
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import logging
 import re
 from dataclasses import dataclass
@@ -573,6 +575,7 @@ def emit_status_transition(  # NOSONAR — central orchestration hub; 15 of 20 p
         specify_cli.status.store.StoreError: If the event log is corrupted.
     """
     current_actor = None
+    effective_root: Path | None = None
     annotation_delta: WPInnerStateDelta | None = None
     if isinstance(feature_dir, TransitionRequest):
         request = feature_dir
@@ -619,6 +622,7 @@ def emit_status_transition(  # NOSONAR — central orchestration hub; 15 of 20 p
         current_actor = request.current_actor
         execution_mode = request.execution_mode
         repo_root = request.repo_root
+        effective_root = request.effective_root
         policy_metadata = request.policy_metadata
         review_result = request.review_result
         annotation_delta = request.annotation_delta
@@ -633,7 +637,8 @@ def emit_status_transition(  # NOSONAR — central orchestration hub; 15 of 20 p
     # resolver. When the caller hands us a worktree-rooted path, this
     # rewrites it to the main repo's kitty-specs/<slug>/ so the event log
     # never lands in a stale worktree-local copy.
-    canonical_feature_dir: Path = canonicalize_feature_dir(feature_dir)
+    root_kwargs = effective_root_options(effective_root)
+    canonical_feature_dir: Path = canonicalize_feature_dir(feature_dir, **root_kwargs)
 
     lock_root = _feature_status_lock_root(canonical_feature_dir, repo_root)
     with feature_status_lock(lock_root, mission_slug):
@@ -663,6 +668,7 @@ def emit_status_transition(  # NOSONAR — central orchestration hub; 15 of 20 p
                 canonical_feature_dir,
                 repo_root,
                 mission_slug,
+                **root_kwargs,
             )
             subtasks_complete = _infer_subtasks_complete(
                 primary_subtasks_dir,
@@ -841,7 +847,8 @@ def emit_status_transition_batch(  # noqa: C901 — composite transition orchest
     if feature_dir is None or mission_slug is None or wp_id is None:
         raise TypeError("emit_status_transition_batch requires feature_dir/mission_dir, mission_slug, and wp_id")
 
-    feature_dir = canonicalize_feature_dir(feature_dir)
+    root_kwargs = effective_root_options(first.effective_root)
+    feature_dir = canonicalize_feature_dir(feature_dir, **root_kwargs)
     mission_id = _load_mission_id(feature_dir)
     from_lane: str = str(_derive_from_lane(feature_dir, wp_id))
     built: list[tuple[StatusEvent, TransitionRequest]] = []
@@ -852,7 +859,8 @@ def emit_status_transition_batch(  # noqa: C901 — composite transition orchest
         request_mission_slug = request.mission_slug or request._legacy_mission_slug
         if request_feature_dir is None or request_mission_slug is None or request.wp_id is None or request.to_lane is None or request.actor is None:
             raise TypeError("Each batch transition requires feature_dir/mission_dir, mission_slug, wp_id, to_lane, and actor")
-        if canonicalize_feature_dir(request_feature_dir) != feature_dir or request_mission_slug != mission_slug or request.wp_id != wp_id:
+        request_root_kwargs = effective_root_options(request.effective_root)
+        if canonicalize_feature_dir(request_feature_dir, **request_root_kwargs) != feature_dir or request_mission_slug != mission_slug or request.wp_id != wp_id:
             raise TypeError("emit_status_transition_batch only supports one feature/mission/wp per batch")
 
         raw_to_lane = str(request.to_lane).strip().lower()
@@ -871,7 +879,7 @@ def emit_status_transition_batch(  # noqa: C901 — composite transition orchest
         ):
             from specify_cli.missions._read_path_resolver import resolve_subtasks_gate_dir  # noqa: PLC0415
 
-            primary_subtasks_dir = resolve_subtasks_gate_dir(feature_dir, request.repo_root, mission_slug)
+            primary_subtasks_dir = resolve_subtasks_gate_dir(feature_dir, request.repo_root, mission_slug, **request_root_kwargs)
             subtasks_complete = _infer_subtasks_complete(
                 primary_subtasks_dir,
                 wp_id,
@@ -987,6 +995,7 @@ def emit_inner_state_changed(
     mission_slug: str,
     at: str | None = None,
     repo_root: Path | None = None,
+    effective_root: Path | None = None,
 ) -> InnerStateChanged:
     """Persist a single off-axis ``InnerStateChanged`` annotation.
 
@@ -1019,7 +1028,9 @@ def emit_inner_state_changed(
         ValueError: for a malformed ``wp_id`` or an empty delta.
         specify_cli.status.store.StoreError: if persistence/readback fails.
     """
-    feature_dir = canonicalize_feature_dir(feature_dir)
+    feature_dir = canonicalize_feature_dir(
+        feature_dir, **(effective_root_options(effective_root)),
+    )
 
     event = annotate(
         wp_id,

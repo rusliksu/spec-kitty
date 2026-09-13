@@ -1,6 +1,6 @@
 ---
 work_package_id: WP01
-title: Owned-checkout seam for state-recording commands
+title: Переходы и ревью в выбранной рабочей копии
 dependencies: []
 requirement_refs:
 - C-001
@@ -45,6 +45,20 @@ owned_files:
 - tests/specify_cli/cli/commands/agent/fixtures/tasks_cli/help/move-task.help
 - tests/architectural/test_no_read_side_bypass.py
 - tests/architectural/test_single_mission_surface_resolver.py
+- src/specify_cli/agent_tasks_ports.py
+- src/specify_cli/cli/commands/agent/tasks_finalize_validation.py
+- src/specify_cli/cli/commands/agent/tasks_parsing_validation.py
+- src/specify_cli/cli/commands/agent/tasks_verdict_persistence.py
+- src/specify_cli/coordination/commit_router.py
+- src/specify_cli/core/paths.py
+- src/specify_cli/missions/owned_diagnostics.py
+- src/specify_cli/review/cycle.py
+- src/specify_cli/status/emit.py
+- src/specify_cli/workspace/context.py
+- src/specify_cli/workspace/owned.py
+- src/specify_cli/workspace/root_resolver.py
+- src/mission_runtime/lifecycle_phase.py
+- tests/tasks/test_single_branch_owned_review.py
 tags: []
 tracker_refs: []
 ---

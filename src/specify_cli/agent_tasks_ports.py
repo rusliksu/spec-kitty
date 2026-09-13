@@ -34,6 +34,8 @@ compatibility shim.
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import json
 import subprocess
 from collections.abc import Callable, Mapping, Sequence
@@ -336,7 +338,8 @@ class RealCoordCommitRouter:
 
     def feature_write_dir(self, mission: MissionHandle) -> Path:
         write_dir: Path = resolve_feature_dir_for_mission(
-            mission.repo_root, mission.mission_slug
+            mission.repo_root, mission.mission_slug,
+            **(effective_root_options(mission.effective_root)),
         )
         return write_dir
 
@@ -369,6 +372,7 @@ class RealCoordCommitRouter:
                 message,
                 policy,
                 kind=kind,
+                **(effective_root_options(mission.effective_root)),
                 target_branch=self._target_branch,
             )
         else:
@@ -379,6 +383,7 @@ class RealCoordCommitRouter:
                 message,
                 policy,
                 kind=kind,
+                **(effective_root_options(mission.effective_root)),
             )
         return CommitArtifactResult(
             status=result.status,

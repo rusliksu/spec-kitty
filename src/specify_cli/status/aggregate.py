@@ -23,6 +23,8 @@ Key constraints
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -808,11 +810,13 @@ class MissionStatus:
                 read_event_stream_transactional,
             )
 
-            subtasks_dir = resolve_subtasks_gate_dir(self.read_dir, self.repo_root, self.mission_slug)
+            root_kwargs = effective_root_options(self.effective_root)
+            subtasks_dir = resolve_subtasks_gate_dir(self.read_dir, self.repo_root, self.mission_slug, **root_kwargs)
             event_stream = read_event_stream_transactional(
                 feature_dir=self.read_dir,
                 mission_slug=self.mission_slug,
                 repo_root=self.repo_root,
+                **root_kwargs,
             )
             if not request.force:
                 subtasks_complete = status_emit._infer_subtasks_complete(

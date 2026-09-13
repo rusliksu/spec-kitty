@@ -80,7 +80,7 @@ def _reset_cache() -> None:
     """
 
 
-def canonicalize_feature_dir(feature_dir: Path) -> Path:
+def canonicalize_feature_dir(feature_dir: Path, *, effective_root: Path | None = None) -> Path:
     """Return the canonical-root version of ``feature_dir`` when possible.
 
     Many emit callers construct ``feature_dir = repo_root / KITTY_SPECS_DIR /
@@ -107,6 +107,11 @@ def canonicalize_feature_dir(feature_dir: Path) -> Path:
     )
 
     feature_dir = Path(feature_dir)
+    if effective_root is not None:
+        resolved = feature_dir.resolve()
+        if not resolved.is_relative_to(effective_root.resolve()):
+            raise ValueError(f"Mission directory {resolved} is outside the declared checkout {effective_root}")
+        return resolved
     parent = feature_dir.parent
     if parent.name != KITTY_SPECS_DIR:
         return feature_dir
