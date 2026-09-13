@@ -1,4 +1,16 @@
 {
+  "acceptance_history": [
+    {
+      "acceptance_mode": "pr",
+      "accepted_at": "2026-09-13T11:28:00.269376+00:00",
+      "accepted_by": "codex",
+      "accepted_from_commit": "162be961e7e872c62498447955fd26fcd79760c5"
+    }
+  ],
+  "acceptance_mode": "pr",
+  "accepted_at": "2026-09-13T11:28:00.269376+00:00",
+  "accepted_by": "codex",
+  "accepted_from_commit": "162be961e7e872c62498447955fd26fcd79760c5",
   "created_at": "2026-09-11T11:15:00.224422+00:00",
   "flattened": false,
   "friendly_name": "Task and status commands honour an owned checkout",
