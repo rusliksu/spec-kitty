@@ -8,13 +8,24 @@ import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from .constants import KITTIFY_DIR, LINT_REPORT_FILENAME, WORKTREES_DIR
 
 logger = logging.getLogger(__name__)
 
 _GITDIR_PREFIX = "gitdir:"
+
+
+class EffectiveRootOptions(TypedDict, total=False):
+    effective_root: Path
+
+
+def effective_root_options(root: Path | None) -> EffectiveRootOptions:
+    """Forward an explicit root without adding a keyword to legacy calls."""
+    if root is None:
+        return {}
+    return {"effective_root": root}
 
 # ---------------------------------------------------------------------------
 # Canonical safe-path-segment validator (FR-001 / D-1)
@@ -756,7 +767,7 @@ def read_retention_from_meta(
     return data.get("retain_branches"), data.get("retain_worktrees")
 
 
-def get_feature_target_branch(repo_root: Path, mission_slug: str) -> str:
+def get_feature_target_branch(repo_root: Path, mission_slug: str, *, effective_root: Path | None = None) -> str:
     """Get target branch for a feature by reading meta.json directly.
 
     Thin adapter over :func:`read_target_branch_from_meta`.
@@ -804,10 +815,12 @@ def get_feature_target_branch(repo_root: Path, mission_slug: str) -> str:
         _compose_primary_feature_dir,
     )
 
-    main_root = get_main_repo_root(repo_root)
+    main_root = effective_root or get_main_repo_root(repo_root)
+    root_kwargs = effective_root_options(effective_root)
     feature_dir = _compose_primary_feature_dir(
         main_root,
         _canonicalize_primary_read_handle(main_root, mission_slug),
+        **root_kwargs,
     )
     fallback = str(resolve_primary_branch(main_root))
     branch = read_target_branch_from_meta(feature_dir)

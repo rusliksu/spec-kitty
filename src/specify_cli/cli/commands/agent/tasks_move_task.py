@@ -58,6 +58,8 @@ docstring for the per-site detail and the C-003 grounds.
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import contextlib
 import logging
 import os
@@ -210,6 +212,9 @@ class _MoveTaskState:
     model: str | None = None
     profile: str | None = None
     invocation_id: str | None = None
+    # Explicit checkout declared by the caller (issue 26); None keeps the
+    # ambient-root behaviour byte-for-byte.
+    owned_checkout: Path | None = None
     # --- phase A: resolved targets ---
     target_lane: Lane = Lane.PLANNED
     repo_root: Path = field(default_factory=Path)
@@ -234,6 +239,7 @@ class _MoveTaskState:
     arb_review_ref: str | None = None
     # --- phase C.5: pre-review regression gate (WP02 T004/T005) ---
     pre_review_gate_metadata: dict[str, Any] | None = None
+    review_workspace: Any = None
     # --- phase D: emit plan ---
     emit_plan: TransitionPlan | None = None
     evidence_dict: dict[str, Any] | None = None
@@ -338,10 +344,12 @@ def _mt_resolve_targets(st: _MoveTaskState, ports: TasksPorts) -> None:
     """Resolve roots/branch/feature-dir and load the WP + its canonical lane."""
     from specify_cli.cli.commands.agent import tasks as _tasks
     st.target_lane = Lane(ensure_lane(st.to))
-    repo_root = _tasks.locate_project_root()
-    if repo_root is None:
-        _tasks._output_error(st.json_output, "Could not locate project root")
-        raise typer.Exit(1)
+    # Issue 26: an explicitly declared owned checkout becomes the root this command
+    # resolves and writes through; without it this is the ambient root exactly as
+    # before (refusals are typed and write nothing).
+    repo_root = _tasks.resolve_repo_root_with_owned_checkout(
+        st.owned_checkout, json_output=st.json_output
+    )
     st.repo_root = repo_root
     # FR-010 / FR-019: one-shot sparse-checkout warning before any read/mutate.
     _tasks._emit_sparse_session_warning(repo_root, command="spec-kitty agent tasks move-task")
@@ -352,7 +360,10 @@ def _mt_resolve_targets(st: _MoveTaskState, ports: TasksPorts) -> None:
         explicit_mission=st.mission, json_output=st.json_output, repo_root=repo_root
     )
     st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
-        repo_root, st.mission_slug, st.json_output
+        repo_root,
+        st.mission_slug,
+        st.json_output,
+        owned_root=repo_root if st.owned_checkout is not None else None,
     )
     from specify_cli.cli.commands.agent.workflow import _resolve_dispatch_binding
 
@@ -365,7 +376,8 @@ def _mt_resolve_targets(st: _MoveTaskState, ports: TasksPorts) -> None:
         # caller-side canonicalizer fold — redundant with the seam's own
         # internal fold for a PRIMARY-partition kind.
         primary_feature_dir = placement_seam(
-            st.main_repo_root, st.mission_slug
+            st.main_repo_root, st.mission_slug,
+            **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
         ).read_dir(MissionArtifactKind.PRIMARY_METADATA)
         claim_mission_id = resolve_mission_identity(primary_feature_dir).mission_id
     st.resolved_binding = _resolve_dispatch_binding(
@@ -424,20 +436,29 @@ def _mt_resolve_targets(st: _MoveTaskState, ports: TasksPorts) -> None:
     # and the coord override persist. It is NEVER repointed to a primary kind — that
     # would move the event-log read off the coord husk and reintroduce the split-brain
     # FR-010 closes.
-    handle = MissionHandle(repo_root=st.main_repo_root, mission_slug=st.mission_slug)
+    handle = MissionHandle(
+        repo_root=st.main_repo_root, mission_slug=st.mission_slug,
+        **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
+    )
     st.mt_feature_dir = ports.coord.feature_write_dir(handle)
     try:
         check_pre30_layout(st.mt_feature_dir)
     except Pre30LayoutError as e:
         _tasks._output_error(st.json_output, str(e))
         raise typer.Exit(1) from None
-    st.wp = _tasks.locate_work_package(repo_root, st.mission_slug, st.task_id)
+    st.wp = _tasks.locate_work_package(
+        repo_root,
+        st.mission_slug,
+        st.task_id,
+        effective_root=st.repo_root if st.owned_checkout is not None else None,
+    )
     # Lane is event-log-only; read from the canonical coord-husk event log.
     st.old_lane = _read_transactional_wp_lane(
         feature_dir=st.mt_feature_dir,
         mission_slug=st.mission_slug,
         wp_id=st.task_id,
         repo_root=st.main_repo_root,
+        **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
     )
     # Event-store write leg — the SAME coord husk as ``mt_feature_dir``.
     st.feature_dir = st.mt_feature_dir
@@ -596,7 +617,8 @@ def _mt_commit_lane_deliverables(st: _MoveTaskState) -> None:
 
     try:
         workspace = _tasks.resolve_workspace_for_wp(
-            st.main_repo_root, st.mission_slug, st.task_id
+            st.main_repo_root, st.mission_slug, st.task_id,
+            **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
         )
     except (ValueError, FileNotFoundError, MissingLanesError, CorruptLanesError):
         # No resolvable lane workspace (missions without lanes.json included) —
@@ -670,17 +692,27 @@ def _mt_gather_review_facts(st: _MoveTaskState) -> None:
     review_artifact_name: str | None = None
     if st.target_lane in (Lane.APPROVED, Lane.DONE):
         review_verdict, st.verdict_artifact_path, review_artifact_name = (
-            resolve_review_verdict_facts(st.wp.path)
+            resolve_review_verdict_facts(
+                st.wp.path,
+                **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
+            )
         )
     feedback = _mt_resolve_feedback(st)
     unchecked_subtasks: tuple[str, ...] = ()
     if st.target_lane in (Lane.FOR_REVIEW, Lane.APPROVED, Lane.DONE) and not st.force:
         unchecked_subtasks = tuple(
-            _tasks._check_unchecked_subtasks(st.repo_root, st.mission_slug, st.task_id, st.force)
+            _tasks._check_unchecked_subtasks(
+                st.repo_root, st.mission_slug, st.task_id, st.force,
+                **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
+            )
         )
     review_ready = True
     review_guidance: tuple[str, ...] = ()
     if st.target_lane in (Lane.FOR_REVIEW, Lane.APPROVED, Lane.DONE):
+        if st.owned_checkout is not None:
+            st.review_workspace = _tasks.resolve_workspace_for_wp(
+                st.main_repo_root, st.mission_slug, st.task_id, effective_root=st.repo_root,
+            )
         # A for_review auto-commit is deliberately deferred until the real
         # pre-review gate permits progress. The initial decision still runs
         # every other read-only guard before that gate; readiness is refreshed
@@ -698,6 +730,8 @@ def _mt_gather_review_facts(st: _MoveTaskState) -> None:
                 st.task_id,
                 st.force,
                 target_lane=str(st.target_lane),
+                **({"resolved_workspace": st.review_workspace} if st.review_workspace is not None else {}),
+                **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
             )
             review_ready = is_valid
             review_guidance = tuple(guidance)
@@ -731,6 +765,8 @@ def _mt_complete_deferred_for_review_readiness(st: _MoveTaskState) -> None:
         st.task_id,
         st.force,
         target_lane=str(st.target_lane),
+        **({"resolved_workspace": st.review_workspace} if st.review_workspace is not None else {}),
+        **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
     )
     st.request = replace(
         st.request,
@@ -807,7 +843,10 @@ def _mt_issue_matrix_facts(st: _MoveTaskState) -> str | None:
     blocker: str | None = _issue_matrix_approval_blocker(
         st.feature_dir,
         target_lane=st.target_lane,
-        primary_feature_dir=placement_seam(st.main_repo_root, st.mission_slug).read_dir(
+        primary_feature_dir=placement_seam(
+            st.main_repo_root, st.mission_slug,
+            **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
+        ).read_dir(
             MissionArtifactKind.SPEC
         ),
     )
@@ -1058,7 +1097,10 @@ def _mt_resolve_pre_review_workspace(st: _MoveTaskState) -> Path | None:
     from specify_cli.lanes.persistence import CorruptLanesError, MissingLanesError
 
     try:
-        workspace = _tasks.resolve_workspace_for_wp(st.main_repo_root, st.mission_slug, st.task_id)
+        workspace = st.review_workspace or _tasks.resolve_workspace_for_wp(
+            st.main_repo_root, st.mission_slug, st.task_id,
+            **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
+        )
     except (ValueError, FileNotFoundError, MissingLanesError, CorruptLanesError):
         return None
     if not workspace.exists:
@@ -1439,7 +1481,10 @@ def _mt_resolve_gate_baseline(st: _MoveTaskState) -> BaselineTestResult | None:
     Shared by the doctrine-bound handler context and the FR-004 override tier so
     both diff against the SAME baseline artifact.
     """
-    wp_slug = _resolve_wp_slug(st.main_repo_root, st.mission_slug, st.task_id)
+    wp_slug = (
+        st.wp.path.stem if st.owned_checkout is not None and st.wp is not None
+        else _resolve_wp_slug(st.main_repo_root, st.mission_slug, st.task_id)
+    )
     # C-008 (coord-commit-integrity-01KY5JS8): baseline-tests.json is a
     # WORK_PACKAGE_TASK-kind (PRIMARY-partition) artifact authored by
     # implement_capture_baseline. Under coord topology ``st.feature_dir`` is the
@@ -1449,11 +1494,16 @@ def _mt_resolve_gate_baseline(st: _MoveTaskState) -> BaselineTestResult | None:
     # ``_resolve_workflow_read_dir(kind=WORK_PACKAGE_TASK)``), not the husk.
     from specify_cli.cli.commands.agent.workflow import _resolve_workflow_read_dir
 
-    baseline_read_dir = _resolve_workflow_read_dir(
-        repo_root=st.main_repo_root,
-        mission_slug=st.mission_slug,
-        kind=MissionArtifactKind.WORK_PACKAGE_TASK,
-    )
+    if st.owned_checkout is not None:
+        baseline_read_dir = placement_seam(st.main_repo_root, st.mission_slug, effective_root=st.repo_root).read_dir(
+            MissionArtifactKind.WORK_PACKAGE_TASK
+        )
+    else:
+        baseline_read_dir = _resolve_workflow_read_dir(
+            repo_root=st.main_repo_root,
+            mission_slug=st.mission_slug,
+            kind=MissionArtifactKind.WORK_PACKAGE_TASK,
+        )
     return BaselineTestResult.load(baseline_read_dir / "tasks" / wp_slug / "baseline-tests.json")
 
 
@@ -1639,9 +1689,14 @@ def _mt_resolve_transition_gate_inputs(
     the shared :class:`_TransitionGateInputs` surface.
     """
     worktree_path = _mt_resolve_pre_review_workspace(st)
+    review_base = (
+        st.review_workspace.implementation_base_commit
+        if st.review_workspace is not None and st.review_workspace.implementation_base_commit is not None
+        else st.target_branch
+    )
     dirty_before = _mt_pre_review_dirty_paths(worktree_path) if worktree_path is not None else ()
     changed_files = (
-        _mt_pre_review_changed_files(worktree_path, st.target_branch)
+        _mt_pre_review_changed_files(worktree_path, review_base)
         if worktree_path is not None
         else ()
     )
@@ -1940,6 +1995,15 @@ def _mt_finalize_plan(st: _MoveTaskState, ports: TasksPorts) -> None:
     if not decision.plan.transition_targets:
         return
 
+    if st.review_workspace is not None and st.review_workspace.implementation_head_commit is not None:
+        from specify_cli.workspace.owned import verify_review_head
+
+        verify_review_head(
+            st.review_workspace.worktree_path,
+            st.review_workspace.branch_name,
+            st.review_workspace.implementation_head_commit,
+        )
+
     if decision.planned_rollback and st.resolved_feedback_source is not None:
         # `persist_rejected_review_cycle_for_rollback` (tasks_verdict_persistence,
         # frozen boundary) writes the rejected artifact's ``reviewer_agent`` from
@@ -2100,6 +2164,7 @@ def _mt_current_event_lane(st: _MoveTaskState) -> str:
             feature_dir=st.feature_dir,
             mission_slug=st.mission_slug,
             repo_root=st.main_repo_root,
+            **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
         )
     ):
         if existing_event.wp_id == st.task_id:
@@ -2381,6 +2446,9 @@ def _mt_emit_transitions(st: _MoveTaskState, ports: TasksPorts) -> None:
             TransitionRequest(
                 feature_dir=st.feature_dir,
                 mission_slug=st.mission_slug,
+                # Issue 26: a declared owned checkout owns the mission on the write side
+                # too, so the transaction anchor never crosses into a sibling checkout.
+                effective_root=st.repo_root if st.owned_checkout is not None else None,
                 wp_id=st.task_id,
                 to_lane=target,
                 actor=transition_actor,
@@ -2673,6 +2741,7 @@ def _mt_emit_runtime_state(st: _MoveTaskState, ports: TasksPorts) -> None:
         actor=st.final_hop_actor or st.actor,
         mission_slug=st.mission_slug,
         repo_root=st.main_repo_root,
+        **effective_root_options(st.repo_root if getattr(st, "owned_checkout", None) is not None else None),
     )
 
 
@@ -2710,7 +2779,8 @@ def _mt_release_review_lock(st: _MoveTaskState) -> None:
         from specify_cli.review.lock import ReviewLock
 
         lock_workspace = _tasks.resolve_workspace_for_wp(
-            st.main_repo_root, st.mission_slug, st.task_id
+            st.main_repo_root, st.mission_slug, st.task_id,
+            **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
         )
         ReviewLock.release(Path(lock_workspace.worktree_path))
     except Exception as _release_exc:  # pragma: no cover - defensive
@@ -2896,6 +2966,7 @@ class _MoveTaskArgs:
     model: str | None = None
     profile: str | None = None
     invocation_id: str | None = None
+    owned_checkout: Path | None = None
 
 
 def _do_move_task(args: _MoveTaskArgs, *, ports: TasksPorts | None = None) -> None:
@@ -2950,6 +3021,7 @@ def _do_move_task(args: _MoveTaskArgs, *, ports: TasksPorts | None = None) -> No
         force=args.force,
         tracker_ref=args.tracker_ref,
         skip_review_artifact_check=args.skip_review_artifact_check,
+        owned_checkout=args.owned_checkout,
         auto_commit=args.auto_commit,
         json_output=args.json_output,
         skip_pre_review_gate=args.skip_pre_review_gate,

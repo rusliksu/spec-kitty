@@ -7,6 +7,8 @@ Provides CLI access to the status emit/materialize pipeline:
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import json
 import logging
 from pathlib import Path
@@ -116,6 +118,7 @@ def _resolve_status_surface(
     explicit_mission: str | None = None,
     *,
     json_output: bool = False,
+    owned_checkout: Path | None = None,
 ) -> tuple[Path, str, Path]:
     """Resolve the status read surface, mission slug, and repo root.
 
@@ -136,7 +139,12 @@ def _resolve_status_surface(
     from specify_cli.status import CoordAuthorityUnavailable, MissionMetadataUnavailable, MissionStatus
 
     cwd = Path.cwd().resolve()
-    repo_root = locate_project_root(cwd)
+    if owned_checkout is not None:
+        from specify_cli.cli.commands.agent.tasks_shared import resolve_repo_root_with_owned_checkout
+
+        repo_root = resolve_repo_root_with_owned_checkout(owned_checkout, json_output=json_output)
+    else:
+        repo_root = locate_project_root(cwd)
 
     if repo_root is None:
         console.print(f"[red]Error:[/red] {PROJECT_ROOT_NOT_FOUND}")
@@ -147,10 +155,17 @@ def _resolve_status_surface(
         json_output=json_output,
         repo_root=repo_root,
     )
-    main_repo_root = get_main_repo_root(repo_root)
+    main_repo_root = repo_root if owned_checkout is not None else get_main_repo_root(repo_root)
+    if owned_checkout is not None:
+        from specify_cli.missions.owned_diagnostics import warn_owned_mission_divergence
+
+        warn_owned_mission_divergence(repo_root, mission_slug)
 
     try:
-        ms = MissionStatus.load(repo_root=main_repo_root, mission_slug=mission_slug)
+        ms = MissionStatus.load(
+            repo_root=main_repo_root, mission_slug=mission_slug,
+            **(effective_root_options(repo_root if owned_checkout is not None else None)),
+        )
         feature_dir = ms.read_dir
     # ``CoordinationBranchDeleted`` (WP05 / T025) surfaces the converged coord-
     # deleted hard-fail (#1848 data-loss) identically to the other fail-closed
@@ -167,6 +182,8 @@ def _resolve_mission_status_for_repo(
     main_repo_root: Path,
     mission_slug: str,
     json_output: bool = False,
+    *,
+    effective_root: Path | None = None,
 ) -> Any:
     """Resolve the coord-aware ``MissionStatus`` aggregate for a mission.
 
@@ -191,7 +208,11 @@ def _resolve_mission_status_for_repo(
     )
 
     try:
-        return MissionStatus.load(repo_root=main_repo_root, mission_slug=mission_slug)
+        return MissionStatus.load(
+            repo_root=main_repo_root,
+            mission_slug=mission_slug,
+            effective_root=effective_root,
+        )
     # ``CoordinationBranchDeleted`` (WP05 / T025): the aggregate now propagates the
     # converged coord-deleted hard-fail VERBATIM, so the CLI surfaces it as a clean
     # fail-closed error (#1848) rather than letting it escape uncaught.
@@ -317,6 +338,17 @@ def emit(
         ),
     ] = None,
     execution_mode: Annotated[str, typer.Option("--execution-mode", help="Execution mode (worktree or direct_repo)")] = "worktree",
+    owned_checkout: Annotated[
+        Path | None,
+        typer.Option(
+            "--owned-checkout",
+            help=(
+                "Explicit checkout root owned by this invocation. Use it to record a "
+                "transition for a mission that lives in a linked worktree; the path is "
+                "validated against this repository before anything is written."
+            ),
+        ),
+    ] = None,
     json_output: Annotated[bool, typer.Option("--json", help="Machine-readable JSON output")] = False,
 ) -> None:
     """Emit a status transition event for a work package.
@@ -331,22 +363,40 @@ def emit(
         spec-kitty agent status emit WP01 --to in_progress --actor claude --force --reason "resuming after crash"
     """
     try:
-        # Resolve repo root
-        cwd = Path.cwd().resolve()
-        repo_root = locate_project_root(cwd)
+        # Resolve repo root. Issue 26: an explicitly declared owned checkout becomes
+        # the root this command resolves and writes through; without it the ambient
+        # root is used exactly as before (refusals are typed and write nothing).
+        from specify_cli.cli.commands.agent.tasks_shared import (
+            resolve_repo_root_with_owned_checkout,
+        )
+
+        owned_root = (
+            resolve_repo_root_with_owned_checkout(owned_checkout, json_output=json_output)
+            if owned_checkout is not None
+            else None
+        )
+        repo_root = owned_root or locate_project_root(Path.cwd().resolve())
         if repo_root is None:
             _output_error(json_output, PROJECT_ROOT_NOT_FOUND)
             raise typer.Exit(1)
 
-        main_repo_root = get_main_repo_root(repo_root)
+        main_repo_root = (
+            owned_root if owned_root is not None else get_main_repo_root(repo_root)
+        )
 
         # Resolve feature slug
         mission_slug = _find_mission_slug(explicit_mission=mission, json_output=json_output, repo_root=repo_root)
+        if owned_root is not None:
+            from specify_cli.missions.owned_diagnostics import warn_owned_mission_divergence
+
+            warn_owned_mission_divergence(owned_root, mission_slug)
 
         # Resolve coord-aware mission aggregate via MissionStatus.load(). The
         # aggregate is retained (not just its read_dir) so the write below can
         # route through it without loading twice (FR-004).
-        ms = _resolve_mission_status_for_repo(main_repo_root, mission_slug, json_output)
+        ms = _resolve_mission_status_for_repo(
+            main_repo_root, mission_slug, json_output, effective_root=owned_root
+        )
         feature_dir = ms.read_dir
 
         # Parse evidence JSON if provided
@@ -411,9 +461,13 @@ def emit(
         # event log affected by this command.
         output_feature_dir = feature_dir
         try:
+            # Issue 26: the reload must carry the declared owned root too,
+            # or it folds back to the ambient primary and machine output
+            # reports an event-log path the command never wrote to.
             output_feature_dir = type(ms).load(
                 repo_root=main_repo_root,
                 mission_slug=mission_slug,
+                effective_root=owned_root,
             ).read_dir
         except Exception as reload_exc:  # noqa: BLE001
             logger.debug(
@@ -686,7 +740,7 @@ def lifecycle(
         str | None,
         typer.Option("--mission", help="Mission slug"),
     ] = None,
-
+    owned_checkout: Annotated[Path | None, typer.Option("--owned-checkout", help="Explicit checkout owning the mission to inspect.")] = None,
     json_output: Annotated[
         bool,
         typer.Option("--json", help="Machine-readable JSON output"),
@@ -700,7 +754,10 @@ def lifecycle(
     """
     from specify_cli.status import derive_mission_lifecycle
 
-    feature_dir, mission_slug, _repo_root = _resolve_status_surface(mission, json_output=json_output)
+    feature_dir, mission_slug, _repo_root = _resolve_status_surface(
+        mission, json_output=json_output,
+        **({"owned_checkout": owned_checkout} if owned_checkout is not None else {}),
+    )
     try:
         result = derive_mission_lifecycle(feature_dir)
     except StoreError as exc:
@@ -912,7 +969,7 @@ def validate(
         str | None,
         typer.Option("--mission", help="Mission slug (required in multi-mission repos)"),
     ] = None,
-
+    owned_checkout: Annotated[Path | None, typer.Option("--owned-checkout", help="Explicit checkout owning the status data to validate.")] = None,
     json_output: Annotated[
         bool,
         typer.Option("--json", help="Machine-readable JSON output"),
@@ -933,19 +990,24 @@ def validate(
     """
     from specify_cli.status import ValidationResult
 
-    cwd = Path.cwd().resolve()
-    repo_root = locate_project_root(cwd)
-    if repo_root is None:
-        if json_output:
-            print(json.dumps({"error": PROJECT_ROOT_NOT_FOUND}))
-        else:
-            console.print(f"[red]Error:[/red] {PROJECT_ROOT_NOT_FOUND}")
-        raise typer.Exit(1)
+    if owned_checkout is not None:
+        feature_dir, mission_slug, main_repo_root = _resolve_status_surface(
+            mission, json_output=json_output, owned_checkout=owned_checkout,
+        )
+    else:
+        cwd = Path.cwd().resolve()
+        repo_root = locate_project_root(cwd)
+        if repo_root is None:
+            if json_output:
+                print(json.dumps({"error": PROJECT_ROOT_NOT_FOUND}))
+            else:
+                console.print(f"[red]Error:[/red] {PROJECT_ROOT_NOT_FOUND}")
+            raise typer.Exit(1)
 
-    mission_slug = _find_mission_slug(explicit_mission=mission, json_output=json_output, repo_root=repo_root)
+        mission_slug = _find_mission_slug(explicit_mission=mission, json_output=json_output, repo_root=repo_root)
 
-    main_repo_root = get_main_repo_root(repo_root)
-    feature_dir, _, _ = _resolve_status_surface_for_repo(main_repo_root, mission_slug, json_output)
+        main_repo_root = get_main_repo_root(repo_root)
+        feature_dir, _, _ = _resolve_status_surface_for_repo(main_repo_root, mission_slug, json_output)
 
     if not feature_dir.exists():
         msg = f"Mission directory not found: {feature_dir}"

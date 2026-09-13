@@ -7,6 +7,8 @@ bookkeeping commit succeeds.
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 from specify_cli.core.constants import KITTY_SPECS_DIR
 import logging
 import subprocess
@@ -562,7 +564,11 @@ def _canonical_repo_root(feature_dir: Path, repo_root: Path) -> Path:
 
 
 def _canonical_primary_feature_dir(
-    repo_root: Path, mission_slug: str, fallback: Path
+    repo_root: Path,
+    mission_slug: str,
+    fallback: Path,
+    *,
+    effective_root: Path | None = None,
 ) -> Path:
     """Resolve the CWD-invariant primary feature-dir anchor via the facade.
 
@@ -592,9 +598,9 @@ def _canonical_primary_feature_dir(
     )
 
     def _primary_anchor() -> Path:
-        anchor: Path = placement_seam(repo_root, mission_slug).read_dir(
-            MissionArtifactKind.PRIMARY_METADATA
-        )
+        anchor: Path = placement_seam(
+            repo_root, mission_slug, effective_root=effective_root
+        ).read_dir(MissionArtifactKind.PRIMARY_METADATA)
         return anchor
 
     def _fallback() -> Path:
@@ -619,7 +625,12 @@ def _canonical_primary_feature_dir(
     # discarded it, then re-invoked the primary resolver — a second composition
     # of the same path. Now both halves come from one resolution.
     try:
-        resolved = resolve_status_surface_with_anchor(repo_root, mission_slug)
+        if effective_root is None:
+            resolved = resolve_status_surface_with_anchor(repo_root, mission_slug)
+        else:
+            resolved = resolve_status_surface_with_anchor(
+                repo_root, mission_slug, effective_root=effective_root
+            )
     except FileNotFoundError:
         # No meta.json at the canonical location: degrade to the request dir so
         # ad-hoc fixtures and the create→first-write window keep working.
@@ -642,7 +653,11 @@ def _canonical_primary_feature_dir(
 
 
 def _resolve_write_target(
-    repo_root: Path, mission_slug: str, coord_branch: str | None
+    repo_root: Path,
+    mission_slug: str,
+    coord_branch: str | None,
+    *,
+    effective_root: Path | None = None,
 ) -> str:
     """Resolve the status write-target ref via the canonical placement resolver.
 
@@ -737,9 +752,15 @@ def _resolve_write_target(
             mission_slug,
             MissionArtifactKind.STATUS_STATE,
             degrade_ref=coord_branch or None,
+            effective_root=effective_root,
         ).ref
     except ActionContextError:
-        fallback_ref: str = get_feature_target_branch(repo_root, mission_slug)
+        # Issue 26: the fallback reads the mission meta from disk, so it must
+        # read it where the mission actually lives — the owned checkout when
+        # one was declared, never the ambient primary.
+        fallback_ref: str = get_feature_target_branch(
+            effective_root or repo_root, mission_slug
+        )
         return fallback_ref
 
 
@@ -759,9 +780,14 @@ def _identity_for_request(request: TransitionRequest) -> _TransactionIdentity:
     interim_repo_root = _repo_root_for_feature(canonical_feature_dir, request.repo_root)
     canonical_repo_root = _canonical_repo_root(canonical_feature_dir, interim_repo_root)
     feature_dir = _canonical_primary_feature_dir(
-        canonical_repo_root, mission_slug, fallback=canonical_feature_dir
+        canonical_repo_root,
+        mission_slug,
+        fallback=canonical_feature_dir,
+        effective_root=request.effective_root,
     )
-    repo_root = request.repo_root or canonical_repo_root
+    # Issue 26: a declared owned checkout is the root this transition belongs to;
+    # the canonical re-anchor above can only see the enclosing checkout.
+    repo_root = request.effective_root or request.repo_root or canonical_repo_root
 
     # FR-007: fail-closed reader routing. Malformed meta surfaces typed
     # MissionMetaReadError instead of raw ValueError.
@@ -807,7 +833,9 @@ def _identity_for_request(request: TransitionRequest) -> _TransactionIdentity:
         feature_dir=feature_dir,
         mission_id=effective_mission_id,
         mid8=effective_mid8,
-        destination_ref=_resolve_write_target(repo_root, mission_slug, coord_branch),
+        destination_ref=_resolve_write_target(
+            repo_root, mission_slug, coord_branch, effective_root=request.effective_root
+        ),
         meta_exists=meta_exists,
         coordination_branch=coord_branch,
         transaction_meta_exists=(feature_dir.parent / transaction_dir_name / "meta.json").exists(),
@@ -854,7 +882,10 @@ def _prepare_event(
         # coord-topology mission) without ever attempting recovery.
         from specify_cli.missions._read_path_resolver import resolve_subtasks_gate_dir  # noqa: PLC0415
 
-        subtasks_dir = resolve_subtasks_gate_dir(feature_dir, request.repo_root, mission_slug)
+        subtasks_dir = resolve_subtasks_gate_dir(
+            feature_dir, request.repo_root, mission_slug,
+            **(effective_root_options(request.effective_root)),
+        )
         subtasks_complete = _emit._infer_subtasks_complete(
             subtasks_dir,
             request.wp_id,
@@ -1162,6 +1193,7 @@ def read_events_transactional(
     feature_dir: Path,
     mission_slug: str,
     repo_root: Path | None = None,
+    effective_root: Path | None = None,
 ) -> list[StatusEvent]:
     """Read status events from the same target transactional writes use."""
     identity = _identity_for_request(
@@ -1172,6 +1204,7 @@ def read_events_transactional(
             to_lane=Lane.PLANNED,
             actor="status-read",
             repo_root=repo_root,
+            effective_root=effective_root,
         )
     )
     return _read_events_from_transaction_target(identity, mission_slug)
@@ -1182,6 +1215,7 @@ def read_event_stream_transactional(
     feature_dir: Path,
     mission_slug: str,
     repo_root: Path | None = None,
+    effective_root: Path | None = None,
 ) -> EventStream:
     """Read the complete event stream from the transactional write target."""
     identity = _identity_for_request(
@@ -1192,6 +1226,7 @@ def read_event_stream_transactional(
             to_lane=Lane.PLANNED,
             actor="status-read",
             repo_root=repo_root,
+            effective_root=effective_root,
         )
     )
     return _read_event_stream_from_transaction_target(identity, mission_slug)
@@ -1439,6 +1474,7 @@ def emit_inner_state_changed_transactional(
     repo_root: Path | None = None,
     operation: str | None = None,
     capability: GuardCapability = GuardCapability.STANDARD,
+    effective_root: Path | None = None,
 ) -> InnerStateChanged:
     """Persist AND commit one off-axis ``InnerStateChanged`` annotation (FR-007).
 
@@ -1487,6 +1523,7 @@ def emit_inner_state_changed_transactional(
         actor=actor,
         repo_root=repo_root,
     )
+    request = replace(request, effective_root=effective_root)
     identity = _identity_for_request(request)
 
     def _uncommitted_emit() -> InnerStateChanged:
@@ -1498,6 +1535,7 @@ def emit_inner_state_changed_transactional(
             mission_slug=mission_slug,
             at=at,
             repo_root=repo_root,
+            **(effective_root_options(effective_root)),
         )
 
     if (

@@ -68,6 +68,8 @@ call sites above).
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -311,7 +313,7 @@ def _resolve_revert_commit_worktree(
     from specify_cli.coordination.workspace import CoordinationWorkspace
     from specify_cli.mission_metadata import load_meta
 
-    primary_dir = placement_seam(st.main_repo_root, st.mission_slug).read_dir(
+    primary_dir = placement_seam(st.main_repo_root, st.mission_slug, **(effective_root_options(st.repo_root if st.owned_checkout is not None else None))).read_dir(
         MissionArtifactKind.PRIMARY_METADATA
     )
     meta = load_meta(primary_dir, allow_missing=True, on_malformed="none")
@@ -429,7 +431,7 @@ def _revert_committed_verdict_write_held(
         f"revert: undo review-cycle-{signal.cycle_number} verdict for "
         f"{st.task_id} on {st.mission_slug} (transition emit failed, FR-002)"
     )
-    target = placement_seam(st.main_repo_root, st.mission_slug).write_target(
+    target = placement_seam(st.main_repo_root, st.mission_slug, **(effective_root_options(st.repo_root if st.owned_checkout is not None else None))).write_target(
         kind=MissionArtifactKind.REVIEW_CYCLE
     )
     worktree_root, commit_path = _resolve_revert_commit_worktree(
@@ -619,6 +621,7 @@ def _announce_verdict_durability_gap(
 
 def resolve_review_verdict_facts(
     wp_path: Path,
+    *, effective_root: Path | None = None,
 ) -> tuple[str | None, Path | None, str | None]:
     """Resolve the latest review verdict for an approval-lane move (FR-002/D-PLAN-9).
 
@@ -666,9 +669,9 @@ def resolve_review_verdict_facts(
     ``_review_cycle_wp_dir``'s own docstring discloses this function used to
     carry, now fixed as part of this WP's repoint).
     """
-    verdict_wp_dir = _resolve_verdict_wp_dir(wp_path)
+    verdict_wp_dir = _resolve_verdict_wp_dir(wp_path, **(effective_root_options(effective_root)))
     wp_id = _wp_id_from_stem(wp_path.stem)
-    status_read_feature_dir = _resolve_verdict_read_feature_dir(wp_path)
+    status_read_feature_dir = _resolve_verdict_read_feature_dir(wp_path, **(effective_root_options(effective_root)))
     lookup = event_sourced_review_result(status_read_feature_dir, wp_id)
     if not lookup.slot_present:
         return None, None, None
@@ -684,7 +687,7 @@ def resolve_review_verdict_facts(
     return review_verdict, artifact_path, artifact_path.name
 
 
-def _resolve_verdict_read_feature_dir(wp_path: Path) -> Path:
+def _resolve_verdict_read_feature_dir(wp_path: Path, *, effective_root: Path | None = None) -> Path:
     """Resolve the STATUS_STATE-authoritative feature dir for *wp_path*'s mission.
 
     Mirrors ``post_merge/review_artifact_consistency.py::
@@ -707,18 +710,18 @@ def _resolve_verdict_read_feature_dir(wp_path: Path) -> Path:
 
     feature_dir = wp_path.parent.parent
     try:
-        main_repo_root = resolve_canonical_root(feature_dir)
+        main_repo_root = effective_root or resolve_canonical_root(feature_dir)
     except WorkspaceRootNotFound:
         return feature_dir
 
     mission_slug = feature_dir.name
-    resolved: Path = placement_seam(main_repo_root, mission_slug).read_dir(
+    resolved: Path = placement_seam(main_repo_root, mission_slug, **(effective_root_options(effective_root))).read_dir(
         MissionArtifactKind.STATUS_STATE
     )
     return resolved
 
 
-def _resolve_verdict_wp_dir(wp_path: Path) -> Path:
+def _resolve_verdict_wp_dir(wp_path: Path, *, effective_root: Path | None = None) -> Path:
     """Resolve the review-cycle directory for the WP task file at *wp_path*.
 
     ``wp_path`` is a REAL, on-disk file (``locate_work_package`` finds it via
@@ -751,12 +754,12 @@ def _resolve_verdict_wp_dir(wp_path: Path) -> Path:
 
     feature_dir = wp_path.parent.parent
     try:
-        main_repo_root = resolve_canonical_root(feature_dir)
+        main_repo_root = effective_root or resolve_canonical_root(feature_dir)
     except WorkspaceRootNotFound:
         return wp_path.parent / wp_path.stem
 
     mission_slug = feature_dir.name
-    resolved: Path = _review_cycle_wp_dir(main_repo_root, mission_slug, wp_path.stem)
+    resolved: Path = _review_cycle_wp_dir(main_repo_root, mission_slug, wp_path.stem, **(effective_root_options(effective_root)))
     return resolved
 
 
@@ -845,7 +848,7 @@ def _persist_approved_review_cycle(
     """
     if st.request is not None and st.request.is_arbiter_override:
         return None
-    wp_slug = _resolve_wp_slug(st.main_repo_root, st.mission_slug, st.task_id)
+    wp_slug = (st.wp.path.stem if st.owned_checkout is not None and st.wp is not None else _resolve_wp_slug(st.main_repo_root, st.mission_slug, st.task_id))
     lookup = event_sourced_review_result(st.feature_dir, st.task_id)
     # FR-007 (T2 / IC-04): a malformed/damaged event-sourced slot
     # (``slot_present=True, result=None``) stays a no-op, UNCHANGED — the
@@ -903,6 +906,7 @@ def _persist_approved_review_cycle(
             reviewer_agent=reviewer_agent,
             verdict="approved",
             commit_router=commit_router,
+            **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
             reproduction_command=reproduction_command,
         )
 
@@ -932,10 +936,11 @@ def persist_rejected_review_cycle_for_rollback(
             main_repo_root=st.main_repo_root,
             mission_slug=st.mission_slug,
             wp_id=st.task_id,
-            wp_slug=_resolve_wp_slug(st.main_repo_root, st.mission_slug, st.task_id),
+            wp_slug=(st.wp.path.stem if st.owned_checkout is not None and st.wp is not None else _resolve_wp_slug(st.main_repo_root, st.mission_slug, st.task_id)),
             feedback_source=st.resolved_feedback_source,
             reviewer_agent=st.agent or "unknown",
             commit_router=commit_router,
+            **(effective_root_options(st.repo_root if st.owned_checkout is not None else None)),
         )
 
     durability_signal = _persist_review_cycle_with_queue(st, ports, _create)

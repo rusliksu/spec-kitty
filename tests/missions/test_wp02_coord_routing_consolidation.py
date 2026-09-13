@@ -266,9 +266,13 @@ def test_resolve_topology_relay_exception_arm(
     # ``_compose_primary_feature_dir`` leaf -- ``resolution.py``'s internal
     # PRIMARY-dir composition (WP03 T016) already called the leaf directly,
     # never the wrapper, before this WP.
+    # The kwarg-sponge is required since tasks-status-owned-checkout-seam-01M282V3
+    # WP01 (issue 26): the leaf gained an optional ``effective_root``, and the
+    # relay under test forwards it (as ``None`` on this no-declaration path). The
+    # stub only has to stand in for the composed directory.
     monkeypatch.setattr(
         "specify_cli.missions._read_path_resolver._compose_primary_feature_dir",
-        lambda _root, _slug: empty_dir,
+        lambda _root, _slug, **_kw: empty_dir,
     )
     # The coordination-branch value the relay classifies from is read separately.
     monkeypatch.setattr(

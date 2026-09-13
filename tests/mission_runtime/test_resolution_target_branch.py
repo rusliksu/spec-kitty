@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pytest
 
-from mission_runtime import resolve_action_context
+from mission_runtime import MissionArtifactKind, placement_seam, resolve_action_context
 from specify_cli.coordination.policy import WorkflowMutationPolicy
 from specify_cli.coordination.types import Allowed, GitChangeSet, Refused
 from specify_cli.status.models import Lane, StatusEvent
@@ -274,3 +274,35 @@ def test_effective_root_falls_back_to_primary_stored_target(
     )
 
     assert ctx.target_branch == "feat/primary-stored"
+
+
+@pytest.mark.parametrize("kind", [MissionArtifactKind.RESEARCH, MissionArtifactKind.STATUS_STATE])
+def test_placement_seam_targets_the_owned_missions_stored_branch(
+    repo: Path, tmp_path: Path, kind: MissionArtifactKind
+) -> None:
+    """Issue 26: a write must not fall back to the protected primary branch.
+
+    The mission exists only in a real linked checkout. Its stored target also
+    differs from the checkout branch, so substituting either ambient main or
+    the caller's current branch is observable through the public write seam.
+    """
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "fixture")
+    caller = _add_caller_worktree(repo, tmp_path)
+    _build_mission(caller, target_branch="codex/owned-mission-target")
+    caller_meta = caller / "kitty-specs" / _MISSION_SLUG / "meta.json"
+    meta = json.loads(caller_meta.read_text(encoding="utf-8"))
+    meta["topology"] = "single_branch"
+    caller_meta.write_text(json.dumps(meta), encoding="utf-8")
+    primary_head = (repo / ".git" / "HEAD").read_bytes()
+    metadata_before = caller_meta.read_bytes()
+
+    target = placement_seam(repo, _MISSION_SLUG, effective_root=caller).write_target(kind)
+
+    assert target.ref == "codex/owned-mission-target"
+    assert caller_meta.read_bytes() == metadata_before
+    assert not (repo / "kitty-specs" / _MISSION_SLUG).exists()
+    assert (repo / ".git" / "HEAD").read_bytes() == primary_head
+    assert subprocess.check_output(
+        ["git", "status", "--porcelain", "-uall"], cwd=repo, text=True
+    ) == ""

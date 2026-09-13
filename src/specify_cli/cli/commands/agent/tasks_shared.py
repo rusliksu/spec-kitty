@@ -28,6 +28,8 @@ the parity contract); interception pins live in
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import logging
 from pathlib import Path
 from typing import Any
@@ -38,6 +40,7 @@ from mission_runtime import MissionArtifactKind, placement_seam
 from specify_cli.agent_tasks_ports import Render
 from specify_cli.cli.commands.agent.tasks_outline import TaskIdResolutionOutcome, TaskIdResult
 from specify_cli.cli.commands.agent.tasks_parsing_validation import (
+    ReviewWorkspaceOptions,
     _validate_ready_for_review as _seam_validate_ready_for_review,
 )
 from specify_cli.cli.selector_resolution import resolve_mission_handle
@@ -49,16 +52,81 @@ from specify_cli.status import is_dossier_snapshot as _is_dossier_snapshot
 logger = logging.getLogger(__name__)
 
 
+def resolve_repo_root_with_owned_checkout(
+    owned_checkout: Path | None,
+    *,
+    json_output: bool,
+) -> Path:
+    """Return the repo root a state-recording command must operate on.
+
+    Without a declaration this is the ambient project root, byte-for-byte as before.
+    With one, the path is validated through the shared checkout-ownership authority
+    (``core/checkout_ownership``) and the claimed checkout becomes the root, so a
+    mission that lives in an owned linked worktree is resolvable and writable from
+    that worktree (issue 26). A declaration that is not owned writes nothing and
+    exits fail-closed with the shared typed refusal.
+    """
+    from specify_cli.cli.commands.agent import tasks as _tasks
+
+    # Routed through the ``tasks`` seam (module docstring's interception rule): the
+    # historical ``monkeypatch.setattr(tasks, "locate_project_root", ...)`` targets
+    # must keep intercepting, so this reads the patched attribute, not core.paths.
+    ambient_root = _tasks.locate_project_root()
+    if ambient_root is None:
+        _emit_owned_root_error("Could not locate project root", json_output=json_output)
+        raise typer.Exit(1)
+    if owned_checkout is None:
+        return ambient_root
+
+    # Deferred: the ownership authority is reachable only on this opt-in path, so
+    # it stays out of the import graph paid by every non-owning invocation.
+    from specify_cli.core.checkout_ownership import (
+        error_for_claim,
+        resolve_ownership_claim,
+    )
+
+    claim = resolve_ownership_claim(owned_checkout, resolved_primary=ambient_root)
+    refusal = error_for_claim(claim)
+    if refusal is not None:
+        _emit_owned_root_error(str(refusal), json_output=json_output, error_code=refusal.error_code)
+        raise typer.Exit(1)
+
+    return claim.claimed_checkout
+
+
+def _emit_owned_root_error(
+    message: str,
+    *,
+    json_output: bool,
+    error_code: str | None = None,
+) -> None:
+    """Render a repo-root refusal in the command family's existing envelope."""
+    import json as _json
+    import sys as _sys
+
+    if json_output:
+        payload: dict[str, object] = {"success": False, "error": message}
+        if error_code is not None:
+            payload["error_code"] = error_code
+        print(_json.dumps(payload))
+        return
+    print(f"Error: {message}", file=_sys.stderr)
+
 def _review_currency_check_branch(
     *,
     main_repo_root: Path,
     mission_slug: str,
     target_branch: str,
     workspace: object | None,
+    effective_root: Path | None = None,
 ) -> str:
     from specify_cli.cli.commands.agent import tasks as _tasks
 
     context = getattr(workspace, "context", None)
+    if effective_root is not None:
+        implementation_base = getattr(workspace, "implementation_base_commit", None)
+        if isinstance(implementation_base, str) and implementation_base:
+            return implementation_base
     base_branch = getattr(context, "base_branch", None)
     if base_branch:
         return str(base_branch)
@@ -69,8 +137,9 @@ def _review_currency_check_branch(
         # against the coordination BASE ref under coord topology. STATUS_STATE keeps
         # the coord ref; a primary kind would read the primary ref as the base and
         # corrupt the currency comparison.
+        root_kwargs = effective_root_options(effective_root)
         placement = _tasks.resolve_placement_only(
-            main_repo_root, mission_slug, kind=MissionArtifactKind.STATUS_STATE
+            main_repo_root, mission_slug, kind=MissionArtifactKind.STATUS_STATE, **root_kwargs
         )
     except Exception as exc:  # noqa: BLE001 -- legacy fixtures keep target-branch fallback
         logger.debug("Could not resolve review currency placement: %s", exc)
@@ -78,7 +147,7 @@ def _review_currency_check_branch(
 
     # FR-005 / FR-001b: the coord-vs-primary decision reads the WP02 STORED
     # topology via the ONE canonical predicate, never a per-ref ``.kind``.
-    if _tasks.routes_through_coordination(_tasks.resolve_topology(main_repo_root, mission_slug)):
+    if _tasks.routes_through_coordination(_tasks.resolve_topology(main_repo_root, mission_slug, **root_kwargs)):
         coord_ref: str = placement.ref
         return coord_ref
     return target_branch
@@ -170,8 +239,14 @@ def _ensure_target_branch_checked_out(
     repo_root: Path,
     mission_slug: str,
     json_output: bool,
+    *,
+    owned_root: Path | None = None,
 ) -> tuple[Path, str]:
     """Resolve branch context without auto-checkout (respects user's current branch).
+
+    ``owned_root`` is the explicitly declared checkout (issue 26). When it is
+    given it IS the root that owns the mission, so the primary-fold below is
+    skipped; without it the historical fold is untouched.
 
     Returns:
         (main_repo_root, current_branch)
@@ -180,8 +255,14 @@ def _ensure_target_branch_checked_out(
     from specify_cli.core.git_ops import get_current_branch, resolve_target_branch
 
     # Write path: keep main-repo-root resolution so canonical serialization
-    # pins to the primary checkout regardless of where the operator stands.
-    main_repo_root = _tasks.get_main_repo_root(repo_root)
+    # pins to the primary checkout regardless of where the operator stands —
+    # unless the caller declared the owned checkout that owns this mission
+    # (issue 26), in which case that checkout IS the root for this command.
+    main_repo_root = owned_root if owned_root is not None else _tasks.get_main_repo_root(repo_root)
+    if owned_root is not None:
+        from specify_cli.missions.owned_diagnostics import warn_owned_mission_divergence
+
+        warn_owned_mission_divergence(owned_root, mission_slug)
 
     # Check for detached HEAD using robust branch detection
     current_branch = get_current_branch(main_repo_root)
@@ -407,7 +488,7 @@ def _resolve_git_common_dir(main_repo_root: Path) -> Path:
     return common_dir
 
 
-def _check_unchecked_subtasks(repo_root: Path, mission_slug: str, wp_id: str, _force: bool) -> list[str]:
+def _check_unchecked_subtasks(repo_root: Path, mission_slug: str, wp_id: str, _force: bool, *, effective_root: Path | None = None) -> list[str]:
     """Return *wp_id*'s incomplete subtask ids, read from the reduced snapshot.
 
     The subtask **roster** (which task ids belong to ``wp_id``) is the authored
@@ -444,11 +525,12 @@ def _check_unchecked_subtasks(repo_root: Path, mission_slug: str, wp_id: str, _f
 
     # Write path: keep main-repo-root resolution so canonical serialization
     # pins to the primary checkout regardless of where the operator stands.
-    main_repo_root = _tasks.get_main_repo_root(repo_root)
+    main_repo_root = effective_root or _tasks.get_main_repo_root(repo_root)
+    root_kwargs = effective_root_options(effective_root)
     # WP04 / FR-006: the authored WP roster is TASKS_INDEX and therefore lives
     # on the primary partition. Dynamic completion is STATUS_STATE and follows
     # the topology-routed status surface instead.
-    feature_dir = placement_seam(main_repo_root, mission_slug).read_dir(
+    feature_dir = placement_seam(main_repo_root, mission_slug, **root_kwargs).read_dir(
         MissionArtifactKind.TASKS_INDEX
     )
     if not (feature_dir / "tasks").is_dir():
@@ -463,7 +545,7 @@ def _check_unchecked_subtasks(repo_root: Path, mission_slug: str, wp_id: str, _f
         return []
     from specify_cli.coordination import resolve_status_surface
 
-    status_dir = resolve_status_surface(main_repo_root, mission_slug).parent
+    status_dir = resolve_status_surface(main_repo_root, mission_slug, **root_kwargs).parent
     return unchecked_subtask_ids_from_snapshot(status_dir, wp_id, roster)
 
 
@@ -473,6 +555,8 @@ def _validate_ready_for_review(
     wp_id: str,
     force: bool,
     target_lane: str = "for_review",
+    *, effective_root: Path | None = None,
+    resolved_workspace: Any = None,
 ) -> tuple[bool, list[str]]:
     """Validate that WP is ready for review by checking for uncommitted changes.
 
@@ -488,6 +572,7 @@ def _validate_ready_for_review(
     """
     from specify_cli.cli.commands.agent import tasks as _tasks
 
+    workspace_options: ReviewWorkspaceOptions = {"resolved_workspace": resolved_workspace} if resolved_workspace is not None else {}
     verdict: tuple[bool, list[str]] = _seam_validate_ready_for_review(
         repo_root,
         mission_slug,
@@ -503,6 +588,8 @@ def _validate_ready_for_review(
         filter_runtime_state_paths=_tasks._filter_runtime_state_paths,
         list_wp_branch_specs_changes_for_guard=_tasks._list_wp_branch_specs_changes_for_guard,
         console=_tasks.console,
+        **(effective_root_options(effective_root)),
+        **workspace_options,
     )
     return verdict
 

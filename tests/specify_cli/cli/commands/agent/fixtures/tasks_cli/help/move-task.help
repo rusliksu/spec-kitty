@@ -36,5 +36,6 @@ Options
 --skip-review-artifact-check Override a rejected latest review artifact when arbiter-approving; requires --note and records override evidence.
 --auto-commit --no-auto-commit Automatically commit WP file changes to target branch (default: from project config)
 --json Output JSON format
+--owned-checkout PATH Explicit checkout root owned by this invocation. Use it to record a transition for a mission that lives in a linked worktree; the path is validated against this repository before anything is written.
 --skip-pre-review-gate Skip the pre-review regression gate on a --to for_review move (also honored via the SPEC_KITTY_SYNC_DISABLE / SPEC_KITTY_SYNC_MINIMAL_IMPORT env vars). The gate still runs and enforces by default.
 --help -h Show this message and exit.

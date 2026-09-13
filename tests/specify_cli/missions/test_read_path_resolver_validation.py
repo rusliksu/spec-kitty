@@ -471,7 +471,9 @@ def test_delegator_propagates_status_read_path_not_found(
         primary_candidate=real_git_repo / "primary",
     )
 
-    def _raise(_repo: Path, _slug: str) -> Path:
+    # ``**_kw`` absorbs the optional ``effective_root`` the delegator forwards
+    # since tasks-status-owned-checkout-seam-01M282V3 WP01 (issue 26).
+    def _raise(_repo: Path, _slug: str, **_kw: object) -> Path:
         raise exc
 
     with patch(
@@ -495,7 +497,9 @@ def test_delegator_propagates_ambiguous_selector(real_git_repo: Path) -> None:
 
     exc = MissionSelectorAmbiguous(handle="01KTAMBG", candidates=["a", "b"])
 
-    def _raise(_repo: Path, _slug: str) -> Path:
+    # ``**_kw`` absorbs the optional ``effective_root`` the delegator forwards
+    # since tasks-status-owned-checkout-seam-01M282V3 WP01 (issue 26).
+    def _raise(_repo: Path, _slug: str, **_kw: object) -> Path:
         raise exc
 
     with patch(

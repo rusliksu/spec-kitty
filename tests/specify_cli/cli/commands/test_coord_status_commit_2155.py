@@ -136,7 +136,10 @@ def _install_distinguishable_topology(
     # module-private leaf (after the handle fold) post-WP03 T016.
     leaf_stub = MagicMock(
         name="_compose_primary_feature_dir",
-        side_effect=lambda _repo, _handle: primary_dir,
+        # ``**_kw`` absorbs the optional ``effective_root`` the leaf gained in
+        # tasks-status-owned-checkout-seam-01M282V3 WP01 (issue 26); the relay
+        # forwards it as ``None`` on this no-declaration path.
+        side_effect=lambda _repo, _handle, **_kw: primary_dir,
     )
     monkeypatch.setattr(rpr, "_compose_primary_feature_dir", leaf_stub)
     # The fold is a no-op for an already-composed handle; pin it so the synthetic

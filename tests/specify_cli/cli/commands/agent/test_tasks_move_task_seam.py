@@ -132,7 +132,14 @@ def test_c001_pre_gate_intercepts_through_tasks_namespace(tmp_path: Path) -> Non
     sparse_mock.assert_called_once()
     auto_mock.assert_called_once_with(tmp_path)
     slug_mock.assert_called_once()
-    branch_mock.assert_called_once_with(tmp_path, "034-feature", True)
+    # Issue 26 / tasks-status-owned-checkout-seam-01M282V3 WP01: the resolver
+    # now threads the declared owned checkout (``--owned-checkout``) to the
+    # branch-ensure seam, so an owned mission resolves its target branch in the
+    # checkout that owns it. The interception claim this test exists for (the
+    # call is routed through the patchable ``tasks.<attr>`` namespace) is
+    # unchanged; the exact call shape gains the new keyword with its
+    # no-declaration default, ``None``.
+    branch_mock.assert_called_once_with(tmp_path, "034-feature", True, owned_root=None)
     skip_mock.assert_called_once_with(tmp_path, "034-feature", "main")
 
 

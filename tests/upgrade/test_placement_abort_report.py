@@ -43,7 +43,11 @@ def _force_mismatch(monkeypatch: pytest.MonkeyPatch, elsewhere: Path) -> None:
     *elsewhere* -- guaranteed to disagree with the real write target, so
     ``_flip_phase`` raises ``PlacementMismatchError`` for real (not mocked)."""
     monkeypatch.setattr(
-        cutover_module, "_resolve_primary_home_or_degrade", lambda feature_dir: elsewhere  # noqa: ARG005
+        cutover_module,
+        "_resolve_primary_home_or_degrade",
+        # ``**_kw`` absorbs the optional ``effective_root`` the helper gained in
+        # tasks-status-owned-checkout-seam-01M282V3 WP01 (issue 26).
+        lambda feature_dir, **_kw: elsewhere,  # noqa: ARG005
     )
 
 
