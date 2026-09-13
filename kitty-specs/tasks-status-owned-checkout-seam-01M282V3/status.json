@@ -19,18 +19,23 @@
   "work_packages": {
     "WP01": {
       "actor": "codex",
+      "agent": "codex",
       "agent_profile": "__resolved_profile_absent__",
       "agent_profile_version": "__resolved_profile_version_absent__",
+      "assignee": "Ruslan",
       "force_count": 0,
       "lane": "for_review",
       "last_event_id": "01M2D097DWVVE3PP7734H4XXQY",
       "last_transition_at": "2026-09-13T09:06:28.924011+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
-        "Реализация проверена: 188 тестов прошли; две контрольные подмены обнаружены; независимое ревью 44e07eb6 не нашло дефектов. Внешний CI ещё не выполнен."
+        "Реализация проверена: 188 тестов прошли; две контрольные подмены обнаружены; независимое ревью 44e07eb6 не нашло дефектов. Внешний CI ещё не выполнен.",
+        "Реализация и локальные проверки завершены; независимое ревью кода 44e07eb6 одобрено. Полный CI пока не запущен из-за HTTP 500 GitHub Actions."
       ],
       "provider": "__resolved_provider_absent__",
       "role": "implementer",
+      "shell_pid": 8664,
+      "shell_pid_created_at": "1789290366.475264",
       "subtasks": {
         "T001": "done",
         "T002": "done",
