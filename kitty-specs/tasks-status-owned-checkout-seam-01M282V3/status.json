@@ -1,32 +1,32 @@
 {
-  "event_count": 11,
-  "last_event_id": "01M2D6QFDEMGJC30GHERFFAF2Y",
-  "materialized_at": "2026-09-13T10:59:07.310804+00:00",
+  "event_count": 12,
+  "last_event_id": "01M2D6ZF7D9EJNKXQKAQ50M6PD",
+  "materialized_at": "2026-09-13T11:03:29.261052+00:00",
   "mission_number": "",
   "mission_slug": "tasks-status-owned-checkout-seam-01M282V3",
   "mission_type": "software-dev",
   "summary": {
-    "approved": 0,
+    "approved": 1,
     "blocked": 0,
     "canceled": 0,
     "claimed": 0,
     "done": 0,
     "for_review": 0,
     "in_progress": 1,
-    "in_review": 1,
+    "in_review": 0,
     "planned": 0
   },
   "work_packages": {
     "WP01": {
-      "actor": "reviewer-renata",
+      "actor": "user",
       "agent": "codex",
       "agent_profile": "__resolved_profile_absent__",
       "agent_profile_version": "__resolved_profile_version_absent__",
       "assignee": "Ruslan",
       "force_count": 0,
-      "lane": "in_review",
-      "last_event_id": "01M2D6QFDEMGJC30GHERFFAF2Y",
-      "last_transition_at": "2026-09-13T10:59:07.310804+00:00",
+      "lane": "approved",
+      "last_event_id": "01M2D6ZF7D9EJNKXQKAQ50M6PD",
+      "last_transition_at": "2026-09-13T11:03:29.261052+00:00",
       "model": "__resolved_model_absent__",
       "notes": [
         "Реализация проверена: 188 тестов прошли; две контрольные подмены обнаружены; независимое ревью 44e07eb6 не нашло дефектов. Внешний CI ещё не выполнен.",
@@ -37,11 +37,11 @@
       ],
       "provider": "__resolved_provider_absent__",
       "review_result": {
-        "reference": "https://github.com/rusliksu/spec-kitty/actions/runs/34749402998/job/103704565746",
+        "reference": "https://github.com/rusliksu/spec-kitty/actions/runs/34750989826",
         "reviewer": "reviewer-renata",
-        "verdict": "changes_requested"
+        "verdict": "approved"
       },
-      "role": "implementer",
+      "role": "reviewer",
       "shell_pid": 16480,
       "shell_pid_created_at": "1789297028.8486648",
       "subtasks": {
