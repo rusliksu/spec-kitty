@@ -357,7 +357,8 @@ def _mt_resolve_targets(st: _MoveTaskState, ports: TasksPorts) -> None:
         _tasks.get_auto_commit_default(repo_root) if st.auto_commit is None else st.auto_commit
     )
     st.mission_slug = _tasks._find_mission_slug(
-        explicit_mission=st.mission, json_output=st.json_output, repo_root=repo_root
+        explicit_mission=st.mission, json_output=st.json_output, repo_root=repo_root,
+        **effective_root_options(repo_root if st.owned_checkout is not None else None),
     )
     st.main_repo_root, st.target_branch = _tasks._ensure_target_branch_checked_out(
         repo_root,
@@ -2529,7 +2530,10 @@ def _mt_build_rollback_summary(
     previously_completed: tuple[str, ...] = ()
     never_completed: tuple[str, ...] = ()
     if roster:
-        handle = MissionHandle(repo_root=st.main_repo_root, mission_slug=st.mission_slug)
+        handle = MissionHandle(
+            repo_root=st.main_repo_root, mission_slug=st.mission_slug,
+            **effective_root_options(st.repo_root if st.owned_checkout is not None else None),
+        )
         feature_dir = ports.fs.planning_read_dir(
             handle, kind=MissionArtifactKind.TASKS_INDEX
         )
@@ -2567,7 +2571,10 @@ def _mt_rollback_subtasks_reset(
     """
     from specify_cli.core.subtask_rows import authored_subtask_roster
 
-    handle = MissionHandle(repo_root=st.main_repo_root, mission_slug=st.mission_slug)
+    handle = MissionHandle(
+        repo_root=st.main_repo_root, mission_slug=st.mission_slug,
+        **effective_root_options(st.repo_root if st.owned_checkout is not None else None),
+    )
     feature_dir = ports.fs.planning_read_dir(
         handle, kind=MissionArtifactKind.TASKS_INDEX
     )

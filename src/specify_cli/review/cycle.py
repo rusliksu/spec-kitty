@@ -393,7 +393,7 @@ def validate_review_artifact_file(path: Path) -> ReviewCycleArtifact:
     return artifact
 
 
-def resolve_review_cycle_pointer(repo_root: Path, pointer: str) -> ResolvedReviewCyclePointer:
+def resolve_review_cycle_pointer(repo_root: Path, pointer: str, *, effective_root: Path | None = None) -> ResolvedReviewCyclePointer:
     """Resolve canonical and legacy review feedback references.
 
     Sentinels return a structured no-artifact result. Canonical pointers are
@@ -422,7 +422,7 @@ def resolve_review_cycle_pointer(repo_root: Path, pointer: str) -> ResolvedRevie
         # canonicalization, so a raw join would compose a DIVERGENT path).
         # ``MissionSelectorAmbiguous`` propagates (no silent pick — C-009).
         candidate = (
-            _review_cycle_wp_dir(repo_root, parts.mission_slug, parts.wp_slug)
+            _review_cycle_wp_dir(repo_root, parts.mission_slug, parts.wp_slug, **effective_root_options(effective_root))
             / parts.filename
         ).resolve()
         if not candidate.exists() or not candidate.is_file():

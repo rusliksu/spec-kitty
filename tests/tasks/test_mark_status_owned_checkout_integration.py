@@ -6,7 +6,7 @@ import pytest
 from typer.testing import CliRunner
 
 from specify_cli.cli.commands.agent import tasks
-from specify_cli.status import read_events, reduce
+from specify_cli.status import materialize_snapshot
 from tests.status.test_status_owned_checkout_seam import MISSION_SLUG, _file_bytes, _git, _init_owned_mission
 
 pytestmark = [pytest.mark.integration, pytest.mark.git_repo, pytest.mark.real_worktree_detection]
@@ -21,7 +21,7 @@ def test_owned_subtask_completion_preserves_authored_files_and_primary(tmp_path:
     authored = {p: p.read_bytes() for p in [mission_dir / "tasks.md", *list((mission_dir / "tasks").glob("WP01*.md"))]}
 
     # Assumption check
-    assert "T001" not in reduce(read_events(mission_dir)).work_packages["WP01"].get("subtasks", {})
+    assert "T001" not in materialize_snapshot(mission_dir).work_packages["WP01"].get("subtasks", {})
 
     # Act
     result = CliRunner().invoke(tasks.app, [
@@ -30,7 +30,7 @@ def test_owned_subtask_completion_preserves_authored_files_and_primary(tmp_path:
 
     # Assert
     assert result.exit_code == 0, result.output
-    state = reduce(read_events(mission_dir)).work_packages["WP01"]
+    state = materialize_snapshot(mission_dir).work_packages["WP01"]
     assert state["subtasks"]["T001"] == "done"
     assert {p: p.read_bytes() for p in authored} == authored
     assert _file_bytes(primary) == before

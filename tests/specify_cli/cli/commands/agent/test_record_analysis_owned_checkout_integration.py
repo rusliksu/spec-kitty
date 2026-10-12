@@ -18,6 +18,7 @@ def test_owned_analysis_is_written_and_committed_without_primary_changes(
     # Arrange
     primary, owned, mission_dir = _init_owned_mission(tmp_path)
     _add_origin(primary, tmp_path)
+    (owned / ".gitignore").write_text(".kittify/sync-state.json\n", encoding="utf-8")
     (mission_dir / "spec.md").write_text("# Specification\n\nSynthetic owned implementation.\n", encoding="utf-8")
     (mission_dir / "plan.md").write_text("# Plan\n\nUse the registered checkout.\n", encoding="utf-8")
     _git(owned, "add", ".")
@@ -41,6 +42,7 @@ def test_owned_analysis_is_written_and_committed_without_primary_changes(
     assert result.exit_code == 0, result.output
     assert (mission_dir / "analysis-report.md").is_file()
     assert _git(owned, "rev-parse", "HEAD") != owned_head
+    assert _git(owned, "ls-files", "--error-unmatch", f"kitty-specs/{MISSION_SLUG}/analysis-report.md")
     assert _git(owned, "status", "--porcelain") == ""
     assert _file_bytes(primary) == before
     assert _git(primary, "rev-parse", "HEAD") == primary_head

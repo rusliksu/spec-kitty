@@ -31,6 +31,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from specify_cli.core.paths import effective_root_options
+
 from specify_cli.review.cycle import REVIEW_FEEDBACK_SENTINELS as _REVIEW_FEEDBACK_SENTINELS
 from specify_cli.status import AgentAssignment, Lane
 
@@ -54,6 +56,7 @@ class ImplementRequest:
     agent: str | None
     allow_sparse_checkout: bool
     acknowledge_not_bulk_edit: bool
+    owned_checkout: Path | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,6 +66,7 @@ class ReviewRequest:
     wp_id: str | None
     mission: str | None
     agent: str | None
+    owned_checkout: Path | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -155,6 +159,8 @@ def workspace_contract_description(workspace: ResolvedWorkspace, wp_id: str) -> 
     if workspace.lane_id:
         shared = ", ".join(workspace.lane_wp_ids or [wp_id])
         return f"Workspace contract: lane {workspace.lane_id} shared by {shared}"
+    if workspace.resolution_kind == "single_branch_workspace":
+        return "Workspace contract: owned single-branch implementation workspace"
     return "Workspace contract: repository root planning workspace"
 
 
@@ -251,7 +257,7 @@ def auto_claim_failure_message(preview: object | None) -> str:
 # ---------------------------------------------------------------------------
 
 
-def resolve_review_feedback_pointer(repo_root: Path, pointer: str) -> Path | None:
+def resolve_review_feedback_pointer(repo_root: Path, pointer: str, *, effective_root: Path | None = None) -> Path | None:
     """Resolve a review feedback pointer to a file path.
 
     Supports two pointer formats:
@@ -268,7 +274,7 @@ def resolve_review_feedback_pointer(repo_root: Path, pointer: str) -> Path | Non
     from specify_cli.review.cycle import resolve_review_cycle_pointer
 
     try:
-        result: Path | None = resolve_review_cycle_pointer(repo_root, pointer).path
+        result: Path | None = resolve_review_cycle_pointer(repo_root, pointer, **effective_root_options(effective_root)).path
         return result
     except ValueError:
         return None
@@ -311,6 +317,8 @@ def read_wp_events(feature_dir: Path, wp_id: str) -> list[StatusEvent]:
 def latest_review_feedback_reference(
     feature_dir: Path,
     wp_id: str,
+    *,
+    effective_root: Path | None = None,
 ) -> tuple[str | None, Path | None, int | None]:
     """Return the newest canonical review feedback reference for *wp_id*.
 
@@ -329,7 +337,7 @@ def latest_review_feedback_reference(
         review_ref = event.review_ref.strip()
         if not review_ref or review_ref in _REVIEW_FEEDBACK_SENTINELS:
             continue
-        return review_ref, resolve_review_feedback_pointer(feedback_root, review_ref), index
+        return review_ref, resolve_review_feedback_pointer(feedback_root, review_ref, **effective_root_options(effective_root)), index
     return None, None, None
 
 
@@ -337,6 +345,8 @@ def resolve_review_feedback_context(
     feature_dir: Path,
     wp_id: str,
     wp_frontmatter: str,
+    *,
+    effective_root: Path | None = None,
 ) -> tuple[bool, str | None, Path | None, str | None]:
     """Resolve review-feedback presence and the canonical readable artifact.
 
@@ -353,14 +363,14 @@ def resolve_review_feedback_context(
     """
     del wp_frontmatter  # FR-006a/FR-007: frontmatter is no longer a review authority
 
-    review_feedback_ref, review_feedback_file, _ = latest_review_feedback_reference(feature_dir, wp_id)
+    review_feedback_ref, review_feedback_file, _ = latest_review_feedback_reference(feature_dir, wp_id, **effective_root_options(effective_root))
     if review_feedback_ref is not None:
         return True, review_feedback_ref, review_feedback_file, "canonical"
 
     return False, None, None, None
 
 
-def _resolve_review_cycle_sub_artifact_dir(feature_dir: Path, wp_slug: str) -> Path:
+def _resolve_review_cycle_sub_artifact_dir(feature_dir: Path, wp_slug: str, *, effective_root: Path | None = None) -> Path:
     """Resolve the review-cycle artifact directory for *wp_slug* (T024).
 
     WP05 (verdict-seam-write-unification-01KZ9Q35): this used to be a RAW
@@ -378,12 +388,12 @@ def _resolve_review_cycle_sub_artifact_dir(feature_dir: Path, wp_slug: str) -> P
     from specify_cli.review.cycle import _review_cycle_wp_dir
 
     try:
-        main_repo_root = resolve_canonical_root(feature_dir)
+        main_repo_root = effective_root or resolve_canonical_root(feature_dir)
     except WorkspaceRootNotFound:
         return feature_dir / "tasks" / wp_slug
 
     mission_slug = feature_dir.name
-    resolved: Path = _review_cycle_wp_dir(main_repo_root, mission_slug, wp_slug)
+    resolved: Path = _review_cycle_wp_dir(main_repo_root, mission_slug, wp_slug, **effective_root_options(effective_root))
     return resolved
 
 
@@ -391,6 +401,8 @@ def has_prior_rejection(
     feature_dir: Path,
     wp_slug: str,
     normalized_wp_id: str,
+    *,
+    effective_root: Path | None = None,
 ) -> bool:
     """Check if a WP has review-cycle artifacts from a prior rejection.
 
@@ -408,7 +420,7 @@ def has_prior_rejection(
     Returns:
         True iff both artifact files and a rejection event are present.
     """
-    sub_artifact_dir = _resolve_review_cycle_sub_artifact_dir(feature_dir, wp_slug)
+    sub_artifact_dir = _resolve_review_cycle_sub_artifact_dir(feature_dir, wp_slug, **effective_root_options(effective_root))
     if not sub_artifact_dir.exists():
         return False
     if not list(sub_artifact_dir.glob("review-cycle-*.md")):
@@ -421,6 +433,7 @@ def has_prior_rejection(
     review_feedback_ref, review_feedback_file, review_feedback_index = latest_review_feedback_reference(
         feature_dir,
         normalized_wp_id,
+        **effective_root_options(effective_root),
     )
     if review_feedback_ref is None or review_feedback_file is None or review_feedback_index is None:
         return False

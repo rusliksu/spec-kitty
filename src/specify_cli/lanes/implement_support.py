@@ -8,6 +8,8 @@ This module handles both supported execution paths:
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -243,7 +245,12 @@ def _rev_parse(repo_root: Path, ref: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _planning_dir(main_repo_root: Path, mission_slug: str) -> Path:
+def _planning_dir(
+    main_repo_root: Path,
+    mission_slug: str,
+    *,
+    effective_root: Path | None = None,
+) -> Path:
     """PRIMARY-partition mission dir (where ``lanes.json`` lives) for *mission_slug*.
 
     Routes through the kind-aware placement seam -- the same seam
@@ -253,9 +260,10 @@ def _planning_dir(main_repo_root: Path, mission_slug: str) -> Path:
     topology (coord-topology missions carry a SEPARATE status/coord dir that
     does NOT hold ``lanes.json``, #2118).
     """
-    return placement_seam(main_repo_root, mission_slug).read_dir(
+    read_dir: Path = placement_seam(main_repo_root, mission_slug, **effective_root_options(effective_root)).read_dir(
         MissionArtifactKind.WORK_PACKAGE_TASK
     )
+    return read_dir
 
 
 def reenter_lane_self_heal(
@@ -423,6 +431,8 @@ def check_claim_ancestry(
     mission_dir: Path,
     wp_id: str,
     workspace_path: Path,
+    *,
+    effective_root: Path | None = None,
 ) -> AncestryCheckResult:
     """THE shared POST-materialize claim-ancestry predicate (C-WP03/FR-007/C-005).
 
@@ -439,7 +449,7 @@ def check_claim_ancestry(
     ``--to claimed``) -- so no caller independently re-derives (and
     potentially diverges on) this decision.
     """
-    manifest = read_lanes_json(_planning_dir(main_repo_root, mission_slug))
+    manifest = read_lanes_json(_planning_dir(main_repo_root, mission_slug, **effective_root_options(effective_root)))
     if manifest is None:
         return AncestryCheckResult(ok=True)
     lane = manifest.lane_for_wp(wp_id)
@@ -477,6 +487,8 @@ def resolve_claim_ancestry_gate(
     mission_dir: Path,
     wp_id: str,
     workspace_path: Path,
+    *,
+    effective_root: Path | None = None,
 ) -> AncestryCheckResult:
     """Ancestry check with self-heal-coupled retry (C-005/FR-005+FR-007 land together).
 
@@ -487,8 +499,10 @@ def resolve_claim_ancestry_gate(
     spuriously blocks a legitimate claim (a gate without self-heal is a
     dead-end retry, FR-005+FR-007's explicit pairing).
     """
-    result = check_claim_ancestry(main_repo_root, mission_slug, mission_dir, wp_id, workspace_path)
+    result = check_claim_ancestry(main_repo_root, mission_slug, mission_dir, wp_id, workspace_path, **effective_root_options(effective_root))
     if result.ok:
         return result
+    if effective_root is not None:
+        return result  # A ready owned checkout must satisfy ancestry without lane materialization.
     reenter_lane_self_heal(main_repo_root, mission_slug, wp_id)
-    return check_claim_ancestry(main_repo_root, mission_slug, mission_dir, wp_id, workspace_path)
+    return check_claim_ancestry(main_repo_root, mission_slug, mission_dir, wp_id, workspace_path, **effective_root_options(effective_root))

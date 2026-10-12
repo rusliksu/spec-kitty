@@ -126,7 +126,7 @@ _EXPECTED_FLAGS: dict[str, frozenset[str]] = {
             "--resume-probe",
         }
     ),
-    "record-analysis": frozenset({"--mission", "--input-file", "--agent", "--json"}),
+    "record-analysis": frozenset({"--mission", "--input-file", "--agent", "--json", "--owned-checkout"}),
     "setup-plan": frozenset({"--mission", "--json"}),
     "accept": frozenset({"--mission", "--mode", "--json", "--lenient", "--no-commit", "--diagnose"}),
     "merge": frozenset(

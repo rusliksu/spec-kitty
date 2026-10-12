@@ -28,7 +28,8 @@ def test_owned_startup_refuses_incompatible_target_schema(
     flag = ["--owned-checkout", str(owned)] if flag_form == "separate" else [f"--owned-checkout={owned}"]
     monkeypatch.setattr(sys, "argv", ["spec-kitty", "agent", "action", "implement", "WP01", *flag])
     before = _file_bytes(primary), _file_bytes(owned)
-    ctx = typer.Context(Command("spec-kitty"), invoked_subcommand="agent")
+    ctx = typer.Context(Command("spec-kitty"))
+    ctx.invoked_subcommand = "agent"
 
     with pytest.raises(SystemExit) as refusal:
         specify_cli._run_startup_project_gates(ctx)

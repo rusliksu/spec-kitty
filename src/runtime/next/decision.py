@@ -18,6 +18,8 @@ preserved for backward compatibility and tests but are no longer called by
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import contextlib
 import io
 import os
@@ -452,6 +454,8 @@ def _state_to_action(
     feature_dir: Path,
     repo_root: Path,
     mission_name: str,
+    *,
+    effective_root: Path | None = None,
 ) -> tuple[str | None, str | None, str | None]:
     """Map a mission state to a ``(action, wp_id, workspace_path)`` triple.
 
@@ -473,7 +477,7 @@ def _state_to_action(
             # reassigned (FR-012a).
             review_wp = _find_first_wp_by_lane(feature_dir, "for_review")
             if review_wp:
-                workspace_path = str(resolve_workspace_for_wp(repo_root, mission_slug, review_wp).worktree_path)
+                workspace_path = str(resolve_workspace_for_wp(repo_root, mission_slug, review_wp, **effective_root_options(effective_root)).worktree_path)
                 return "review", review_wp, workspace_path
             # in_review WPs exist but are not actionable by this agent —
             # review is already in progress, nothing to pick up.
@@ -482,7 +486,7 @@ def _state_to_action(
                 return None, None, None
             return None, None, None
 
-        workspace_path = str(resolve_workspace_for_wp(repo_root, mission_slug, wp_id).worktree_path)
+        workspace_path = str(resolve_workspace_for_wp(repo_root, mission_slug, wp_id, **effective_root_options(effective_root)).worktree_path)
         return "implement", wp_id, workspace_path
 
     # "review" state: WP-level if for_review WP exists, else template-level.
@@ -491,7 +495,7 @@ def _state_to_action(
     if state == "review":
         wp_id = _find_first_wp_by_lane(feature_dir, "for_review")
         if wp_id is not None:
-            workspace_path = str(resolve_workspace_for_wp(repo_root, mission_slug, wp_id).worktree_path)
+            workspace_path = str(resolve_workspace_for_wp(repo_root, mission_slug, wp_id, **effective_root_options(effective_root)).worktree_path)
             return "review", wp_id, workspace_path
         # Explicitly skip in_review WPs — they are claimed by another
         # reviewer (FR-012a).  Fall through to generic template resolution.
@@ -552,6 +556,8 @@ def _build_prompt_safe(
     agent: str,
     repo_root: Path,
     mission_type: str,
+    *,
+    effective_root: Path | None = None,
 ) -> str | None:
     """Build prompt, returning None on failure instead of raising.
 
@@ -568,6 +574,7 @@ def _build_prompt_safe(
         agent=agent,
         repo_root=repo_root,
         mission_type=mission_type,
+        **effective_root_options(effective_root),
     )
     return path
 
@@ -582,6 +589,8 @@ def _build_prompt_or_error(
     agent: str,
     repo_root: Path,
     mission_type: str,
+    *,
+    effective_root: Path | None = None,
 ) -> tuple[str | None, str | None]:
     """Build prompt, returning ``(path, None)`` on success or ``(None, error)``.
 
@@ -642,6 +651,7 @@ def _build_prompt_or_error(
                 agent=agent,
                 repo_root=repo_root,
                 mission_type=mission_type,
+                **effective_root_options(effective_root),
             )
         path_str = str(prompt_path)
         try:

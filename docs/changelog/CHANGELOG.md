@@ -44,6 +44,8 @@ _The 3.2.6rc5 candidate cycle is open. Entries land here as missions merge._
 
 ### 🐛 Fixed
 
+- Work packages in an explicitly owned checkout now keep analysis, implementation, review, and completion in that checkout while preserving the primary checkout and global command installation.
+
 - **Обычный запуск CLI больше не обновляет user-global skills и не может удалить пользовательские файлы внутри canonical skill roots.** Явный `init`, `upgrade` или `repair` по-прежнему обновляет package-owned paths из дистрибутива, но теперь делает ownership-aware overlay: exact source collisions заменяются безопасно, включая read-only файлы и symlink, а отсутствующие в source пользовательские metadata, вложенные каталоги, symlink и соседние skills сохраняются. Startup-обновление user-global slash commands остаётся без изменений. Этот change-set не устанавливает пакет в live environment и не публикует release.
 
 - Concurrent mission-step loads now use independent YAML parsers, preventing valid steps and their template mappings from disappearing during overlapping cold-cache reads.

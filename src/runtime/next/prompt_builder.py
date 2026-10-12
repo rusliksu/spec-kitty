@@ -13,6 +13,9 @@ default per NEW-2 resolution).
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
+import shlex
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -34,7 +37,7 @@ from specify_cli.core.paths import get_feature_target_branch
 from specify_cli.runtime.resolver import resolve_command
 from specify_cli.review.antipattern_checklist import render_wp_review_antipattern_checklist
 from specify_cli.status import read_wp_frontmatter
-from specify_cli.workspace.context import resolve_workspace_for_wp
+from specify_cli.workspace.context import ResolvedWorkspace, resolve_workspace_for_wp
 
 
 # ---------------------------------------------------------------------------
@@ -64,6 +67,8 @@ def build_prompt(
     agent: str,
     repo_root: Path,
     mission_type: str,
+    *,
+    effective_root: Path | None = None,
 ) -> tuple[str, Path]:
     """Build a prompt for the given action.
 
@@ -76,7 +81,7 @@ def build_prompt(
     rules, WP content, and completion instructions.
     """
     if action in ("implement", "review") and wp_id:
-        prompt_text = _build_wp_prompt(action, feature_dir, mission_slug, wp_id, agent, repo_root, mission_type)
+        prompt_text = _build_wp_prompt(action, feature_dir, mission_slug, wp_id, agent, repo_root, mission_type, **effective_root_options(effective_root))
     else:
         prompt_text = _build_template_prompt(action, feature_dir, mission_slug, agent, repo_root, mission_type)
 
@@ -147,6 +152,28 @@ def _build_template_prompt(
     return f"{header}\n\n{governance}\n\n{template_content}"
 
 
+def _owned_action_command(action: str, wp_id: str, agent: str, mission_slug: str, root_option: str) -> list[str]:
+    if not root_option:
+        return []
+    return [f"  spec-kitty agent action {action} {wp_id} --agent {agent} --mission {mission_slug}{root_option}"]
+
+
+def _workspace_contract_line(workspace: ResolvedWorkspace, wp_id: str, owned: bool) -> str:
+    if workspace.lane_id:
+        shared = ", ".join(workspace.lane_wp_ids or [wp_id])
+        return f"Workspace contract: lane {workspace.lane_id} shared by {shared}"
+    if owned:
+        return "Workspace contract: registered owned checkout"
+    return "Workspace contract: repository root planning workspace"
+
+
+def _owned_review_commands(workspace: ResolvedWorkspace) -> list[str]:
+    base, head = workspace.implementation_base_commit, workspace.implementation_head_commit
+    if not base or not head:
+        raise ValueError("Owned review requires proven implementation base and HEAD commits.")
+    return [f"  git log {base}..{head} --oneline", f"  git diff {base}..{head} --stat"]
+
+
 def _build_wp_prompt(
     action: str,
     feature_dir: Path,
@@ -155,10 +182,13 @@ def _build_wp_prompt(
     agent: str,
     repo_root: Path,
     mission_type: str,
+    *,
+    effective_root: Path | None = None,
 ) -> str:
     """Build prompt for implement or review actions with WP context."""
-    workspace = resolve_workspace_for_wp(repo_root, mission_slug, wp_id)
+    workspace = resolve_workspace_for_wp(repo_root, mission_slug, wp_id, **effective_root_options(effective_root))
     workspace_path = workspace.worktree_path
+    root_option = f" --owned-checkout {shlex.quote(str(effective_root))}" if effective_root is not None else ""
     wp_files = sorted((feature_dir / "tasks").glob(f"{wp_id}*.md"))
     wp_meta = None
     if wp_files:
@@ -182,11 +212,7 @@ def _build_wp_prompt(
     lines.append(f"Mission: {mission_slug}")
     lines.append(f"Mission Type: {mission_type}")
     lines.append(f"Workspace: {workspace_path}")
-    if workspace.lane_id:
-        shared = ", ".join(workspace.lane_wp_ids or [wp_id])
-        lines.append(f"Workspace contract: lane {workspace.lane_id} shared by {shared}")
-    else:
-        lines.append("Workspace contract: repository root planning workspace")
+    lines.append(_workspace_contract_line(workspace, wp_id, effective_root is not None))
     lines.append("")
     lines.extend(_mission_type_governance_lines(repo_root, feature_dir))
     lines.append(_governance_context(repo_root, action=action, feature_dir=feature_dir, profile=agent_profile_id))
@@ -211,13 +237,14 @@ def _build_wp_prompt(
     # Working directory
     lines.append("WORKING DIRECTORY:")
     lines.append(f"  cd {workspace_path}")
-    if not workspace.lane_id:
+    lines.extend(_owned_action_command(action, wp_id, agent, mission_slug, root_option))
+    if not workspace.lane_id and effective_root is None:
         lines.append("  # Planning-artifact work for this WP happens in the repository root")
     lines.append("")
 
     if action == "review":
         review_paths = ""
-        if not workspace.lane_id:
+        if not workspace.lane_id and effective_root is None:
             if wp_files:
                 wp_meta, _ = read_wp_frontmatter(wp_files[0])
                 if wp_meta.owned_files:
@@ -257,9 +284,13 @@ def _build_wp_prompt(
                     review_base = commit_hash.strip()
                     break
         lines.append("REVIEW COMMANDS:")
-        if workspace.lane_id:
+        if effective_root is not None:
+            lines.extend(_owned_review_commands(workspace))
+        elif workspace.lane_id:
             review_base = (
-                workspace.context.base_branch if workspace.context and workspace.context.base_branch else get_feature_target_branch(repo_root, mission_slug)
+                workspace.context.base_branch
+                if workspace.context and workspace.context.base_branch
+                else get_feature_target_branch(repo_root, mission_slug, **effective_root_options(effective_root))
             )
             lines.append(f"  git log {review_base}..HEAD --oneline")
             lines.append(f"  git diff {review_base}..HEAD --stat")
@@ -287,12 +318,15 @@ def _build_wp_prompt(
     # Completion instructions
     lines.append("WHEN DONE:")
     if action == "implement":
-        lines.append(f"  spec-kitty agent tasks mark-status {subtask_cmd} --status done --mission {mission_slug}")
-        lines.append(f'  spec-kitty agent tasks move-task {wp_id} --to for_review --mission {mission_slug} --note "Ready for review"')
+        lines.append(f"  spec-kitty agent tasks mark-status {subtask_cmd} --status done --mission {mission_slug}{root_option}")
+        lines.append(f'  spec-kitty agent tasks move-task {wp_id} --to for_review --mission {mission_slug} --note "Ready for review"{root_option}')
     else:
-        lines.append(f'  APPROVE: spec-kitty agent tasks move-task {wp_id} --to approved --mission {mission_slug} --note "Review passed"')
+        lines.append(f'  APPROVE: spec-kitty agent tasks move-task {wp_id} --to approved --mission {mission_slug} --note "Review passed"{root_option}')
         lines.append("           approved means review-passed; merge will later record done")
-        lines.append(f"  REJECT:  spec-kitty agent tasks move-task {wp_id} --to planned --review-feedback-file <feedback-file> --mission {mission_slug}")
+        lines.append(
+            f"  REJECT:  spec-kitty agent tasks move-task {wp_id} --to planned "
+            f"--review-feedback-file <feedback-file> --mission {mission_slug}{root_option}"
+        )
 
     return "\n".join(lines)
 

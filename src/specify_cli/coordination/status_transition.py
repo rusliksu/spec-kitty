@@ -1018,6 +1018,7 @@ def read_current_wp_state_transactional(
     mission_slug: str,
     wp_id: str,
     repo_root: Path | None = None,
+    effective_root: Path | None = None,
 ) -> CurrentWpState:
     """Read the current WP lane/actor/role from the transaction's write target.
 
@@ -1035,6 +1036,7 @@ def read_current_wp_state_transactional(
             to_lane=Lane.PLANNED,
             actor="status-read",
             repo_root=repo_root,
+            **effective_root_options(effective_root),
         )
     )
     contract = _read_contract_from_transaction_target(identity, mission_slug)
