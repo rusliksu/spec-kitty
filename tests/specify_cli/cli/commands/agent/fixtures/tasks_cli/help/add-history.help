@@ -10,4 +10,5 @@ Options
 --agent TEXT Agent name
 --shell-pid TEXT Shell PID
 --json Output JSON format
+--owned-checkout PATH Explicit registered checkout owned by this invocation; record the history note there.
 --help -h Show this message and exit.

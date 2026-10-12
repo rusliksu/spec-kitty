@@ -109,7 +109,7 @@ def test_rollback_subtask_reset_uses_authored_frontmatter_roster(tmp_path: Path)
         "---\nwork_package_id: WP01\ndependencies: []\nsubtasks:\n  - T001\n  - T002\n---\n",
         encoding="utf-8",
     )
-    st = SimpleNamespace(main_repo_root=tmp_path, mission_slug="demo", task_id="WP01")
+    st = SimpleNamespace(main_repo_root=tmp_path, mission_slug="demo", task_id="WP01", owned_checkout=None)
     ports = SimpleNamespace(
         fs=SimpleNamespace(planning_read_dir=lambda _handle, *, kind: feature_dir)
     )
@@ -143,7 +143,7 @@ def test_build_claim_review_override_defaults_release_and_resets_subtasks(
         "---\nwork_package_id: WP01\ndependencies: []\nsubtasks:\n  - T001\n---\n",
         encoding="utf-8",
     )
-    st = SimpleNamespace(main_repo_root=tmp_path, mission_slug="demo", task_id="WP01")
+    st = SimpleNamespace(main_repo_root=tmp_path, mission_slug="demo", task_id="WP01", owned_checkout=None)
     ports = SimpleNamespace(
         fs=SimpleNamespace(planning_read_dir=lambda _handle, *, kind: feature_dir)
     )
@@ -176,7 +176,7 @@ def test_build_claim_review_override_release_marker_independent_of_existing_fiel
         "---\nwork_package_id: WP01\ndependencies: []\nsubtasks: []\n---\n",
         encoding="utf-8",
     )
-    st = SimpleNamespace(main_repo_root=tmp_path, mission_slug="demo", task_id="WP01")
+    st = SimpleNamespace(main_repo_root=tmp_path, mission_slug="demo", task_id="WP01", owned_checkout=None)
     ports = SimpleNamespace(
         fs=SimpleNamespace(planning_read_dir=lambda _handle, *, kind: feature_dir)
     )
