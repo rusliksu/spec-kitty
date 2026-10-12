@@ -637,9 +637,9 @@ class DeclaredCommandScopeSource:
         "-c", ...]`` so the configured command gets real POSIX shell
         semantics — matching what :func:`run_configured_command` already
         gives every OTHER configured-command consumer in this codebase.
-        Falls back to ``None`` (visible ``NO_COVERAGE``, never a crash — the
-        port's own invariant) when the platform has no POSIX shell to hand
-        this argv to.
+        Windows uses native argv with the existing configured-command syntax
+        guards. Unsupported syntax falls back to ``None`` (visible
+        ``NO_COVERAGE``, never a crash — the port's own invariant).
         """
         from specify_cli.configured_command import (
             ConfiguredCommandUnsupported,

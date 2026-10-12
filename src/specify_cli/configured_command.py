@@ -83,6 +83,17 @@ def _unsupported_windows_message() -> str:
     )
 
 
+def _native_windows_template_args(command_template: str, substitutions: Mapping[str, str]) -> list[str]:
+    """Validate native syntax and substitute values after splitting the template."""
+    if _has_unquoted_posix_shell_syntax(command_template) or _uses_posix_single_quotes(command_template):
+        raise ConfiguredCommandUnsupported(_unsupported_windows_message())
+    try:
+        template_args = shlex.split(command_template)
+    except ValueError as exc:
+        raise ConfiguredCommandUnsupported(f"Configured command could not be parsed: {exc}") from exc
+    return [arg.format(**substitutions) for arg in template_args]
+
+
 def _run_args(
     args: str | list[str],
     *,
@@ -191,7 +202,7 @@ def build_shell_command_with_substitutions(
     command_template: str,
     substitutions: Mapping[str, str | Path],
 ) -> list[str]:
-    """Render a configured command template into a self-contained ``["sh", "-c", ...]`` argv.
+    """Render a configured command template into a self-contained argv.
 
     For callers that can only return a plain argv (no side channel for an
     ``env=`` mapping alongside it) — e.g. ``ScopeSource.test_command() ->
@@ -211,15 +222,11 @@ def build_shell_command_with_substitutions(
     substituted values are DELIVERED to the shell (inline ``export`` vs. a
     separate ``env=`` mapping) differs.
 
-    Raises :class:`ConfiguredCommandUnsupported` on ``win32`` — there is no
-    ``sh`` to hand a self-contained argv to; callers there must fall back to
-    :func:`run_configured_command_template`'s ``.format()`` shape instead.
+    Windows uses the same native argv and syntax guards as
+    :func:`run_configured_command_template`, without introducing a shell.
     """
     if sys.platform == "win32":
-        raise ConfiguredCommandUnsupported(
-            "build_shell_command_with_substitutions requires a POSIX shell (sh -c) "
-            "and has no Windows equivalent; use run_configured_command_template instead."
-        )
+        return _native_windows_template_args(command_template, {key: str(value) for key, value in substitutions.items()})
     # Only feed keys the template actually references to the scanner — a
     # substitution the template never uses (e.g. a plain command with no
     # {output_file} placeholder at all) must not grow an unused `export`
@@ -248,14 +255,7 @@ def run_configured_command_template(
     raw_substitutions = {key: str(value) for key, value in substitutions.items()}
     env: Mapping[str, str] | None = None
     if sys.platform == "win32":
-        requires_posix_shell = _has_unquoted_posix_shell_syntax(command_template)
-        if requires_posix_shell or _uses_posix_single_quotes(command_template):
-            raise ConfiguredCommandUnsupported(_unsupported_windows_message())
-        try:
-            template_args = shlex.split(command_template)
-        except ValueError as exc:
-            raise ConfiguredCommandUnsupported(f"Configured command could not be parsed: {exc}") from exc
-        args: str | list[str] = [arg.format(**raw_substitutions) for arg in template_args]
+        args: str | list[str] = _native_windows_template_args(command_template, raw_substitutions)
     else:
         shell_command, substitution_env = _format_shell_template_with_env(
             command_template,

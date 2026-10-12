@@ -11,6 +11,15 @@ from specify_cli.review.scope_source import DeclaredCommandScopeSource
 pytestmark = [pytest.mark.integration, pytest.mark.windows_ci]
 
 
+def test_declared_windows_template_retains_shell_syntax_refusal(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / ".kittify").mkdir()
+    (tmp_path / ".kittify" / "config.yaml").write_text(
+        "review:\n  test_command: runner && another-runner\n", encoding="utf-8",
+    )
+    monkeypatch.setattr(sys, "platform", "win32")
+    assert DeclaredCommandScopeSource(repo_root=tmp_path).test_command() is None
+
+
 def test_declared_windows_template_preserves_literal_output_argument(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     project = tmp_path / "project"
     (project / ".kittify").mkdir(parents=True)
