@@ -351,9 +351,9 @@ def _signal_owned_process_tree(
     """Signal only the process group created for this runner-owned child."""
     platform = platform or os.name
     if platform == "nt":
-        command = ["taskkill", "/PID", str(process.pid), "/T"]
-        if force:
-            command.append("/F")
+        # Console children reject taskkill's non-forced termination. Killing
+        # only the parent would orphan them before the forced retry can find it.
+        command = ["taskkill", "/PID", str(process.pid), "/T", "/F"]
         result = windows_tree_kill(command)
         if result.returncode != 0 and process.poll() is None:
             # The tree-aware authority can race a naturally exiting child. If
