@@ -9,7 +9,7 @@ from typer.testing import CliRunner
 from runtime.next._tmp_namespace import prompt_tmp_dir
 from runtime.next.prompt_builder import build_prompt
 from specify_cli.cli.commands.agent import tasks, workflow, workflow_executor
-from specify_cli.status import Lane, WPInnerStateDelta, emit_inner_state_changed
+from specify_cli.status import Lane, WPInnerStateDelta, emit_inner_state_changed, materialize_snapshot
 from specify_cli.review.lock import ReviewLock
 from tests.specify_cli.cli.commands.agent.test_implement_owned_checkout_integration import _implementation_baseline
 from tests.status.test_status_owned_checkout_seam import MISSION_SLUG, _file_bytes, _git
@@ -18,8 +18,9 @@ from tests.tasks.test_single_branch_owned_review import _review_checkout
 pytestmark = [pytest.mark.integration, pytest.mark.git_repo, pytest.mark.real_worktree_detection]
 
 
+@pytest.mark.parametrize("drift", [None, "before_claim", "after_claim"])
 def test_owned_review_and_rejected_fix_keep_the_primary_unchanged(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, drift: str | None,
 ) -> None:
     # Arrange
     primary, owned, base = _review_checkout(tmp_path)
@@ -62,8 +63,36 @@ def test_owned_review_and_rejected_fix_keep_the_primary_unchanged(
     assert f"git diff {base}..{reviewed_head} --stat" in next_prompt
     assert "repository root planning workspace" not in next_prompt
 
+    if drift is not None:
+        original_claim = workflow_executor.review_claim_transition
+
+        def change_code() -> None:
+            (owned / "src" / "feature.py").write_text("VALUE = 99\n", encoding="utf-8")
+            _git(owned, "add", "src/feature.py")
+            _git(owned, "commit", "-m", "Concurrent implementation change")
+
+        def concurrent_claim(**kwargs):
+            if drift == "before_claim":
+                change_code()
+            result = original_claim(**kwargs)
+            if drift == "after_claim":
+                change_code()
+            return result
+
+        monkeypatch.setattr(workflow_executor, "review_claim_transition", concurrent_claim)
+
     # Act
     review = runner.invoke(workflow.app, ["review", "--agent", "claude", *common])
+
+    if drift is not None:
+        assert review.exit_code != 0, review.output
+        state = materialize_snapshot(mission_dir).work_packages["WP01"]
+        assert state["lane"] == ("for_review" if drift == "before_claim" else "in_review")
+        assert (owned / "src" / "feature.py").read_text(encoding="utf-8") == "VALUE = 99\n"
+        assert _file_bytes(primary) == before
+        assert _git(primary, "rev-parse", "HEAD") == head
+        assert _git(primary, "ls-files", "--stage") == index
+        return
 
     # Assert
     assert review.exit_code == 0, review.output
