@@ -7,9 +7,11 @@ uncatchably killed; that separate boundary remains tracked by #2762.
 
 from __future__ import annotations
 
+import csv
 import json
 import os
 import subprocess
+import sys
 import time
 from collections.abc import Sequence
 from pathlib import Path
@@ -150,7 +152,7 @@ class _WindowsProcess:
 
 
 @pytest.mark.windows_ci
-def test_windows_taskkill_contract_uses_tree_then_force_escalation() -> None:
+def test_windows_taskkill_contract_reaps_console_children_as_a_tree() -> None:
     """The existing ci-windows marker collector discovers this exact node."""
     process = _WindowsProcess()
     commands: list[tuple[str, ...]] = []
@@ -173,11 +175,58 @@ def test_windows_taskkill_contract_uses_tree_then_force_escalation() -> None:
     )
 
     assert commands == [
-        ("taskkill", "/PID", "4242", "/T"),
+        ("taskkill", "/PID", "4242", "/T", "/F"),
         ("taskkill", "/PID", "4242", "/T", "/F"),
     ]
     assert process.terminated is False
     assert process.killed is False
+
+
+def _windows_process_is_running(pid: int) -> bool:
+    result = subprocess.run(
+        ["tasklist", "/FO", "CSV", "/NH", "/FI", f"PID eq {pid}"],
+        check=True, capture_output=True, text=True,
+    )
+    return any(len(row) > 1 and row[1] == str(pid) for row in csv.reader(result.stdout.splitlines()))
+
+
+@pytest.mark.integration
+@pytest.mark.windows_ci
+@pytest.mark.skipif(os.name != "nt", reason="real Windows console-process tree evidence")
+@pytest.mark.parametrize("mode", ["timeout", "cancel"])
+def test_real_windows_interruption_reaps_console_tree(tmp_path: Path, mode: str) -> None:
+    ready = tmp_path / "windows-tree-ready.json"
+    script = (
+        "import json, os, subprocess, sys, time; "
+        "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'], "
+        "stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); "
+        "open(sys.argv[1], 'w').write(json.dumps({'parent': os.getpid(), 'child': child.pid})); "
+        "time.sleep(60)"
+    )
+    pids: dict[str, int] = {}
+
+    def wait_after_ready(process: subprocess.Popen[str], timeout: float) -> tuple[str, str]:
+        if not pids:
+            pids.update(_wait_for_ready(ready))
+            if mode == "cancel":
+                raise KeyboardInterrupt
+        return process.communicate(timeout=timeout)
+
+    try:
+        state, _raw, _error = pre_review_gate._run_raw_command(
+            [sys.executable, "-c", script, str(ready)],
+            repo_root=tmp_path, timeout=1.0, progress_callback=None,
+            monotonic=time.monotonic, wait=wait_after_ready,
+        )
+        expected = pre_review_gate.HeadRunState.TIMED_OUT if mode == "timeout" else pre_review_gate.HeadRunState.CANCELLED
+        assert state is expected
+        assert pids
+        assert not _windows_process_is_running(pids["parent"])
+        assert not _windows_process_is_running(pids["child"])
+    finally:
+        for pid in pids.values():
+            if _windows_process_is_running(pid):
+                subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True, check=False)
 
 
 class _RaceProcess:

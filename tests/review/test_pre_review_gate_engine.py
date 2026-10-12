@@ -629,9 +629,7 @@ def test_windows_signal_targets_owned_descendant_tree(
         windows_tree_kill=_taskkill,
     )
 
-    expected = ("taskkill", "/PID", str(process.pid), "/T")
-    if force:
-        expected += ("/F",)
+    expected = ("taskkill", "/PID", str(process.pid), "/T", "/F")
     assert commands == [expected]
     assert process.terminated is False
     assert process.killed is False
