@@ -17,11 +17,20 @@ from tests.status.test_status_owned_checkout_seam import (
 pytestmark = [pytest.mark.integration, pytest.mark.git_repo]
 
 
+def _add_origin(primary: Path, tmp_path: Path) -> None:
+    origin = tmp_path / "origin.git"
+    _git(tmp_path, "clone", "--bare", str(primary), str(origin))
+    _git(primary, "remote", "add", "origin", str(origin))
+    _git(primary, "fetch", "origin")
+    _git(primary, "branch", "--set-upstream-to", "origin/main", "main")
+
+
 def test_next_issues_the_owned_work_package_without_writing_primary(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Arrange
     primary, owned, mission_dir = _init_owned_mission(tmp_path)
+    _add_origin(primary, tmp_path)
     monkeypatch.chdir(owned)
     primary_before = _file_bytes(primary)
     primary_head = _git(primary, "rev-parse", "HEAD")
