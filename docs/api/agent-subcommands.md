@@ -678,6 +678,12 @@ _Mission lifecycle commands for AI agents_
 
 ## spec-kitty agent mission check-prerequisites
 
+Use `--owned-checkout <registered-path>` with `--mission <slug>` when the planning
+artifacts belong to an explicitly owned linked checkout. Prerequisite validation
+and `--resume-probe` read that declared namespace without writing artifacts or
+changing either checkout. Without the declaration, the primary planning anchor
+is preserved.
+
 ```
  Usage: spec-kitty agent mission check-prerequisites [OPTIONS]
 

@@ -29,7 +29,8 @@ from typing import Annotated, Any, cast
 from specify_cli.cli.console import console
 import typer
 
-from mission_runtime import ActionContextError
+from mission_runtime import ActionContextError, MissionArtifactKind, placement_seam
+from specify_cli.core.paths import effective_root_options
 
 from specify_cli.cli.commands.agent.mission_branch_context import (
     _inject_branch_contract,
@@ -113,7 +114,7 @@ def _mission_created_envelope_problems(created: dict[str, Any]) -> list[str]:
     return problems
 
 
-def _matching_resume_probe_dirs(repo_root: Path, handle: str) -> list[Path]:
+def _matching_resume_probe_dirs(repo_root: Path, handle: str, *, effective_root: Path | None = None) -> list[Path]:
     """Return every canonical or partial scaffold matching ``handle``."""
     from specify_cli.context.mission_resolver import (
         AmbiguousHandleError,
@@ -125,7 +126,7 @@ def _matching_resume_probe_dirs(repo_root: Path, handle: str) -> list[Path]:
     from specify_cli.lanes.branch_naming import mid8_from_slug, strip_numeric_prefix
 
     safe_handle = assert_safe_path_segment(handle)
-    main_root = get_main_repo_root(repo_root)
+    main_root = effective_root if effective_root is not None else get_main_repo_root(repo_root)
     matches: set[Path] = set()
 
     try:
@@ -266,13 +267,13 @@ def _mission_created_snapshot_problems(
     return problems
 
 
-def _build_resume_probe_payload(repo_root: Path, handle: str) -> dict[str, object]:
+def _build_resume_probe_payload(repo_root: Path, handle: str, *, effective_root: Path | None = None) -> dict[str, object]:
     """Return a structured resume result without misclassifying valid history."""
     from specify_cli.core.paths import get_main_repo_root
     from specify_cli.lanes.branch_naming import mid8_from_slug
     from specify_cli.missions._substantive import is_committed, is_substantive
 
-    candidates = _matching_resume_probe_dirs(repo_root, handle)
+    candidates = _matching_resume_probe_dirs(repo_root, handle, **effective_root_options(effective_root))
     if not candidates:
         return {
             "result": "success",
@@ -354,7 +355,7 @@ def _build_resume_probe_payload(repo_root: Path, handle: str) -> dict[str, objec
             "remediation": "Repair or remove the partial scaffold explicitly; do not create through it.",
         }
 
-    main_root = get_main_repo_root(repo_root)
+    main_root = effective_root if effective_root is not None else get_main_repo_root(repo_root)
     spec_is_committed = is_committed(spec_file, main_root)
     mission_type = str(meta["mission_type"])
     return {
@@ -388,7 +389,7 @@ def _read_meta_for_pr_bound(feature_dir: Path) -> dict[str, Any]:
     """
     from specify_cli.mission_metadata import load_meta_or_empty
 
-    return load_meta_or_empty(feature_dir)
+    return cast(dict[str, Any], load_meta_or_empty(feature_dir))
 
 
 def _read_meta_for_emission(feature_dir: Path) -> dict[str, Any] | None:
@@ -401,7 +402,7 @@ def _read_meta_for_emission(feature_dir: Path) -> dict[str, Any] | None:
     """
     from specify_cli.mission_metadata import load_meta
 
-    return load_meta(feature_dir, allow_missing=True, on_malformed="none")
+    return cast(dict[str, Any] | None, load_meta(feature_dir, allow_missing=True, on_malformed="none"))
 
 
 def _emit_check_prerequisites_detection_error(
@@ -412,6 +413,7 @@ def _emit_check_prerequisites_detection_error(
     json_output: bool,
     paths_only: bool,
     include_tasks: bool,
+    effective_root: Path | None = None,
 ) -> None:
     """Emit the existing feature-detection payload for prerequisite checks."""
     command_args: list[str] = []
@@ -430,6 +432,8 @@ def _emit_check_prerequisites_detection_error(
         command_name="check-prerequisites",
         command_args=command_args,
     )
+    if effective_root is not None:
+        payload["error"] = str(detection_error)
     if json_output:
         _emit_json(payload)
         return
@@ -495,6 +499,14 @@ def _emit_check_prerequisites_result(
         console.print(f"   • {warning}")
 
 
+def _owned_prerequisites_directory(repo_root: Path, mission: str | None) -> Path:
+    if not mission or not mission.strip():
+        raise ActionContextError("FEATURE_CONTEXT_UNRESOLVED", "--mission <slug> is required with --owned-checkout")
+    return placement_seam(repo_root, mission.strip(), effective_root=repo_root).read_dir(
+        MissionArtifactKind.PRIMARY_METADATA
+    )
+
+
 def check_prerequisites(
     feature: Annotated[str | None, typer.Option("--mission", help="Mission slug (e.g., '020-my-mission')")] = None,
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON format")] = False,
@@ -511,6 +523,10 @@ def check_prerequisites(
         bool,
         typer.Option("--require-tasks", hidden=True, help="Deprecated alias for --include-tasks"),
     ] = False,
+    owned_checkout: Annotated[
+        Path | None,
+        typer.Option("--owned-checkout", help="Read prerequisites from this validated registered checkout without writing artifacts."),
+    ] = None,
 ) -> None:
     """Validate mission structure and prerequisites.
 
@@ -542,6 +558,13 @@ def check_prerequisites(
             )
             raise typer.Exit(1) from None
 
+        effective_root: Path | None = None
+        if owned_checkout is not None:
+            from specify_cli.cli.commands.agent.tasks_shared import resolve_repo_root_with_owned_checkout
+
+            repo_root = resolve_repo_root_with_owned_checkout(owned_checkout, json_output=json_output)
+            effective_root = repo_root
+
         if resume_probe:
             if not feature or not feature.strip():
                 _emit_console_or_json_error(
@@ -556,7 +579,7 @@ def check_prerequisites(
                 )
                 raise typer.Exit(1) from None
             try:
-                resume_payload = _build_resume_probe_payload(repo_root, feature.strip())
+                resume_payload = _build_resume_probe_payload(repo_root, feature.strip(), **effective_root_options(effective_root))
             except ValueError as exc:
                 _emit_console_or_json_error(json_output=json_output, message=str(exc))
                 raise typer.Exit(1) from None
@@ -589,7 +612,11 @@ def check_prerequisites(
         # single-authority-topology-cleanup mission (#1716 write-surface coherence).
         cwd = Path.cwd().resolve()
         try:
-            feature_dir = _mission._primary_anchored_feature_dir(repo_root, feature)
+            feature_dir = (
+                _owned_prerequisites_directory(repo_root, feature)
+                if effective_root is not None
+                else _mission._primary_anchored_feature_dir(repo_root, feature)
+            )
             if feature_dir is None:
                 feature_dir = _mission._find_feature_directory(
                     repo_root,
@@ -604,6 +631,7 @@ def check_prerequisites(
                 json_output=json_output,
                 paths_only=paths_only,
                 include_tasks=include_tasks,
+                **effective_root_options(effective_root),
             )
             raise typer.Exit(1) from None
 

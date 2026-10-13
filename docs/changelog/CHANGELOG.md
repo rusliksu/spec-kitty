@@ -45,6 +45,7 @@ _The 3.2.6rc5 candidate cycle is open. Entries land here as missions merge._
 ### 🐛 Fixed
 
 - Work packages in an explicitly owned checkout now keep analysis, implementation, review, and completion in that checkout while preserving the primary checkout and global command installation.
+- Planning prerequisite and resume checks accept the same explicit owned checkout, so a mission created there can be analyzed without copying its files to the primary checkout.
 - Locked AnyIO and urllib3 dependencies use patched versions required by the dependency audit.
 - Baseline and review commands on Windows can use native configured argv with the existing syntax guards and literal placeholder handling.
 - Interrupted Windows validation commands force-stop only their owned console process tree before reaping, so a rejected graceful termination cannot leave children using a temporary checkout.
