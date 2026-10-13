@@ -52,6 +52,39 @@ If the WP depends on another WP, task finalization will already have assigned it
 
 ## Step 3: Work in the Resolved Worktree
 
+### Use an existing owned checkout
+
+For a single-branch mission already committed in a registered Git checkout,
+pass the same explicit checkout to the loop and the action commands:
+
+```bash
+spec-kitty next --agent <agent> --mission <slug> --owned-checkout /path/to/checkout
+spec-kitty agent mission record-analysis --mission <slug> --input-file analysis.md --owned-checkout /path/to/checkout
+spec-kitty agent action implement WP01 --agent <agent> --mission <slug> --owned-checkout /path/to/checkout
+```
+
+The checkout must belong to the current repository, remain on the mission's
+target branch, and contain its committed planning artifacts. Dependencies,
+analysis freshness, branch protection, actor ownership, and review checks still
+apply. This path reuses the checkout; it does not allocate a lane worktree or
+refresh user-global commands and runtime assets.
+Project schema and version-pin checks run against the declared checkout.
+
+Keep `--owned-checkout` on the completion commands printed in the prompt:
+
+```bash
+spec-kitty agent tasks mark-status T001 --status done --mission <slug> --owned-checkout /path/to/checkout
+spec-kitty agent tasks move-task WP01 --to for_review --auto-commit --mission <slug> --owned-checkout /path/to/checkout
+spec-kitty agent action review WP01 --agent <reviewer> --mission <slug> --owned-checkout /path/to/checkout
+```
+
+Commit any remaining command-generated bookkeeping in this checkout before the
+next claim. Dirty or staged planning files are refused rather than
+included in a status commit. Review commands use the proven base and the
+implementation HEAD captured before the review claim. If the branch or
+implementation changes during that claim, rerun review without reverting the
+concurrent changes.
+
 In your terminal:
 
 ```bash

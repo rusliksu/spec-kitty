@@ -8097,6 +8097,7 @@ pages:
     - {slug: "step-1-get-the-wp-prompt", text: "Step 1: Get the WP Prompt", level: 2}
     - {slug: "step-2-create-or-resolve-the-workspace", text: "Step 2: Create or Resolve the Workspace", level: 2}
     - {slug: "step-3-work-in-the-resolved-worktree", text: "Step 3: Work in the Resolved Worktree", level: 2}
+    - {slug: "use-an-existing-owned-checkout", text: "Use an existing owned checkout", level: 3}
     - {slug: "step-4-mark-the-wp-ready-for-review", text: "Step 4: Mark the WP Ready for Review", level: 2}
     - {slug: "what-happens", text: "What Happens", level: 2}
     - {slug: "troubleshooting", text: "Troubleshooting", level: 2}

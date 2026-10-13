@@ -7,6 +7,8 @@ creation stays with the caller; durable lane transitions live here.
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
@@ -111,6 +113,7 @@ def start_implementation_status(
     allow_rework: bool = False,
     rework_reason: str = "Re-implementing after review feedback",
     annotation_delta: WPInnerStateDelta | None = None,
+    effective_root: Path | None = None,
 ) -> WorkPackageStartResult:
     """Idempotently move a WP into ``in_progress`` for an implementation actor."""
     # Lazy import breaks the status↔coordination cycle (status/__init__ imports
@@ -123,7 +126,7 @@ def start_implementation_status(
         read_current_wp_state_transactional,
     )
 
-    feature_dir = canonicalize_feature_dir(feature_dir)
+    feature_dir = canonicalize_feature_dir(feature_dir, **effective_root_options(effective_root))
     lock_root = _repo_root_for_lock(feature_dir, repo_root)
 
     with feature_status_lock(lock_root, mission_slug):
@@ -132,6 +135,7 @@ def start_implementation_status(
             mission_slug=mission_slug,
             wp_id=wp_id,
             repo_root=repo_root,
+            **effective_root_options(effective_root),
         )
         current_lane = current.lane
         current_actor = current.actor
@@ -153,6 +157,7 @@ def start_implementation_status(
                         execution_mode=execution_mode,
                         repo_root=repo_root,
                         policy_metadata=policy_metadata,
+                        **effective_root_options(effective_root),
                     ),
                     TransitionRequest(
                         feature_dir=feature_dir,
@@ -165,6 +170,7 @@ def start_implementation_status(
                         repo_root=repo_root,
                         policy_metadata=policy_metadata,
                         annotation_delta=annotation_delta,
+                        **effective_root_options(effective_root),
                     ),
                 ],
                 ensure_sync_daemon=ensure_sync_daemon,
@@ -195,6 +201,7 @@ def start_implementation_status(
                         repo_root=repo_root,
                         policy_metadata=policy_metadata,
                         annotation_delta=annotation_delta,
+                        **effective_root_options(effective_root),
                     )
                 ],
                 ensure_sync_daemon=ensure_sync_daemon,
@@ -229,6 +236,7 @@ def start_implementation_status(
                     repo_root=repo_root,
                     policy_metadata=policy_metadata,
                     annotation_delta=annotation_delta,
+                    **effective_root_options(effective_root),
                 ),
                 ensure_sync_daemon=ensure_sync_daemon,
                 sync_dossier=sync_dossier,
@@ -259,6 +267,7 @@ def start_review_status(
     sync_dossier: bool = True,
     review_ref: str | None = "action-review-claim",
     annotation_delta: WPInnerStateDelta | None = None,
+    effective_root: Path | None = None,
 ) -> WorkPackageStartResult:
     """Idempotently move a WP into ``in_review`` for a reviewer actor."""
     # Lazy import breaks the status↔coordination cycle (see start_implementation_status).
@@ -267,7 +276,7 @@ def start_review_status(
         read_current_wp_state_transactional,
     )
 
-    feature_dir = canonicalize_feature_dir(feature_dir)
+    feature_dir = canonicalize_feature_dir(feature_dir, **effective_root_options(effective_root))
     lock_root = _repo_root_for_lock(feature_dir, repo_root)
 
     with feature_status_lock(lock_root, mission_slug):
@@ -276,6 +285,7 @@ def start_review_status(
             mission_slug=mission_slug,
             wp_id=wp_id,
             repo_root=repo_root,
+            **effective_root_options(effective_root),
         )
         current_lane = current.lane
         current_actor = current.actor
@@ -296,6 +306,7 @@ def start_review_status(
                     repo_root=repo_root,
                     policy_metadata=policy_metadata,
                     annotation_delta=annotation_delta,
+                    **effective_root_options(effective_root),
                 ),
                 ensure_sync_daemon=ensure_sync_daemon,
                 sync_dossier=sync_dossier,

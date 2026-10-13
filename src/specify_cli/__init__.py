@@ -123,8 +123,11 @@ def main_callback(
     if _is_doctor_restart_daemon_invocation(sys.argv):
         return
 
-    next_fast_path = _is_next_invocation(sys.argv)
-    if not next_fast_path:
+    project_local_path = _is_next_invocation(sys.argv) or any(
+        arg == "--owned-checkout" or arg.startswith("--owned-checkout=")
+        for arg in sys.argv[1:]
+    )
+    if not project_local_path:
         root_callback(ctx)
 
         # Keep runtime and global slash commands current before project gates.
@@ -144,7 +147,15 @@ def _run_startup_project_gates(ctx: typer.Context) -> None:
     from specify_cli.runtime.bootstrap import check_version_pin
 
     # F-Pin-001 / 1A-16: Warn on runtime.pin_version for all project invocations.
-    project_root = locate_project_root()
+    import sys
+
+    owned_checkout = _owned_checkout_argument(sys.argv)
+    if owned_checkout is None:
+        project_root = locate_project_root()
+    else:
+        from specify_cli.cli.commands.agent.tasks_shared import resolve_repo_root_with_owned_checkout
+
+        project_root = resolve_repo_root_with_owned_checkout(owned_checkout, json_output="--json" in sys.argv)
     if project_root is not None:
         check_version_pin(project_root)
 
@@ -154,6 +165,22 @@ def _run_startup_project_gates(ctx: typer.Context) -> None:
         from specify_cli.migration.gate import check_schema_version
 
         check_schema_version(project_root, invoked_subcommand=ctx.invoked_subcommand)
+
+
+def _owned_checkout_argument(argv: list[str]) -> Path | None:
+    """Read the declared checkout without modifying process or project state."""
+    declared: Path | None = None
+    for index, arg in enumerate(argv[1:], start=1):
+        if arg == "--owned-checkout":
+            value = argv[index + 1] if index + 1 < len(argv) else ""
+        elif arg.startswith("--owned-checkout="):
+            value = arg.partition("=")[2]
+        else:
+            continue
+        if not value or value.startswith("--"):
+            raise typer.BadParameter("--owned-checkout requires a path", param_hint="--owned-checkout")
+        declared = Path(value)
+    return declared
 
 
 def _build_app() -> typer.Typer:

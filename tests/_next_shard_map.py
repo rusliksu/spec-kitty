@@ -35,6 +35,7 @@ _NEXT_SHARD_1_FILES: tuple[str, ...] = (
     "tests/next/test_internal_runtime_coverage.py",
     "tests/next/test_next_claimable_payload.py",
     "tests/next/test_occurrence_gate_next_loop.py",
+    "tests/next/test_owned_implement_next_integration.py",
     "tests/next/test_prompt_file_invariant.py",
 )
 _NEXT_SHARD_2_FILES: tuple[str, ...] = (
@@ -42,6 +43,7 @@ _NEXT_SHARD_2_FILES: tuple[str, ...] = (
     "tests/next/test_internal_runtime_parity.py",
     "tests/next/test_mission_run_back_reference.py",
     "tests/next/test_next_command_integration.py",
+    "tests/next/test_owned_prompt_governance_integration.py",
     "tests/next/test_prompt_builder_unit.py",
     "tests/next/test_runtime_bridge_unit.py",
 )
@@ -50,6 +52,7 @@ _NEXT_SHARD_3_FILES: tuple[str, ...] = (
     "tests/next/test_internal_runtime_engine_coverage.py",
     "tests/next/test_next_package_unit.py",
     "tests/next/test_next_replay_parity_integration.py",
+    "tests/next/test_owned_prompt_contract_unit.py",
     "tests/next/test_plan_mission_runtime.py",
     "tests/next/test_prompt_step_schema_extensions.py",
     "tests/next/test_query_mode_unit.py",

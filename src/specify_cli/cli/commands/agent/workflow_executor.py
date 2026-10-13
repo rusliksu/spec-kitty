@@ -34,6 +34,10 @@ load time (``workflow.py`` imports this module for its re-export shims).
 
 from __future__ import annotations
 
+import shlex
+
+from specify_cli.core.paths import effective_root_options
+
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -114,7 +118,10 @@ def _claim_policy_metadata(shell_pid: int, agent: str) -> dict[str, Any]:
     return metadata
 
 
-def _locate_wp(repo_root: Path, mission_slug: str, normalized_wp_id: str) -> WorkPackage:
+def _locate_wp(repo_root: Path, mission_slug: str, normalized_wp_id: str,
+    *,
+    effective_root: Path | None = None,
+) -> WorkPackage:
     """Typed accessor for ``workflow.locate_work_package`` (#2675 T054).
 
     ``_wf()`` returns ``ModuleType``, so ``.locate_work_package(...)`` leaks
@@ -124,7 +131,7 @@ def _locate_wp(repo_root: Path, mission_slug: str, normalized_wp_id: str) -> Wor
     """
     return cast(
         "WorkPackage",
-        _wf().locate_work_package(repo_root, mission_slug, normalized_wp_id),
+        _wf().locate_work_package(repo_root, mission_slug, normalized_wp_id, **effective_root_options(effective_root)),
     )
 
 
@@ -218,6 +225,7 @@ def commit_workflow_change(
     pre_emit_event_size: int,
     pre_emit_status_bytes: bytes | None,
     auto_rebase_lane_after_commit: bool = False,
+    effective_root: Path | None = None,
 ) -> None:
     """Commit a workflow change with atomic event-log rollback on failure.
 
@@ -251,10 +259,6 @@ def commit_workflow_change(
     # ``safe_commit`` fallback below even for a genuine coord-topology mission.
     # Anchor this read on the primary surface via the same kind-aware seam
     # every other identity read in this module already uses.
-    primary_meta_dir = w._resolve_workflow_read_dir(
-        repo_root=repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.PRIMARY_METADATA
-    )
-    coord_branch, mission_id, mid8 = w._load_coord_branch_meta(primary_meta_dir)
     events_path = feature_dir / w._STATUS_EVENTS_FILENAME
     status_path = feature_dir / w._STATUS_FILENAME
     rollback_ctx = _CommitFailureContext(
@@ -270,9 +274,22 @@ def commit_workflow_change(
     # the seam's ref-only CommitTarget does not carry. But the legacy leaf's
     # DESTINATION ref is threaded from this ONE resolution rather than the
     # raw, un-seam-resolved ``target_branch`` parameter (C-001).
-    placement = w._resolve_workflow_placement(
-        repo_root=repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.STATUS_STATE
-    )
+    try:
+        primary_meta_dir = w._resolve_workflow_read_dir(
+            repo_root=repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.PRIMARY_METADATA,
+            **effective_root_options(effective_root),
+        )
+        coord_branch, mission_id, mid8 = w._load_coord_branch_meta(primary_meta_dir)
+        placement = w._resolve_workflow_placement(
+            repo_root=repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.STATUS_STATE,
+            **effective_root_options(effective_root),
+        )
+    except Exception as exc:
+        _handle_commit_failure(
+            exc=exc, receipt_ref=target_branch, message=message, wp_id=wp_id,
+            rollback=rollback_ctx, error_prefix="Error: Failed to resolve workflow commit placement",
+            include_recovery_note=True,
+        )
     if placement.ref != target_branch:
         # Diagnostic only (never authoritative): the seam is the single
         # placement authority (C-001); ``target_branch`` is whatever ref the
@@ -354,6 +371,10 @@ def commit_workflow_change(
     # committed" no-op over gitignored ``.worktrees/`` paths). Fail loud instead;
     # never route coord paths through the legacy repo_root leaf.
     if coord_branch:
+        w._restore_status_artifacts(
+            events_path=events_path, pre_emit_event_size=pre_emit_event_size,
+            status_path=status_path, pre_emit_status_bytes=pre_emit_status_bytes,
+        )
         print(
             f"Error: coord-commit misroute prevented for {wp_id}: mission "
             f"{mission_slug!r} declares coordination_branch {str(coord_branch)!r} but "
@@ -524,8 +545,25 @@ def write_prompt_to_file(
 # ---------------------------------------------------------------------------
 
 
+def implement_owned_checkout_preflight(repo_root: Path, mission_slug: str) -> None:
+    """Refuse dirty mission artifacts before an owned status claim can commit them."""
+    from specify_cli.cli.commands.implement_cores import _feature_dir_status_entries
+    from specify_cli.git.commit_helpers import assert_not_protected_branch
+
+    assert_not_protected_branch(repo_root, operation="start work package")
+    feature_dir = _wf()._resolve_workflow_read_dir(
+        repo_root=repo_root, mission_slug=mission_slug,
+        kind=MissionArtifactKind.WORK_PACKAGE_TASK, effective_root=repo_root,
+    )
+    if _feature_dir_status_entries(repo_root, feature_dir):
+        raise RuntimeError("Uncommitted planning artifacts in the owned checkout; commit your changes before claiming work.")
+
+
 def implement_sparse_checkout_preflight(
     repo_root: Path, mission_slug: str, agent: str | None, allow_sparse_checkout: bool
+,
+    *,
+    effective_root: Path | None = None,
 ) -> None:
     """WP05/T021 FR-007: sparse-checkout preflight, run before any worktree
     creation or state change. Raises ``typer.Exit(1)`` on refusal.
@@ -549,7 +587,7 @@ def implement_sparse_checkout_preflight(
         # is a PRIMARY-partition kind, so it short-circuits to PRIMARY before any
         # coord probe and never lands on that husk.
         identity = resolve_mission_identity(
-            placement_seam(repo_root, mission_slug).read_dir(MissionArtifactKind.PRIMARY_METADATA)
+            placement_seam(repo_root, mission_slug, **effective_root_options(effective_root)).read_dir(MissionArtifactKind.PRIMARY_METADATA)
         )
         mission_id_for_preflight = identity.mission_id
     except Exception:  # noqa: BLE001 — meta.json may not exist for legacy missions
@@ -570,10 +608,13 @@ def implement_sparse_checkout_preflight(
         raise typer.Exit(1) from exc
 
 
-def implement_locate_wp(repo_root: Path, mission_slug: str, normalized_wp_id: str) -> WorkPackage:
+def implement_locate_wp(repo_root: Path, mission_slug: str, normalized_wp_id: str,
+    *,
+    effective_root: Path | None = None,
+) -> WorkPackage:
     """Find the WP file, translating the canonical-status-missing case."""
     try:
-        return _locate_wp(repo_root, mission_slug, normalized_wp_id)
+        return _locate_wp(repo_root, mission_slug, normalized_wp_id, **effective_root_options(effective_root))
     except RuntimeError as e:
         if is_missing_canonical_status_error(e):
             print(f"Error: {missing_canonical_status_message(normalized_wp_id, mission_slug)}")
@@ -615,6 +656,9 @@ def implement_check_wp_charter_precondition(main_repo_root: Path, wp: WorkPackag
 
 def implement_check_dependency_gate(
     main_repo_root: Path, mission_slug: str, normalized_wp_id: str, wp_meta: WPMetadata
+,
+    *,
+    effective_root: Path | None = None,
 ) -> None:
     """Gate the not-yet-started claim transition on dependency readiness.
 
@@ -630,7 +674,7 @@ def implement_check_dependency_gate(
     from specify_cli.status import resolve_lane_alias as dep_resolve_alias
 
     w = _wf()
-    dependency_feature_dir = w._canonical_status_feature_dir(main_repo_root, mission_slug)
+    dependency_feature_dir = w._canonical_status_feature_dir(main_repo_root, mission_slug, **effective_root_options(effective_root))
     dependency_snapshot = dep_reduce_events(dep_read_events(dependency_feature_dir))
     dependency_lanes = {
         wp_id: state.get("lane", Lane.PLANNED) for wp_id, state in dependency_snapshot.work_packages.items()
@@ -670,6 +714,8 @@ def implement_resolve_feedback_and_gate(
     mission_slug: str,
     normalized_wp_id: str,
     wp: WorkPackage,
+    *,
+    effective_root: Path | None = None,
 ) -> tuple[Path, bool, str | None, Path | None, str | None]:
     """Resolve the review-feedback context and enforce the analysis-report gate.
 
@@ -684,12 +730,14 @@ def implement_resolve_feedback_and_gate(
     # fix-mode and baseline-commit sites) — routes through the kind-aware
     # seam instead of the kind-blind coord husk (NFR-001 / Directive-041).
     feature_dir = w._resolve_workflow_read_dir(
-        repo_root=main_repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK
+        repo_root=main_repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK,
+        **effective_root_options(effective_root),
     )
     has_feedback, review_feedback_ref, review_feedback_file, review_feedback_source = resolve_review_feedback_context(
         feature_dir=feature_dir,
         wp_id=normalized_wp_id,
         wp_frontmatter=getattr(wp, "frontmatter", "") or "",
+        **effective_root_options(effective_root),
     )
 
     if review_feedback_source == "canonical" and review_feedback_file is None:
@@ -700,7 +748,7 @@ def implement_resolve_feedback_and_gate(
     # #1989 (read-side companion to WP01): read the report from the PRIMARY
     # checkout where record-analysis writes it (see _analysis_report_gate_dir).
     w._require_current_analysis_report(
-        w._analysis_report_gate_dir(main_repo_root, mission_slug),
+        w._analysis_report_gate_dir(main_repo_root, mission_slug, **effective_root_options(effective_root)),
         main_repo_root,
         mission_slug,
     )
@@ -708,7 +756,10 @@ def implement_resolve_feedback_and_gate(
     return feature_dir, has_feedback, review_feedback_ref, review_feedback_file, review_feedback_source
 
 
-def implement_resolve_mission_type(repo_root: Path, mission_slug: str) -> tuple[str, str | None]:
+def implement_resolve_mission_type(repo_root: Path, mission_slug: str,
+    *,
+    effective_root: Path | None = None,
+) -> tuple[str, str | None]:
     """Resolve the mission type + (for research missions) the deliverables path.
 
     FR-005 (#2186): the mission TYPE is a meta.json read and meta.json lives
@@ -720,7 +771,7 @@ def implement_resolve_mission_type(repo_root: Path, mission_slug: str) -> tuple[
     instead — PRIMARY_METADATA is a PRIMARY-partition kind, so it resolves
     PRIMARY for every topology without ever consulting that husk.
     """
-    mission_type_dir = placement_seam(repo_root, mission_slug).read_dir(MissionArtifactKind.PRIMARY_METADATA)
+    mission_type_dir = placement_seam(repo_root, mission_slug, **effective_root_options(effective_root)).read_dir(MissionArtifactKind.PRIMARY_METADATA)
     mission_type = get_mission_type(mission_type_dir)
     deliverables_path = None
     if mission_type == MISSION_TYPE_RESEARCH:
@@ -751,6 +802,7 @@ def _implement_start_claim(
     status_execution_mode: str,
     workspace_path: Path,
     resolved_binding: ResolvedBinding | None,
+    effective_root: Path | None = None,
 ) -> str:
     """Emit the claim status event, guarded by the runtime operational-context
     precondition. Returns ``shell_pid``. Raises ``typer.Exit(1)`` on
@@ -822,6 +874,7 @@ def _implement_start_claim(
                 if resolved_binding is not None
                 else None
             ),
+            **effective_root_options(effective_root),
         )
     except WorkPackageClaimConflict as exc:
         print(f"Error: {exc}")
@@ -844,6 +897,7 @@ def _implement_write_claim_and_commit(
     target_branch: str,
     pre_emit_event_size: int,
     pre_emit_status_bytes: bytes | None,
+    effective_root: Path | None = None,
 ) -> None:
     """Auto-commit the claim's event-log/status artifacts (enables instant
     status sync). The WP file is not mutated for the claim (byte-stable, SC-004);
@@ -879,17 +933,18 @@ def _implement_write_claim_and_commit(
         feature_dir=feature_dir,
         mission_slug=mission_slug,
         target_branch=target_branch,
-        paths=[actual_wp_path, *status_artifacts],
+        paths=status_artifacts if effective_root is not None else [actual_wp_path, *status_artifacts],
         message=f"chore: Start {normalized_wp_id} implementation [{agent}]",
         operation=f"planned -> claimed for {normalized_wp_id}",
         wp_id=normalized_wp_id,
         pre_emit_event_size=pre_emit_event_size,
         pre_emit_status_bytes=pre_emit_status_bytes,
         auto_rebase_lane_after_commit=True,
+        **effective_root_options(effective_root),
     )
 
 
-def _implement_trigger_dossier_sync(repo_root: Path, mission_slug: str) -> None:
+def _implement_trigger_dossier_sync(repo_root: Path, mission_slug: str, *, effective_root: Path | None = None) -> None:
     """Fire-and-forget dossier sync after a claim commit."""
     w = _wf()
     try:
@@ -902,7 +957,8 @@ def _implement_trigger_dossier_sync(repo_root: Path, mission_slug: str) -> None:
         # to resolve via the kind-blind husk) — routed via the
         # kind-aware seam (NFR-001 / Directive-041).
         impl_feature_dir = w._resolve_workflow_read_dir(
-            repo_root=repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.TASKS_INDEX
+            repo_root=repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.TASKS_INDEX,
+            **effective_root_options(effective_root),
         )
         trigger_feature_dossier_sync_if_enabled(impl_feature_dir, mission_slug, repo_root)
     except Exception as dossier_sync_exc:  # noqa: BLE001 — best-effort fire-and-forget
@@ -921,6 +977,7 @@ def _implement_emit_resume_refresh(
     actor: str,
     repo_root: Path,
     resolved_binding: ResolvedBinding | None = None,
+    effective_root: Path | None = None,
 ) -> None:
     """WP07/T029a (FR-004/US3): refresh ``shell_pid`` on resume/re-claim of an
     already ``in_progress`` WP via an off-axis ``InnerStateChanged``
@@ -957,6 +1014,7 @@ def _implement_emit_resume_refresh(
         actor=actor,
         mission_slug=mission_slug,
         repo_root=repo_root,
+        **effective_root_options(effective_root),
     )
 
 
@@ -980,6 +1038,7 @@ def implement_claim_transition(
     workspace_path: Path,
     status_execution_mode: str,
     resolved_binding: ResolvedBinding | None = None,
+    effective_root: Path | None = None,
 ) -> ImplementClaimResult:
     """Move a WP to ``in_progress`` (claiming it) if not already there.
 
@@ -1001,7 +1060,7 @@ def implement_claim_transition(
 
     # Move to in_progress lane if not already there, and ensure agent is recorded
     # Lane is event-log-only; read from canonical event log (no frontmatter fallback)
-    wf_feature_dir = w._canonical_status_feature_dir(main_repo_root, mission_slug)
+    wf_feature_dir = w._canonical_status_feature_dir(main_repo_root, mission_slug, **effective_root_options(effective_root))
     wf_events = wf_read_events(wf_feature_dir)
     wf_snapshot = wf_reduce(wf_events) if wf_events else None
     wf_has_canonical = wf_snapshot is not None and normalized_wp_id in wf_snapshot.work_packages
@@ -1014,7 +1073,7 @@ def implement_claim_transition(
     logger.debug("WP agent assignment: tool=%s model=%s", wp_agent_assignment.tool, wp_agent_assignment.model)
     needs_agent_assignment = wp_agent_assignment.tool == "unknown"
     wp_slug = wp.path.stem
-    fix_mode_active = has_prior_rejection(feature_dir, wp_slug, normalized_wp_id)
+    fix_mode_active = has_prior_rejection(feature_dir, wp_slug, normalized_wp_id, **effective_root_options(effective_root))
 
     events_path_pre = wf_feature_dir / w._STATUS_EVENTS_FILENAME
     status_path_pre = wf_feature_dir / w._STATUS_FILENAME
@@ -1045,6 +1104,7 @@ def implement_claim_transition(
             status_execution_mode=status_execution_mode,
             workspace_path=workspace_path,
             resolved_binding=resolved_binding,
+            **effective_root_options(effective_root),
         )
 
         if current_lane == Lane.IN_PROGRESS:
@@ -1055,6 +1115,7 @@ def implement_claim_transition(
                 actor=agent or wp_agent_assignment.tool or "unknown",
                 resolved_binding=resolved_binding,
                 repo_root=main_repo_root,
+                **effective_root_options(effective_root),
             )
         _implement_write_claim_and_commit(
             wp=wp,
@@ -1066,14 +1127,15 @@ def implement_claim_transition(
             target_branch=target_branch,
             pre_emit_event_size=pre_emit_event_size,
             pre_emit_status_bytes=pre_emit_status_bytes,
+            **effective_root_options(effective_root),
         )
 
         print(f"✓ Claimed {normalized_wp_id} (agent: {agent}, PID: {shell_pid}, target: {target_branch})")
 
-        _implement_trigger_dossier_sync(repo_root, mission_slug)
+        _implement_trigger_dossier_sync(repo_root, mission_slug, **effective_root_options(effective_root))
 
         # Reload to get updated content
-        wp = _locate_wp(repo_root, mission_slug, normalized_wp_id)
+        wp = _locate_wp(repo_root, mission_slug, normalized_wp_id, **effective_root_options(effective_root))
     else:
         print(f"⚠️  {normalized_wp_id} is already in lane: {current_lane}. Action implement will not move it to in_progress.")
         _implement_emit_resume_refresh(
@@ -1083,6 +1145,7 @@ def implement_claim_transition(
             actor=agent or wp_agent_assignment.tool or "unknown",
             repo_root=main_repo_root,
             resolved_binding=resolved_binding,
+            **effective_root_options(effective_root),
         )
         status_artifacts = [path.resolve() for path in w._collect_status_artifacts(wf_feature_dir)]
         w._commit_workflow_change(
@@ -1090,13 +1153,14 @@ def implement_claim_transition(
             feature_dir=wf_feature_dir,
             mission_slug=mission_slug,
             target_branch=target_branch,
-            paths=[wp.path.resolve(), *status_artifacts],
+            paths=status_artifacts if effective_root is not None else [wp.path.resolve(), *status_artifacts],
             message=f"chore: Refresh {normalized_wp_id} implementation liveness",
             operation=f"refresh implementation liveness for {normalized_wp_id}",
             wp_id=normalized_wp_id,
             pre_emit_event_size=pre_emit_event_size,
             pre_emit_status_bytes=pre_emit_status_bytes,
             auto_rebase_lane_after_commit=True,
+            **effective_root_options(effective_root),
         )
 
     return ImplementClaimResult(
@@ -1119,6 +1183,7 @@ def implement_try_render_fix_mode_prompt(
     mission_slug: str,
     normalized_wp_id: str,
     repo_root: Path,
+    effective_root: Path | None = None,
 ) -> Path | None:
     """Render the focused fix-mode prompt when the WP was rejected and has
     review-cycle artifacts. The fix-prompt completely replaces the full WP
@@ -1150,7 +1215,7 @@ def implement_try_render_fix_mode_prompt(
         # review``). This function's own ``.from_file``/``.latest`` calls
         # below remain content/cycle-number loaders (squad #1 — KEPT, not
         # verdict readers), unaffected by this directory-resolution fix.
-        sub_artifact_dir = _review_cycle_wp_dir(repo_root, mission_slug, wp_slug)
+        sub_artifact_dir = _review_cycle_wp_dir(repo_root, mission_slug, wp_slug, **effective_root_options(effective_root))
         # Declared up front (#2675 T054): ``.from_file(...)`` returns a
         # non-Optional ``ReviewCycleArtifact`` while ``.latest(...)`` returns
         # ``ReviewCycleArtifact | None`` -- without this explicit annotation
@@ -1175,6 +1240,7 @@ def implement_try_render_fix_mode_prompt(
             worktree_path=workspace_path,
             mission_slug=mission_slug,
             wp_id=normalized_wp_id,
+            **effective_root_options(effective_root),
         )
         fix_prompt_file = write_prompt_to_file("implement", mission_slug, normalized_wp_id, fix_prompt_text, repo_root=repo_root)
         print()
@@ -1227,6 +1293,7 @@ def implement_capture_baseline(
     feature_dir: Path,
     wp_slug: str,
     main_repo_root: Path,
+    effective_root: Path | None = None,
 ) -> None:
     """Capture (one-time, cached) baseline test results before the agent
     starts coding, and best-effort commit the baseline artifact."""
@@ -1294,6 +1361,7 @@ def implement_capture_baseline(
                     repo_root=main_repo_root,
                     mission_slug=mission_slug,
                     kind=MissionArtifactKind.WORK_PACKAGE_TASK,
+                    **effective_root_options(effective_root),
                 )
                 w.safe_commit(
                     repo_root=main_repo_root,
@@ -1334,8 +1402,10 @@ def build_implement_prompt_lines(
     review_feedback_file: Path | None,
     mission_type: str,
     deliverables_path: str | None,
+    effective_root: Path | None = None,
 ) -> list[str]:
     """Assemble the full ``IMPLEMENT: <wp>`` prompt body."""
+    root_option = f" --owned-checkout {shlex.quote(str(effective_root))}" if effective_root is not None else ""
     lines: list[str] = []
     lines.append("=" * 80)
     lines.append(f"IMPLEMENT: {normalized_wp_id}")
@@ -1380,12 +1450,12 @@ def build_implement_prompt_lines(
     lines.append(f'     git commit -m "feat({normalized_wp_id}): <brief description>"')
     lines.append("     git log -1 --oneline  # Verify commit succeeded")
     lines.append("  2. Mark all subtasks as done:")
-    lines.append(f"     spec-kitty agent tasks mark-status {subtask_cmd} --status done --mission {mission_slug}")
+    lines.append(f"     spec-kitty agent tasks mark-status {subtask_cmd} --status done --mission {mission_slug}{root_option}")
     lines.append("  3. Move WP to review:")
-    lines.append(f'     spec-kitty agent tasks move-task {normalized_wp_id} --to for_review --mission {mission_slug} --note "Ready for review"')
+    lines.append(f'     spec-kitty agent tasks move-task {normalized_wp_id} --to for_review --mission {mission_slug} --note "Ready for review"{root_option}')
     lines.append("")
     lines.append("✗ Blocked or cannot complete:")
-    lines.append(f'  spec-kitty agent tasks add-history {normalized_wp_id} --mission {mission_slug} --note "Blocked: <reason>"')
+    lines.append(f'  spec-kitty agent tasks add-history {normalized_wp_id} --mission {mission_slug} --note "Blocked: <reason>"{root_option}')
     lines.append("=" * 80)
     lines.append("")
     lines.append("📍 WORKING DIRECTORY:")
@@ -1458,12 +1528,15 @@ def build_implement_prompt_lines(
     lines.append("      git log -1 --oneline  # Verify commit succeeded")
     lines.append("      (Use fix: for bugs, chore: for maintenance, docs: for documentation)")
     lines.append("   2. Mark all subtasks as done:")
-    lines.append(f"      spec-kitty agent tasks mark-status {subtask_cmd} --status done --mission {mission_slug}")
+    lines.append(f"      spec-kitty agent tasks mark-status {subtask_cmd} --status done --mission {mission_slug}{root_option}")
     lines.append("   3. Move WP to review (will check for uncommitted changes):")
-    lines.append(f'      spec-kitty agent tasks move-task {normalized_wp_id} --to for_review --mission {mission_slug} --note "Ready for review: <summary>"')
+    lines.append(
+        f'      spec-kitty agent tasks move-task {normalized_wp_id} --to for_review '
+        f'--mission {mission_slug} --note "Ready for review: <summary>"{root_option}'
+    )
     lines.append("")
     lines.append("⚠️  Blocked or cannot complete:")
-    lines.append(f'   spec-kitty agent tasks add-history {normalized_wp_id} --mission {mission_slug} --note "Blocked: <reason>"')
+    lines.append(f'   spec-kitty agent tasks add-history {normalized_wp_id} --mission {mission_slug} --note "Blocked: <reason>"{root_option}')
     lines.append("")
     lines.append("⚠️  NOTE: The move-task command will FAIL if you have uncommitted changes!")
     lines.append("     Commit all implementation files BEFORE moving to for_review.")
@@ -1485,9 +1558,11 @@ def implement_finalize_and_print(
     mission_type: str,
     deliverables_path: str | None,
     subtask_cmd: str,
+    effective_root: Path | None = None,
 ) -> None:
     """Write the full prompt to its scoped tmp file and print the concise
     stdout summary directing the agent to read it."""
+    root_option = f" --owned-checkout {shlex.quote(str(effective_root))}" if effective_root is not None else ""
     full_content = "\n".join(prompt_lines)
     prompt_file = write_prompt_to_file("implement", mission_slug, normalized_wp_id, full_content, repo_root=repo_root)
 
@@ -1514,8 +1589,8 @@ def implement_finalize_and_print(
     print()
     print("After implementation, run:")
     print(f'  1. git status && git add <your-files> && git commit -m "feat({normalized_wp_id}): <description>"')
-    print(f"  2. spec-kitty agent tasks mark-status {subtask_cmd} --status done --mission {mission_slug}")
-    print(f'  3. spec-kitty agent tasks move-task {normalized_wp_id} --to for_review --mission {mission_slug} --note "Ready for review"')
+    print(f"  2. spec-kitty agent tasks mark-status {subtask_cmd} --status done --mission {mission_slug}{root_option}")
+    print(f'  3. spec-kitty agent tasks move-task {normalized_wp_id} --to for_review --mission {mission_slug} --note "Ready for review"{root_option}')
     print("     (Pre-flight check will verify no uncommitted changes)")
 
 
@@ -1537,7 +1612,9 @@ class ReviewLaneContext:
 
 
 def review_resolve_wp_and_lane_gate(
-    repo_root: Path, main_repo_root: Path, mission_slug: str, normalized_wp_id: str
+    repo_root: Path, main_repo_root: Path, mission_slug: str, normalized_wp_id: str,
+    *,
+    effective_root: Path | None = None,
 ) -> ReviewLaneContext:
     """Load the WP and enforce the "must be for_review (or review-claimed)" gate."""
     from specify_cli.cli.commands.agent.workflow_cores import event_is_review_claim
@@ -1548,7 +1625,7 @@ def review_resolve_wp_and_lane_gate(
     w = _wf()
 
     try:
-        wp = _locate_wp(repo_root, mission_slug, normalized_wp_id)
+        wp = _locate_wp(repo_root, mission_slug, normalized_wp_id, **effective_root_options(effective_root))
     except RuntimeError as e:
         if is_missing_canonical_status_error(e):
             raise RuntimeError(missing_canonical_status_message(normalized_wp_id, mission_slug)) from e
@@ -1557,7 +1634,7 @@ def review_resolve_wp_and_lane_gate(
     # Move to in_progress lane if not already there.
     # Explicit WP review requests must target for_review (or already review-claimed in_progress).
     # Lane is event-log-only; read from canonical event log (no frontmatter fallback)
-    feature_dir = w._canonical_status_feature_dir(main_repo_root, mission_slug)
+    feature_dir = w._canonical_status_feature_dir(main_repo_root, mission_slug, **effective_root_options(effective_root))
     rv_events = rv_read_events(feature_dir)
     rv_snapshot = rv_reduce(rv_events) if rv_events else None
     rv_has_canonical = rv_snapshot is not None and normalized_wp_id in rv_snapshot.work_packages
@@ -1570,7 +1647,8 @@ def review_resolve_wp_and_lane_gate(
     # worktree). write_intent gates the checkout-identity refusal; the pure read
     # vehicles leave it False so reads are never falsely refused.
     review_workspace = _wf().resolve_workspace_for_wp(
-        main_repo_root, mission_slug, normalized_wp_id, write_intent=True
+        main_repo_root, mission_slug, normalized_wp_id, write_intent=True,
+        **effective_root_options(effective_root),
     )
     status_execution_mode = "direct_repo" if review_workspace.resolution_kind == "repo_root" else "worktree"
     latest_event = None
@@ -1648,6 +1726,8 @@ def review_claim_transition(
     status_execution_mode: str,
     repo_root: Path,
     resolved_binding: ResolvedBinding | None = None,
+    review_workspace: ResolvedWorkspace | None = None,
+    effective_root: Path | None = None,
 ) -> WorkPackage:
     """Claim a WP for review (``for_review`` -> ``in_review``) if applicable."""
     from specify_cli.status import start_review_status
@@ -1697,6 +1777,11 @@ def review_claim_transition(
     )
 
     with w.feature_status_lock(main_repo_root, mission_slug):
+        if review_workspace is not None:
+            from specify_cli.workspace.owned import verify_review_head
+
+            checkout, branch, _, pinned_head = _owned_review_range(review_workspace)
+            verify_review_head(checkout, branch, pinned_head)
         # WP06 T027: capture pre-emit event-log size for
         # surgical rollback on commit failure.
         events_path_pre_rev = feature_dir / w._STATUS_EVENTS_FILENAME
@@ -1722,6 +1807,7 @@ def review_claim_transition(
                 # transition alone does not perform).
                 policy_metadata=claim_policy_metadata,
                 annotation_delta=claim_delta,
+                **effective_root_options(effective_root),
             )
         except WorkPackageClaimConflict as exc:
             print(f"Error: {exc}")
@@ -1738,6 +1824,7 @@ def review_claim_transition(
                 actor=agent,
                 mission_slug=mission_slug,
                 repo_root=main_repo_root,
+                **effective_root_options(effective_root),
             )
 
         # WP04/T015 (FR-004/NFR-003/SC-004): the review claim's shell_pid/agent
@@ -1757,22 +1844,23 @@ def review_claim_transition(
             feature_dir=feature_dir,
             mission_slug=mission_slug,
             target_branch=target_branch,
-            paths=[actual_wp_path, *status_artifacts],
+            paths=status_artifacts if effective_root is not None else [actual_wp_path, *status_artifacts],
             message=f"chore: Start {normalized_wp_id} review [{agent}]",
             operation=f"for_review -> in_review for {normalized_wp_id}",
             wp_id=normalized_wp_id,
             pre_emit_event_size=pre_emit_event_size_rev,
             pre_emit_status_bytes=pre_emit_status_bytes_rev,
             auto_rebase_lane_after_commit=True,
+            **effective_root_options(effective_root),
         )
 
     print(f"✓ Claimed {normalized_wp_id} for review (agent: {agent}, PID: {shell_pid}, target: {target_branch})")
 
     # Reload to get updated content
-    return _locate_wp(repo_root, mission_slug, normalized_wp_id)
+    return _locate_wp(repo_root, mission_slug, normalized_wp_id, **effective_root_options(effective_root))
 
 
-def review_compute_dependents_warning(repo_root: Path, mission_slug: str, normalized_wp_id: str) -> list[str]:
+def review_compute_dependents_warning(repo_root: Path, mission_slug: str, normalized_wp_id: str, *, effective_root: Path | None = None) -> list[str]:
     """Warn when other planned/in-flight WPs depend on the one under review."""
     from specify_cli.core.dependency_graph import build_dependency_graph, get_dependents
 
@@ -1780,7 +1868,7 @@ def review_compute_dependents_warning(repo_root: Path, mission_slug: str, normal
     # WP04 / T018 / FR-002: build_dependency_graph reads tasks/ (PRIMARY-partition)
     # → route through the planning seam.  Status-event reads stay on the coord-aware
     # resolver (C-001) so dependents' lane comes from the authoritative event log.
-    review_planning_dir = placement_seam(repo_root, mission_slug).read_dir(
+    review_planning_dir = placement_seam(repo_root, mission_slug, **effective_root_options(effective_root)).read_dir(
         MissionArtifactKind.WORK_PACKAGE_TASK
     )
     graph = build_dependency_graph(review_planning_dir)
@@ -1802,7 +1890,7 @@ def review_compute_dependents_warning(repo_root: Path, mission_slug: str, normal
         from specify_cli.status import read_events as rw_read_events
         from specify_cli.status import reduce as rw_reduce
 
-        review_status_dir = placement_seam(repo_root, mission_slug).read_dir(
+        review_status_dir = placement_seam(repo_root, mission_slug, **effective_root_options(effective_root)).read_dir(
             MissionArtifactKind.STATUS_STATE
         )
         rw_events = rw_read_events(review_status_dir)
@@ -1831,9 +1919,9 @@ def _review_context_line(
     lines: list[str] = []
     if review_ctx["base_branch"] != "unknown":
         base = review_ctx["base_branch"]
-        branch_ref = review_ctx["branch_name"]
+        branch_ref = review_ctx.get("head_ref", review_ctx["branch_name"])
         review_paths = ""
-        if workspace.resolution_kind == "repo_root":
+        if workspace.resolution_kind in {"repo_root", "single_branch_workspace"}:
             wp_meta, _ = read_wp_frontmatter(wp.path)
             pathspecs = build_owned_files_review_pathspecs(list(wp_meta.owned_files or []), mission_slug)
             if pathspecs:
@@ -1858,7 +1946,7 @@ def _review_context_line(
     return lines
 
 
-def _review_baseline_context_lines(*, main_repo_root: Path, mission_slug: str, wp_slug: str) -> list[str]:
+def _review_baseline_context_lines(*, main_repo_root: Path, mission_slug: str, wp_slug: str, effective_root: Path | None = None) -> list[str]:
     """Render the "BASELINE TEST CONTEXT" block, if a cached baseline exists."""
     lines: list[str] = []
     w = _wf()
@@ -1869,7 +1957,8 @@ def _review_baseline_context_lines(*, main_repo_root: Path, mission_slug: str, w
     # routed via the kind-aware seam instead of the kind-blind coord husk
     # (NFR-001 / Directive-041).
     rv_feature_dir = w._resolve_workflow_read_dir(
-        repo_root=main_repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK
+        repo_root=main_repo_root, mission_slug=mission_slug, kind=MissionArtifactKind.WORK_PACKAGE_TASK,
+        **effective_root_options(effective_root),
     )
     try:
         from specify_cli.review.baseline import BaselineTestResult
@@ -1918,8 +2007,10 @@ def build_review_prompt_lines(
     review_ctx: dict[str, object],
     main_repo_root: Path,
     review_feedback_path: Path,
+    effective_root: Path | None = None,
 ) -> list[str]:
     """Assemble the full ``REVIEW: <wp>`` prompt body."""
+    root_option = f" --owned-checkout {shlex.quote(str(effective_root))}" if effective_root is not None else ""
     lines: list[str] = []
     lines.append("=" * 80)
     lines.append(f"REVIEW: {normalized_wp_id}")
@@ -1938,7 +2029,7 @@ def build_review_prompt_lines(
     # to typeless. A resolution failure degrades to ``None`` (typeless), the
     # pre-WP11 behaviour, rather than aborting the prompt.
     try:
-        review_mission_type, _ = implement_resolve_mission_type(repo_root, mission_slug)
+        review_mission_type, _ = implement_resolve_mission_type(repo_root, mission_slug, **effective_root_options(effective_root))
     except Exception:
         review_mission_type = None
     lines.append(
@@ -1967,19 +2058,22 @@ def build_review_prompt_lines(
     lines.extend(_review_context_line(workspace=workspace, workspace_path=workspace_path, review_ctx=review_ctx, mission_slug=mission_slug, wp=wp))
 
     wp_slug = wp.path.stem
-    lines.extend(_review_baseline_context_lines(main_repo_root=main_repo_root, mission_slug=mission_slug, wp_slug=wp_slug))
+    lines.extend(_review_baseline_context_lines(
+        main_repo_root=main_repo_root, mission_slug=mission_slug, wp_slug=wp_slug,
+        **effective_root_options(effective_root),
+    ))
 
     lines.append("=" * 80)
     lines.append("WHEN YOU'RE DONE:")
     lines.append("=" * 80)
     lines.append("✓ Review passed, no issues:")
-    lines.append(f'  spec-kitty agent tasks move-task {normalized_wp_id} --to approved --mission {mission_slug} --note "Review passed"')
+    lines.append(f'  spec-kitty agent tasks move-task {normalized_wp_id} --to approved --mission {mission_slug} --note "Review passed"{root_option}')
     lines.append("")
     lines.append("⚠️  Changes requested:")
     lines.append("  1. Write feedback to (in-repo, committed with the project):")
     lines.append(f"     {review_feedback_path}")
     lines.append(
-        f"  2. spec-kitty agent tasks move-task {normalized_wp_id} --to planned --review-feedback-file {review_feedback_path} --mission {mission_slug}"
+        f"  2. spec-kitty agent tasks move-task {normalized_wp_id} --to planned --review-feedback-file {review_feedback_path} --mission {mission_slug}{root_option}"
     )
     lines.append("  3. move-task stores feedback reference in the event log and WP frontmatter")
     lines.append("=" * 80)
@@ -2016,7 +2110,7 @@ def build_review_prompt_lines(
     lines.append("=" * 80)
     lines.append("")
     lines.append("✅ APPROVE (no issues found):")
-    lines.append(f'   spec-kitty agent tasks move-task {normalized_wp_id} --to approved --mission {mission_slug} --note "Review passed: <summary>"')
+    lines.append(f'   spec-kitty agent tasks move-task {normalized_wp_id} --to approved --mission {mission_slug} --note "Review passed: <summary>"{root_option}')
     lines.append("")
     lines.append("❌ REQUEST CHANGES (issues found):")
     lines.append("   1. Write feedback to the in-repo path (committed with the project):")
@@ -2027,7 +2121,8 @@ def build_review_prompt_lines(
     lines.append("")
     lines.append("   2. Move to planned with feedback:")
     lines.append(
-        f"      spec-kitty agent tasks move-task {normalized_wp_id} --to planned --review-feedback-file {review_feedback_path} --mission {mission_slug}"
+        f"      spec-kitty agent tasks move-task {normalized_wp_id} --to planned "
+        f"--review-feedback-file {review_feedback_path} --mission {mission_slug}{root_option}"
     )
     lines.append("")
     lines.append("⚠️  NOTE: You MUST run one of these commands to complete the review!")
@@ -2049,6 +2144,7 @@ def review_finalize_and_print(
     dependents_warning: list[str],
     review_feedback_path: Path,
     wp: WorkPackage,
+    effective_root: Path | None = None,
 ) -> None:
     """Write the review prompt (with metadata), validate it, and print the
     concise stdout summary."""
@@ -2068,7 +2164,7 @@ def review_finalize_and_print(
     # kind, so it short-circuits to PRIMARY before any coord probe and never
     # lands on that husk.
     mission_identity = resolve_mission_identity(
-        placement_seam(main_repo_root, mission_slug).read_dir(MissionArtifactKind.PRIMARY_METADATA)
+        placement_seam(main_repo_root, mission_slug, **effective_root_options(effective_root)).read_dir(MissionArtifactKind.PRIMARY_METADATA)
     )
     review_metadata = build_review_prompt_metadata(
         repo_root=main_repo_root,
@@ -2093,6 +2189,7 @@ def review_finalize_and_print(
         dependents_warning=dependents_warning,
         review_feedback_path=review_feedback_path,
         wp=wp,
+        **effective_root_options(effective_root),
     )
 
 
@@ -2107,8 +2204,10 @@ def _review_print_finalize_summary(
     dependents_warning: list[str],
     review_feedback_path: Path,
     wp: WorkPackage,
+    effective_root: Path | None = None,
 ) -> None:
     """The concise stdout summary printed after the review prompt is written."""
+    root_option = f" --owned-checkout {shlex.quote(str(effective_root))}" if effective_root is not None else ""
     print()
     if dependents_warning:
         for line in dependents_warning:
@@ -2123,11 +2222,11 @@ def _review_print_finalize_summary(
     if review_ctx["base_branch"] != "unknown":
         base = review_ctx["base_branch"]
         print(f"🔀 Branch: {review_ctx['branch_name']} (based on {base}, {review_ctx['commit_count']} commits)")
-        if workspace.resolution_kind == "repo_root":
+        if workspace.resolution_kind in {"repo_root", "single_branch_workspace"}:
             wp_meta, _ = read_wp_frontmatter(wp.path)
             pathspecs = build_owned_files_review_pathspecs(list(wp_meta.owned_files or []), mission_slug)
             review_paths = " -- " + " ".join(pathspecs) if pathspecs else ""
-            print(f"   Review diff: git log {base}..{review_ctx['branch_name']} --oneline{review_paths}")
+            print(f"   Review diff: git log {base}..{review_ctx.get('head_ref', review_ctx['branch_name'])} --oneline{review_paths}")
         else:
             print(f"   Review diff: git log {base}..{review_ctx['branch_name']} --oneline")
     elif workspace.resolution_kind == "repo_root":
@@ -2137,13 +2236,71 @@ def _review_print_finalize_summary(
     print(f"    cat {prompt_file}")
     print()
     print("After review, run:")
-    print(f'  ✅ spec-kitty agent tasks move-task {normalized_wp_id} --to approved --mission {mission_slug} --note "Review passed"')
-    print(f"  ❌ spec-kitty agent tasks move-task {normalized_wp_id} --to planned --review-feedback-file {review_feedback_path} --mission {mission_slug}")
+    print(f'  ✅ spec-kitty agent tasks move-task {normalized_wp_id} --to approved --mission {mission_slug} --note "Review passed"{root_option}')
+    print(
+        f"  ❌ spec-kitty agent tasks move-task {normalized_wp_id} --to planned "
+        f"--review-feedback-file {review_feedback_path} --mission {mission_slug}{root_option}"
+    )
 
 
 # ---------------------------------------------------------------------------
 # ``_resolve_review_context()`` sub-phase extractions (T011)
 # ---------------------------------------------------------------------------
+
+
+def _owned_review_range(workspace: ResolvedWorkspace) -> tuple[Path, str, str, str]:
+    """Read the already verified, immutable implementation range."""
+    if (
+        workspace.resolution_kind != "single_branch_workspace"
+        or not workspace.exists or not workspace.branch_name
+        or not workspace.implementation_base_commit or not workspace.implementation_head_commit
+    ):
+        raise RuntimeError("Owned review requires an existing single-branch workspace with proven base and HEAD commits.")
+    return (
+        workspace.worktree_path, workspace.branch_name,
+        workspace.implementation_base_commit, workspace.implementation_head_commit,
+    )
+
+
+def review_owned_checkout_preflight(repo_root: Path, mission_slug: str, wp_id: str, workspace: ResolvedWorkspace) -> None:
+    """Reuse the canonical readiness gate with the pinned owned workspace."""
+    from specify_cli.cli.commands.agent.tasks import _validate_ready_for_review
+
+    _owned_review_range(workspace)
+    valid, guidance = _validate_ready_for_review(
+        repo_root, mission_slug, wp_id, False, target_lane="in_review",
+        effective_root=repo_root, resolved_workspace=workspace,
+    )
+    if not valid:
+        raise RuntimeError("\n".join(guidance))
+
+
+def verify_owned_review_bookkeeping(workspace: ResolvedWorkspace, feature_dir: Path) -> None:
+    """Refuse concurrent implementation changes after the pinned review claim."""
+    from specify_cli.task_utils import run_git
+    from specify_cli.workspace.owned import verify_review_head
+
+    checkout, branch, _, pinned_head = _owned_review_range(workspace)
+    current_head = run_git(["rev-parse", "HEAD"], cwd=checkout, check=True).stdout.strip()
+    ancestry = run_git(["merge-base", "--is-ancestor", pinned_head, current_head], cwd=checkout, check=False)
+    changed = run_git(["log", "--diff-merges=first-parent", "--format=", "--name-only", f"{pinned_head}..{current_head}"], cwd=checkout, check=True)
+    allowed = {path.relative_to(checkout).as_posix() for path in _wf()._collect_status_artifacts(feature_dir)}
+    if ancestry.returncode != 0 or set(changed.stdout.split()) - allowed:
+        raise RuntimeError("Implementation changed during the review claim; rerun review without reverting the concurrent commit.")
+    verify_review_head(checkout, branch, current_head)
+
+
+def review_context_for_owned_workspace(workspace: ResolvedWorkspace) -> dict[str, object]:
+    """Render reviews against the resolved base and pre-claim implementation HEAD."""
+    from specify_cli.task_utils import run_git
+
+    checkout, branch, base, head = _owned_review_range(workspace)
+    count = run_git(["rev-list", "--count", f"{base}..{head}"], cwd=checkout, check=True)
+    return {
+        "branch_name": branch, "base_branch": base, "base_ref": base,
+        "mission_branch": branch, "lane_branch": branch, "head_ref": head,
+        "commit_count": int(count.stdout.strip()),
+    }
 
 
 def review_context_for_repo_root_workspace(

@@ -20,6 +20,7 @@ Usage:
 from __future__ import annotations
 
 from pathlib import Path
+import shlex
 
 from specify_cli.review.artifacts import ReviewCycleArtifact
 
@@ -117,6 +118,8 @@ def generate_fix_prompt(
     worktree_path: Path,
     mission_slug: str,
     wp_id: str,
+    *,
+    effective_root: Path | None = None,
 ) -> str:
     """Generate a focused fix-mode prompt from a review-cycle artifact.
 
@@ -133,6 +136,7 @@ def generate_fix_prompt(
     Returns:
         The complete fix-mode prompt as a string.
     """
+    root_option = f" --owned-checkout {shlex.quote(str(effective_root))}" if effective_root is not None else ""
     sections: list[str] = []
 
     # ── Header ──────────────────────────────────────────────────────────────
@@ -193,14 +197,14 @@ def generate_fix_prompt(
         sections.append(
             f"5. Move this WP back to for_review:\n"
             f"   spec-kitty agent tasks move-task {wp_id} --to for_review"
-            f" --mission {mission_slug}"
+            f" --mission {mission_slug}{root_option}"
         )
     else:
         sections.append("3. Commit your changes")
         sections.append(
             f"4. Move this WP back to for_review:\n"
             f"   spec-kitty agent tasks move-task {wp_id} --to for_review"
-            f" --mission {mission_slug}"
+            f" --mission {mission_slug}{root_option}"
         )
     sections.append("")
 

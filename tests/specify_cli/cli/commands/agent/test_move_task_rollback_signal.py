@@ -59,7 +59,7 @@ def _ports(feature_dir: Path) -> SimpleNamespace:
 
 
 def _st(tmp_path: Path) -> SimpleNamespace:
-    return SimpleNamespace(main_repo_root=tmp_path, mission_slug=_SLUG, task_id="WP01")
+    return SimpleNamespace(main_repo_root=tmp_path, mission_slug=_SLUG, task_id="WP01", owned_checkout=None)
 
 
 # --------------------------------------------------------------------------- #

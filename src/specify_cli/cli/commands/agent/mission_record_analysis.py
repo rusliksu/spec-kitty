@@ -15,6 +15,8 @@ is preserved byte-for-byte from the pre-decomposition ``mission.py``.
 
 from __future__ import annotations
 
+from specify_cli.core.paths import effective_root_options
+
 import contextlib
 from pathlib import Path
 import subprocess
@@ -102,7 +104,10 @@ def _git_dirty_paths(repo_root: Path) -> list[str]:
     return dirty
 
 
-def _resolve_record_analysis_placement_ref(repo_root: Path, feature_dir: Path) -> CommitTarget | None:
+def _resolve_record_analysis_placement_ref(repo_root: Path, feature_dir: Path,
+    *,
+    effective_root: Path | None = None,
+) -> CommitTarget | None:
     """Resolve the ANALYSIS_REPORT write placement ref for ``record-analysis``.
 
     Routes through ``placement_seam(...).write_target(ANALYSIS_REPORT)`` — the
@@ -119,7 +124,7 @@ def _resolve_record_analysis_placement_ref(repo_root: Path, feature_dir: Path) -
     from mission_runtime import ActionContextError as _ActionContextError, placement_seam
 
     try:
-        return placement_seam(repo_root, feature_dir.name).write_target(
+        return placement_seam(repo_root, feature_dir.name, **effective_root_options(effective_root)).write_target(
             MissionArtifactKind.ANALYSIS_REPORT
         )
     except _ActionContextError:
@@ -159,6 +164,7 @@ def _enforce_analysis_report_write_preflight(
     json_output: bool,
     placement_ref: CommitTarget | None = None,
     mission_slug: str | None = None,
+    effective_root: Path | None = None,
 ) -> None:
     """Fail before `record-analysis` mutates a mission artifact in unsafe git state.
 
@@ -192,7 +198,7 @@ def _enforce_analysis_report_write_preflight(
     if (
         placement_ref is not None
         and mission_slug is not None
-        and routes_through_coordination(resolve_topology(repo_root, mission_slug))
+        and routes_through_coordination(resolve_topology(repo_root, mission_slug, **effective_root_options(effective_root)))
     ):
         dirty_paths = [
             path
@@ -225,6 +231,17 @@ def _enforce_analysis_report_write_preflight(
     # the coordination worktree before committing.
 
 
+def _owned_analysis_directory(repo_root: Path, mission: str | None, effective_root: Path) -> Path:
+    from mission_runtime import placement_seam
+
+    if not mission or not mission.strip():
+        raise ActionContextError("FEATURE_CONTEXT_UNRESOLVED", "--mission <slug> is required")
+    directory = placement_seam(repo_root, mission.strip(), effective_root=effective_root).read_dir(MissionArtifactKind.PRIMARY_METADATA)
+    if not directory.is_dir():
+        raise ActionContextError("FEATURE_CONTEXT_UNRESOLVED", f"Mission not found in owned checkout: {mission}")
+    return directory
+
+
 def record_analysis(
     feature: Annotated[str | None, typer.Option("--mission", help="Mission slug (e.g., '020-my-mission')")] = None,
     input_file: Annotated[
@@ -236,6 +253,10 @@ def record_analysis(
         typer.Option("--agent", help="Agent name that produced the analysis report"),
     ] = None,
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON format")] = False,
+    owned_checkout: Annotated[
+        Path | None,
+        typer.Option("--owned-checkout", help="Explicit registered checkout owned by this invocation; record the analysis there."),
+    ] = None,
 ) -> None:
     """Persist `/spec-kitty.analyze` output as `analysis-report.md`."""
     try:
@@ -244,18 +265,29 @@ def record_analysis(
             _emit_record_analysis_error(PROJECT_ROOT_NOT_FOUND, json_output=json_output)
             raise typer.Exit(1)
         cwd_repo_root = repo_root  # preserve CWD root for branch-protection check
-        repo_root = get_main_repo_root(repo_root)
+        effective_root: Path | None = None
+        if owned_checkout is None:
+            repo_root = get_main_repo_root(repo_root)
+        else:
+            from specify_cli.cli.commands.agent.tasks_shared import resolve_repo_root_with_owned_checkout
+
+            repo_root = resolve_repo_root_with_owned_checkout(owned_checkout, json_output=json_output)
+            cwd_repo_root = repo_root
+            effective_root = repo_root
 
         # WP06 / T020 (#1814): resolve the mission read/write surface FIRST (via
         # the consolidated read primitive — no silent fallback) so the dirty-tree
         # preflight can key off the context's placement ref and not deadlock on
         # coord-residue in the primary checkout.
         try:
-            feature_dir = _find_feature_directory(
-                repo_root,
-                Path.cwd().resolve(),
-                explicit_feature=feature,
-            )
+            if effective_root is None:
+                feature_dir = _find_feature_directory(
+                    repo_root,
+                    Path.cwd().resolve(),
+                    explicit_feature=feature,
+                )
+            else:
+                feature_dir = _owned_analysis_directory(repo_root, feature, effective_root)
         except (ValueError, ActionContextError) as detection_error:
             payload = _build_setup_plan_detection_error(
                 repo_root,
@@ -277,7 +309,7 @@ def record_analysis(
         # T013 / D11: a genuine resolution failure fails closed here instead of
         # silently letting the preflight run with a conservative, un-filtered
         # dirty set (see ``_require_record_analysis_placement``).
-        placement_ref = _resolve_record_analysis_placement_ref(repo_root, feature_dir)
+        placement_ref = _resolve_record_analysis_placement_ref(repo_root, feature_dir, **effective_root_options(effective_root))
         placement_ref = _require_record_analysis_placement(
             placement_ref, mission_slug=feature_dir.name
         )
@@ -286,6 +318,7 @@ def record_analysis(
             json_output=json_output,
             placement_ref=placement_ref,
             mission_slug=feature_dir.name,
+            **effective_root_options(effective_root),
         )
 
         body = sys.stdin.read() if input_file == "-" else Path(input_file).read_text(encoding="utf-8")
@@ -324,7 +357,7 @@ def record_analysis(
         from specify_cli.cli.commands.agent.mission_feature_resolution import _kind_for_artifact
         from mission_runtime import placement_seam
 
-        write_feature_dir = placement_seam(repo_root, feature_dir.name).read_dir(
+        write_feature_dir = placement_seam(repo_root, feature_dir.name, **effective_root_options(effective_root)).read_dir(
             _kind_for_artifact("spec")
         )
 
@@ -378,7 +411,8 @@ def record_analysis(
                 # topology and NEVER transits the coordination branch. No coord copy
                 # is made — the write surface equals the read surface.
                 kind=MissionArtifactKind.ANALYSIS_REPORT,
-                target_branch=get_feature_target_branch(repo_root, _analysis_mission_slug),
+                target_branch=get_feature_target_branch(repo_root, _analysis_mission_slug, **effective_root_options(effective_root)),
+                **effective_root_options(effective_root),
             )
 
         with contextlib.suppress(Exception):

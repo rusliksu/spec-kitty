@@ -21,6 +21,7 @@ the review gate) carry ``write_intent=True``, while the audited read vehicle
 """
 from __future__ import annotations
 
+import ast
 import json
 import subprocess
 from dataclasses import dataclass
@@ -289,6 +290,28 @@ def _src(rel: str) -> str:
     return (_REPO_ROOT / rel).read_text(encoding="utf-8")
 
 
+def _assert_workspace_write_intent(source: str, function_name: str) -> None:
+    functions = [
+        node for node in ast.walk(ast.parse(source))
+        if isinstance(node, ast.FunctionDef) and node.name == function_name
+    ]
+    assert [node.name for node in functions] == [function_name], (
+        f"Expected one {function_name} write entry point"
+    )
+    calls = [
+        node for node in ast.walk(functions[0])
+        if isinstance(node, ast.Call)
+        and (
+            isinstance(node.func, ast.Name) and node.func.id == "resolve_workspace_for_wp"
+            or isinstance(node.func, ast.Attribute) and node.func.attr == "resolve_workspace_for_wp"
+        )
+    ]
+    assert len(calls) == 1, f"Expected one workspace resolve in {function_name}"
+    keywords = {keyword.arg: keyword.value for keyword in calls[0].keywords}
+    write_intent = keywords.get("write_intent")
+    assert isinstance(write_intent, ast.Constant) and write_intent.value is True
+
+
 def test_true_wp_write_sites_carry_write_intent() -> None:
     """All THREE true WP-write sites pass ``write_intent=True`` (no under-marking).
 
@@ -296,20 +319,22 @@ def test_true_wp_write_sites_carry_write_intent() -> None:
     gate in particular is the case an owned-files-only resolution.py approach
     would have missed.
     """
-    implement_cli = _src("src/specify_cli/cli/commands/implement.py")
-    agent_workflow = _src("src/specify_cli/cli/commands/agent/workflow.py")
-    review_executor = _src("src/specify_cli/cli/commands/agent/workflow_executor.py")
+    for path, function_name in (
+        ("src/specify_cli/cli/commands/implement.py", "implement"),
+        ("src/specify_cli/cli/commands/agent/workflow.py", "implement"),
+        ("src/specify_cli/cli/commands/agent/workflow_executor.py", "review_resolve_wp_and_lane_gate"),
+    ):
+        _assert_workspace_write_intent(_src(path), function_name)
 
-    # compat `spec-kitty implement` CLI
-    assert "resolve_workspace_for_wp(repo_root, mission_slug, wp_id, write_intent=True)" in implement_cli
-    # canonical `agent action implement`
-    assert (
-        "resolve_workspace_for_wp(main_repo_root, mission_slug, normalized_wp_id, write_intent=True)"
-        in agent_workflow
-    )
-    # review gate (pre-claim) — the review write path
-    assert "write_intent=True" in review_executor
-    assert "resolve_workspace_for_wp(" in review_executor
+
+def test_write_intent_guard_rejects_missing_or_false_markers() -> None:
+    for call in (
+        "resolve_workspace_for_wp(repo, mission, wp, write_intent=False)",
+        "resolve_workspace_for_wp(repo, mission, wp)",
+        "other_resolver(repo, mission, wp, write_intent=True)",
+    ):
+        with pytest.raises(AssertionError):
+            _assert_workspace_write_intent(f"def probe():\n    {call}\n", "probe")
 
 
 def test_read_vehicle_does_not_carry_write_intent() -> None:

@@ -289,6 +289,7 @@ def _find_mission_slug(
     json_output: bool = False,
     repo_root: Path | None = None,
     render: Render | None = None,
+    effective_root: Path | None = None,
 ) -> str:
     """Require an explicit mission slug (no auto-detection).
 
@@ -327,7 +328,8 @@ def _find_mission_slug(
         # checkout; get_main_repo_root() here guards against caller passing a
         # worktree path directly.
         legacy_dir = placement_seam(
-            _tasks.get_main_repo_root(repo_root), raw_handle
+            effective_root or _tasks.get_main_repo_root(repo_root), raw_handle,
+            **effective_root_options(effective_root),
         ).read_dir(MissionArtifactKind.PRIMARY_METADATA)
         if legacy_dir.exists():
             # F-001: the candidate resolver canonicalizes mid8/ULID/numeric
@@ -335,6 +337,9 @@ def _find_mission_slug(
             # handle — is the canonical mission slug downstream consumers need.
             legacy_name: str = legacy_dir.name
             return legacy_name
+        if effective_root is not None:
+            _tasks._output_error(json_output, f"Mission '{raw_handle}' was not found in owned checkout {effective_root}.")
+            raise typer.Exit(1)
         try:
             resolved = resolve_mission_handle(raw_handle, repo_root, json_mode=json_output)
             resolved_slug: str = resolved.mission_slug

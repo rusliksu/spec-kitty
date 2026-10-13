@@ -79,6 +79,7 @@ from specify_cli.core.dependency_graph import build_dependency_graph, get_depend
 # re-export: the relocated move_task family routes it via ``_tasks.<attr>``
 # (WP05); command bodies remaining here keep calling it directly.
 from specify_cli.core.paths import locate_project_root as locate_project_root
+from specify_cli.core.paths import effective_root_options
 from specify_cli.core.paths import get_main_repo_root as get_main_repo_root
 from specify_cli.core.paths import get_feature_target_branch as get_feature_target_branch
 # ``get_status_read_root`` keeps an explicit ``as`` re-export: its direct call
@@ -862,6 +863,10 @@ def mark_status(
         bool | None, typer.Option("--auto-commit/--no-auto-commit", help="Automatically commit tasks.md changes to target branch (default: from project config)")
     ] = None,
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON format")] = False,
+    owned_checkout: Annotated[
+        Path | None,
+        typer.Option("--owned-checkout", help="Explicit registered checkout owned by this invocation; record canonical subtask completion there."),
+    ] = None,
 ) -> None:
     """Update task checkbox status in tasks.md for one or more tasks.
 
@@ -891,6 +896,7 @@ def mark_status(
         mission=mission,
         auto_commit=auto_commit,
         json_output=json_output,
+        **({"owned_checkout": owned_checkout} if owned_checkout is not None else {}),
     )
 
 
@@ -928,7 +934,10 @@ def list_tasks(
         )
         effective_root = repo_root if owned_checkout is not None else None
 
-        mission_slug = _find_mission_slug(explicit_mission=mission, json_output=json_output, repo_root=repo_root)
+        mission_slug = _find_mission_slug(
+            explicit_mission=mission, json_output=json_output, repo_root=repo_root,
+            **effective_root_options(effective_root),
+        )
 
         # Ensure we operate on the target branch for this feature
         main_repo_root, _ = _ensure_target_branch_checked_out(
@@ -1017,6 +1026,10 @@ def add_history(
     agent: Annotated[str | None, typer.Option("--agent", help="Agent name")] = None,
     shell_pid: Annotated[str | None, typer.Option("--shell-pid", help="Shell PID")] = None,
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON format")] = False,
+    owned_checkout: Annotated[
+        Path | None,
+        typer.Option("--owned-checkout", help="Explicit registered checkout owned by this invocation; record the history note there."),
+    ] = None,
 ) -> None:
     """Append history entry to task activity log.
 
@@ -1030,19 +1043,33 @@ def add_history(
             _output_error(json_output, "Could not locate project root")
             raise typer.Exit(1)
 
+        if owned_checkout is not None:
+            repo_root = resolve_repo_root_with_owned_checkout(owned_checkout, json_output=json_output)
+        effective_root = repo_root if owned_checkout is not None else None
+        if effective_root is not None:
+            from specify_cli.git.commit_helpers import assert_not_protected_branch
+
+            assert_not_protected_branch(repo_root, operation="record work package history")
+
         # FR-010 / FR-019: one-shot sparse-checkout session warning.
         _emit_sparse_session_warning(repo_root, command="spec-kitty agent tasks add-history")
 
-        mission_slug = _find_mission_slug(explicit_mission=mission, json_output=json_output, repo_root=repo_root)
+        mission_slug = _find_mission_slug(
+            explicit_mission=mission, json_output=json_output, repo_root=repo_root,
+            **effective_root_options(effective_root),
+        )
 
         # Ensure we operate on the target branch for this feature
-        _ah_main_repo_root, _ = _ensure_target_branch_checked_out(repo_root, mission_slug, json_output)
+        _ah_main_repo_root, _ = _ensure_target_branch_checked_out(
+            repo_root, mission_slug, json_output,
+            **({"owned_root": effective_root} if effective_root is not None else {}),
+        )
 
         # Boundary guard — hard-reject pre-3.0 layout before any WP mutation.
         # Resolve through the kind-aware authority (resolution-authority gate:
         # add_history is a WRITE-classified function, so a kind-blind
         # resolve_feature_dir_for_mission here would be a coord-authority violation).
-        _ah_feature_dir = placement_seam(_ah_main_repo_root, mission_slug).read_dir(
+        _ah_feature_dir = placement_seam(_ah_main_repo_root, mission_slug, **effective_root_options(effective_root)).read_dir(
             MissionArtifactKind.TASKS_INDEX
         )
         try:
@@ -1052,7 +1079,7 @@ def add_history(
             raise typer.Exit(1) from None
 
         # Load work package
-        wp = locate_work_package(repo_root, mission_slug, task_id)
+        wp = locate_work_package(repo_root, mission_slug, task_id, **effective_root_options(effective_root))
 
         # Build history entry. Route agent/shell_pid through the
         # WorkPackage.agent/.shell_pid seam -- which routes unconditionally
