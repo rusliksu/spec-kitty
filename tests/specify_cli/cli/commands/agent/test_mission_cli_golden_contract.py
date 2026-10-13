@@ -124,6 +124,7 @@ _EXPECTED_FLAGS: dict[str, frozenset[str]] = {
             "--include-tasks",
             "--require-tasks",
             "--resume-probe",
+            "--owned-checkout",  # Explicit prerequisite namespace; default primary anchor is unchanged.
         }
     ),
     "record-analysis": frozenset({"--mission", "--input-file", "--agent", "--json", "--owned-checkout"}),
