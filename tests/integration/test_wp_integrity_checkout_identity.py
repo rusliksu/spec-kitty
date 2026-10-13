@@ -295,7 +295,9 @@ def _assert_workspace_write_intent(source: str, function_name: str) -> None:
         node for node in ast.walk(ast.parse(source))
         if isinstance(node, ast.FunctionDef) and node.name == function_name
     ]
-    assert len(functions) == 1, f"Expected one {function_name} write entry point"
+    assert [node.name for node in functions] == [function_name], (
+        f"Expected one {function_name} write entry point"
+    )
     calls = [
         node for node in ast.walk(functions[0])
         if isinstance(node, ast.Call)
